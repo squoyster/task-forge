@@ -1,0 +1,29 @@
+{
+  "project": {
+    "name": "task-forge",
+    "defaultBranch": "main"
+  },
+  "tasks": {
+    "directory": "tasks",
+    "idPrefix": "TASK",
+    "template": "tasks/TEMPLATE.md"
+  },
+  "worktrees": {
+    "root": "../worktrees",
+    "branchPrefix": "agent"
+  },
+  "github": {
+    "enabled": false
+  },
+  "opencode": {
+    "enabled": true,
+    "command": "opencode"
+  },
+  "continuation": {
+    "autoContinue": true,
+    "maxTaskFixIterations": 3,
+    "allowDraftPr": true,
+    "allowCommit": true,
+    "allowPush": false
+  }
+}

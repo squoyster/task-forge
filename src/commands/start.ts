@@ -2,7 +2,8 @@ import { loadTaskById, updateTaskStatus, appendAgentNote } from "../core/task-st
 import { validateTransition } from "../core/status-transition.js";
 import { createWorktree } from "../core/git.js";
 import { makeBranchName, getWorktreePath } from "../util/paths.js";
-import { logInfo, logSuccess, logWarn, logHeader, logSub, logDivider, logError } from "../util/logging.js";
+import { logInfo, logSuccess, logWarn, logHeader, logSub, logDivider } from "../util/logging.js";
+import { TaskNotFoundError, InvalidStatusTransitionError, WorktreeError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
 
 export async function cmdStart(taskId: string): Promise<void> {
@@ -10,14 +11,16 @@ export async function cmdStart(taskId: string): Promise<void> {
   const task = loadTaskById(taskId);
 
   if (!task) {
-    logError(`Task ${taskId} not found.`);
-    process.exit(1);
+    throw new TaskNotFoundError(taskId);
   }
 
   // Validate status
   if (task.status !== "Ready" && task.status !== "In Progress") {
-    logError(`Task ${taskId} has status '${task.status}'. Must be 'Ready' or 'In Progress' to start.`);
-    process.exit(1);
+    throw new InvalidStatusTransitionError(
+      task.status,
+      "In Progress",
+      ["Ready", "In Progress"],
+    );
   }
 
   // Create worktree and branch
@@ -38,16 +41,20 @@ export async function cmdStart(taskId: string): Promise<void> {
       logInfo(`Worktree already exists at: ${result.path}`);
     }
   } catch (err) {
-    logWarn(`Could not create worktree: ${err instanceof Error ? err.message : String(err)}`);
-    logInfo("Continuing without worktree...");
+    throw new WorktreeError(
+      `Could not create worktree: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 
   // Update status to In Progress if it was Ready
   if (task.status === "Ready") {
     const transitionError = validateTransition(task.status, "In Progress");
     if (transitionError) {
-      logError(transitionError);
-      process.exit(1);
+      throw new InvalidStatusTransitionError(
+        task.status,
+        "In Progress",
+        ["In Progress"],
+      );
     }
     updateTaskStatus(task.filePath, "In Progress");
     logSuccess("Status updated: Ready → In Progress");

@@ -24,9 +24,13 @@ let _repoRoot: string | null = null;
 
 export function getRepoRoot(): string {
   if (!_repoRoot) {
-    _repoRoot = findRepoRoot(__dirname);
+    _repoRoot = process.cwd();
   }
   return _repoRoot;
+}
+
+export function setRepoRoot(root: string): void {
+  _repoRoot = root;
 }
 
 export function getTasksDir(repoRoot: string): string {
