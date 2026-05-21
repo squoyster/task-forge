@@ -1,0 +1,333 @@
+# TaskForge Autonomous Coding Board
+
+A repo-centered task management and execution system for agentic software development.
+
+## Core Mission
+
+TaskForge exists to manage software work for an agentic coding team. It combines:
+
+- A human-visible task board
+- Repo-native Markdown task specifications
+- Isolated agent workspaces using git worktrees
+- Task branches and pull requests
+- Automatic continuation policies
+- Explicit human-intervention gates
+- Project status summaries
+
+## Operating Model
+
+Three layers:
+
+1. **Human-visible board** — GitHub Issues/Projects, Plane, Linear, Jira, or repo-native Markdown
+2. **Repo-native task specs** — the execution contract (these Markdown files)
+3. **Agent execution in isolated worktrees** — the isolation boundary
+
+The board is for visibility. The Markdown task spec is the execution contract. The worktree/branch is the isolation boundary. The pull request is the review boundary. The test suite and CI are the verification boundary.
+
+## Architecture
+
+```
+Human Interface
+  ├─ GitHub Issues / GitHub Projects
+  ├─ Plane
+  ├─ Linear
+  ├─ Jira
+  └─ Repo-native Markdown task files
+
+Repository
+  ├─ TASKFORGE.md          (this file)
+  ├─ AGENTS.md             (if present)
+  ├─ tasks/
+  │   ├─ README.md
+  │   ├─ TEMPLATE.md
+  │   └─ TASK-NNN.md / FEATURE-NNN.md / BUG-NNN.md / etc.
+  ├─ specs/
+  ├─ docs/decisions/
+  ├─ tests/
+  ├─ logs/taskforge/
+  └─ scripts/
+      └─ taskforge              (thin wrapper → TypeScript CLI)
+
+Execution Layer
+  ├─ OpenCode or compatible CLI coding agent
+  ├─ Git worktrees
+  ├─ Task branches
+  ├─ Local tests
+  ├─ CI
+  └─ Pull requests
+```
+
+## Task Types
+
+| Type | Description |
+|---|---|
+| Epic | Large body of work containing multiple features and tasks |
+| Feature | User-visible or system-visible capability |
+| Task | Concrete implementation unit |
+| Bug | Incorrect behavior requiring reproduction, fix, and regression protection |
+| Chore | Maintenance, cleanup, dependency update, or minor infrastructure |
+| Research / Spike | Investigation producing a decision memo and follow-up tasks |
+| Refactor | Internal structure improvement with no intended behavior change |
+| Test | Test coverage, validation harness, regression tests |
+| Documentation | README, runbooks, architecture notes, inline docs |
+| Infrastructure | Build system, deployment, local environment, CI/CD |
+| Security | Auth, permissions, secrets, vulnerabilities |
+| Release | Versioning, changelog, deployment packaging, release notes |
+| Dependency | Package update, deprecation replacement, version drift |
+| Maintenance | Lockfile cleanup, SBOM generation, dependency policy |
+
+## Task Statuses
+
+| Status | Description |
+|---|---|
+| Inbox | Raw human idea, unprocessed request |
+| Needs Spec | Not yet specific enough for implementation |
+| Ready | Has sufficient scope, acceptance criteria, and verification strategy |
+| In Progress | An agent or human is actively working on it |
+| Blocked | Cannot continue without human input or unresolved failure |
+| Review | Code or output is ready for review |
+| Verify | Implementation done but needs validation or manual confirmation |
+| Done | Merged, accepted, and completed |
+| Rejected | Invalid, duplicate, not useful, or intentionally closed |
+| Deferred | Valid but postponed |
+
+## Board Columns
+
+```
+Inbox → Needs Spec → Ready → In Progress → Review → Verify → Done
+                         ↓
+                      Blocked
+```
+
+## Agent Roles
+
+| Role | Purpose |
+|---|---|
+| Intake Agent | Convert raw human requests into structured task records |
+| Planner Agent | Decompose epics/features into safe executable tasks |
+| Implementer Agent | Implement one task at a time in isolated worktree |
+| QA Agent | Validate behavior, run tests, verify acceptance criteria |
+| Reviewer Agent | Review code, scope compliance, correctness, security |
+| Continuation Agent | Keep work moving automatically through safe steps |
+| Release/Summary Agent | Maintain human-visible project state |
+| Dependency Steward Agent | Track dependency health, detect vulnerabilities/deprecations, propose safe fixes |
+
+## Workspace Strategy
+
+Use git worktrees by default:
+
+```bash
+git worktree add ../worktrees/TASK-123 -b agent/TASK-123-short-title
+cd ../worktrees/TASK-123
+```
+
+Branch pattern: `agent/TASK-ID-short-description`
+
+Examples:
+- `agent/TASK-123-folder-watcher`
+- `agent/BUG-042-token-refresh-retry`
+- `agent/FEATURE-018-transcript-search`
+
+Do not work directly on `main`, `master`, `develop`, `release/*`, or `production/*` unless explicitly instructed.
+
+## Priority System
+
+| Priority | Description |
+|---|---|
+| P0 | Urgent correctness, production, security, data-loss, or blocking issue |
+| P1 | Important feature or major bug |
+| P2 | Normal planned work |
+| P3 | Cleanup, polish, documentation, minor improvement |
+
+Work selection rules:
+1. Continue already-started safe tasks before starting new ones
+2. Prefer unblocking tasks
+3. Prefer P0 > P1 > P2 > P3
+4. Prefer tasks with clear acceptance criteria
+5. Prefer smaller tasks when priority is equal
+6. Avoid starting tasks with unresolved dependencies
+7. Avoid parallel work that touches the same files
+
+## Automatic Continuation Policy
+
+Continue automatically when the next action is:
+- Safe, local, reversible
+- Within task scope
+- Consistent with acceptance criteria
+- Not cost-incurring, destructive, or security-sensitive
+
+### Continue Without Asking For:
+- Reading repository files
+- Searching the codebase
+- Creating task files, branches, worktrees
+- Editing files within declared scope
+- Adding/updating tests
+- Running local tests, linters, formatters, static analysis
+- Re-running failed tests after code changes
+- Fixing compile errors caused by the task
+- Refactoring within scope when needed
+- Committing changes
+- Opening draft PRs
+- Updating task notes and status
+- Splitting oversized tasks into proposed subtasks
+- Marking tasks blocked with exact reasons
+
+### Stop For Human Intervention:
+- Ambiguous product behavior that changes user-visible semantics
+- Conflicting requirements
+- Destructive data operation
+- Production deployment
+- External paid API usage
+- Cloud resource creation with cost impact
+- Credential, token, key, or secret access
+- Security-sensitive change outside explicit scope
+- Legal/compliance-sensitive decision
+- Database migration that may lose or rewrite production data
+- Broad architecture change outside task scope
+- Dependency or license change with material implications
+- Repeated failure after reasonable retries
+- Test failure that appears unrelated and cannot be safely isolated
+- Missing information that cannot be inferred and materially affects correctness
+
+### Do Not Stop For:
+- Unfamiliar codebase
+- Tedious work
+- Need to discover tests
+- Need to add a small helper abstraction
+- Need to add a test
+- Formatting requirements
+- Single local command failure
+- Messy existing code
+- Multiple reasonable implementation details when one is clearly low-risk
+- Obvious and reversible next steps
+
+## Continuation Loop
+
+1. Inspect current task board or task files
+2. Find highest-priority task in Ready, In Progress, Verify, or Review
+3. Prefer continuing existing In Progress work
+4. Check dependencies
+5. Check whether the next action is safe
+6. If safe, execute the next step
+7. Run relevant verification
+8. Update task notes
+9. Commit focused changes if code changed
+10. Open or update draft PR if appropriate
+11. Update board/task status
+12. Select next safe task
+13. Stop only when a real stopping condition exists
+
+## Failure Handling
+
+Reasonable retries:
+- 1 retry for transient command/environment failure
+- 2-3 iterations for task-caused test or compile failure
+- 0 retries for destructive or cost-incurring operations
+
+## Definition of Ready
+
+A task is Ready only when:
+- Goal is clear
+- Scope is bounded
+- Acceptance criteria exist
+- Verification method exists
+- Dependencies are known
+- Risk is identified
+- Human intervention is not currently required
+
+## Definition of Done
+
+A task is Done only when:
+- Acceptance criteria are satisfied
+- Required tests pass or exceptions are documented
+- Code changes are committed
+- PR is merged or deliverable is accepted
+- Task notes are updated
+- Board status is updated
+- Result summary exists
+- Follow-up tasks are created if needed
+
+## Safe Autonomy Rules
+
+### Agents Have Authority To:
+- Continue local development
+- Modify in-scope code
+- Add tests
+- Improve task-local structure
+- Commit changes
+- Open draft PRs
+- Update task files
+- Move task status forward when criteria are satisfied
+- Move task status backward when validation fails
+- Mark tasks Blocked when necessary
+
+### Agents Do Not Have Authority To:
+- Deploy to production
+- Spend money
+- Use paid cloud resources
+- Access secrets without explicit approval
+- Perform destructive data operations
+- Make major architectural changes outside task scope
+- Change licensing posture
+- Suppress failing tests
+- Merge their own PR unless explicitly allowed
+- Mark Done without verification
+
+## Integration Preference Order
+
+1. GitHub Issues + GitHub Projects + repo task files
+2. Plane + repo task files
+3. Linear + repo task files
+4. Jira + repo task files
+5. Markdown-only repo task files
+
+Always keep repo-native task specs even when using an external issue tracker.
+
+## CLI Commands
+
+| Command | Description |
+|---|---|
+| `taskforge init` | Initialize TaskForge in this repo |
+| `taskforge next` | Return highest-priority safe task to continue |
+| `taskforge start TASK-123` | Set up worktree, branch, and begin task |
+| `taskforge status` | Show project status summary |
+| `taskforge block TASK-123 "reason"` | Mark task as blocked |
+| `taskforge done TASK-123` | Mark task as done |
+| `taskforge summary` | Show full project summary |
+| `taskforge sync` | Sync with external issue tracker |
+| `taskforge deps scan` | Run broad dependency health checks |
+| `taskforge deps audit` | Run package-manager-native audit |
+| `taskforge deps outdated` | Report outdated direct dependencies |
+| `taskforge deps deprecated` | Check for deprecated packages |
+| `taskforge deps plan` | Produce a dependency remediation plan |
+| `taskforge deps create-tasks` | Create dependency tasks from findings |
+| `taskforge deps pr` | Create focused dependency update PRs |
+| `taskforge deps summary` | Produce a dependency health summary |
+
+## OpenCode Session Prompt
+
+When launching an OpenCode session:
+
+```
+You are operating under TaskForge Autonomous Coding Board.
+
+Read TASKFORGE.md, AGENTS.md if present, and the relevant task file under tasks/.
+
+Use git worktrees and task branches unless already inside the correct task worktree.
+
+Continue automatically through safe local steps:
+- inspect, implement, test, fix, retest, commit
+- update task notes
+- open/update draft PR if available
+
+Stop only for real human-intervention conditions.
+
+Do not ask for permission between safe steps.
+
+Before ending, always update the task file with:
+- what changed
+- tests run
+- current status
+- blockers, if any
+- recommended next action
+```

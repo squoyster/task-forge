@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.taskforge/*.sqlite
+.taskforge/*.sqlite-shm
+.taskforge/*.sqlite-wal
+worktrees/
+*.log
