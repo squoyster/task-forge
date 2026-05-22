@@ -1,7 +1,7 @@
 ---
 id: TASK-003
 type: Task
-status: Ready
+status: Done
 priority: P1
 agentRole: Implementer
 riskLevel: Low
@@ -68,3 +68,29 @@ No
 ## Continuation Policy
 
 Auto-continue unless a stopping condition occurs.
+
+## Agent Notes
+
+### 2026-05-21 System
+- Task started
+
+### 2026-05-21 System
+- Added `--json` flag to `taskforge status` command
+- JSON output includes: total, byStatus counts, and per-task id/title/priority/status
+- Human-readable output unchanged when flag not provided
+- JSON output is pure stdout (no log decorations)
+- 5 new tests cover JSON format, empty state, and decoration-free output
+- All verification gates pass: typecheck, lint, build, 115 tests
+
+## Result
+
+Task completed successfully. `taskforge status --json` outputs valid JSON with `total`, `byStatus`, and `tasks` keys. Existing human-readable output is unchanged.
+
+## Links
+- Issue:
+- Project Item:
+- PR:
+- Branch:
+- Worktree:
+- CI:
+- Test Log:

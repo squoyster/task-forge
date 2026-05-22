@@ -2,8 +2,89 @@ import { loadAllTasks } from "../core/task-store.js";
 import { selectNextTask } from "../core/scheduler.js";
 import { logHeader, logSub, logDivider, logInfo } from "../util/logging.js";
 
-export async function cmdSummary(): Promise<void> {
+interface SummaryJsonTask {
+  id: string;
+  title: string;
+  priority: string;
+  role: string;
+  status: string;
+}
+
+interface SummaryJson {
+  generated: string;
+  total: number;
+  byStatus: Record<string, number>;
+  nextAction: string;
+  tasks: SummaryJsonTask[];
+}
+
+function makeLine(t: { id: string; priority: string; agentRole?: string; body: string }): {
+  id: string;
+  title: string;
+  priority: string;
+  role: string;
+} {
+  const titleMatch = t.body.match(/^#\s+\S+:\s+(.+)$/m);
+  return {
+    id: t.id,
+    title: titleMatch ? titleMatch[1] : t.id,
+    priority: t.priority,
+    role: t.agentRole ?? "Implementer",
+  };
+}
+
+function buildJson(tasks: ReturnType<typeof loadAllTasks>): SummaryJson {
+  const now = new Date();
+  const byStatus: Record<string, number> = {};
+  const taskEntries: SummaryJsonTask[] = [];
+
+  for (const t of tasks) {
+    byStatus[t.status] = (byStatus[t.status] || 0) + 1;
+    const info = makeLine(t);
+    taskEntries.push({ ...info, status: t.status });
+  }
+
+  const active = tasks.filter((t) => t.status === "In Progress");
+  const review = tasks.filter((t) => t.status === "Review");
+  const verify = tasks.filter((t) => t.status === "Verify");
+  const needsSpec = tasks.filter((t) => t.status === "Needs Spec");
+  const inbox = tasks.filter((t) => t.status === "Inbox");
+  const next = selectNextTask(tasks);
+
+  let nextAction: string;
+  if (active.length > 0) {
+    nextAction = "Continue existing in-progress work.";
+  } else if (verify.length > 0) {
+    nextAction = "Run QA/verification on tasks in Verify status.";
+  } else if (review.length > 0) {
+    nextAction = "Review tasks in Review status.";
+  } else if (next) {
+    nextAction = `Start the highest-priority task: ${next.id}`;
+  } else if (needsSpec.length > 0) {
+    nextAction = "Create specs for tasks in Needs Spec.";
+  } else if (inbox.length > 0) {
+    nextAction = "Process inbox items into structured tasks.";
+  } else {
+    nextAction = "No actionable tasks. Add work to the inbox.";
+  }
+
+  return {
+    generated: now.toISOString().replace("T", " ").slice(0, 19),
+    total: tasks.length,
+    byStatus,
+    nextAction,
+    tasks: taskEntries,
+  };
+}
+
+export async function cmdSummary(json?: boolean): Promise<void> {
   const tasks = loadAllTasks();
+
+  if (json) {
+    const output = buildJson(tasks);
+    console.log(JSON.stringify(output, null, 2));
+    return;
+  }
 
   if (tasks.length === 0) {
     logInfo("No task files found.");
@@ -11,7 +92,7 @@ export async function cmdSummary(): Promise<void> {
   }
 
   const now = new Date();
-  logHeader(`# TaskForge Summary`);
+  logHeader("# TaskForge Summary");
   logDivider();
   logSub(`Generated: ${now.toISOString().replace("T", " ").slice(0, 19)}`);
   logDivider();
@@ -26,66 +107,65 @@ export async function cmdSummary(): Promise<void> {
   const done = tasks.filter((t) => t.status === "Done");
   const humanNeeded = tasks.filter((t) => t.humanInterventionRequired);
 
-  const makeLine = (t: { id: string; priority: string; agentRole?: string; body: string }) => {
-    const titleMatch = t.body.match(/^#\s+\S+:\s+(.+)$/m);
-    const title = titleMatch ? titleMatch[1] : t.id;
-    return `- **${t.id}**: ${title} (Priority: ${t.priority}, Role: ${t.agentRole ?? "Implementer"})`;
+  const displayLine = (t: { id: string; priority: string; agentRole?: string; body: string }) => {
+    const { id, title, priority, role } = makeLine(t);
+    return `- **${id}**: ${title} (Priority: ${priority}, Role: ${role})`;
   };
 
-  logHeader(`## Active Work`);
+  logHeader("## Active Work");
   logDivider();
   if (active.length === 0) logSub("None");
-  else active.forEach((t) => logSub(makeLine(t)));
+  else active.forEach((t) => logSub(displayLine(t)));
   logDivider();
 
-  logHeader(`## Blocked`);
+  logHeader("## Blocked");
   logDivider();
   if (blocked.length === 0) logSub("None");
-  else blocked.forEach((t) => logSub(makeLine(t)));
+  else blocked.forEach((t) => logSub(displayLine(t)));
   logDivider();
 
-  logHeader(`## Ready Next`);
+  logHeader("## Ready Next");
   logDivider();
   if (ready.length === 0) logSub("None");
-  else ready.forEach((t) => logSub(makeLine(t)));
+  else ready.forEach((t) => logSub(displayLine(t)));
   logDivider();
 
-  logHeader(`## In Review`);
+  logHeader("## In Review");
   logDivider();
   if (review.length === 0 && verify.length === 0) {
     logSub("None");
   } else {
-    review.forEach((t) => logSub(`${makeLine(t)} [Review]`));
-    verify.forEach((t) => logSub(`${makeLine(t)} [Verify]`));
+    review.forEach((t) => logSub(`${displayLine(t)} [Review]`));
+    verify.forEach((t) => logSub(`${displayLine(t)} [Verify]`));
   }
   logDivider();
 
-  logHeader(`## Completed`);
+  logHeader("## Completed");
   logDivider();
   if (done.length === 0) logSub("None");
-  else done.forEach((t) => logSub(makeLine(t)));
+  else done.forEach((t) => logSub(displayLine(t)));
   logDivider();
 
-  logHeader(`## Inbox`);
+  logHeader("## Inbox");
   logDivider();
   if (inbox.length === 0) logSub("None");
-  else inbox.forEach((t) => logSub(makeLine(t)));
+  else inbox.forEach((t) => logSub(displayLine(t)));
   logDivider();
 
-  logHeader(`## Needs Spec`);
+  logHeader("## Needs Spec");
   logDivider();
   if (needsSpec.length === 0) logSub("None");
-  else needsSpec.forEach((t) => logSub(makeLine(t)));
+  else needsSpec.forEach((t) => logSub(displayLine(t)));
   logDivider();
 
-  logHeader(`## Human Action Needed`);
+  logHeader("## Human Action Needed");
   logDivider();
   if (humanNeeded.length === 0) logSub("None");
-  else humanNeeded.forEach((t) => logSub(makeLine(t)));
+  else humanNeeded.forEach((t) => logSub(displayLine(t)));
   logDivider();
 
   // Recommended next action
-  logHeader(`## Recommended Next Action`);
+  logHeader("## Recommended Next Action");
   logDivider();
   const next = selectNextTask(tasks);
   if (active.length > 0) {
@@ -105,7 +185,7 @@ export async function cmdSummary(): Promise<void> {
   }
   logDivider();
 
-  logHeader(`## Summary`);
+  logHeader("## Summary");
   logDivider();
   logSub(`- **Total tasks:** ${tasks.length}`);
   logSub(`- **Active:** ${active.length}`);

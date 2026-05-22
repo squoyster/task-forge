@@ -44,12 +44,14 @@ program
 program
   .command("status")
   .description("Show project status summary")
-  .action(wrap(cmdStatus));
+  .option("--json", "Output in JSON format for programmatic consumption")
+  .action((opts) => wrap(() => cmdStatus(opts.json ?? false))());
 
 program
   .command("summary")
   .description("Show full project summary with recommended next action")
-  .action(wrap(cmdSummary));
+  .option("--json", "Output in JSON format for programmatic consumption")
+  .action((opts) => wrap(() => cmdSummary(opts.json ?? false))());
 
 program
   .command("block <taskId> <reason>")

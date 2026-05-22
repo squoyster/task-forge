@@ -1,9 +1,27 @@
 import { loadAllTasks } from "../core/task-store.js";
 import { logHeader, logSub, logDivider, logInfo } from "../util/logging.js";
 
+interface StatusRow {
+  id: string;
+  title: string;
+  priority: string;
+  extra?: string;
+}
+
+interface StatusJson {
+  total: number;
+  byStatus: Record<string, number>;
+  tasks: {
+    id: string;
+    title: string;
+    priority: string;
+    status: string;
+  }[];
+}
+
 function printTable(
   header: string,
-  rows: { id: string; title: string; priority: string; extra?: string }[],
+  rows: StatusRow[],
 ): void {
   logHeader(`## ${header}`);
   logDivider();
@@ -18,15 +36,43 @@ function printTable(
   logDivider();
 }
 
-export async function cmdStatus(): Promise<void> {
+function makeRow(t: { id: string; priority: string; body: string }): StatusRow {
+  const titleMatch = t.body.match(/^#\s+\S+:\s+(.+)$/m);
+  return {
+    id: t.id,
+    title: titleMatch ? titleMatch[1] : t.id,
+    priority: t.priority,
+  };
+}
+
+function buildJson(tasks: ReturnType<typeof loadAllTasks>): StatusJson {
+  const byStatus: Record<string, number> = {};
+  const taskEntries: StatusJson["tasks"] = [];
+
+  for (const t of tasks) {
+    byStatus[t.status] = (byStatus[t.status] || 0) + 1;
+    const r = makeRow(t);
+    taskEntries.push({ id: r.id, title: r.title, priority: r.priority, status: t.status });
+  }
+
+  return { total: tasks.length, byStatus, tasks: taskEntries };
+}
+
+export async function cmdStatus(json?: boolean): Promise<void> {
   const tasks = loadAllTasks();
+
+  if (json) {
+    const output = buildJson(tasks);
+    console.log(JSON.stringify(output, null, 2));
+    return;
+  }
 
   if (tasks.length === 0) {
     logInfo("No task files found.");
     return;
   }
 
-  logHeader(`# TaskForge Status`);
+  logHeader("# TaskForge Status");
   logDivider();
 
   const active = tasks.filter((t) => t.status === "In Progress");
@@ -39,20 +85,11 @@ export async function cmdStatus(): Promise<void> {
   const done = tasks.filter((t) => t.status === "Done");
   const humanNeeded = tasks.filter((t) => t.humanInterventionRequired);
 
-  const makeRow = (t: { id: string; priority: string; body: string }) => {
-    const titleMatch = t.body.match(/^#\s+\S+:\s+(.+)$/m);
-    return {
-      id: t.id,
-      title: titleMatch ? titleMatch[1] : t.id,
-      priority: t.priority,
-    };
-  };
-
   printTable("Active Work", active.map(makeRow));
   printTable("Blocked", blocked.map(makeRow));
   printTable("Ready Next", ready.map(makeRow));
 
-  logHeader(`## In Review`);
+  logHeader("## In Review");
   logDivider();
   if (review.length === 0 && verify.length === 0) {
     logSub("None");
@@ -72,7 +109,7 @@ export async function cmdStatus(): Promise<void> {
   printTable("Needs Spec", needsSpec.map(makeRow));
   printTable("Completed", done.map(makeRow));
 
-  logHeader(`## Human Action Needed`);
+  logHeader("## Human Action Needed");
   logDivider();
   if (humanNeeded.length === 0) {
     logSub("None");
@@ -84,7 +121,7 @@ export async function cmdStatus(): Promise<void> {
   }
   logDivider();
 
-  logHeader(`## Summary`);
+  logHeader("## Summary");
   logDivider();
   logSub(`- **Total tasks:** ${tasks.length}`);
   logSub(`- **Active:** ${active.length}`);
