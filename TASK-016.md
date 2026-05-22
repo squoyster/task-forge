@@ -1,6 +1,6 @@
 ---
 id: TASK-016
-type: Enhancement
+type: Refactor
 status: Ready
 priority: P0
 agentRole: Implementer

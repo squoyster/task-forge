@@ -1,6 +1,6 @@
 ---
 id: TASK-017
-type: Enhancement
+type: Feature
 status: Ready
 priority: P0
 agentRole: Implementer
