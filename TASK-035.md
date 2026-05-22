@@ -1,11 +1,13 @@
 ---
 id: TASK-035
 type: Feature
-status: Ready
+status: In Progress
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 43e61b982c
+claimed_at: '2026-05-22 08:06:26'
 ---
 
 # TASK-035: Add `new` Command — Create Arbitrary Task Files
@@ -50,3 +52,11 @@ Low.
 ## Continuation Policy
 
 Auto-continue.
+
+## Agent Notes
+
+### 2026-05-22 System
+- Task started via taskforge start TASK-035
+- Session: 43e61b982c
+- Branch: agent/TASK-035-add-new-command-create-arbitrary-task-fi--43e61b982c
+- Worktree: /Volumes/Transcend/devel/worktrees/TASK-035
