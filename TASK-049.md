@@ -1,17 +1,14 @@
 ---
 id: TASK-049
 type: Documentation
-status: In Progress
+status: Done
 priority: P1
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: true
 dependsOn:
   - TASK-046
-assignee: 55f965a6c3
-claimed_at: '2026-05-22 19:52:22'
 context_hash: 27705145f76d1ff7
-worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-049
 ---
 
 # TASK-049: Branch Protection / Ruleset Guidance for `task-state`
@@ -49,6 +46,12 @@ TASK-046.
 Medium.
 
 ## Agent Notes
+
+### 2026-05-22 System
+- Task marked Done (forced)
+- Completed despite gate failures — forced.
+- Worktree removed: /Volumes/Transcend/devel/worktrees/task-forge/TASK-049
+- Worktree and branch fields cleared from task frontmatter.
 
 ### 2026-05-22 System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-049
