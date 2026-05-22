@@ -2,7 +2,7 @@ import { loadTaskById, updateTaskStatus, clearTaskLock, appendAgentNote } from "
 import { commitAndPushTaskState } from "../core/git.js";
 import { assertTaskOwnership } from "../core/session.js";
 import { STATUS } from "../util/status-constants.js";
-import { logSuccess, logInfo, logError } from "../util/logging.js";
+import { logSuccess, logInfo } from "../util/logging.js";
 import { TaskNotFoundError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
 import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
