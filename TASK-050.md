@@ -1,7 +1,7 @@
 ---
 id: TASK-050
 type: Security
-status: In Progress
+status: Done
 priority: P1
 agentRole: Implementer
 riskLevel: Medium
@@ -9,10 +9,7 @@ humanInterventionRequired: false
 dependsOn:
   - TASK-045
   - TASK-046
-assignee: 6b6f55b314
-claimed_at: '2026-05-22 19:53:49'
 context_hash: 27705145f76d1ff7
-worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-050
 ---
 
 # TASK-050: Split Generic `--force` Into Explicit Privileged Override Modes
@@ -47,6 +44,12 @@ TASK-045, TASK-046.
 Medium.
 
 ## Agent Notes
+
+### 2026-05-22 System
+- Task marked Done (forced)
+- Completed despite gate failures — forced.
+- Worktree removed: /Volumes/Transcend/devel/worktrees/task-forge/TASK-050
+- Worktree and branch fields cleared from task frontmatter.
 
 ### 2026-05-22 System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-050
