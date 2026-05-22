@@ -83,9 +83,15 @@ program
 program
   .command("block <taskId> <reason>")
   .description("Mark a task as blocked with a reason")
+  .option("--category <cat>", "Blocker category: human_decision, test_failure, merge_conflict, missing_secret, unsafe_operation, ambiguous_spec")
+  .option("--blocked-by <who>", "Who/what is blocking: human, agent, bot")
   .option("--json", "Output in JSON format")
-  .action((taskId: string, reason: string, opts: { json?: boolean }) => {
-    return wrap(() => cmdBlock(taskId, reason, { json: opts.json ?? false }))();
+  .action((taskId: string, reason: string, opts: { json?: boolean; category?: string; blockedBy?: string }) => {
+    return wrap(() => cmdBlock(taskId, reason, {
+      json: opts.json ?? false,
+      category: opts.category,
+      blockedBy: opts.blockedBy,
+    }))();
   });
 
 program

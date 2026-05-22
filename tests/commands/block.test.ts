@@ -91,4 +91,36 @@ describe("cmdBlock", () => {
     const content = fs.readFileSync(fp, "utf-8");
     expect(content).toContain("Blocked");
   });
+
+  it("sets block_category and blocked_by fields", async () => {
+    const fp = makeTaskFile("TASK-001");
+    await cmdBlock("TASK-001", "Need decision", {
+      category: "human_decision",
+      blockedBy: "human",
+    });
+
+    const content = fs.readFileSync(fp, "utf-8");
+    expect(content).toContain("block_category: human_decision");
+    expect(content).toContain("blocked_by: human");
+    expect(content).toContain("blocked_since:");
+    expect(content).toContain("blocked_reason: Need decision");
+  });
+
+  it("defaults block_category and blocked_by to unspecified", async () => {
+    const fp = makeTaskFile("TASK-001");
+    await cmdBlock("TASK-001", "Just a reason");
+
+    const content = fs.readFileSync(fp, "utf-8");
+    expect(content).toContain("block_category: unspecified");
+    expect(content).toContain("blocked_by: unspecified");
+  });
+
+  it("includes category in agent note", async () => {
+    const fp = makeTaskFile("TASK-001", {}, `# TASK-001: Test\n\n## Goal\nTest\n\n## Agent Notes\n`);
+    await cmdBlock("TASK-001", "Need access", {
+      category: "missing_secret",
+    });
+    const content = fs.readFileSync(fp, "utf-8");
+    expect(content).toContain("Task blocked [missing_secret]: Need access");
+  });
 });

@@ -36,6 +36,18 @@ export const TaskStatus = z.enum([
   STATUS.DEFERRED,
 ]);
 
+export const BlockCategory = z.enum([
+  "human_decision",
+  "test_failure",
+  "merge_conflict",
+  "missing_secret",
+  "unsafe_operation",
+  "ambiguous_spec",
+  "unspecified",
+]);
+
+export const BlockedBy = z.enum(["human", "agent", "bot", "unspecified"]);
+
 export const TaskSchema = z.object({
   id: z.string(),
   type: TaskType.default("Task"),
@@ -49,6 +61,10 @@ export const TaskSchema = z.object({
   claimed_at: z.union([z.string(), z.date()]).optional(),
   branch: z.string().optional(),
   worktree: z.string().optional(),
+  blocked_reason: z.string().optional(),
+  blocked_by: BlockedBy.optional(),
+  blocked_since: z.union([z.string(), z.date()]).optional(),
+  block_category: BlockCategory.optional(),
   issue: z.number().optional(),
   pr: z.number().optional(),
 });

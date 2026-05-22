@@ -18,6 +18,9 @@ interface ListJsonEntry {
   type: string;
   title: string;
   agentRole?: string;
+  blocked_reason?: string;
+  blocked_by?: string;
+  block_category?: string;
 }
 
 function matchesSearch(task: ParsedTask, search: string): boolean {
@@ -61,6 +64,9 @@ export async function cmdList(options: ListOptions = {}): Promise<void> {
       type: t.type,
       title: getTitle(t),
       agentRole: t.agentRole,
+      blocked_reason: t.blocked_reason,
+      blocked_by: t.blocked_by,
+      block_category: t.block_category,
     }));
     console.log(JSON.stringify(entries, null, 2));
     return;
@@ -77,6 +83,9 @@ export async function cmdList(options: ListOptions = {}): Promise<void> {
   for (const t of filtered) {
     const title = getTitle(t);
     logSub(`- **${t.id}** [${t.status}] (${t.priority}, ${t.type}): ${title}`);
+    if (t.blocked_reason && t.status === "Blocked") {
+      logSub(`  ↳ ${t.block_category !== "unspecified" ? `[${t.block_category}] ` : ""}${t.blocked_reason}`);
+    }
   }
 
   logDivider();

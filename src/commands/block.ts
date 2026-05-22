@@ -1,8 +1,8 @@
-import { loadTaskById, updateTaskStatus, clearTaskLock, appendAgentNote } from "../core/task-store.js";
+import { loadTaskById, clearTaskLock, appendAgentNote, parseTaskFile, writeTaskFile } from "../core/task-store.js";
 import { validateTransition, getAllowedTransitions } from "../core/status-transition.js";
 import { commitAndPushTaskState } from "../core/git.js";
 import { STATUS } from "../util/status-constants.js";
-import { logSuccess } from "../util/logging.js";
+import { logSuccess, logSub } from "../util/logging.js";
 import { TaskNotFoundError, InvalidStatusTransitionError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
 import { assertTaskOwnership } from "../core/session.js";
@@ -10,6 +10,8 @@ import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result
 
 export interface BlockOptions {
   json?: boolean;
+  category?: string;
+  blockedBy?: string;
 }
 
 export async function cmdBlock(
@@ -46,25 +48,42 @@ export async function cmdBlock(
     await assertTaskOwnership(task, repoRoot);
   }
 
-  updateTaskStatus(task.filePath, STATUS.BLOCKED);
+  // Re-read for writing additional fields
+  const current = parseTaskFile(task.filePath);
+  if (!current) {
+    throw new TaskNotFoundError(taskId);
+  }
+
+  current.status = STATUS.BLOCKED;
+  current.blocked_reason = reason;
+  current.block_category = (options.category as typeof current.block_category) ?? "unspecified";
+  current.blocked_by = (options.blockedBy as typeof current.blocked_by) ?? "unspecified";
+  current.blocked_since = new Date().toISOString().replace("T", " ").replace(/\.\d+Z$/, "");
+  writeTaskFile(current);
 
   // Clear the lock
   clearTaskLock(task.filePath);
 
   const today = new Date().toISOString().split("T")[0];
+  const catLabel = options.category ? ` [${options.category}]` : "";
   appendAgentNote(task.filePath, today, "System", [
-    `Task blocked: ${reason}`,
-  ]);
+    `Task blocked${catLabel}: ${reason}`,
+    options.blockedBy ? `Blocked by: ${options.blockedBy}` : "",
+  ].filter(Boolean));
 
   // Push state changes to shared task-state branch
   await commitAndPushTaskState(repoRoot, `chore: block ${taskId} — ${reason}`);
 
   if (options.json) {
+    const final = loadTaskById(taskId);
     printJson(jsonOk({
-      task: buildJsonTask(task),
+      task: final ? buildJsonTask(final) : buildJsonTask(current),
     }));
     return;
   }
 
   logSuccess(`Task ${taskId} blocked: ${reason}`);
+  if (options.category && options.category !== "unspecified") {
+    logSub(`  Category: ${options.category}`);
+  }
 }
