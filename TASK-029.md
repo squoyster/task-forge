@@ -1,11 +1,13 @@
 ---
 id: TASK-029
 type: Feature
-status: Ready
+status: In Progress
 priority: P3
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
+assignee: 5ac25d0a44
+claimed_at: '2026-05-22 07:16:00'
 ---
 
 # TASK-029: Safe Cleanup with Dry-Run
@@ -57,3 +59,11 @@ Medium — destructive operation, safety checks are critical.
 ## Continuation Policy
 
 Auto-continue.
+
+## Agent Notes
+
+### 2026-05-22 System
+- Task started via taskforge start TASK-029
+- Session: 5ac25d0a44
+- Branch: agent/TASK-029-safe-cleanup-with-dry-run--5ac25d0a44
+- Worktree: /Volumes/Transcend/devel/worktrees/TASK-029
