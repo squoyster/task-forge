@@ -18,6 +18,7 @@ import { cmdCleanup, type CleanupOptions } from "./commands/cleanup-cmd.js";
 import { cmdPrompt } from "./commands/prompt.js";
 import { cmdResume } from "./commands/resume.js";
 import { cmdDoctor } from "./commands/doctor.js";
+import { cmdConfigValidate } from "./commands/config-validate.js";
 import { cmdList, type ListOptions } from "./commands/list.js";
 import { cmdSync } from "./commands/sync.js";
 import { cmdDepsScan } from "./commands/deps/scan.js";
@@ -303,3 +304,9 @@ program
   .description("Run diagnostic checks on repo and task-state health")
   .option("--json", "Output in JSON format")
   .action((opts: { json?: boolean }) => wrap(() => cmdDoctor(opts))());
+
+program
+  .command("config-validate")
+  .description("Validate .taskforge/config.json")
+  .option("--json", "Output in JSON format")
+  .action((opts: { json?: boolean }) => wrap(() => cmdConfigValidate(opts))());
