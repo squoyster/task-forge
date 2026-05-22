@@ -1,7 +1,7 @@
 import { loadAllTasks, updateTaskStatus, clearTaskLock, appendAgentNote } from "../core/task-store.js";
 import { getRepoRoot } from "../util/paths.js";
-import { commitAndPushTaskState } from "../core/git.js";
-import { logInfo, logSuccess, logSub } from "../util/logging.js";
+import { jitteredPush } from "../core/git.js";
+import { logInfo, logSuccess, logSub, logWarn } from "../util/logging.js";
 
 const STALE_THRESHOLD_MS = 4 * 60 * 60 * 1000; // 4 hours
 
@@ -49,10 +49,14 @@ export async function cmdSweep(): Promise<void> {
     logSuccess(`  ${task.id}: In Progress → Ready (claim cleared)`);
   }
 
-  // Push all state changes to the task-state branch
-  await commitAndPushTaskState(repoRoot, `chore: sweep ${staleTasks.length} stale task(s)`);
+  // Push all state changes to the task-state branch with jittered retry
+  const pushed = await jitteredPush(repoRoot, `chore: sweep ${staleTasks.length} stale task(s)`);
 
-  logSuccess(`Sweeper: Recovered ${staleTasks.length} stale task(s).`);
+  if (!pushed) {
+    logWarn("Sweeper: failed to push state changes after retries. State changes are committed locally.");
+  } else {
+    logSuccess(`Sweeper: Recovered ${staleTasks.length} stale task(s).`);
+  }
 }
 
 function parseClaimedAt(value: string | Date): Date | null {

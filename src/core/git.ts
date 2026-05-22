@@ -2,6 +2,7 @@ import simpleGit from "simple-git";
 import { execa } from "execa";
 import { getWorktreePath, makeBranchName, getTaskStateDir } from "../util/paths.js";
 import type { ParsedTask } from "./task-store.js";
+import { logWarn } from "../util/logging.js";
 
 export interface WorktreeResult {
   path: string;
@@ -232,4 +233,123 @@ function extractTitle(task: ParsedTask): string {
   const match = task.body.match(/^#\s+\S+:\s+(.+)$/m);
   if (match) return match[1];
   return task.id;
+}
+
+/**
+ * Options for jitteredPush().
+ */
+export interface JitteredPushOptions {
+  /** Maximum number of retry attempts (default: 3) */
+  maxRetries?: number;
+  /** Minimum jitter delay in milliseconds (default: 2000) */
+  jitterMinMs?: number;
+  /** Maximum jitter delay in milliseconds (default: 10000) */
+  jitterMaxMs?: number;
+  /**
+   * Called after a successful `git pull --rebase` to allow the caller
+   * to re-read task state and decide whether to retry.
+   * Return true to retry the push; return false to abort.
+   * If not provided, always retries up to maxRetries.
+   */
+  onConflict?: (stateDir: string) => Promise<boolean>;
+}
+
+/**
+ * Push changes to the task-state branch with jittered retry on
+ * non-fast-forward rejection (optimistic concurrency).
+ *
+ * This wraps the same commit+push flow as commitAndPushTaskState but
+ * adds retry logic: on a non-fast-forward push rejection, it executes
+ * `git pull --rebase`, waits a random jitter period (2-10s by default),
+ * and retries up to `maxRetries` times.
+ *
+ * If the `onConflict` callback is provided, it is called after each rebase
+ * so the caller can re-read task state and abort if another agent claimed
+ * the task.
+ *
+ * Returns true if the push succeeded, false if all retries were exhausted
+ * or the operation was aborted.
+ */
+export async function jitteredPush(
+  repoRoot: string,
+  message: string,
+  options?: JitteredPushOptions,
+): Promise<boolean> {
+  const stateDir = getTaskStateDir(repoRoot);
+
+  // First check if the worktree directory exists
+  const fs = await import("node:fs");
+  if (!fs.existsSync(stateDir)) {
+    return true; // Not yet initialized — pretend success
+  }
+
+  const maxRetries = options?.maxRetries ?? 3;
+  const jitterMin = options?.jitterMinMs ?? 2000;
+  const jitterMax = options?.jitterMaxMs ?? 10000;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      // Stage and commit
+      const git = simpleGit(stateDir);
+      await git.add(".");
+      const status = await git.status();
+      if (status.files.length > 0) {
+        await git.commit(message);
+      }
+
+      // Push
+      await execa("git", ["push", "origin", "task-state"], { cwd: stateDir });
+      return true; // Push succeeded
+    } catch (err) {
+      // If we've exhausted retries, give up
+      if (attempt >= maxRetries) {
+        logWarn(`jitteredPush: exhausted ${maxRetries} retries for push to task-state`);
+        return false;
+      }
+
+      // Only retry on non-fast-forward rejection
+      if (!isNonFastForwardRejection(err)) {
+        logWarn(`jitteredPush: push failed with unrecoverable error, skipping retry`);
+        return false;
+      }
+
+      // Pull rebase to catch up
+      try {
+        await execa("git", ["pull", "--rebase", "origin", "task-state"], { cwd: stateDir });
+      } catch {
+        logWarn(`jitteredPush: git pull --rebase failed, aborting retry`);
+        return false;
+      }
+
+      // Jitter wait
+      const delay = jitterMin + Math.floor(Math.random() * (jitterMax - jitterMin + 1));
+      await new Promise((resolve) => setTimeout(resolve, delay));
+
+      // Call the conflict callback if provided — it can abort the retry
+      if (options?.onConflict) {
+        const shouldContinue = await options.onConflict(stateDir);
+        if (!shouldContinue) {
+          return false;
+        }
+      }
+
+      // Continue to next attempt (retry push)
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Detect whether an execa error represents a non-fast-forward push rejection.
+ */
+function isNonFastForwardRejection(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  const lower = msg.toLowerCase();
+  return (
+    lower.includes("non-fast-forward") ||
+    lower.includes("[rejected]") ||
+    lower.includes("fetch first") ||
+    (lower.includes("failed to push") && lower.includes("updates were rejected"))
+  );
 }

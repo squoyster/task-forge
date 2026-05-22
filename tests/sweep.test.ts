@@ -7,7 +7,7 @@ import { setRepoRoot } from "../src/util/paths.js";
 
 // Mock the git module so we don't need real git operations
 vi.mock("../src/core/git.js", () => ({
-  commitAndPushTaskState: vi.fn(),
+  jitteredPush: vi.fn(),
   ensureTaskStateBranch: vi.fn(),
 }));
 
@@ -136,9 +136,9 @@ describe("cmdSweep", () => {
     expect(content).not.toContain("claimed_at");
   });
 
-  it("commits and pushes state changes", async () => {
+  it("commits and pushes state changes with jittered retry", async () => {
     // Import the mocked module to verify it was called
-    const { commitAndPushTaskState } = await import("../src/core/git.js");
+    const { jitteredPush } = await import("../src/core/git.js");
 
     makeTaskFile("TASK-001", {
       assignee: "abc123def0",
@@ -147,7 +147,7 @@ describe("cmdSweep", () => {
 
     await cmdSweep();
 
-    expect(commitAndPushTaskState).toHaveBeenCalledWith(
+    expect(jitteredPush).toHaveBeenCalledWith(
       expect.any(String),
       expect.stringMatching(/sweep/i),
     );

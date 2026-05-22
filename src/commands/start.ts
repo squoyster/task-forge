@@ -1,6 +1,6 @@
-import { loadTaskById, updateTaskStatus, updateTaskLock, appendAgentNote } from "../core/task-store.js";
+import { loadTaskById, updateTaskStatus, updateTaskLock, appendAgentNote, clearTaskLock } from "../core/task-store.js";
 import { validateTransition } from "../core/status-transition.js";
-import { createWorktree, commitAndPushTaskState } from "../core/git.js";
+import { createWorktree, jitteredPush } from "../core/git.js";
 import { makeBranchName } from "../util/paths.js";
 import { generateSessionId } from "../core/session.js";
 import { logInfo, logSuccess, logWarn, logError, logHeader, logSub, logDivider } from "../util/logging.js";
@@ -94,8 +94,36 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
     `Worktree: ${task.worktree ?? "none"}`,
   ]);
 
-  // Push state changes to shared task-state branch
-  await commitAndPushTaskState(repoRoot, `chore: start ${taskId} [session: ${sessionId}]`);
+  // Push state changes to shared task-state branch with jittered retry
+  const pushed = await jitteredPush(repoRoot, `chore: start ${taskId} [session: ${sessionId}]`, {
+    onConflict: async (_stateDir: string) => {
+      // After rebase, re-read the task to check if another agent claimed it
+      const currentTask = loadTaskById(taskId);
+      if (!currentTask) {
+        logWarn(`Task ${taskId} disappeared after rebase. Aborting.`);
+        return false;
+      }
+      if (currentTask.assignee && currentTask.assignee !== sessionId) {
+        logWarn(
+          `Another agent (session "${currentTask.assignee}") claimed ${taskId} while we were pushing. ` +
+          `Abandoning claim.`,
+        );
+        // Clear our local lock
+        clearTaskLock(task.filePath);
+        return false;
+      }
+      // Task is still ours — retry the push
+      return true;
+    },
+  });
+
+  if (!pushed) {
+    logError(
+      `Failed to push claim for ${taskId}. The task may have been claimed by another agent. ` +
+      `Run 'taskforge next' to find another task.`,
+    );
+    return;
+  }
 
   // Print agent instructions
   logDivider();
