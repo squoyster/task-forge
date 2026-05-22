@@ -38,14 +38,16 @@ program
 program
   .command("next")
   .description("Return the highest-priority safe task to continue")
-  .action(wrap(cmdNext));
+  .option("--json", "Output in JSON format")
+  .action((opts: { json?: boolean }) => wrap(() => cmdNext(opts))());
 
 program
   .command("start <taskId>")
   .description("Set up worktree, branch, and begin a task")
   .option("--force", "Override stale lock if task is locked by another session")
-  .action((taskId: string, opts: { force?: boolean }) => {
-    const startOpts: StartOptions = { force: opts.force ?? false };
+  .option("--json", "Output in JSON format")
+  .action((taskId: string, opts: { force?: boolean; json?: boolean }) => {
+    const startOpts: StartOptions = { force: opts.force ?? false, json: opts.json ?? false };
     return wrap(() => cmdStart(taskId, startOpts))();
   });
 
@@ -64,7 +66,10 @@ program
 program
   .command("block <taskId> <reason>")
   .description("Mark a task as blocked with a reason")
-  .action((taskId: string, reason: string) => wrap(() => cmdBlock(taskId, reason))());
+  .option("--json", "Output in JSON format")
+  .action((taskId: string, reason: string, opts: { json?: boolean }) => {
+    return wrap(() => cmdBlock(taskId, reason, { json: opts.json ?? false }))();
+  });
 
 program
   .command("done <taskId>")
@@ -72,11 +77,13 @@ program
   .option("--force", "Force transition to Done even if not allowed")
   .option("--cleanup", "Remove worktree after marking done")
   .option("--delete-branch", "Delete the task branch after marking done (implies --cleanup)")
-  .action((taskId: string, opts: { force?: boolean; cleanup?: boolean; deleteBranch?: boolean }) => {
+  .option("--json", "Output in JSON format")
+  .action((taskId: string, opts: { force?: boolean; cleanup?: boolean; deleteBranch?: boolean; json?: boolean }) => {
     const doneOpts: DoneOptions = {
       force: opts.force ?? false,
       cleanup: opts.cleanup ?? false,
       deleteBranch: opts.deleteBranch ?? false,
+      json: opts.json ?? false,
     };
     // --delete-branch implies --cleanup
     if (doneOpts.deleteBranch && !doneOpts.cleanup) {
@@ -113,15 +120,17 @@ program
   .command("unlock <taskId>")
   .description("Manually unlock a task (requires --force)")
   .option("--force", "Force unlock the task")
-  .action((taskId: string, opts: { force?: boolean }) => {
-    const unlockOpts: UnlockOptions = { force: opts.force ?? false };
+  .option("--json", "Output in JSON format")
+  .action((taskId: string, opts: { force?: boolean; json?: boolean }) => {
+    const unlockOpts: UnlockOptions = { force: opts.force ?? false, json: opts.json ?? false };
     return wrap(() => cmdUnlock(taskId, unlockOpts))();
   });
 
 program
   .command("sweep")
   .description("Sweeper Protocol: recover stale in-progress tasks (claimed >4h)")
-  .action(wrap(cmdSweep));
+  .option("--json", "Output in JSON format")
+  .action((opts: { json?: boolean }) => wrap(() => cmdSweep(opts))());
 
 // Dependency Steward commands
 const deps = program.command("deps").description("Dependency health management");

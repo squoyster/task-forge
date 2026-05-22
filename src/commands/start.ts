@@ -8,9 +8,11 @@ import { STATUS } from "../util/status-constants.js";
 import { logInfo, logSuccess, logWarn, logError, logHeader, logSub, logDivider } from "../util/logging.js";
 import { TaskNotFoundError, InvalidStatusTransitionError, WorktreeError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
+import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
 
 export interface StartOptions {
   force?: boolean;
+  json?: boolean;
 }
 
 export async function cmdStart(taskId: string, options?: StartOptions): Promise<void> {
@@ -23,11 +25,22 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
   const task = loadTaskById(taskId);
 
   if (!task) {
+    if (options?.json) {
+      printJson(jsonError(`Task ${taskId} not found`, "TASK_NOT_FOUND"));
+      return;
+    }
     throw new TaskNotFoundError(taskId);
   }
 
   // Validate status
   if (task.status !== STATUS.READY && task.status !== STATUS.IN_PROGRESS) {
+    if (options?.json) {
+      printJson(jsonError(
+        `Cannot start task with status "${task.status}". Must be "${STATUS.READY}" or "${STATUS.IN_PROGRESS}".`,
+        "INVALID_STATUS",
+      ));
+      return;
+    }
     throw new InvalidStatusTransitionError(
       task.status,
       STATUS.IN_PROGRESS,
@@ -37,6 +50,13 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
 
   // Lock check: if task is locked by another session, reject unless --force
   if (task.assignee && !options?.force) {
+    if (options?.json) {
+      printJson(jsonError(
+        `Task ${taskId} is assigned to session "${task.assignee}" since ${task.claimed_at ?? "unknown"}. Use --force to override.`,
+        "NEEDS_FORCE",
+      ));
+      return;
+    }
     logError(
       `Task ${taskId} is assigned to session "${task.assignee}" since ${task.claimed_at ?? "unknown"}. ` +
       `Use --force to override (only if you are sure the claim is stale).`,
@@ -45,7 +65,7 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
   }
 
   // If --force, warn about overriding
-  if (task.assignee && options?.force) {
+  if (task.assignee && options?.force && !options?.json) {
     logWarn(`Overriding stale claim from session "${task.assignee}".`);
   }
 
@@ -63,13 +83,22 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
     const result = await createWorktree(repoRoot, task);
     task.worktree = result.path;
 
-    if (result.created) {
-      logSuccess(`Created worktree at: ${result.path}`);
-      logSuccess(`Created branch: ${result.branch}`);
-    } else {
-      logInfo(`Worktree already exists at: ${result.path}`);
+    if (!options?.json) {
+      if (result.created) {
+        logSuccess(`Created worktree at: ${result.path}`);
+        logSuccess(`Created branch: ${result.branch}`);
+      } else {
+        logInfo(`Worktree already exists at: ${result.path}`);
+      }
     }
   } catch (err) {
+    if (options?.json) {
+      printJson(jsonError(
+        `Could not create worktree: ${err instanceof Error ? err.message : String(err)}`,
+        "WORKTREE_ERROR",
+      ));
+      return;
+    }
     throw new WorktreeError(
       `Could not create worktree: ${err instanceof Error ? err.message : String(err)}`,
     );
@@ -89,7 +118,9 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
       );
     }
     updateTaskStatus(task.filePath, STATUS.IN_PROGRESS);
-    logSuccess(`Status updated: ${STATUS.READY} → ${STATUS.IN_PROGRESS}`);
+    if (!options?.json) {
+      logSuccess(`Status updated: ${STATUS.READY} → ${STATUS.IN_PROGRESS}`);
+    }
   }
 
   // Append agent note
@@ -107,14 +138,16 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
       // After rebase, re-read the task to check if another agent claimed it
       const currentTask = loadTaskById(taskId);
       if (!currentTask) {
-        logWarn(`Task ${taskId} disappeared after rebase. Aborting.`);
+        if (!options?.json) logWarn(`Task ${taskId} disappeared after rebase. Aborting.`);
         return false;
       }
       if (currentTask.assignee && currentTask.assignee !== sessionId) {
-        logWarn(
-          `Another agent (session "${currentTask.assignee}") claimed ${taskId} while we were pushing. ` +
-          `Abandoning claim.`,
-        );
+        if (!options?.json) {
+          logWarn(
+            `Another agent (session "${currentTask.assignee}") claimed ${taskId} while we were pushing. ` +
+            `Abandoning claim.`,
+          );
+        }
         // Clear our local lock
         clearTaskLock(task.filePath);
         return false;
@@ -125,10 +158,32 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
   });
 
   if (!pushed) {
+    if (options?.json) {
+      printJson(jsonError(
+        `Failed to push claim for ${taskId}. The task may have been claimed by another agent.`,
+        "PUSH_FAILED",
+      ));
+      return;
+    }
     logError(
       `Failed to push claim for ${taskId}. The task may have been claimed by another agent. ` +
       `Run 'taskforge next' to find another task.`,
     );
+    return;
+  }
+
+  // Success — output JSON or human-readable
+  if (options?.json) {
+    printJson(jsonOk({
+      task: buildJsonTask(task),
+      workspace: {
+        branch: task.branch,
+        worktree: task.worktree ?? undefined,
+      },
+      next: {
+        command: task.worktree ? `cd ${task.worktree}` : undefined,
+      },
+    }));
     return;
   }
 

@@ -2,8 +2,13 @@ import { loadAllTasks } from "../core/task-store.js";
 import { selectNextTask, scoreTask, hasUnmetDependencies } from "../core/scheduler.js";
 import { sweepStaleTasks } from "../core/sweeper.js";
 import { logInfo, logHeader, logSub, logDivider } from "../util/logging.js";
+import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
 
-export async function cmdNext(): Promise<void> {
+export interface NextOptions {
+  json?: boolean;
+}
+
+export async function cmdNext(options?: NextOptions): Promise<void> {
   // Run sweeper before selecting next task
   await sweepStaleTasks(undefined, { commit: true });
 
@@ -11,6 +16,10 @@ export async function cmdNext(): Promise<void> {
   const tasks = loadAllTasks();
 
   if (tasks.length === 0) {
+    if (options?.json) {
+      printJson(jsonError("No task files found.", "NO_TASKS"));
+      return;
+    }
     logInfo("No task files found.");
     return;
   }
@@ -18,9 +27,27 @@ export async function cmdNext(): Promise<void> {
   const next = selectNextTask(tasks);
 
   if (!next) {
+    if (options?.json) {
+      printJson(jsonError("No actionable tasks found.", "NO_ACTIONABLE_TASKS"));
+      return;
+    }
     logInfo("No actionable tasks found.");
     logDivider();
     logInfo("All tasks are in Inbox, Needs Spec, Blocked, Done, Rejected, Deferred, or blocked by dependencies.");
+    return;
+  }
+
+  if (options?.json) {
+    const unmet = hasUnmetDependencies(next, tasks);
+    const result: Record<string, unknown> = {
+      ok: true,
+      task: buildJsonTask(next),
+      score: scoreTask(next),
+    };
+    if (unmet.length > 0) {
+      result.waitingOn = unmet;
+    }
+    printJson(result as unknown as ReturnType<typeof jsonOk>);
     return;
   }
 

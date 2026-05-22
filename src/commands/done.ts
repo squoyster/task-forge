@@ -6,29 +6,42 @@ import { logSuccess, logInfo, logWarn, logSub } from "../util/logging.js";
 import { TaskNotFoundError, InvalidStatusTransitionError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
 import { assertTaskOwnership } from "../core/session.js";
+import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
 import type { ParsedTask } from "../core/task-store.js";
 
 export interface DoneOptions {
   force?: boolean;
   cleanup?: boolean;
   deleteBranch?: boolean;
+  json?: boolean;
 }
 
 export async function cmdDone(
   taskId: string,
   options: DoneOptions = {},
 ): Promise<void> {
-  const { force = false, cleanup = false, deleteBranch = false } = options;
+  const { force = false, cleanup = false, deleteBranch = false, json = false } = options;
   const repoRoot = getRepoRoot();
   const task = loadTaskById(taskId);
 
   if (!task) {
+    if (json) {
+      printJson(jsonError(`Task ${taskId} not found`, "TASK_NOT_FOUND"));
+      return;
+    }
     throw new TaskNotFoundError(taskId);
   }
 
   // --- Status transition ---
   const transitionError = validateTransition(task.status, STATUS.DONE);
   if (transitionError && !force) {
+    if (json) {
+      printJson(jsonError(
+        `Cannot transition from "${task.status}" to "${STATUS.DONE}". Allowed: ${STATUS.REVIEW}, ${STATUS.VERIFY}`,
+        "INVALID_TRANSITION",
+      ));
+      return;
+    }
     throw new InvalidStatusTransitionError(
       task.status,
       STATUS.DONE,
@@ -49,7 +62,9 @@ export async function cmdDone(
   const today = new Date().toISOString().split("T")[0];
   const notes: string[] = [`Task marked Done${force ? " (forced)" : ""}`];
 
-  logSuccess(`Task ${taskId} marked as Done.`);
+  if (!json) {
+    logSuccess(`Task ${taskId} marked as Done.`);
+  }
 
   // --- Cleanup: remove worktree ---
   if (cleanup) {
@@ -58,8 +73,14 @@ export async function cmdDone(
 
   appendAgentNote(task.filePath, today, "System", notes);
 
-  // Push state changes to shared task-state branch
+  // Push state changes
   await commitAndPushTaskState(repoRoot, `chore: done ${taskId}`);
+
+  if (json) {
+    printJson(jsonOk({
+      task: buildJsonTask(task),
+    }));
+  }
 }
 
 async function performCleanup(
