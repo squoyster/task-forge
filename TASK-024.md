@@ -1,11 +1,13 @@
 ---
 id: TASK-024
 type: Feature
-status: Ready
+status: In Progress
 priority: P2
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
+assignee: 6d6918b78f
+claimed_at: '2026-05-22 06:39:08'
 ---
 
 # TASK-024: Add `claim` Command — Separate Claim Primitive
@@ -53,3 +55,11 @@ Medium — changes start command flow but should be backward-compatible.
 ## Continuation Policy
 
 Auto-continue.
+
+## Agent Notes
+
+### 2026-05-22 System
+- Task started via taskforge start TASK-024
+- Session: 6d6918b78f
+- Branch: agent/TASK-024-add-claim-command-separate-claim-primiti--6d6918b78f
+- Worktree: /Volumes/Transcend/devel/worktrees/TASK-024
