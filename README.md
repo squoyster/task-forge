@@ -81,13 +81,18 @@ See [TASKFORGE.md](TASKFORGE.md) for the full specification, including the Sweep
 |---|---|
 | `taskforge init` | Initialize TaskForge in this repo |
 | `taskforge next` | Return highest-priority safe task |
-| `taskforge start TASK-123` | Set up worktree, branch, begin task |
+| `taskforge claim TASK-N` | Claim a task (set assignee) without creating worktree |
+| `taskforge start TASK-N` | Set up worktree, branch, begin task |
+| `taskforge resume TASK-N` | Re-enter an existing task workspace |
 | `taskforge status` | Show project status summary |
 | `taskforge summary` | Show full project summary |
 | `taskforge list` | List and filter tasks (--status, --priority, --search) |
-| `taskforge block TASK-123 "reason"` | Mark task as blocked |
-| `taskforge done TASK-123` | Mark task as done (--cleanup, --delete-branch) |
-| `taskforge unlock TASK-123 --force` | Force-unlock a stale claim |
+| `taskforge inspect TASK-N` | Inspect worktree/branch/dirty state |
+| `taskforge gates` | Run verification gates (typecheck, lint, build, test) |
+| `taskforge heartbeat TASK-N` | Extend Sweeper lease on active task |
+| `taskforge block TASK-N "reason"` | Mark task as blocked |
+| `taskforge done TASK-N` | Mark task as done (--cleanup, --delete-branch) |
+| `taskforge unlock TASK-N --force` | Force-unlock a stale claim |
 | `taskforge sweep` | Sweeper Protocol — recover stale in-progress tasks |
 | `taskforge sync` | Sync with external issue tracker |
 | `taskforge deps scan` | Run broad dependency health checks |

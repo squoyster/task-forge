@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **TASK-024: `claim` command** — standalone primitive that sets `assignee`/`claimed_at` on a task without creating a worktree or branch. Accepts `--force` to override existing claims, `--session` for explicit session IDs, `--json` for structured output. Uses `jitteredPush` with `onConflict` for optimistic concurrency (same as `start`). Enables `next → claim → start` workflow decomposition.
+
+- **TASK-023: Docs update** — `tasks/README.md` now carries a deprecation banner directing readers to `../task-state/` as the authoritative task store. `README.md` already correctly identified task-state as authoritative (verified, no changes needed).
+
+- **TASK-022: Auto-sweep on start/next** — `taskforge start` and `taskforge next` automatically run `sweepStaleTasks()` before task selection, ensuring stale claims are recovered before a new agent picks a task. The `sweep` command remains available as a thin wrapper for manual use.
+
+- **TASK-021: Harden status semantics** — centralized `STATUS` constants object (`src/util/status-constants.ts`) as the single source of truth for all status values. Added `normalizeStatus()` that accepts common input variants (`in_progress`, `InProgress`, `needs_spec`, `NeedsSpec`, etc.) and normalizes to canonical human-readable values at boundaries. Uses `z.preprocess` in Zod schema for transparent normalization. All internal status comparisons now use `STATUS.*` constants. Persisted values remain human-readable (`In Progress`, `Needs Spec`) — no snake_case migration. Note: TASK-016 (normalize status to snake_case) was deferred and replaced by this task.
+
+- **TASK-020: `inspect` command** — `taskforge inspect TASK-ID` reports worktree existence, branch existence, dirty status (`git status --porcelain`), commits ahead/behind main (`git rev-list --count`), last commit hash, claim staleness (>4h), and claim age in hours. Supports `--all` to inspect all `In Progress` tasks, and `--json` for structured machine output.
+
+- **TASK-019: `heartbeat` command** — `taskforge heartbeat TASK-ID` extends the Sweeper lease by updating `claimed_at` to current UTC. Requires session ownership (via `assertTaskOwnership`) unless `--force`. Only valid for `In Progress` tasks. Appends agent note with previous lease time. Supports `--json` output.
+
+- **TASK-018: `gates` command** — `taskforge gates` runs configured verification gates (typecheck, lint, build, test) sequentially via execa. Reads gate commands from `.taskforge/config.json`. Supports `--only typecheck,lint` to run a subset, and `--json` for structured results. `taskforge done` now enforces gate checks before marking Done (throws unless gates pass; `--force` overrides).
+
+- **TASK-017: Lifecycle JSON contracts** — all lifecycle commands (`next`, `start`, `done`, `block`, `unlock`, `sweep`) now support `--json` for structured machine output. JSON contract helper in `src/util/json-result.ts` provides `jsonOk()`, `jsonError()`, `buildJsonTask()`, `printJson()`, and `statusToJson()` (snake_case for API consumption). Success output includes `task`, `workspace`, and `next` fields.
+
 - **TASK-015: Jittered retries for optimistic concurrency** — resilient multi-agent task claiming with `git pull --rebase`, 2–10s random jitter wait, and up to 3 retries on push rejection.
 
 - **TASK-014: Sweeper Protocol** — automatic deadlock recovery: detects stale `in_progress` tasks (claimed_at > 4 hours), resets to `Ready`, clears `assignee`. Runs via `taskforge sweep`.
@@ -18,6 +34,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **TASKFORGE.md, AGENTS.md** — documented the Sweeper Protocol, optimistic concurrency with jittered retries, and the renamed field schema. Added `task-state` architecture as authoritative.
+
+- **TASKS-023:** `tasks/README.md` updated with deprecation notice pointing to `task-state` as authoritative task store.
 
 ## [0.1.0] — 2026-05-21
 
