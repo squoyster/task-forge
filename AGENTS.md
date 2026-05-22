@@ -77,6 +77,20 @@ Agents must never run `git` commands directly on the task-state worktree or main
 
 The only allowed direct git usage: `git push/pull` on the agent's own feature branch within their worktree.
 
+### Git Operations Matrix
+
+| Operation | Allowed on main? | Allowed on task-state? | Allowed on agent branch? | TaskForge Command |
+|-----------|------------------|------------------------|--------------------------|-------------------|
+| `git pull` | ✅ | ✅ (via `pullTaskState`) | ✅ | `pullTaskState` (automatic) |
+| `git push` | ❌ | ❌ (use transaction layer) | ✅ | `jitteredPush` / transaction |
+| `git commit` | ❌ | ❌ | ✅ | — |
+| `git worktree add` | ❌ (use `start`) | ❌ | ❌ | `taskforge start` |
+| `git worktree remove` | ❌ (use `done --cleanup`) | ❌ | ❌ | `taskforge done --cleanup` |
+| `git branch -D` | ❌ | ❌ | ❌ | `taskforge done --delete-branch` |
+| `git merge` | ❌ (manual only) | ❌ | ✅ | — |
+| `git checkout task-state` | ❌ | ❌ | ❌ | Never |
+| `git push --force` | ❌ | ❌ | ❌ | Never |
+
 ### 2. No Direct Task-State File Editing
 
 Never edit `../task-state/*.md` files directly — no `sed`, no manual YAML edits, no `vim`. Status changes, lock clearing, and agent notes must go through the CLI lifecycle commands. Manual edits produce stale `assignee`/`claimed_at` fields on Done tasks, broken state invariants, and confused schedulers.
