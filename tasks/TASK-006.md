@@ -72,7 +72,9 @@ Auto-continue unless a stopping condition occurs.
 
 ## Agent Notes
 
-### 2026-05-22 Implementer
+### 2026-05-21 Implementer
+- Merged agent/TASK-006-dependency-tracking into main
+- All verification gates passed (typecheck, lint, build, 141 tests)
 - Added dependsOn: string[] optional field to TaskSchema in src/core/task.ts
 - Updated src/core/task-store.ts: dependsOn frontmatter parsing and serialization
 - Updated src/core/scheduler.ts: added hasUnmetDependencies(), getDependents(), detectCircularDependencies(), warnOnCircularDependencies(); updated selectNextTask() to filter out dependency-blocked tasks
