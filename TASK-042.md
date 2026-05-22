@@ -1,91 +1,81 @@
 ---
 id: TASK-042
 type: Feature
-status: Inbox
-priority: P2
+status: Ready
+priority: P1
 agentRole: Implementer
-riskLevel: Low
+riskLevel: Medium
 humanInterventionRequired: false
-dependsOn:
-  - TASK-040
-  - TASK-041
 ---
 
-# TASK-042: Doctor Agent & Self-Healing Workflow
+# TASK-042: Global Doctor-Lock — Pause All Agents During Recovery
 
 ## Goal
 
-Define the "Doctor" agent role and its self-healing workflow. When a system inconsistency is detected (e.g., by `taskforge doctor`), a privileged doctor agent enters a checkpoint, repairs the state using whatever tools necessary (including raw git), creates bug tasks against TaskForge itself if the inconsistency was caused by a system defect, and releases the checkpoint.
+Add a `.doctor-lock` mechanism to task-state that, when present, causes all agents to pause before taking action — enabling a dedicated recovery agent to fix global inconsistencies without interference.
 
 ## Background
 
-The TASK-034 incident revealed a gap: an inconsistency (merged code, stale task status) went undetected until `next` recommended a phantom task. The `doctor` command exists but only reports — it can't fix. A doctor agent needs the authority to:
+TASK-040 added per-agent guardrails (an agent can't start a new task without closing their current one). But some inconsistencies are global (duplicate task IDs across agents, task-state corruption, broken references) and require a coordinated recovery where ALL agents pause.
 
-1. Stop all other agents (checkpoint — TASK-041)
-2. Fix state directly (privileged capability — TASK-040)
-3. File bugs against the system if the root cause is a defect
+The mechanism: a file at `task-state/.doctor-lock` with a timestamp. All agents check for it before `next`/`claim`/`start`. If present and not expired, they print the lock reason and exit. The doctor agent creates the lock, fixes the problem, then removes it. A TTL prevents deadlock if the doctor crashes.
 
-## Scope
+## Implementation
 
-### New/modified files:
+### New: `src/core/doctor-lock.ts`
 
-- `src/commands/doctor.ts` — add `--fix` mode that repairs detected issues
-- `src/commands/checkpoint.ts` — doctor workflow integration
-- `.opencode/agent/doctor.md` — doctor agent definition
-- `AGENTS.md` — document doctor agent role
-
-### Doctor workflow:
-
-```
-1. doctor detects inconsistency (e.g., merged tasks not Done)
-2. checkpoint start — "Doctor repair: fixing N stale tasks"
-3. For each inconsistency:
-   a. Repair state (update task status, clear locks)
-   b. If caused by a system defect → create BUG task
-4. checkpoint release
-5. Report: what was fixed, what bugs were filed
+```typescript
+createDoctorLock(reason: string, repoRoot?: string): void
+removeDoctorLock(repoRoot?: string): void
+isDoctorLocked(repoRoot?: string): { locked: boolean; reason?: string }
 ```
 
-### Doctor agent definition:
+Lock file format (`task-state/.doctor-lock`):
+```json
+{"reason":"Duplicate task IDs found: TASK-001","created":"2026-05-22T10:00:00Z","ttl_hours":1}
+```
 
-- Role: "Doctor Agent"
-- Capability: `privileged`
-- Purpose: Diagnose and repair system inconsistencies, file bugs against TaskForge
-- Authority: Raw git access, checkpoint management, direct task-state mutation
-- Triggered by: `taskforge doctor` detecting issues, or human request
+### Wired into:
+- `src/commands/next.ts` — check before selection
+- `src/commands/claim.ts` — check before claiming
+- `src/commands/start.ts` — check before claiming
+- `src/commands/done.ts` — auto-remove lock when completing a doctor recovery task
+- `src/commands/doctor.ts` — create lock + recovery task when `--fix` finds critical issues
 
-### `doctor --fix` enhancements:
+### Lock lifecycle:
+1. `taskforge doctor --fix` finds critical inconsistency → creates `.doctor-lock` + recovery task
+2. All agents check `.doctor-lock` before acting → pause if present
+3. Doctor agent works the recovery task, marks it Done via `taskforge done`
+4. `taskforge done` detects the completed task was a doctor recovery → removes `.doctor-lock`
+5. All agents pull, see lock removed, resume normal operation
 
-| Detection | Fix |
-|-----------|-----|
-| Task In Progress, branch merged to main | Mark task Done, clear lock |
-| Task In Progress, worktree missing, no commits ahead | Reset to Ready, clear lock |
-| Task In Progress, worktree missing, has unmerged commits | Move to Review |
-| Orphan branches (no task file) | Report for manual cleanup |
-| Orphan worktrees (no task file) | Report for manual cleanup |
+### TTL behavior:
+- Default: 1 hour
+- After TTL, the lock is considered stale and agents proceed (with warning)
+- Prevents permanent deadlock if doctor agent crashes
 
 ## Acceptance Criteria
 
-- [ ] Doctor agent definition exists in `.opencode/agent/doctor.md`
-- [ ] `AGENTS.md` documents doctor role and capability
-- [ ] `taskforge doctor --fix` repairs detected inconsistencies (with checkpoint)
-- [ ] `doctor --fix` workflow: checkpoint start → fix → create bugs → checkpoint release
-- [ ] `doctor --fix` is gated to privileged agents only
-- [ ] Doctor can create BUG tasks against TaskForge itself
-- [ ] All existing tests pass
-- [ ] Tests cover: fix workflow, bug creation for system defects, checkpoint lifecycle
+- [ ] `createDoctorLock(reason)` creates `task-state/.doctor-lock` with JSON content
+- [ ] `removeDoctorLock()` deletes the lock file
+- [ ] `isDoctorLocked()` returns `{ locked: true, reason }` when lock exists and is not expired
+- [ ] `isDoctorLocked()` returns `{ locked: false }` when lock is expired (logs warning)
+- [ ] `taskforge next` refuses if doctor-locked
+- [ ] `taskforge claim` refuses if doctor-locked
+- [ ] `taskforge start` refuses if doctor-locked
+- [ ] `taskforge doctor` creates lock when `--fix` is passed and issues found
+- [ ] `taskforge doctor --unlock` removes the lock
+- [ ] JSON error output includes code `DOCTOR_LOCKED`
+- [ ] Tests cover: lock creation, TTL expiry, agent refusal, unlock
 
 ## Dependencies
 
-- **TASK-040**: Agent Capability Levels
-- **TASK-041**: Checkpoint Mechanism
-
-## Test / Verification Command
-
-```bash
-npm run typecheck && npm run lint && npm run build && npm test -- --run
-```
+TASK-040 (session guardrail), TASK-038 (doctor)
 
 ## Risk Level
 
-Low — doctor agent is a human-invoked or scheduled role, not autonomous. Fixes are reversible.
+Medium — blocks all agents when active. TTL prevents permanent deadlock.
+
+## Continuation Policy
+
+Auto-continue.
