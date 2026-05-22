@@ -183,6 +183,31 @@ describe("writeTaskFile", () => {
     expect(raw).not.toContain("branch");
     expect(raw).not.toContain("worktree");
     expect(raw).not.toContain("issue");
+    expect(raw).not.toContain("dependsOn");
+  });
+
+  it("serializes and deserializes dependsOn", () => {
+    const fp = path.join(tasksDir, "TASK-110.md");
+    const task: ParsedTask = {
+      id: "TASK-110",
+      type: "Task",
+      status: "Ready",
+      priority: "P2",
+      riskLevel: "Low",
+      humanInterventionRequired: false,
+      dependsOn: ["TASK-001", "TASK-002"],
+      body: "body with dependsOn",
+      filePath: fp,
+    };
+    writeTaskFile(task);
+
+    const raw = fs.readFileSync(fp, "utf-8");
+    expect(raw).toContain("TASK-001");
+    expect(raw).toContain("TASK-002");
+
+    const readBack = parseTaskFile(fp);
+    expect(readBack).not.toBeNull();
+    expect(readBack!.dependsOn).toEqual(["TASK-001", "TASK-002"]);
   });
 });
 

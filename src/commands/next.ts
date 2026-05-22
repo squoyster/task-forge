@@ -1,5 +1,5 @@
 import { loadAllTasks } from "../core/task-store.js";
-import { selectNextTask, scoreTask } from "../core/scheduler.js";
+import { selectNextTask, scoreTask, hasUnmetDependencies } from "../core/scheduler.js";
 import { logInfo, logHeader, logSub, logDivider } from "../util/logging.js";
 
 export async function cmdNext(): Promise<void> {
@@ -15,7 +15,7 @@ export async function cmdNext(): Promise<void> {
   if (!next) {
     logInfo("No actionable tasks found.");
     logDivider();
-    logInfo("All tasks are in Inbox, Needs Spec, Blocked, Done, Rejected, or Deferred.");
+    logInfo("All tasks are in Inbox, Needs Spec, Blocked, Done, Rejected, Deferred, or blocked by dependencies.");
     return;
   }
 
@@ -26,6 +26,20 @@ export async function cmdNext(): Promise<void> {
   logSub(`**Priority:** ${next.priority}`);
   logSub(`**Agent Role:** ${next.agentRole ?? "Implementer"}`);
   logSub(`**Score:** ${scoreTask(next)}`);
+
+  // Show dependency info
+  const unmet = hasUnmetDependencies(next, tasks);
+  if (unmet.length > 0) {
+    logSub(`**Waiting on:** ${unmet.join(", ")}`);
+  }
+
+  // Show who depends on this task
+  const dependents = tasks.filter(
+    (t) => t.dependsOn && t.dependsOn.includes(next.id),
+  );
+  if (dependents.length > 0) {
+    logSub(`**Blocks:** ${dependents.map((d) => d.id).join(", ")}`);
+  }
 
   // Extract goal from body
   const goalMatch = next.body.match(/## Goal\n([\s\S]*?)(?=##|\n\n\n|$)/);

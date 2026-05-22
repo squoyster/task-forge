@@ -1,11 +1,13 @@
 ---
 id: TASK-006
 type: Task
-status: Inbox
+status: Done
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+branch: agent/TASK-006-dependency-tracking
+worktree: ../worktrees/TASK-006
 ---
 
 # TASK-006: Add task dependency tracking to schema and scheduler
@@ -34,13 +36,13 @@ Disallowed files/directories:
 
 ## Acceptance Criteria
 
-- [ ] TaskSchema has optional `dependsOn: string[]` field
-- [ ] Tasks with unmet dependencies are excluded from `selectNextTask()`
-- [ ] `taskforge next` shows dependency info (what's blocking, what depends on this)
-- [ ] `status` shows dependency chains (blocked by, blocking)
-- [ ] Circular dependency detection logs a warning
-- [ ] Existing task files without dependsOn are parsed correctly (backward compatible)
-- [ ] Unit tests cover dependency filtering, circular detection, and backward compat
+- [x] TaskSchema has optional `dependsOn: string[]` field
+- [x] Tasks with unmet dependencies are excluded from `selectNextTask()`
+- [x] `taskforge next` shows dependency info (what's blocking, what depends on this)
+- [x] `status` shows dependency chains (blocked by, blocking)
+- [x] Circular dependency detection logs a warning
+- [x] Existing task files without dependsOn are parsed correctly (backward compatible)
+- [x] Unit tests cover dependency filtering, circular detection, and backward compat
 
 ## Test / Verification Command
 
@@ -67,3 +69,16 @@ Low
 ## Continuation Policy
 
 Auto-continue unless a stopping condition occurs.
+
+## Agent Notes
+
+### 2026-05-22 Implementer
+- Added dependsOn: string[] optional field to TaskSchema in src/core/task.ts
+- Updated src/core/task-store.ts: dependsOn frontmatter parsing and serialization
+- Updated src/core/scheduler.ts: added hasUnmetDependencies(), getDependents(), detectCircularDependencies(), warnOnCircularDependencies(); updated selectNextTask() to filter out dependency-blocked tasks
+- Updated src/commands/next.ts: shows Waiting on/Blocks dependency info for the selected task
+- Updated src/commands/status.ts: added Dependency-Blocked section, dependency info in Active/Review/Verify entries, JSON output includes dependsOn/blockedBy/blockedDependents
+- Updated tests/task.test.ts: 3 new tests for dependsOn field validation
+- Updated tests/scheduler.test.ts: expanded from 8 to 23 tests covering dependency filtering, circular detection, dependents lookup
+- Updated tests/task-store.test.ts: 1 new test for dependsOn write/read roundtrip
+- Verification: typecheck, lint, build, all 141 tests pass (11 test files)
