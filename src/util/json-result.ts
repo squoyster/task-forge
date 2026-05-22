@@ -33,6 +33,16 @@ export interface JsonResult {
   error?: string;
   code?: string;
   sweep?: { scanned: number; stale: number; changed: number };
+  gates?: GateResult[];
+  allPassed?: boolean;
+}
+
+export interface GateResult {
+  name: string;
+  passed: boolean;
+  duration: number;
+  error?: string;
+  command: string;
 }
 
 /**

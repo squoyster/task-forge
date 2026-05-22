@@ -7,6 +7,7 @@ import { TaskNotFoundError, InvalidStatusTransitionError } from "../core/errors.
 import { getRepoRoot } from "../util/paths.js";
 import { assertTaskOwnership } from "../core/session.js";
 import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
+import { cmdGates } from "./gates.js";
 import type { ParsedTask } from "../core/task-store.js";
 
 export interface DoneOptions {
@@ -30,6 +31,19 @@ export async function cmdDone(
       return;
     }
     throw new TaskNotFoundError(taskId);
+  }
+
+  // --- Check gates ---
+  const gatesPassed = await cmdGates({ json: options.json });
+  if (!gatesPassed && !force) {
+    if (options.json) {
+      printJson(jsonError(
+        "Not all gates passed. Run 'taskforge done --force' to override.",
+        "GATES_FAILED",
+      ));
+      return;
+    }
+    throw new Error("Not all gates passed. Run 'taskforge done --force' to override.");
   }
 
   // --- Status transition ---
@@ -59,12 +73,22 @@ export async function cmdDone(
   // Clear the lock
   clearTaskLock(task.filePath);
 
-  const today = new Date().toISOString().split("T")[0];
-  const notes: string[] = [`Task marked Done${force ? " (forced)" : ""}`];
+const today = new Date().toISOString().split("T")[0];
+  const notes: string[] = [
+    `Task marked Done${force ? " (forced)" : ""}`,
+    !gatesPassed && force ? "Completed despite gate failures — forced." : "",
+  ].filter(Boolean);
 
-  if (!json) {
-    logSuccess(`Task ${taskId} marked as Done.`);
+  if (json) {
+    // In JSON mode, output the done result (gates may have been forced)
+    printJson(jsonOk({
+      task: buildJsonTask(task),
+      ...(!gatesPassed && force ? { warning: "Gates failed but overridden with --force" } : {}),
+    }));
+    return;
   }
+
+  logSuccess(`Task ${taskId} marked as Done.`);
 
   // --- Cleanup: remove worktree ---
   if (cleanup) {

@@ -14,6 +14,10 @@ vi.mock("../src/core/git.js", () => ({
   ensureTaskStateBranch: vi.fn(),
 }));
 
+vi.mock("../src/commands/gates.js", () => ({
+  cmdGates: vi.fn().mockResolvedValue(true),
+}));
+
 import { removeWorktree, removeBranch } from "../src/core/git.js";
 
 let uniqueDir: string;

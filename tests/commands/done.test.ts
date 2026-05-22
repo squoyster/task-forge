@@ -1,9 +1,13 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { cmdDone } from "../../src/commands/done.js";
 import { setRepoRoot } from "../../src/util/paths.js";
+
+vi.mock("../../src/commands/gates.js", () => ({
+  cmdGates: vi.fn().mockResolvedValue(true),
+}));
 
 let uniqueDir: string;
 let stateDir: string;

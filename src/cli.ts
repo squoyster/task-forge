@@ -5,6 +5,7 @@ import { cmdNext } from "./commands/next.js";
 import { cmdStart, type StartOptions } from "./commands/start.js";
 import { cmdStatus } from "./commands/status.js";
 import { cmdSummary } from "./commands/summary.js";
+import { cmdGates, type GatesOptions } from "./commands/gates.js";
 import { cmdBlock } from "./commands/block.js";
 import { cmdDone, type DoneOptions } from "./commands/done.js";
 import { cmdUnlock, type UnlockOptions } from "./commands/unlock.js";
@@ -62,6 +63,19 @@ program
   .description("Show full project summary with recommended next action")
   .option("--json", "Output in JSON format for programmatic consumption")
   .action((opts) => wrap(() => cmdSummary(opts.json ?? false))());
+
+program
+  .command("gates")
+  .description("Run configured verification gates")
+  .option("--json", "Output results in JSON format")
+  .option("--only <names>", "Run only specific gates (comma-separated)")
+  .action((opts: { json?: boolean; only?: string }) => {
+    const gateOpts: GatesOptions = {
+      json: opts.json ?? false,
+      only: opts.only,
+    };
+    return wrap(() => cmdGates(gateOpts))();
+  });
 
 program
   .command("block <taskId> <reason>")
@@ -177,7 +191,7 @@ deps
   .description("Produce a dependency health summary")
   .action(wrap(cmdDepsSummary));
 
-function wrap<T extends () => Promise<void>>(fn: T): () => Promise<void> {
+function wrap(fn: () => Promise<unknown>): () => Promise<void> {
   return async () => {
     try {
       await fn();
