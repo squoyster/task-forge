@@ -11,6 +11,7 @@ dependsOn:
 assignee: 55f965a6c3
 claimed_at: '2026-05-22 19:52:22'
 context_hash: 27705145f76d1ff7
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-049
 ---
 
 # TASK-049: Branch Protection / Ruleset Guidance for `task-state`
@@ -48,6 +49,9 @@ TASK-046.
 Medium.
 
 ## Agent Notes
+
+### 2026-05-22 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-049
 
 ### 2026-05-22 System
 - Task claimed via taskforge start TASK-049
