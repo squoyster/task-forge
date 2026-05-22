@@ -1,0 +1,70 @@
+---
+id: TASK-034
+type: Feature
+status: Ready
+priority: P1
+agentRole: Implementer
+riskLevel: Medium
+humanInterventionRequired: false
+---
+
+# TASK-034: Proactive Git Pull Before Reading Task-State
+
+## Goal
+
+Prevent stale reads of task-state by pulling the shared `task-state` worktree before any command reads task files. This eliminates the race window where two agents read stale state and only discover the conflict after a push rejection.
+
+## Background
+
+Currently, no command pulls the task-state worktree before reading. The only pull happens **reactively** inside `jitteredPush` when a push is rejected as non-fast-forward. This means:
+
+1. `taskforge next` may recommend a task already claimed by another agent
+2. `taskforge start` may create a worktree from stale main, then abort during push (wasting time and leaving orphan worktrees)
+3. `taskforge sweep` may miss tasks that were just claimed or reset
+4. `taskforge claim` may attempt to claim an already-claimed task
+
+The fix: pull task-state proactively before any read, so commands see the latest shared state.
+
+## Scope
+
+### New/modified files:
+
+- `src/core/git.ts` — add `pullTaskState()` helper that does `git pull --rebase origin task-state` in the task-state worktree (idempotent, no-op if not a git repo or remote unreachable)
+- `src/commands/next.ts` — call `pullTaskState()` before `loadAllTasks()` and `sweepStaleTasks()`
+- `src/commands/start.ts` — call `pullTaskState()` before `sweepStaleTasks()` and `loadTaskById()`
+- `src/commands/claim.ts` — call `pullTaskState()` before `sweepStaleTasks()` and `loadTaskById()`
+- `src/commands/sweep.ts` (or `src/core/sweeper.ts`) — call `pullTaskState()` before scanning
+
+### Optionally updated:
+
+- Other commands that read task-state: `done`, `block`, `unlock`, `inspect`, `heartbeat` (lower priority — these operate on a specific task ID that the agent already owns)
+
+## Acceptance Criteria
+
+- [ ] `pullTaskState()` pulls `origin/task-state` into the task-state worktree via `git pull --rebase`
+- [ ] Gracefully handles: no remote, no git repo, network errors (logs warning, proceeds)
+- [ ] `taskforge next` pulls before scanning tasks
+- [ ] `taskforge start` pulls before claiming and creating worktree
+- [ ] `taskforge claim` pulls before claiming
+- [ ] `taskforge sweep` pulls before scanning
+- [ ] Adds no measurable latency on fast networks (pull is fast when up-to-date)
+- [ ] All existing tests pass (mock `pullTaskState` as needed)
+- [ ] Tests cover: pull-before-read ordering, graceful failure on no remote
+
+## Test / Verification Command
+
+```bash
+npm run typecheck && npm run lint && npm run build && npm test -- --run
+```
+
+## Dependencies
+
+None — uses existing git infrastructure.
+
+## Risk Level
+
+Medium — changes the read path of every core command. Must be graceful (never blocks operations on network failure).
+
+## Continuation Policy
+
+Auto-continue unless a stopping condition occurs.
