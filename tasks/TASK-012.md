@@ -1,7 +1,7 @@
 ---
 id: TASK-012
 type: Feature
-status: In Progress
+status: Done
 priority: P1
 agentRole: Implementer
 riskLevel: Medium
@@ -96,3 +96,18 @@ Auto-continue unless a stopping condition occurs.
 - Task started via taskforge start TASK-012
 - Branch: agent/TASK-012-session-based-task-locking-to-prevent-ag
 - Worktree: /Volumes/Transcend/devel/worktrees/TASK-012
+
+### 2026-05-22 Implementer
+- Implemented session.ts (generateSessionId, parseSessionIdFromBranch, assertTaskOwnership)
+- Rewrote start.ts with lock check, --force, session GUID in branch name
+- Updated done.ts and block.ts with ownership assertion and lock clearing
+- Created unlock.ts with --force guard
+- Updated task.ts schema (lockedBy, lockedAt)
+- Updated task-store.ts (updateTaskLock, clearTaskLock, parse/write fixes)
+- Updated paths.ts (makeBranchName accepts sessionId)
+- Updated cli.ts (unlock command, --force flag on start)
+- Added tests for session.ts and unlock.ts
+- All 266 tests pass, 24 files
+- Verification: typecheck, lint, build, test all pass
+- Fixed YAML date auto-parsing issue (gray-matter `date: false`, non-ISO date format)
+- Fixed unused import lint error in session.test.ts
