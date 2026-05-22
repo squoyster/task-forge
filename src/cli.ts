@@ -16,6 +16,7 @@ import { cmdClaim, type ClaimOptions } from "./commands/claim.js";
 import { cmdReport, type ReportOptions } from "./commands/report.js";
 import { cmdCleanup, type CleanupOptions } from "./commands/cleanup-cmd.js";
 import { cmdPrompt } from "./commands/prompt.js";
+import { cmdResume } from "./commands/resume.js";
 import { cmdList, type ListOptions } from "./commands/list.js";
 import { cmdSync } from "./commands/sync.js";
 import { cmdDepsScan } from "./commands/deps/scan.js";
@@ -289,3 +290,9 @@ program
   .description("Emit a complete agent execution packet")
   .option("--json", "Output in JSON format")
   .action((taskId: string, opts: { json?: boolean }) => wrap(() => cmdPrompt(taskId, opts))());
+
+program
+  .command("resume <taskId>")
+  .description("Re-enter an existing task workspace")
+  .option("--json", "Output in JSON format")
+  .action((taskId: string, opts: { json?: boolean }) => wrap(() => cmdResume(taskId, opts))());
