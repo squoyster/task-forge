@@ -234,13 +234,15 @@ program
   .option("--type <type>", "Task type (Task, Feature, Bug, etc.)", "Task")
   .option("--priority <p>", "Priority (P0-P3)", "P2")
   .option("--agent-role <role>", "Agent role", "Implementer")
+  .option("--status <status>", "Initial status (Ready, Inbox, etc.)", "Ready")
   .option("--body <text>", "Additional body text")
   .option("--json", "Output in JSON format")
-  .action((title: string, opts: { type?: string; priority?: string; agentRole?: string; body?: string; json?: boolean }) => {
+  .action((title: string, opts: { type?: string; priority?: string; agentRole?: string; status?: string; body?: string; json?: boolean }) => {
     const newOpts: NewOptions = {
       type: opts.type,
       priority: opts.priority,
       agentRole: opts.agentRole,
+      status: opts.status,
       body: opts.body,
       json: opts.json ?? false,
     };

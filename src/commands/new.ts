@@ -10,6 +10,7 @@ export interface NewOptions {
   type?: string;
   priority?: string;
   agentRole?: string;
+  status?: string;
   body?: string;
   json?: boolean;
 }
@@ -19,6 +20,7 @@ export async function cmdNew(title: string, options?: NewOptions): Promise<void>
   const taskType = options?.type ?? "Task";
   const priority = options?.priority ?? "P2";
   const agentRole = options?.agentRole ?? "Implementer";
+  const status = options?.status ?? "Ready";
   const bodyExtra = options?.body ?? "";
   const json = options?.json ?? false;
 
@@ -28,7 +30,7 @@ export async function cmdNew(title: string, options?: NewOptions): Promise<void>
     "---",
     `id: ${nextId}`,
     `type: ${taskType}`,
-    `status: Inbox`,
+    `status: ${status}`,
     `priority: ${priority}`,
     `agentRole: ${agentRole}`,
     `riskLevel: Low`,
