@@ -1,7 +1,7 @@
 ---
 id: TASK-050
 type: Security
-status: Ready
+status: In Progress
 priority: P1
 agentRole: Implementer
 riskLevel: Medium
@@ -9,6 +9,9 @@ humanInterventionRequired: false
 dependsOn:
   - TASK-045
   - TASK-046
+assignee: 6b6f55b314
+claimed_at: '2026-05-22 19:53:49'
+context_hash: 27705145f76d1ff7
 ---
 
 # TASK-050: Split Generic `--force` Into Explicit Privileged Override Modes
@@ -41,3 +44,10 @@ TASK-045, TASK-046.
 ## Risk Level
 
 Medium.
+
+## Agent Notes
+
+### 2026-05-22 System
+- Task claimed via taskforge start TASK-050
+- Session: 6b6f55b314
+- Branch: agent/TASK-050-split-generic-force-into-explicit-privil--6b6f55b314
