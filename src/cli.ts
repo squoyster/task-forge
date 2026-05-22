@@ -29,7 +29,8 @@ program
 program
   .command("init")
   .description("Initialize TaskForge in this repository")
-  .action(wrap(cmdInit));
+  .option("--force", "Recreate missing configuration files and templates")
+  .action((opts: { force?: boolean }) => wrap(() => cmdInit(opts.force ?? false))());
 
 program
   .command("next")

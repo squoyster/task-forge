@@ -8,46 +8,60 @@ import {
 } from "../markdown/templates.js";
 import { logSuccess, logInfo } from "../util/logging.js";
 
-export async function cmdInit(): Promise<void> {
+interface FileSpec {
+  path: string;
+  label: string;
+  content: string;
+}
+
+export async function cmdInit(_force = false): Promise<void> {
   const repoRoot = getRepoRoot();
   const tasksDir = getTasksDir(repoRoot);
   const taskforgeDir = getTaskforgeDir(repoRoot);
 
-  // Create directories
-  for (const dir of [tasksDir, taskforgeDir, path.join(repoRoot, "specs"), path.join(repoRoot, "docs", "decisions"), path.join(repoRoot, "logs", "taskforge")]) {
+  // Create directories (skipped silently if present)
+  const dirs = [
+    tasksDir,
+    taskforgeDir,
+    path.join(repoRoot, "specs"),
+    path.join(repoRoot, "docs", "decisions"),
+    path.join(repoRoot, "logs", "taskforge"),
+  ];
+  for (const dir of dirs) {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
   }
 
-  // Create TASKFORGE.md if not exists
-  const taskforgePath = path.join(repoRoot, "TASKFORGE.md");
-  if (!fs.existsSync(taskforgePath)) {
-    fs.writeFileSync(taskforgePath, TASKFORGE_TEMPLATE, "utf-8");
-    logSuccess("Created TASKFORGE.md");
-  } else {
-    logInfo("TASKFORGE.md already exists");
+  // Create / recreate missing files
+  const files: FileSpec[] = [
+    {
+      path: path.join(repoRoot, "TASKFORGE.md"),
+      label: "TASKFORGE.md",
+      content: TASKFORGE_TEMPLATE,
+    },
+    {
+      path: path.join(tasksDir, "README.md"),
+      label: "tasks/README.md",
+      content: TASKS_README_TEMPLATE,
+    },
+    {
+      path: path.join(tasksDir, "TEMPLATE.md"),
+      label: "tasks/TEMPLATE.md",
+      content: TASK_TEMPLATE,
+    },
+  ];
+
+  for (const file of files) {
+    if (!fs.existsSync(file.path)) {
+      fs.writeFileSync(file.path, file.content, "utf-8");
+      logSuccess(`Created ${file.label}`);
+    } else {
+      logInfo(`${file.label} already exists`);
+    }
   }
 
-  // Create tasks/README.md if not exists
-  const readmePath = path.join(tasksDir, "README.md");
-  if (!fs.existsSync(readmePath)) {
-    fs.writeFileSync(readmePath, TASKS_README_TEMPLATE, "utf-8");
-    logSuccess("Created tasks/README.md");
-  } else {
-    logInfo("tasks/README.md already exists");
-  }
-
-  // Create tasks/TEMPLATE.md if not exists
-  const templatePath = path.join(tasksDir, "TEMPLATE.md");
-  if (!fs.existsSync(templatePath)) {
-    fs.writeFileSync(templatePath, TASK_TEMPLATE, "utf-8");
-    logSuccess("Created tasks/TEMPLATE.md");
-  } else {
-    logInfo("tasks/TEMPLATE.md already exists");
-  }
-
-  // Create default config
+  // Create config (preserves existing)
   const configPath = path.join(taskforgeDir, "config.json");
   if (!fs.existsSync(configPath)) {
     const config = {

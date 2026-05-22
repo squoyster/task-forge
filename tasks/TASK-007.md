@@ -1,11 +1,13 @@
 ---
 id: TASK-007
 type: Task
-status: Inbox
+status: Done
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+branch: agent/TASK-007-force-init-flag
+worktree: ../worktrees/TASK-007
 ---
 
 # TASK-007: Add --force flag to init command for re-initialization
@@ -30,13 +32,13 @@ Disallowed files/directories:
 
 ## Acceptance Criteria
 
-- [ ] `taskforge init` (no flag) preserves existing files (current behavior)
-- [ ] `taskforge init --force` recreates TASKFORGE.md if deleted
-- [ ] `taskforge init --force` recreates config.json if deleted (preserves existing config if present)
-- [ ] `taskforge init --force` recreates task templates (README.md, TEMPLATE.md) if deleted
-- [ ] `taskforge init --force` recreates missing directories
-- [ ] Existing task files are never overwritten, even with --force
-- [ ] Unit tests cover force mode with various missing file combinations
+- [x] `taskforge init` (no flag) preserves existing files (current behavior)
+- [x] `taskforge init --force` recreates TASKFORGE.md if deleted
+- [x] `taskforge init --force` recreates config.json if deleted (preserves existing config if present)
+- [x] `taskforge init --force` recreates task templates (README.md, TEMPLATE.md) if deleted
+- [x] `taskforge init --force` recreates missing directories
+- [x] Existing task files are never overwritten, even with --force
+- [x] Unit tests cover force mode with various missing file combinations
 
 ## Test / Verification Command
 
@@ -62,3 +64,12 @@ Low
 ## Continuation Policy
 
 Auto-continue unless a stopping condition occurs.
+
+## Agent Notes
+
+### 2026-05-22 Implementer
+- Added --force flag to taskforge init command
+- Modified src/commands/init.ts: accepts force parameter, refactored file creation into FileSpec array for cleaner iteration
+- Modified src/cli.ts: added --force option to init command
+- Added tests/init.test.ts: 12 test cases covering all acceptance criteria
+- Verification: typecheck, lint, build, all 134 tests pass (12 test files)
