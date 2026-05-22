@@ -1,12 +1,11 @@
 ---
 id: TASK-023
 type: Documentation
-status: In Progress
+status: Done
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: df3163ec20
 claimed_at: '2026-05-22 06:34:12'
 ---
 
@@ -29,9 +28,9 @@ The gap analysis flagged that `README.md` still says `tasks/` is where tasks liv
 
 ## Acceptance Criteria
 
-- [ ] `README.md` clearly states task files live in `../task-state/`, not `tasks/` on main
-- [ ] Any `tasks/README.md` contains a legacy notice directing readers to `../task-state/`
-- [ ] No misleading language remains about `tasks/` being authoritative
+- [x] `README.md` clearly states task files live in `../task-state/`, not `tasks/` on main
+- [x] Any `tasks/README.md` contains a legacy notice directing readers to `../task-state/`
+- [x] No misleading language remains about `tasks/` being authoritative
 
 ## Dependencies
 
@@ -52,3 +51,10 @@ Auto-continue.
 - Session: df3163ec20
 - Branch: agent/TASK-023-update-readmetasks-docs-to-mark-task-sta--df3163ec20
 - Worktree: /Volumes/Transcend/devel/worktrees/TASK-023
+
+### 2026-05-22 Implementer
+- `README.md` already correctly identifies task-state as authoritative and tasks/ as legacy — verified no changes needed.
+- Updated `tasks/README.md` with a prominent deprecation banner directing to task-state as authoritative source.
+- Updated file naming section to reference `task-state/` instead of `tasks/`.
+- Verified `taskforge start` workflow works end-to-end: claimed task, created worktree/branch, assigned session.
+- Noted: `taskforge done` from main worktree fails ownership check when not on the agent branch — the ownership assertion in done.ts is not guarded by `--force`. This is a minor discoverability issue for single-branch workflows.
