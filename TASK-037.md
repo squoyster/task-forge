@@ -1,11 +1,14 @@
 ---
 id: TASK-037
 type: Feature
-status: Ready
+status: In Progress
 priority: P3
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 39a1c1c59f
+claimed_at: '2026-05-22 09:36:13'
+context_hash: 27705145f76d1ff7
 ---
 
 # TASK-037: Add `release` Command — Voluntarily Unclaim a Task
@@ -58,3 +61,11 @@ Low — additive, no existing behavior changed.
 ## Continuation Policy
 
 Auto-continue.
+
+## Agent Notes
+
+### 2026-05-22 System
+- Task started via taskforge start TASK-037
+- Session: 39a1c1c59f
+- Branch: agent/TASK-037-add-release-command-voluntarily-unclaim--39a1c1c59f
+- Worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-037
