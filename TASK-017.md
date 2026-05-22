@@ -1,7 +1,7 @@
 ---
 id: TASK-017
 type: Feature
-status: Ready
+status: Done
 priority: P0
 agentRole: Implementer
 riskLevel: Medium
@@ -76,14 +76,14 @@ Error response (when `--json` is passed):
 
 ## Acceptance Criteria
 
-- [ ] All lifecycle commands accept `--json` flag
-- [ ] Successful JSON output follows the `{ ok: true, task: {...} }` contract
-- [ ] Error JSON output follows the `{ ok: false, error: "...", code: "..." }` contract
-- [ ] JSON output contains no ANSI color codes, no log decorations
-- [ ] Errors are written to stdout (not stderr) when `--json` is active
-- [ ] Existing human-readable output is unchanged without `--json`
-- [ ] Tests verify stdout purity with `--json` flag
-- [ ] All existing tests pass
+- [x] All lifecycle commands accept `--json` flag
+- [x] Successful JSON output follows the `{ ok: true, task: {...} }` contract
+- [x] Error JSON output follows the `{ ok: false, error: "...", code: "..." }` contract
+- [x] JSON output contains no ANSI color codes, no log decorations
+- [x] Errors are written to stdout (not stderr) when `--json` is active
+- [x] Existing human-readable output is unchanged without `--json`
+- [x] Tests verify stdout purity with `--json` flag
+- [x] All existing tests pass
 
 ## Test / Verification Command
 
@@ -93,11 +93,24 @@ npm run typecheck && npm run lint && npm run build && npm test -- --run
 
 ## Dependencies
 
-TASK-016 (status normalization) — JSON contract should use canonical status values.
+TASK-021 (harden status semantics) — JSON contract uses canonical status values via `statusToJson()`.
 
 ## Risk Level
 
 Low — `--json` is additive; existing behavior is unchanged when flag is absent.
+
+## Agent Notes
+
+### 2026-05-21 Implementer
+
+- Created `src/util/json-result.ts` with `JsonResult` types, `jsonOk()`, `jsonError()`, `buildJsonTask()`, `printJson()`, and `statusToJson()` helpers
+- Added `--json` flag to lifecycle commands: `next`, `start`, `done`, `block`, `unlock`, `sweep`
+- Updated `src/cli.ts` to wire `--json` option to all lifecycle commands
+- JSON output follows the spec contract: `{ ok: true, task: { id, status, statusLabel, priority, title }, workspace: { branch, worktree }, next: { command } }`
+- Error output follows: `{ ok: false, error: "...", code: "..." }`
+- Existing human-readable output is unchanged without `--json`
+- `statusToJson()` converts canonical status values to snake_case for JSON output (e.g., "In Progress" → "in_progress")
+- All verification gates pass: typecheck, lint (0 errors), build, 286 tests
 
 ## Continuation Policy
 
