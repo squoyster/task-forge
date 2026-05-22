@@ -1,0 +1,30 @@
+name: Task-State Validation
+on:
+  push:
+    branches: [task-state]
+  pull_request:
+    branches: [task-state]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          path: main-repo
+      - uses: actions/checkout@v4
+        with:
+          ref: task-state
+          path: task-state-data
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install and build
+        run: |
+          cd main-repo
+          npm ci
+          npm run build
+      - name: Validate task-state
+        run: |
+          cd main-repo
+          node dist/cli.js validate-state --strict --json
