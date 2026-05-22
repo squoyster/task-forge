@@ -91,7 +91,8 @@ See [TASKFORGE.md](TASKFORGE.md) for the full specification, including the Sweep
 | `taskforge heartbeat TASK-N` | Extend Sweeper lease on active task |
 | `taskforge block TASK-N "reason"` | Mark task as blocked |
 | `taskforge done TASK-N` | Mark task as done (--cleanup, --delete-branch) |
-| `taskforge unlock TASK-N --force` | Force-unlock a stale claim |
+| `taskforge release TASK-N` | Voluntarily release a claim |
+| `taskforge reject TASK-N "reason"` | Mark a task as rejected (obsolete, won't implement) |
 | `taskforge sweep` | Sweeper Protocol — recover stale in-progress tasks |
 | `taskforge sync` | Sync with external issue tracker |
 | `taskforge deps scan` | Run broad dependency health checks |

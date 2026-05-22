@@ -9,6 +9,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **TASK-057: Transactional migration** — `start`, `sweep`, and `done` now use `withTaskStateTransaction` for CAS reapply semantics instead of raw `jitteredPush`/`commitAndPushTaskState`. `claim` already migrated in TASK-048.
+
+- **TASK-056: `reject` command** — `taskforge reject TASK-ID "reason"` marks tasks as rejected (obsolete, won't implement, superseded). Terminal state; clears claim fields.
+
+- **TASK-055: Git operations matrix** — `AGENTS.md` now has a complete matrix of which git operations are allowed on main, task-state, and agent branches. Documents the `taskforge` CLI equivalents for every git workflow.
+
+- **TASK-051: Doctor-lock via transaction** — `taskforge doctor --fix` creates `.doctor-lock` through the transactional mutation layer. Lock removal is tied to recovery task completion.
+
+- **TASK-050: Explicit override flags** — `done` accepts `--force-gates`, `--force-transition`, `--force-ownership` as explicit alternatives to generic `--force`. Generic `--force` still works (deprecated).
+
+- **TASK-049: Control-plane hardening docs** — `docs/control-plane-hardening.md` documents threat model, credential tiers (read-only agent, implementer, recovery/bot, admin), GitHub branch protection config, and emergency recovery procedure. CI workflow at `.github/workflows/task-state-validate.yml`.
+
+- **TASK-048: CAS reapply for claim** — `claim.ts` migrated from `jitteredPush` to `withTaskStateTransaction`, providing true compare-and-swap semantics with fresh-state re-read on conflict.
+
+- **TASK-047: Two-phase `start`** — `start` now durably claims the task (pushes to remote) BEFORE creating the worktree. Failed push leaves no orphan worktree.
+
+- **TASK-046: State invariant validator** — `taskforge validate-state` checks 13 invariants (Done+assignee, Ready+assignee, broken deps, circular deps, etc.). Integrated with `doctor` and CI.
+
+- **TASK-045: Transactional mutation layer** — `withTaskStateTransaction()` provides single boundary for all task-state writes: pull → load → mutate → validate → commit → push → CAS retry. Foundation for P0 hardening.
+
+- **TASK-044: Legacy `tasks/` removal** — Removed 16 stale task files from `main/tasks/`. Task files live exclusively on `task-state` branch.
+
+- **TASK-043: Agent discipline policy** — `AGENTS.md` codifies: no direct git on task-state, no direct file editing, doctor-mode protocol, guardrail compliance.
+
+- **TASK-042: Doctor-lock mechanism** — Global pause flag at `task-state/.doctor-lock` with TTL. Checked by `next`, `claim`, `start`. Auto-removed on recovery task completion.
+
+- **TASK-041: Worktree path qualification** — Worktrees now live at `../worktrees/<project-name>/TASK-NNN/` preventing collisions across repos.
+
+- **TASK-040: Session guardrails** — `checkOutstandingSessionTasks()` prevents agents from claiming a new task while owning an unclosed one. Wired into `next`, `claim`, `start`.
+
+- **TASK-039: Control-file change detection** — `hashControlFiles()` computes SHA-256 of AGENTS.md, TASKFORGE.md, configs, etc. on task start. `done` refuses if files changed (unless `--force`).
+
 - **TASK-034: Proactive git pull before reading task-state** — adds `pullTaskState()` helper that does `git pull --rebase origin task-state` in the task-state worktree before any task read. Called in `next`, `start`, `claim`, and `sweep` commands. Gracefully handles network errors, missing remotes, and non-git repos without throwing. Eliminates the stale-read race window where agents select already-claimed tasks.
 
 - **TASK-024: `claim` command** — standalone primitive that sets `assignee`/`claimed_at` on a task without creating a worktree or branch. Accepts `--force` to override existing claims, `--session` for explicit session IDs, `--json` for structured output. Uses `jitteredPush` with `onConflict` for optimistic concurrency (same as `start`). Enables `next → claim → start` workflow decomposition.

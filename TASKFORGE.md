@@ -428,3 +428,54 @@ Before ending, always update the task file with:
 - blockers, if any
 - recommended next action
 ```
+
+## Control-Plane Architecture (v0.2+)
+
+### Transactional Mutation Layer
+
+All task-state mutations flow through `withTaskStateTransaction()`, which provides:
+
+1. **Pull** latest task-state before mutation
+2. **Load** fresh state
+3. **Apply** mutation via typed transaction API
+4. **Validate** invariants before commit
+5. **Commit** with structured message
+6. **Push** to remote task-state
+7. **On conflict**: reload fresh state, re-apply mutation, retry with jitter
+
+This replaces the older `jitteredPush()` for high-risk commands (claim, start, sweep, done).
+
+### Session Guardrails
+
+Before `next`, `claim`, or `start`, the system enforces:
+
+- **Outstanding task check**: You cannot start new work while you own an unclosed task
+- **Doctor lock check**: All agents pause when a `.doctor-lock` is active (global recovery)
+- **Control-file change detection**: `done` refuses if AGENTS.md, TASKFORGE.md, etc. changed since task start
+
+### Doctor Mode
+
+When `taskforge doctor --fix` detects critical inconsistencies, it creates a `.doctor-lock` file and recovery task. All normal agents pause. Only the recovery agent may work the recovery task. Completing it removes the lock.
+
+### Worktree Path Qualification
+
+Worktrees are qualified with the project name to prevent collisions across repos:
+```
+../worktrees/<project-name>/TASK-NNN/
+```
+
+### State Invariant Validator
+
+`taskforge validate-state` checks for impossible state combinations (Done+assignee, Ready+assignee, Blocked without reason, broken dependencies, circular references, etc.) and runs in CI via `.github/workflows/task-state-validate.yml`.
+
+### CLI Command Surface (complete)
+
+| Command | Category |
+|---------|----------|
+| `next`, `claim`, `start`, `resume` | Task discovery and claiming |
+| `done`, `release`, `reject`, `block`, `unlock` | Lifecycle transitions |
+| `status`, `summary`, `list`, `inspect`, `prompt` | Read operations |
+| `sweep`, `heartbeat`, `cleanup`, `report` | Maintenance |
+| `gates`, `validate-state`, `doctor`, `config-validate` | Quality and health |
+| `deps scan/audit/outdated/plan/pr/summary` | Dependency management |
+| `new`, `sync` | Task creation and external sync |
