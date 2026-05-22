@@ -1,11 +1,13 @@
 ---
 id: TASK-023
 type: Documentation
-status: Ready
+status: In Progress
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: df3163ec20
+claimed_at: '2026-05-22 06:34:12'
 ---
 
 # TASK-023: Update README/tasks Docs to Mark task-state as Authoritative
@@ -42,3 +44,11 @@ Low
 ## Continuation Policy
 
 Auto-continue.
+
+## Agent Notes
+
+### 2026-05-22 System
+- Task started via taskforge start TASK-023
+- Session: df3163ec20
+- Branch: agent/TASK-023-update-readmetasks-docs-to-mark-task-sta--df3163ec20
+- Worktree: /Volumes/Transcend/devel/worktrees/TASK-023
