@@ -6,7 +6,7 @@ import { cmdStart } from "./commands/start.js";
 import { cmdStatus } from "./commands/status.js";
 import { cmdSummary } from "./commands/summary.js";
 import { cmdBlock } from "./commands/block.js";
-import { cmdDone } from "./commands/done.js";
+import { cmdDone, type DoneOptions } from "./commands/done.js";
 import { cmdSync } from "./commands/sync.js";
 import { cmdDepsScan } from "./commands/deps/scan.js";
 import { cmdDepsAudit } from "./commands/deps/audit-cmd.js";
@@ -62,7 +62,20 @@ program
   .command("done <taskId>")
   .description("Mark a task as done")
   .option("--force", "Force transition to Done even if not allowed")
-  .action((taskId: string, opts: { force?: boolean }) => wrap(() => cmdDone(taskId, opts.force ?? false))());
+  .option("--cleanup", "Remove worktree after marking done")
+  .option("--delete-branch", "Delete the task branch after marking done (implies --cleanup)")
+  .action((taskId: string, opts: { force?: boolean; cleanup?: boolean; deleteBranch?: boolean }) => {
+    const doneOpts: DoneOptions = {
+      force: opts.force ?? false,
+      cleanup: opts.cleanup ?? false,
+      deleteBranch: opts.deleteBranch ?? false,
+    };
+    // --delete-branch implies --cleanup
+    if (doneOpts.deleteBranch && !doneOpts.cleanup) {
+      doneOpts.cleanup = true;
+    }
+    return wrap(() => cmdDone(taskId, doneOpts))();
+  });
 
 program
   .command("sync")

@@ -43,9 +43,50 @@ export async function createWorktree(
 export async function removeWorktree(
   repoRoot: string,
   taskId: string,
-): Promise<void> {
+): Promise<boolean> {
   const worktreePath = getWorktreePath(repoRoot, taskId);
+  // Check if worktree exists before attempting removal
+  const git = simpleGit(repoRoot);
+  const worktrees = await git.raw("worktree", "list", "--porcelain");
+  if (!worktrees.includes(worktreePath)) {
+    return false;
+  }
   await execa("git", ["worktree", "remove", worktreePath], { cwd: repoRoot });
+  return true;
+}
+
+export async function removeBranch(
+  repoRoot: string,
+  branchName: string,
+  deleteRemote = false,
+): Promise<boolean> {
+  const git = simpleGit(repoRoot);
+  const branches = await git.branchLocal();
+  const branchExists = branches.all.includes(branchName);
+
+  if (!branchExists) {
+    return false;
+  }
+
+  // Cannot delete the currently checked-out branch
+  const current = await git.branch();
+  if (current.current === branchName) {
+    await git.checkout("main");
+  }
+
+  await git.deleteLocalBranch(branchName, true); // force delete
+
+  if (deleteRemote) {
+    try {
+      await execa("git", ["push", "origin", "--delete", branchName], {
+        cwd: repoRoot,
+      });
+    } catch {
+      // Remote branch may not exist — that's fine
+    }
+  }
+
+  return true;
 }
 
 export async function listWorktrees(
