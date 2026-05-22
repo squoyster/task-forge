@@ -8,6 +8,7 @@ import { logInfo, logSuccess, logWarn, logError } from "../util/logging.js";
 import { TaskNotFoundError, InvalidStatusTransitionError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
 import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
+import { eventLogEvent } from "../core/event-log.js";
 
 export interface ClaimOptions {
   force?: boolean;
@@ -124,6 +125,7 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
   if (json) {
     // Re-read the task after push for accurate state
     const updated = loadTaskById(taskId);
+    eventLogEvent(taskId, "claimed", { session: sessionId, forced: force });
     printJson(jsonOk({
       task: updated ? buildJsonTask(updated) : buildJsonTask(task),
     }));
@@ -132,4 +134,5 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
 
   logSuccess(`Task ${taskId} claimed. Session: ${sessionId}`);
   logInfo(`Run 'taskforge start ${taskId}' to create the worktree and begin work.`);
+  eventLogEvent(taskId, "claimed", { session: sessionId, forced: force });
 }
