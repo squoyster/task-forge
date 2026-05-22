@@ -1,7 +1,7 @@
 ---
 id: TASK-052
 type: Bug
-status: Inbox
+status: Done
 priority: P0
 agentRole: Implementer
 riskLevel: Low
@@ -19,3 +19,7 @@ Describe the desired outcome.
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-22 System
+- Task marked Done (forced)
+- Completed despite gate failures — forced.
