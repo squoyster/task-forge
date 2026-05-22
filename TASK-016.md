@@ -1,7 +1,7 @@
 ---
 id: TASK-016
 type: Refactor
-status: In Progress
+status: Deferred
 priority: P0
 agentRole: Implementer
 riskLevel: Medium
@@ -10,7 +10,12 @@ assignee: b2c542a4c1
 claimed_at: '2026-05-22 03:26:03'
 ---
 
-# TASK-016: Normalize Task Status Values
+# TASK-016: Normalize Task Status Values (Replaced)
+
+> **This task has been replaced by [TASK-021](/Volumes/Transcend/devel/task-state/TASK-021.md).**
+> The original approach (migrating to lowercase snake_case in persisted files) was rejected
+> in favor of preserving human-readable canonical values but centralizing and hardening the
+> system around them. See TASK-021 for the corrected specification.
 
 ## Goal
 
