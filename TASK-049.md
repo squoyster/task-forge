@@ -1,13 +1,16 @@
 ---
 id: TASK-049
 type: Documentation
-status: Ready
+status: In Progress
 priority: P1
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: true
 dependsOn:
   - TASK-046
+assignee: 55f965a6c3
+claimed_at: '2026-05-22 19:52:22'
+context_hash: 27705145f76d1ff7
 ---
 
 # TASK-049: Branch Protection / Ruleset Guidance for `task-state`
@@ -43,3 +46,10 @@ TASK-046.
 ## Risk Level
 
 Medium.
+
+## Agent Notes
+
+### 2026-05-22 System
+- Task claimed via taskforge start TASK-049
+- Session: 55f965a6c3
+- Branch: agent/TASK-049-branch-protection-ruleset-guidance-for-t--55f965a6c3
