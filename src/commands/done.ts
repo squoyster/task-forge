@@ -1,6 +1,7 @@
 import { loadTaskById, updateTaskStatus, clearTaskLock, appendAgentNote, parseTaskFile, writeTaskFile } from "../core/task-store.js";
 import { validateTransition } from "../core/status-transition.js";
-import { removeWorktree, removeBranch, commitAndPushTaskState } from "../core/git.js";
+import { removeWorktree, removeBranch } from "../core/git.js";
+import { withTaskStateTransaction } from "../core/task-state-transaction.js";
 import { STATUS } from "../util/status-constants.js";
 import { logSuccess, logInfo, logWarn, logSub } from "../util/logging.js";
 import { TaskNotFoundError, InvalidStatusTransitionError } from "../core/errors.js";
@@ -126,8 +127,11 @@ const today = new Date().toISOString().split("T")[0];
 
   appendAgentNote(task.filePath, today, "System", notes);
 
-  // Push state changes
-  await commitAndPushTaskState(repoRoot, `chore: done ${taskId}`);
+  // Push state changes through transaction
+  await withTaskStateTransaction(
+    { command: `done ${taskId}` },
+    (tx) => { tx.clearClaim(taskId); },
+  );
 
   if (json) {
     printJson(jsonOk({

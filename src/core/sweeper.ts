@@ -1,5 +1,6 @@
 import { loadAllTasks, updateTaskStatus, clearTaskLock, appendAgentNote } from "./task-store.js";
 import { jitteredPush } from "./git.js";
+import { withTaskStateTransaction } from "./task-state-transaction.js";
 import { STATUS } from "../util/status-constants.js";
 import { getRepoRoot } from "../util/paths.js";
 import { logInfo, logSuccess, logSub, logWarn } from "../util/logging.js";
@@ -144,7 +145,20 @@ export async function sweepStaleTasks(
 
   let pushed = true;
   if (!dryRun && swept.length > 0 && shouldCommit) {
-    pushed = await jitteredPush(root, `chore: sweep ${swept.length} stale task(s)`);
+    pushed = await withTaskStateTransaction(
+      { command: `sweep ${swept.length} task(s)`, maxRetries: 3 },
+      (tx) => {
+        for (const s of swept) {
+          if (s.action === "review") {
+            const t = tx.loadTask(s.id);
+            if (t) { t.status = STATUS.REVIEW; tx.updateTask(t); tx.clearClaim(s.id); }
+          } else if (s.action === "reset") {
+            const t = tx.loadTask(s.id);
+            if (t) { t.status = STATUS.READY; tx.updateTask(t); tx.clearClaim(s.id); }
+          }
+        }
+      },
+    ).then(() => true).catch(() => false);
   }
 
   return {

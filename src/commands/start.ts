@@ -1,6 +1,7 @@
 import { loadTaskById, loadAllTasks, updateTaskStatus, updateTaskLock, appendAgentNote, clearTaskLock, parseTaskFile, writeTaskFile } from "../core/task-store.js";
 import { validateTransition } from "../core/status-transition.js";
-import { createWorktree, jitteredPush } from "../core/git.js";
+import { createWorktree } from "../core/git.js";
+import { withTaskStateTransaction } from "../core/task-state-transaction.js";
 import { makeBranchName } from "../util/paths.js";
 import { generateSessionId } from "../core/session.js";
 import { checkOutstandingSessionTasks } from "../core/session.js";
@@ -139,19 +140,22 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
     `Branch: ${task.branch}`,
   ]);
 
-  // Push claim durably
-  const pushed = await jitteredPush(repoRoot, `chore: claim ${taskId} [session: ${sessionId}]`, {
-    onConflict: async (_stateDir: string) => {
-      const currentTask = loadTaskById(taskId);
-      if (!currentTask) { if (!options?.json) logWarn(`Task ${taskId} disappeared after rebase. Aborting.`); return false; }
-      if (currentTask.assignee && currentTask.assignee !== sessionId) {
-        if (!options?.json) logWarn(`Another agent claimed ${taskId} while we were pushing. Abandoning claim.`);
-        clearTaskLock(task.filePath);
-        return false;
-      }
+  // Push claim durably through transaction layer
+  const pushed = await withTaskStateTransaction(
+    { command: `claim ${taskId}`, maxRetries: 3 },
+    async (tx) => {
+      const fresh = tx.loadTask(taskId);
+      if (!fresh) throw new Error("Task disappeared");
+      if (fresh.assignee && fresh.assignee !== sessionId) throw new Error(`Claimed by ${fresh.assignee}`);
+      tx.claimTask(taskId, sessionId);
+      tx.appendNote(taskId, "System", [
+        `Task claimed via taskforge start ${taskId}${options?.force ? " (forced)" : ""}`,
+        `Session: ${sessionId}`,
+        `Branch: ${task.branch}`,
+      ]);
       return true;
     },
-  });
+  ).catch(() => false);
 
   if (!pushed) {
     if (options?.json) {
@@ -200,8 +204,18 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
     `Worktree created: ${task.worktree}`,
   ]);
 
-  // Push metadata update
-  await jitteredPush(repoRoot, `chore: start ${taskId} [workspace]`);
+  // Push metadata update through transaction
+  await withTaskStateTransaction(
+    { command: `start ${taskId} [workspace]`, maxRetries: 2 },
+    (tx) => {
+      const t = tx.loadTask(taskId);
+      if (t) {
+        t.worktree = task.worktree;
+        tx.updateTask(t);
+        tx.appendNote(taskId, "System", [`Worktree created: ${task.worktree}`]);
+      }
+    },
+  );
 
   // Success output
   if (options?.json) {
