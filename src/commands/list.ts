@@ -1,4 +1,5 @@
 import { loadAllTasks } from "../core/task-store.js";
+import { normalizeStatus } from "../util/status-constants.js";
 import { logHeader, logSub, logDivider, logInfo } from "../util/logging.js";
 import type { ParsedTask } from "../core/task-store.js";
 
@@ -36,8 +37,11 @@ export function filterTasks(
   tasks: ParsedTask[],
   options: ListOptions,
 ): ParsedTask[] {
+  // Normalize status filter if provided
+  const normalizedStatus = options.status ? normalizeStatus(options.status) : undefined;
+
   return tasks.filter((t) => {
-    if (options.status && t.status !== options.status) return false;
+    if (normalizedStatus && t.status !== normalizedStatus) return false;
     if (options.priority && t.priority !== options.priority) return false;
     if (options.type && t.type !== options.type) return false;
     if (options.search && !matchesSearch(t, options.search)) return false;

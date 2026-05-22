@@ -1,6 +1,7 @@
 import { loadTaskById, updateTaskStatus, clearTaskLock, appendAgentNote } from "../core/task-store.js";
 import { validateTransition, getAllowedTransitions } from "../core/status-transition.js";
 import { commitAndPushTaskState } from "../core/git.js";
+import { STATUS } from "../util/status-constants.js";
 import { logSuccess } from "../util/logging.js";
 import { TaskNotFoundError, InvalidStatusTransitionError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
@@ -14,10 +15,10 @@ export async function cmdBlock(taskId: string, reason: string): Promise<void> {
     throw new TaskNotFoundError(taskId);
   }
 
-  const transitionError = validateTransition(task.status, "Blocked");
+  const transitionError = validateTransition(task.status, STATUS.BLOCKED);
   if (transitionError) {
     const allowed = getAllowedTransitions(task.status);
-    throw new InvalidStatusTransitionError(task.status, "Blocked", allowed);
+    throw new InvalidStatusTransitionError(task.status, STATUS.BLOCKED, allowed);
   }
 
   // Assert ownership if task is locked
@@ -25,7 +26,7 @@ export async function cmdBlock(taskId: string, reason: string): Promise<void> {
     await assertTaskOwnership(task, repoRoot);
   }
 
-  updateTaskStatus(task.filePath, "Blocked");
+  updateTaskStatus(task.filePath, STATUS.BLOCKED);
 
   // Clear the lock
   clearTaskLock(task.filePath);

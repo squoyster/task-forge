@@ -1,14 +1,16 @@
+import { STATUS } from "../util/status-constants.js";
+
 const TRANSITIONS: Record<string, string[]> = {
-  Inbox: ["Needs Spec", "Rejected"],
-  "Needs Spec": ["Ready", "Deferred"],
-  Ready: ["In Progress", "Blocked", "Deferred"],
-  "In Progress": ["Review", "Verify", "Blocked", "Deferred"],
-  Blocked: ["Ready", "In Progress"],
-  Review: ["In Progress", "Verify", "Done"],
-  Verify: ["In Progress", "Review", "Done"],
-  Done: ["In Progress"],
-  Rejected: [],
-  Deferred: ["Ready"],
+  [STATUS.INBOX]: [STATUS.NEEDS_SPEC, STATUS.REJECTED],
+  [STATUS.NEEDS_SPEC]: [STATUS.READY, STATUS.DEFERRED],
+  [STATUS.READY]: [STATUS.IN_PROGRESS, STATUS.BLOCKED, STATUS.DEFERRED],
+  [STATUS.IN_PROGRESS]: [STATUS.REVIEW, STATUS.VERIFY, STATUS.BLOCKED, STATUS.DEFERRED],
+  [STATUS.BLOCKED]: [STATUS.READY, STATUS.IN_PROGRESS],
+  [STATUS.REVIEW]: [STATUS.IN_PROGRESS, STATUS.VERIFY, STATUS.DONE],
+  [STATUS.VERIFY]: [STATUS.IN_PROGRESS, STATUS.REVIEW, STATUS.DONE],
+  [STATUS.DONE]: [STATUS.IN_PROGRESS],
+  [STATUS.REJECTED]: [],
+  [STATUS.DEFERRED]: [STATUS.READY],
 };
 
 export function isValidTransition(

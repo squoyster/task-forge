@@ -1,6 +1,6 @@
 import matter from "gray-matter";
 import fs from "node:fs";
-import { TaskSchema, type Task } from "./task.js";
+import { TaskSchema, type Task, STATUS } from "./task.js";
 import { getTaskFilePath, getTaskStateDir, getRepoRoot } from "../util/paths.js";
 import { logWarn } from "../util/logging.js";
 
@@ -28,7 +28,7 @@ export function parseTaskFile(filePath: string): ParsedTask | null {
   const taskData: Record<string, unknown> = {
     id,
     type: frontmatter.type ?? "Task",
-    status: frontmatter.status ?? "Inbox",
+    status: frontmatter.status ?? STATUS.INBOX,
     priority: frontmatter.priority ?? "P2",
     agentRole: frontmatter.agentRole ?? frontmatter.agent_role,
     riskLevel: frontmatter.riskLevel ?? frontmatter.risk_level ?? "Low",

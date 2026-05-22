@@ -1,6 +1,7 @@
 import { loadTaskById, updateTaskStatus, clearTaskLock, appendAgentNote, parseTaskFile, writeTaskFile } from "../core/task-store.js";
 import { validateTransition } from "../core/status-transition.js";
 import { removeWorktree, removeBranch, commitAndPushTaskState } from "../core/git.js";
+import { STATUS } from "../util/status-constants.js";
 import { logSuccess, logInfo, logWarn, logSub } from "../util/logging.js";
 import { TaskNotFoundError, InvalidStatusTransitionError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
@@ -26,12 +27,12 @@ export async function cmdDone(
   }
 
   // --- Status transition ---
-  const transitionError = validateTransition(task.status, "Done");
+  const transitionError = validateTransition(task.status, STATUS.DONE);
   if (transitionError && !force) {
     throw new InvalidStatusTransitionError(
       task.status,
-      "Done",
-      ["Review", "Verify"],
+      STATUS.DONE,
+      [STATUS.REVIEW, STATUS.VERIFY],
     );
   }
 
@@ -40,7 +41,7 @@ export async function cmdDone(
     await assertTaskOwnership(task, repoRoot);
   }
 
-  updateTaskStatus(task.filePath, "Done");
+  updateTaskStatus(task.filePath, STATUS.DONE);
 
   // Clear the lock
   clearTaskLock(task.filePath);

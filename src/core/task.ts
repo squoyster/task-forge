@@ -1,17 +1,5 @@
 import { z } from "zod";
-
-export const TaskStatus = z.enum([
-  "Inbox",
-  "Needs Spec",
-  "Ready",
-  "In Progress",
-  "Blocked",
-  "Review",
-  "Verify",
-  "Done",
-  "Rejected",
-  "Deferred",
-]);
+import { STATUS, ALL_STATUSES, ACTIVE_STATUSES, TERMINAL_STATUSES, createStatusSchema } from "../util/status-constants.js";
 
 export const TaskPriority = z.enum(["P0", "P1", "P2", "P3"]);
 
@@ -35,10 +23,23 @@ export const TaskType = z.enum([
 
 export const RiskLevel = z.enum(["Low", "Medium", "High"]);
 
+export const TaskStatus = z.enum([
+  STATUS.INBOX,
+  STATUS.NEEDS_SPEC,
+  STATUS.READY,
+  STATUS.IN_PROGRESS,
+  STATUS.BLOCKED,
+  STATUS.REVIEW,
+  STATUS.VERIFY,
+  STATUS.DONE,
+  STATUS.REJECTED,
+  STATUS.DEFERRED,
+]);
+
 export const TaskSchema = z.object({
   id: z.string(),
   type: TaskType.default("Task"),
-  status: TaskStatus.default("Inbox"),
+  status: createStatusSchema().default(STATUS.INBOX),
   priority: TaskPriority.default("P2"),
   agentRole: z.string().optional(),
   riskLevel: RiskLevel.default("Low"),
@@ -54,6 +55,7 @@ export const TaskSchema = z.object({
 
 export type Task = z.infer<typeof TaskSchema>;
 
+export { STATUS, ALL_STATUSES, ACTIVE_STATUSES, TERMINAL_STATUSES };
 export const ALLOWED_STATUSES = TaskStatus.options;
 export const ALLOWED_PRIORITIES = TaskPriority.options;
 export const ALLOWED_TYPES = TaskType.options;

@@ -1,5 +1,6 @@
 import { loadAllTasks, updateTaskStatus, clearTaskLock, appendAgentNote } from "./task-store.js";
 import { jitteredPush } from "./git.js";
+import { STATUS } from "../util/status-constants.js";
 import { getRepoRoot } from "../util/paths.js";
 import { logInfo, logSuccess, logSub, logWarn } from "../util/logging.js";
 
@@ -68,7 +69,7 @@ export async function sweepStaleTasks(
   const tasks = loadAllTasks(root);
 
   const staleTasks = tasks.filter((t) => {
-    if (t.status !== "In Progress") return false;
+    if (t.status !== STATUS.IN_PROGRESS) return false;
     if (!t.assignee || !t.claimed_at) return false;
     if (skipAssignee && t.assignee === skipAssignee) return false;
 
@@ -94,7 +95,7 @@ export async function sweepStaleTasks(
     });
 
     // Reset to Ready
-    updateTaskStatus(task.filePath, "Ready");
+    updateTaskStatus(task.filePath, STATUS.READY);
     // Clear the claim
     clearTaskLock(task.filePath);
 
@@ -138,7 +139,7 @@ export async function runSweeperAndPrint(
   for (const swept of result.stale) {
     const ageHours = (swept.ageMs / (60 * 60 * 1000)).toFixed(1);
     logSub(`Resetting ${swept.id} (claimed by "${swept.previousAssignee}" ${ageHours}h ago)`);
-    logSuccess(`  ${swept.id}: In Progress → Ready (claim cleared)`);
+    logSuccess(`  ${swept.id}: ${STATUS.IN_PROGRESS} → ${STATUS.READY} (claim cleared)`);
   }
 
   if (!result.pushed) {

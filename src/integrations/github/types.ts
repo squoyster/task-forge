@@ -1,3 +1,5 @@
+import { STATUS } from "../../util/status-constants.js";
+
 export interface GitHubConfig {
   owner: string;
   repo: string;
@@ -16,16 +18,16 @@ export interface IssueResult {
 }
 
 export const STATUS_LABELS: Record<string, string> = {
-  "Inbox": "inbox",
-  "Needs Spec": "needs-spec",
-  "Ready": "ready",
-  "In Progress": "in-progress",
-  "Blocked": "blocked",
-  "Review": "review",
-  "Verify": "verify",
-  "Done": "done",
-  "Rejected": "rejected",
-  "Deferred": "deferred",
+  [STATUS.INBOX]: "inbox",
+  [STATUS.NEEDS_SPEC]: "needs-spec",
+  [STATUS.READY]: "ready",
+  [STATUS.IN_PROGRESS]: "in-progress",
+  [STATUS.BLOCKED]: "blocked",
+  [STATUS.REVIEW]: "review",
+  [STATUS.VERIFY]: "verify",
+  [STATUS.DONE]: "done",
+  [STATUS.REJECTED]: "rejected",
+  [STATUS.DEFERRED]: "deferred",
 };
 
 export const STATUS_COLORS: Record<string, string> = {

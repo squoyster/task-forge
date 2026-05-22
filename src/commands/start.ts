@@ -4,6 +4,7 @@ import { createWorktree, jitteredPush } from "../core/git.js";
 import { makeBranchName } from "../util/paths.js";
 import { generateSessionId } from "../core/session.js";
 import { sweepStaleTasks } from "../core/sweeper.js";
+import { STATUS } from "../util/status-constants.js";
 import { logInfo, logSuccess, logWarn, logError, logHeader, logSub, logDivider } from "../util/logging.js";
 import { TaskNotFoundError, InvalidStatusTransitionError, WorktreeError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
@@ -26,11 +27,11 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
   }
 
   // Validate status
-  if (task.status !== "Ready" && task.status !== "In Progress") {
+  if (task.status !== STATUS.READY && task.status !== STATUS.IN_PROGRESS) {
     throw new InvalidStatusTransitionError(
       task.status,
-      "In Progress",
-      ["Ready", "In Progress"],
+      STATUS.IN_PROGRESS,
+      [STATUS.READY, STATUS.IN_PROGRESS],
     );
   }
 
@@ -78,17 +79,17 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
   updateTaskLock(task.filePath, sessionId);
 
   // Update status to In Progress if it was Ready
-  if (task.status === "Ready") {
-    const transitionError = validateTransition(task.status, "In Progress");
+  if (task.status === STATUS.READY) {
+    const transitionError = validateTransition(task.status, STATUS.IN_PROGRESS);
     if (transitionError) {
       throw new InvalidStatusTransitionError(
         task.status,
-        "In Progress",
-        ["In Progress"],
+        STATUS.IN_PROGRESS,
+        [STATUS.IN_PROGRESS],
       );
     }
-    updateTaskStatus(task.filePath, "In Progress");
-    logSuccess("Status updated: Ready → In Progress");
+    updateTaskStatus(task.filePath, STATUS.IN_PROGRESS);
+    logSuccess(`Status updated: ${STATUS.READY} → ${STATUS.IN_PROGRESS}`);
   }
 
   // Append agent note

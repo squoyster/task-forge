@@ -1,5 +1,6 @@
 import { loadAllTasks } from "../core/task-store.js";
 import { selectNextTask } from "../core/scheduler.js";
+import { STATUS } from "../util/status-constants.js";
 import { logHeader, logSub, logDivider, logInfo } from "../util/logging.js";
 
 interface SummaryJsonTask {
@@ -44,11 +45,11 @@ function buildJson(tasks: ReturnType<typeof loadAllTasks>): SummaryJson {
     taskEntries.push({ ...info, status: t.status });
   }
 
-  const active = tasks.filter((t) => t.status === "In Progress");
-  const review = tasks.filter((t) => t.status === "Review");
-  const verify = tasks.filter((t) => t.status === "Verify");
-  const needsSpec = tasks.filter((t) => t.status === "Needs Spec");
-  const inbox = tasks.filter((t) => t.status === "Inbox");
+  const active = tasks.filter((t) => t.status === STATUS.IN_PROGRESS);
+  const review = tasks.filter((t) => t.status === STATUS.REVIEW);
+  const verify = tasks.filter((t) => t.status === STATUS.VERIFY);
+  const needsSpec = tasks.filter((t) => t.status === STATUS.NEEDS_SPEC);
+  const inbox = tasks.filter((t) => t.status === STATUS.INBOX);
   const next = selectNextTask(tasks);
 
   let nextAction: string;
@@ -97,14 +98,14 @@ export async function cmdSummary(json?: boolean): Promise<void> {
   logSub(`Generated: ${now.toISOString().replace("T", " ").slice(0, 19)}`);
   logDivider();
 
-  const active = tasks.filter((t) => t.status === "In Progress");
-  const blocked = tasks.filter((t) => t.status === "Blocked");
-  const ready = tasks.filter((t) => t.status === "Ready");
-  const review = tasks.filter((t) => t.status === "Review");
-  const verify = tasks.filter((t) => t.status === "Verify");
-  const inbox = tasks.filter((t) => t.status === "Inbox");
-  const needsSpec = tasks.filter((t) => t.status === "Needs Spec");
-  const done = tasks.filter((t) => t.status === "Done");
+  const active = tasks.filter((t) => t.status === STATUS.IN_PROGRESS);
+  const blocked = tasks.filter((t) => t.status === STATUS.BLOCKED);
+  const ready = tasks.filter((t) => t.status === STATUS.READY);
+  const review = tasks.filter((t) => t.status === STATUS.REVIEW);
+  const verify = tasks.filter((t) => t.status === STATUS.VERIFY);
+  const inbox = tasks.filter((t) => t.status === STATUS.INBOX);
+  const needsSpec = tasks.filter((t) => t.status === STATUS.NEEDS_SPEC);
+  const done = tasks.filter((t) => t.status === STATUS.DONE);
   const humanNeeded = tasks.filter((t) => t.humanInterventionRequired);
 
   const displayLine = (t: { id: string; priority: string; agentRole?: string; body: string }) => {

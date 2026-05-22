@@ -1,17 +1,18 @@
 import type { ParsedTask } from "./task-store.js";
+import { STATUS, ACTIVE_STATUSES } from "../util/status-constants.js";
 import { logWarn } from "../util/logging.js";
 
 const STATUS_PRIORITY: Record<string, number> = {
-  "In Progress": 7,
-  Verify: 6,
-  Review: 5,
-  Ready: 4,
-  Blocked: 0,
-  Inbox: 0,
-  "Needs Spec": 0,
-  Done: 0,
-  Rejected: 0,
-  Deferred: 0,
+  [STATUS.IN_PROGRESS]: 7,
+  [STATUS.VERIFY]: 6,
+  [STATUS.REVIEW]: 5,
+  [STATUS.READY]: 4,
+  [STATUS.BLOCKED]: 0,
+  [STATUS.INBOX]: 0,
+  [STATUS.NEEDS_SPEC]: 0,
+  [STATUS.DONE]: 0,
+  [STATUS.REJECTED]: 0,
+  [STATUS.DEFERRED]: 0,
 };
 
 const PRIORITY_WEIGHT: Record<string, number> = {
@@ -38,9 +39,8 @@ export function hasUnmetDependencies(task: ParsedTask, allTasks: ParsedTask[]): 
   for (const depId of task.dependsOn) {
     const dep = allTasks.find((t) => t.id === depId);
     if (!dep) {
-      // Dependency task doesn't exist — treat as unmet
       unmet.push(depId);
-    } else if (dep.status !== "Done" && dep.status !== "Rejected" && dep.status !== "Deferred") {
+    } else if (dep.status !== STATUS.DONE && dep.status !== STATUS.REJECTED && dep.status !== STATUS.DEFERRED) {
       unmet.push(depId);
     }
   }
@@ -116,10 +116,7 @@ export function selectNextTask(tasks: ParsedTask[]): ParsedTask | null {
 
   const actionable = tasks.filter(
     (t) =>
-      (t.status === "In Progress" ||
-        t.status === "Verify" ||
-        t.status === "Review" ||
-        t.status === "Ready") &&
+      ACTIVE_STATUSES.includes(t.status as never) &&
       hasUnmetDependencies(t, tasks).length === 0,
   );
 

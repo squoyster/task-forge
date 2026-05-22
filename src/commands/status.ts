@@ -1,5 +1,6 @@
 import { loadAllTasks } from "../core/task-store.js";
 import { hasUnmetDependencies, getDependents } from "../core/scheduler.js";
+import { STATUS } from "../util/status-constants.js";
 import { logHeader, logSub, logDivider, logInfo } from "../util/logging.js";
 
 interface StatusRow {
@@ -111,20 +112,20 @@ export async function cmdStatus(json?: boolean): Promise<void> {
   logHeader("# TaskForge Status");
   logDivider();
 
-  const active = tasks.filter((t) => t.status === "In Progress");
-  const blocked = tasks.filter((t) => t.status === "Blocked");
-  const ready = tasks.filter((t) => t.status === "Ready");
-  const review = tasks.filter((t) => t.status === "Review");
-  const verify = tasks.filter((t) => t.status === "Verify");
-  const inbox = tasks.filter((t) => t.status === "Inbox");
-  const needsSpec = tasks.filter((t) => t.status === "Needs Spec");
-  const done = tasks.filter((t) => t.status === "Done");
+  const active = tasks.filter((t) => t.status === STATUS.IN_PROGRESS);
+  const blocked = tasks.filter((t) => t.status === STATUS.BLOCKED);
+  const ready = tasks.filter((t) => t.status === STATUS.READY);
+  const review = tasks.filter((t) => t.status === STATUS.REVIEW);
+  const verify = tasks.filter((t) => t.status === STATUS.VERIFY);
+  const inbox = tasks.filter((t) => t.status === STATUS.INBOX);
+  const needsSpec = tasks.filter((t) => t.status === STATUS.NEEDS_SPEC);
+  const done = tasks.filter((t) => t.status === STATUS.DONE);
   const humanNeeded = tasks.filter((t) => t.humanInterventionRequired);
 
   // Dependency-blocked tasks: actionable tasks with unmet dependencies
   const depBlocked = tasks.filter(
     (t) =>
-      (t.status === "Ready" || t.status === "In Progress" || t.status === "Review" || t.status === "Verify") &&
+      (t.status === STATUS.READY || t.status === STATUS.IN_PROGRESS || t.status === STATUS.REVIEW || t.status === STATUS.VERIFY) &&
       hasUnmetDependencies(t, tasks).length > 0,
   );
 
@@ -132,7 +133,7 @@ export async function cmdStatus(json?: boolean): Promise<void> {
     const depInfo = makeDependencyInfo(t, tasks);
     return { ...makeRow(t), extra: depInfo.extra };
   }));
-  printTable("Blocked", blocked.map(makeRow));
+  printTable(STATUS.BLOCKED, blocked.map(makeRow));
   printTable("Dependency-Blocked", depBlocked.map((t) => {
     const depInfo = makeDependencyInfo(t, tasks);
     return { ...makeRow(t), extra: depInfo.extra ?? "Waiting on dependencies" };
@@ -159,8 +160,8 @@ export async function cmdStatus(json?: boolean): Promise<void> {
   }
   logDivider();
 
-  printTable("Inbox", inbox.map(makeRow));
-  printTable("Needs Spec", needsSpec.map(makeRow));
+  printTable(STATUS.INBOX, inbox.map(makeRow));
+  printTable(STATUS.NEEDS_SPEC, needsSpec.map(makeRow));
   printTable("Completed", done.map(makeRow));
 
   logHeader("## Human Action Needed");
@@ -181,6 +182,6 @@ export async function cmdStatus(json?: boolean): Promise<void> {
   logSub(`- **Active:** ${active.length}`);
   logSub(`- **Blocked:** ${blocked.length}`);
   logSub(`- **Dependency-Blocked:** ${depBlocked.length}`);
-  logSub(`- **Ready:** ${ready.length - depBlocked.filter((t) => t.status === "Ready").length}`);
+  logSub(`- **Ready:** ${ready.length - depBlocked.filter((t) => t.status === STATUS.READY).length}`);
   logSub(`- **Done:** ${done.length}`);
 }

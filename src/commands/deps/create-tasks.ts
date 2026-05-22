@@ -1,5 +1,6 @@
 import { generateDepsPlan } from "./plan.js";
 import { getNextId, loadAllTasks, writeTaskFile } from "../../core/task-store.js";
+import { STATUS } from "../../util/status-constants.js";
 import { getTaskStateDir, getRepoRoot } from "../../util/paths.js";
 import { commitAndPushTaskState } from "../../core/git.js";
 import { logInfo, logSuccess, logDivider } from "../../util/logging.js";
@@ -33,7 +34,7 @@ export async function cmdDepsCreateTasks(): Promise<void> {
     writeTaskFile({
       id,
       type: "Security",
-      status: "Ready",
+       status: STATUS.READY,
       priority: isCritical ? "P0" : "P1",
       agentRole: "Dependency Steward",
       riskLevel: isCritical ? "High" : "Medium",
@@ -57,7 +58,7 @@ export async function cmdDepsCreateTasks(): Promise<void> {
     writeTaskFile({
       id,
       type: "Dependency",
-      status: "Ready",
+       status: STATUS.READY,
       priority: "P2",
       agentRole: "Dependency Steward",
       riskLevel: "Medium",
@@ -82,7 +83,7 @@ export async function cmdDepsCreateTasks(): Promise<void> {
     writeTaskFile({
       id,
       type: "Dependency",
-      status: "Ready",
+       status: STATUS.READY,
       priority: "P2",
       agentRole: "Dependency Steward",
       riskLevel: "Low",
