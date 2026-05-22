@@ -1,13 +1,16 @@
 ---
 id: TASK-047
 type: Bug
-status: Ready
+status: In Progress
 priority: P0
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
 dependsOn:
   - TASK-045
+assignee: 3428c352ed
+claimed_at: '2026-05-22 09:53:45'
+context_hash: 27705145f76d1ff7
 ---
 
 # TASK-047: Make `start` Two-Phase — Durable Claim Before Worktree Creation
@@ -37,3 +40,11 @@ TASK-045.
 ## Risk Level
 
 Medium.
+
+## Agent Notes
+
+### 2026-05-22 System
+- Task started via taskforge start TASK-047
+- Session: 3428c352ed
+- Branch: agent/TASK-047-make-start-two-phase-durable-claim-befor--3428c352ed
+- Worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-047
