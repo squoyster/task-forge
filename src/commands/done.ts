@@ -1,9 +1,10 @@
-import { loadTaskById, updateTaskStatus, appendAgentNote, parseTaskFile, writeTaskFile } from "../core/task-store.js";
+import { loadTaskById, updateTaskStatus, clearTaskLock, appendAgentNote, parseTaskFile, writeTaskFile } from "../core/task-store.js";
 import { validateTransition } from "../core/status-transition.js";
 import { removeWorktree, removeBranch } from "../core/git.js";
 import { logSuccess, logInfo, logWarn, logSub } from "../util/logging.js";
 import { TaskNotFoundError, InvalidStatusTransitionError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
+import { assertTaskOwnership } from "../core/session.js";
 import type { ParsedTask } from "../core/task-store.js";
 
 export interface DoneOptions {
@@ -34,7 +35,15 @@ export async function cmdDone(
     );
   }
 
+  // Assert ownership if task is locked (skip if no lock set)
+  if (task.lockedBy) {
+    await assertTaskOwnership(task, repoRoot);
+  }
+
   updateTaskStatus(task.filePath, "Done");
+
+  // Clear the lock
+  clearTaskLock(task.filePath);
 
   const today = new Date().toISOString().split("T")[0];
   const notes: string[] = [`Task marked Done${force ? " (forced)" : ""}`];

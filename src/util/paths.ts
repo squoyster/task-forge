@@ -45,7 +45,7 @@ export function getConfigJsonPath(repoRoot: string): string {
   return path.join(getTaskforgeDir(repoRoot), "config.json");
 }
 
-export function makeBranchName(id: string, title: string): string {
+export function makeBranchName(id: string, title: string, sessionId?: string): string {
   const slug = title
     .toLowerCase()
     .replace(/[^a-z0-9\s-]/g, "")
@@ -54,5 +54,6 @@ export function makeBranchName(id: string, title: string): string {
     .slice(0, 40)
     .replace(/-$/, "");
   const suffix = slug ? `-${slug}` : "";
-  return `agent/${id}${suffix}`;
+  const sessionSuffix = sessionId ? `--${sessionId}` : "";
+  return `agent/${id}${suffix}${sessionSuffix}`;
 }

@@ -13,7 +13,7 @@ export function parseTaskFile(filePath: string): ParsedTask | null {
   if (!fs.existsSync(filePath)) return null;
 
   const content = fs.readFileSync(filePath, "utf-8");
-  const parsed = matter(content);
+  const parsed = matter(content, { date: false } as Record<string, unknown>);
 
   const frontmatter = parsed.data as Record<string, unknown>;
 
@@ -37,6 +37,8 @@ export function parseTaskFile(filePath: string): ParsedTask | null {
       frontmatter.human_intervention_required ??
       false,
     dependsOn: frontmatter.dependsOn,
+    lockedBy: frontmatter.lockedBy as string | undefined,
+    lockedAt: frontmatter.lockedAt as string | undefined,
     branch: frontmatter.branch,
     worktree: frontmatter.worktree,
     issue: frontmatter.issue ? Number(frontmatter.issue) : undefined,
@@ -69,6 +71,8 @@ export function writeTaskFile(
     riskLevel: task.riskLevel,
     humanInterventionRequired: task.humanInterventionRequired,
     dependsOn: task.dependsOn,
+    lockedBy: task.lockedBy,
+    lockedAt: task.lockedAt,
     branch: task.branch,
     worktree: task.worktree,
     issue: task.issue,
@@ -106,6 +110,33 @@ export function updateTaskIssue(
   if (!task) return null;
 
   task.issue = issueNumber;
+  writeTaskFile(task);
+  return task;
+}
+
+export function updateTaskLock(
+  filePath: string,
+  sessionId: string,
+): ParsedTask | null {
+  const task = parseTaskFile(filePath);
+  if (!task) return null;
+
+  task.lockedBy = sessionId;
+  // Use a YAML-safe format: YYYY-MM-DD HH:MM:SS (not ISO, avoids YAML Date auto-parsing)
+  const now = new Date();
+  task.lockedAt = now.toISOString().replace("T", " ").replace(/\.\d+Z$/, "");
+  writeTaskFile(task);
+  return task;
+}
+
+export function clearTaskLock(
+  filePath: string,
+): ParsedTask | null {
+  const task = parseTaskFile(filePath);
+  if (!task) return null;
+
+  task.lockedBy = undefined;
+  task.lockedAt = undefined;
   writeTaskFile(task);
   return task;
 }

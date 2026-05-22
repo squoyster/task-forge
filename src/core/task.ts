@@ -44,6 +44,8 @@ export const TaskSchema = z.object({
   riskLevel: RiskLevel.default("Low"),
   humanInterventionRequired: z.boolean().default(false),
   dependsOn: z.array(z.string()).optional(),
+  lockedBy: z.string().optional(),
+  lockedAt: z.string().optional(),
   branch: z.string().optional(),
   worktree: z.string().optional(),
   issue: z.number().optional(),
