@@ -1,6 +1,6 @@
 ---
 id: TASK-023
-type: Docs
+type: Documentation
 status: Ready
 priority: P2
 agentRole: Implementer
