@@ -1,11 +1,13 @@
 ---
 id: TASK-014
 type: Feature
-status: Ready
+status: In Progress
 priority: P1
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
+lockedBy: 2449205b30
+lockedAt: '2026-05-22 02:49:47'
 ---
 
 # TASK-014: Sweeper Protocol — Deadlock Recovery for Stale Agent Locks
@@ -77,3 +79,11 @@ Medium — field rename touches many files; sweep logic is straightforward but s
 ## Continuation Policy
 
 Auto-continue unless a stopping condition occurs.
+
+## Agent Notes
+
+### 2026-05-22 System
+- Task started via taskforge start TASK-014
+- Session: 2449205b30
+- Branch: agent/TASK-014-sweeper-protocol-deadlock-recovery-for-s--2449205b30
+- Worktree: /Volumes/Transcend/devel/worktrees/TASK-014
