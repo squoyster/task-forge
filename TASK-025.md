@@ -1,0 +1,60 @@
+---
+id: TASK-025
+type: Feature
+status: Ready
+priority: P2
+agentRole: Implementer
+riskLevel: Low
+humanInterventionRequired: false
+---
+
+# TASK-025: Add Structured Blocker Fields
+
+## Goal
+
+Extend the `taskforge block` command and task frontmatter with structured blocker metadata: `blocked_reason`, `blocked_by`, `blocked_since`, and blocker category — enabling agents and operators to understand *why* a task is blocked without reading arbitrary prose.
+
+## Background
+
+The gap analysis identifies blocker categories as a gap for agentic workflows:
+
+| Category | Meaning |
+|---|---|
+| `human_decision` | policy/product choice |
+| `test_failure` | agent cannot resolve after attempts |
+| `merge_conflict` | conflict requires owner judgment |
+| `missing_secret` | credentials/token unavailable |
+| `unsafe_operation` | destructive operation requires approval |
+| `ambiguous_spec` | acceptance criteria insufficient |
+
+Current `block` command takes a free-text reason — useful but not machine-parseable.
+
+## Usage
+
+```bash
+taskforge block TASK-023 "Need decision on sweep behavior" \
+  --category human_decision \
+  --blocked-by human \
+  --json
+```
+
+## Acceptance Criteria
+
+- [ ] `block` command accepts `--category` (enum of above values)
+- [ ] `block` command accepts `--blocked-by` (human/agent/bot)
+- [ ] Frontmatter stores `blocked_reason`, `blocked_by`, `blocked_since` (auto-set to now), and `block_category`
+- [ ] `taskforge list --status Blocked` and `taskforge status` show blocker metadata
+- [ ] `--json` output includes blocker fields
+- [ ] Backward-compatible: existing `block <id> <reason>` still works (category defaults to `unspecified`)
+
+## Dependencies
+
+TASK-017 (JSON contracts)
+
+## Risk Level
+
+Low — additive fields, existing behavior unchanged.
+
+## Continuation Policy
+
+Auto-continue.
