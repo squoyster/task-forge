@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: 74a42e191a
 claimed_at: '2026-05-22 20:22:22'
 context_hash: 0cd53b090047347c
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-056
 ---
 
 # TASK-056: Add reject command for obsolete/wont-implement tasks
@@ -22,6 +23,9 @@ Describe the desired outcome.
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-22 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-056
 
 ### 2026-05-22 System
 - Task claimed via taskforge start TASK-056
