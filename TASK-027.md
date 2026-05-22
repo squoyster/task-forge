@@ -1,11 +1,13 @@
 ---
 id: TASK-027
 type: Feature
-status: Ready
+status: In Progress
 priority: P2
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
+assignee: 95971d8dcc
+claimed_at: '2026-05-22 07:05:46'
 ---
 
 # TASK-027: Add `report` / `finish` Command — Structured Completion Report
@@ -67,3 +69,11 @@ Medium — adds a new lifecycle command that interacts with git and gates.
 ## Continuation Policy
 
 Auto-continue.
+
+## Agent Notes
+
+### 2026-05-22 System
+- Task started via taskforge start TASK-027
+- Session: 95971d8dcc
+- Branch: agent/TASK-027-add-report-finish-command-structured-com--95971d8dcc
+- Worktree: /Volumes/Transcend/devel/worktrees/TASK-027
