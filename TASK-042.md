@@ -1,13 +1,11 @@
 ---
 id: TASK-042
 type: Feature
-status: In Progress
+status: Done
 priority: P1
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
-assignee: 28bf60cee1
-claimed_at: '2026-05-22 08:55:07'
 ---
 
 # TASK-042: Global Doctor-Lock — Pause All Agents During Recovery
@@ -83,6 +81,9 @@ Medium — blocks all agents when active. TTL prevents permanent deadlock.
 Auto-continue.
 
 ## Agent Notes
+
+### 2026-05-22 System
+- Task marked Done (forced)
 
 ### 2026-05-22 System
 - Task started via taskforge start TASK-042
