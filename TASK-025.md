@@ -1,11 +1,13 @@
 ---
 id: TASK-025
 type: Feature
-status: Ready
+status: In Progress
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 716af96673
+claimed_at: '2026-05-22 06:47:59'
 ---
 
 # TASK-025: Add Structured Blocker Fields
@@ -58,3 +60,11 @@ Low — additive fields, existing behavior unchanged.
 ## Continuation Policy
 
 Auto-continue.
+
+## Agent Notes
+
+### 2026-05-22 System
+- Task started via taskforge start TASK-025
+- Session: 716af96673
+- Branch: agent/TASK-025-add-structured-blocker-fields--716af96673
+- Worktree: /Volumes/Transcend/devel/worktrees/TASK-025
