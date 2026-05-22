@@ -37,8 +37,8 @@ export function parseTaskFile(filePath: string): ParsedTask | null {
       frontmatter.human_intervention_required ??
       false,
     dependsOn: frontmatter.dependsOn,
-    lockedBy: frontmatter.lockedBy as string | undefined,
-    lockedAt: frontmatter.lockedAt as string | undefined,
+    assignee: frontmatter.assignee as string | undefined,
+    claimed_at: frontmatter.claimed_at as string | Date | undefined,
     branch: frontmatter.branch,
     worktree: frontmatter.worktree,
     issue: frontmatter.issue ? Number(frontmatter.issue) : undefined,
@@ -71,8 +71,8 @@ export function writeTaskFile(
     riskLevel: task.riskLevel,
     humanInterventionRequired: task.humanInterventionRequired,
     dependsOn: task.dependsOn,
-    lockedBy: task.lockedBy,
-    lockedAt: task.lockedAt,
+    assignee: task.assignee,
+    claimed_at: task.claimed_at,
     branch: task.branch,
     worktree: task.worktree,
     issue: task.issue,
@@ -121,10 +121,10 @@ export function updateTaskLock(
   const task = parseTaskFile(filePath);
   if (!task) return null;
 
-  task.lockedBy = sessionId;
+  task.assignee = sessionId;
   // Use a YAML-safe format: YYYY-MM-DD HH:MM:SS (not ISO, avoids YAML Date auto-parsing)
   const now = new Date();
-  task.lockedAt = now.toISOString().replace("T", " ").replace(/\.\d+Z$/, "");
+  task.claimed_at = now.toISOString().replace("T", " ").replace(/\.\d+Z$/, "");
   writeTaskFile(task);
   return task;
 }
@@ -135,8 +135,8 @@ export function clearTaskLock(
   const task = parseTaskFile(filePath);
   if (!task) return null;
 
-  task.lockedBy = undefined;
-  task.lockedAt = undefined;
+  task.assignee = undefined;
+  task.claimed_at = undefined;
   writeTaskFile(task);
   return task;
 }

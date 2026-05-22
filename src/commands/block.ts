@@ -21,7 +21,7 @@ export async function cmdBlock(taskId: string, reason: string): Promise<void> {
   }
 
   // Assert ownership if task is locked
-  if (task.lockedBy) {
+  if (task.assignee) {
     await assertTaskOwnership(task, repoRoot);
   }
 

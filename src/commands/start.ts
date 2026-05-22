@@ -29,17 +29,17 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
   }
 
   // Lock check: if task is locked by another session, reject unless --force
-  if (task.lockedBy && !options?.force) {
+  if (task.assignee && !options?.force) {
     logError(
-      `Task ${taskId} is locked by session "${task.lockedBy}" since ${task.lockedAt ?? "unknown"}. ` +
-      `Use --force to override (only if you are sure the lock is stale).`,
+      `Task ${taskId} is assigned to session "${task.assignee}" since ${task.claimed_at ?? "unknown"}. ` +
+      `Use --force to override (only if you are sure the claim is stale).`,
     );
     return;
   }
 
   // If --force, warn about overriding
-  if (task.lockedBy && options?.force) {
-    logWarn(`Overriding stale lock from session "${task.lockedBy}".`);
+  if (task.assignee && options?.force) {
+    logWarn(`Overriding stale claim from session "${task.assignee}".`);
   }
 
   // Generate session ID

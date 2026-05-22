@@ -8,6 +8,7 @@ import { cmdSummary } from "./commands/summary.js";
 import { cmdBlock } from "./commands/block.js";
 import { cmdDone, type DoneOptions } from "./commands/done.js";
 import { cmdUnlock, type UnlockOptions } from "./commands/unlock.js";
+import { cmdSweep } from "./commands/sweep.js";
 import { cmdList, type ListOptions } from "./commands/list.js";
 import { cmdSync } from "./commands/sync.js";
 import { cmdDepsScan } from "./commands/deps/scan.js";
@@ -116,6 +117,11 @@ program
     const unlockOpts: UnlockOptions = { force: opts.force ?? false };
     return wrap(() => cmdUnlock(taskId, unlockOpts))();
   });
+
+program
+  .command("sweep")
+  .description("Sweeper Protocol: recover stale in-progress tasks (claimed >4h)")
+  .action(wrap(cmdSweep));
 
 // Dependency Steward commands
 const deps = program.command("deps").description("Dependency health management");

@@ -36,7 +36,7 @@ export async function cmdDone(
   }
 
   // Assert ownership if task is locked (skip if no lock set)
-  if (task.lockedBy) {
+  if (task.assignee) {
     await assertTaskOwnership(task, repoRoot);
   }
 

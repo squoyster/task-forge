@@ -22,13 +22,13 @@ export function parseSessionIdFromBranch(branch: string): string | null {
 
 /**
  * Assert that the current worktree's branch session owns the task.
- * Throws if the session doesn't match lockedBy.
+ * Throws if the session doesn't match assignee.
  */
 export async function assertTaskOwnership(
   task: Task,
   repoRoot: string,
 ): Promise<void> {
-  if (!task.lockedBy) return; // No lock — ownership not required
+  if (!task.assignee) return; // No assignee — ownership not required
 
   const branch = await getCurrentBranch(repoRoot);
   const agentSession = parseSessionIdFromBranch(branch);
@@ -41,9 +41,9 @@ export async function assertTaskOwnership(
     );
   }
 
-  if (agentSession !== task.lockedBy) {
+  if (agentSession !== task.assignee) {
     throw new TaskForgeError(
-      `Task ${task.id} is locked by session "${task.lockedBy}", ` +
+      `Task ${task.id} is assigned to session "${task.assignee}", ` +
       `but this worktree's branch "${branch}" identifies as "${agentSession}". ` +
       `Use 'taskforge unlock ${task.id} --force' to release the lock.`,
       "OWNERSHIP_MISMATCH",

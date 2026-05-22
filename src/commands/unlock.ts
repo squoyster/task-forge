@@ -19,14 +19,14 @@ export async function cmdUnlock(
     throw new TaskNotFoundError(taskId);
   }
 
-  if (!task.lockedBy) {
-    logWarn(`Task ${taskId} is not locked.`);
+  if (!task.assignee) {
+    logWarn(`Task ${taskId} is not claimed.`);
     return;
   }
 
   if (!options.force) {
     logError(
-      `Task ${taskId} is locked by session "${task.lockedBy}" since ${task.lockedAt ?? "unknown"}. ` +
+      `Task ${taskId} is assigned to session "${task.assignee}" since ${task.claimed_at ?? "unknown"}. ` +
       `Use --force to unlock.`,
     );
     return;
@@ -36,10 +36,10 @@ export async function cmdUnlock(
 
   const today = new Date().toISOString().split("T")[0];
   appendAgentNote(task.filePath, today, "System", [
-    `Task unlocked (forced) — previous lock was held by session "${task.lockedBy}"`,
+    `Task unlocked (forced) — previous claim was held by session "${task.assignee}"`,
   ]);
 
-  logSuccess(`Task ${taskId} unlocked. Lock from session "${task.lockedBy}" has been cleared.`);
+  logSuccess(`Task ${taskId} unlocked. Claim from session "${task.assignee}" has been cleared.`);
 
   // Push state changes to shared task-state branch
   await commitAndPushTaskState(repoRoot, `chore: unlock ${taskId}`);

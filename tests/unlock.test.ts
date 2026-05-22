@@ -53,22 +53,22 @@ function makeTaskFile(
 
 describe("cmdUnlock", () => {
   it("rejects unlocking a task without --force", async () => {
-    makeTaskFile("TASK-001", { lockedBy: "abc123def0", lockedAt: "2026-05-21 19:00:00" });
+    makeTaskFile("TASK-001", { assignee: "abc123def0", claimed_at: "2026-05-21 19:00:00" });
     // Without --force, unlock logs an error and returns without throwing
     await expect(cmdUnlock("TASK-001")).resolves.not.toThrow();
   });
 
   it("unlocks a locked task with --force", async () => {
-    const fp = makeTaskFile("TASK-001", { lockedBy: "abc123def0", lockedAt: "2026-05-21 19:00:00" });
+    const fp = makeTaskFile("TASK-001", { assignee: "abc123def0", claimed_at: "2026-05-21 19:00:00" });
 
     await cmdUnlock("TASK-001", { force: true });
 
     const content = fs.readFileSync(fp, "utf-8");
-    expect(content).not.toContain("lockedBy");
-    expect(content).not.toContain("lockedAt");
+    expect(content).not.toContain("assignee");
+    expect(content).not.toContain("claimed_at");
   });
 
-  it("is a no-op (warning) on an unlocked task", async () => {
+  it("is a no-op (warning) on an unclaimed task", async () => {
     makeTaskFile("TASK-001");
     await expect(cmdUnlock("TASK-001", { force: true })).resolves.not.toThrow();
   });
