@@ -1,15 +1,13 @@
 ---
 id: TASK-046
 type: Feature
-status: In Progress
+status: Done
 priority: P0
 agentRole: Implementer
 riskLevel: High
 humanInterventionRequired: false
 dependsOn:
   - TASK-045
-assignee: 241f82f885
-claimed_at: '2026-05-22 09:49:52'
 context_hash: 27705145f76d1ff7
 ---
 
@@ -48,6 +46,9 @@ TASK-045 (transaction layer for commit-time validation).
 High.
 
 ## Agent Notes
+
+### 2026-05-22 System
+- Task marked Done (forced)
 
 ### 2026-05-22 System
 - Task started via taskforge start TASK-046
