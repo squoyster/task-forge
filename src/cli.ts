@@ -15,6 +15,7 @@ import { cmdInspect, type InspectOptions } from "./commands/inspect.js";
 import { cmdClaim, type ClaimOptions } from "./commands/claim.js";
 import { cmdReport, type ReportOptions } from "./commands/report.js";
 import { cmdCleanup, type CleanupOptions } from "./commands/cleanup-cmd.js";
+import { cmdPrompt } from "./commands/prompt.js";
 import { cmdList, type ListOptions } from "./commands/list.js";
 import { cmdSync } from "./commands/sync.js";
 import { cmdDepsScan } from "./commands/deps/scan.js";
@@ -283,3 +284,8 @@ function wrap(fn: () => Promise<unknown>): () => Promise<void> {
 }
 
 program.parse();
+program
+  .command("prompt <taskId>")
+  .description("Emit a complete agent execution packet")
+  .option("--json", "Output in JSON format")
+  .action((taskId: string, opts: { json?: boolean }) => wrap(() => cmdPrompt(taskId, opts))());
