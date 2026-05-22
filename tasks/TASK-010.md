@@ -1,11 +1,13 @@
 ---
 id: TASK-010
 type: Task
-status: Inbox
+status: Done
 priority: P3
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+branch: agent/TASK-010-search-filter-list
+worktree: ../worktrees/TASK-010
 ---
 
 # TASK-010: Add task search and filtering capabilities
@@ -31,14 +33,14 @@ Disallowed files/directories:
 
 ## Acceptance Criteria
 
-- [ ] `taskforge list` shows all tasks in a compact table format
-- [ ] `taskforge list --status Ready` filters by status
-- [ ] `taskforge list --priority P1` filters by priority
-- [ ] `taskforge list --type Bug` filters by task type
-- [ ] `taskforge list --search "keyword"` filters by text match in title/body
-- [ ] `taskforge list --json` outputs filtered results as JSON
-- [ ] Filters can be combined (AND logic)
-- [ ] Unit tests cover each filter and combinations
+- [x] `taskforge list` shows all tasks in a compact table format
+- [x] `taskforge list --status Ready` filters by status
+- [x] `taskforge list --priority P1` filters by priority
+- [x] `taskforge list --type Bug` filters by task type
+- [x] `taskforge list --search "keyword"` filters by text match in title/body
+- [x] `taskforge list --json` outputs filtered results as JSON
+- [x] Filters can be combined (AND logic)
+- [x] Unit tests cover each filter and combinations
 
 ## Test / Verification Command
 
@@ -65,3 +67,12 @@ Low
 ## Continuation Policy
 
 Auto-continue unless a stopping condition occurs.
+
+## Agent Notes
+
+### 2026-05-22 Implementer
+- Created src/commands/list.ts: new `taskforge list` command with --status, --priority, --type, --search, --json filters
+- Updated src/cli.ts: registered list command with all filter options
+- Added tests/commands/list.test.ts: 17 test cases (8 filterTests + 9 cmdList) covering all filters, combinations, JSON output, edge cases
+- filterTasks() supports AND-combined filters with case-insensitive text search
+- Verification: typecheck, lint, build, all 138 tests pass (12 test files)
