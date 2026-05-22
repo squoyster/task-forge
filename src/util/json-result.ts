@@ -32,7 +32,7 @@ export interface JsonResult {
   next?: JsonNext;
   error?: string;
   code?: string;
-  sweep?: { scanned: number; stale: number; changed: number };
+  sweep?: { scanned: number; stale: number; changed: number; dryRun?: boolean; actions?: Array<{ taskId: string; previousAssignee: string; ageHours: string; action: string; reason?: string }> };
   gates?: GateResult[];
   allPassed?: boolean;
 }

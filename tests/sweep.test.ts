@@ -159,4 +159,30 @@ describe("cmdSweep", () => {
     // Should not throw — sweep should handle gracefully (no tasks to sweep)
     await expect(cmdSweep()).resolves.not.toThrow();
   });
+
+  it("dry-run does not mutate stale tasks", async () => {
+    const fp = makeTaskFile("TASK-001", {
+      assignee: "abc123def0",
+      claimed_at: hoursAgo(5),
+    });
+
+    await cmdSweep({ dryRun: true });
+
+    const content = fs.readFileSync(fp, "utf-8");
+    expect(content).toContain('status: "In Progress"');
+    expect(content).toContain("abc123def0");
+  });
+
+  it("force skips inspection and resets all stale", async () => {
+    const fp = makeTaskFile("TASK-001", {
+      assignee: "abc123def0",
+      claimed_at: hoursAgo(5),
+    });
+
+    await cmdSweep({ force: true });
+
+    const content = fs.readFileSync(fp, "utf-8");
+    expect(content).toContain("status: Ready");
+    expect(content).not.toContain("assignee");
+  });
 });

@@ -3,6 +3,8 @@ import { jitteredPush } from "./git.js";
 import { STATUS } from "../util/status-constants.js";
 import { getRepoRoot } from "../util/paths.js";
 import { logInfo, logSuccess, logSub, logWarn } from "../util/logging.js";
+import type { InspectResult } from "../commands/inspect.js";
+import type { ParsedTask } from "./task-store.js";
 
 const STALE_THRESHOLD_MS = 4 * 60 * 60 * 1000; // 4 hours
 
@@ -11,6 +13,9 @@ export interface SweepOptions {
   staleThresholdMs?: number;
   skipAssignee?: string;
   commit?: boolean;
+  dryRun?: boolean;
+  force?: boolean;
+  inspectTask?: (task: ParsedTask, repoRoot: string) => Promise<InspectResult>;
 }
 
 export interface SweptTask {
@@ -19,6 +24,8 @@ export interface SweptTask {
   claimedAt: string | Date;
   ageMs: number;
   filePath: string;
+  action: "reset" | "review" | "skipped";
+  reason?: string;
 }
 
 export interface SweepResult {
@@ -26,6 +33,7 @@ export interface SweepResult {
   stale: SweptTask[];
   changed: number;
   pushed: boolean;
+  dryRun?: boolean;
 }
 
 function parseClaimedAt(value: string | Date): Date | null {
@@ -47,15 +55,6 @@ function parseClaimedAt(value: string | Date): Date | null {
   return null;
 }
 
-/**
- * Core sweeper logic: scan for stale In Progress tasks and recover them.
- * Returns a SweepResult describing what was done.
- *
- * Callers:
- *  - cmdSweep() in commands/sweep.ts (CLI wrapper)
- *  - cmdNext() in commands/next.ts (run before task selection)
- *  - cmdStart() in commands/start.ts (run before task claiming)
- */
 export async function sweepStaleTasks(
   repoRoot?: string,
   options?: SweepOptions,
@@ -65,6 +64,9 @@ export async function sweepStaleTasks(
   const threshold = options?.staleThresholdMs ?? STALE_THRESHOLD_MS;
   const skipAssignee = options?.skipAssignee;
   const shouldCommit = options?.commit ?? true;
+  const dryRun = options?.dryRun ?? false;
+  const force = options?.force ?? false;
+  const inspectTaskFn = options?.inspectTask;
 
   const tasks = loadAllTasks(root);
 
@@ -81,48 +83,79 @@ export async function sweepStaleTasks(
   });
 
   const swept: SweptTask[] = [];
+  let changedCount = 0;
 
   for (const task of staleTasks) {
     const claimedTime = parseClaimedAt(task.claimed_at!)!;
     const ageMs = now.getTime() - claimedTime.getTime();
 
-    swept.push({
+    let action: "reset" | "review" | "skipped" = "reset";
+    let reason: string | undefined;
+
+    // Classify worktree state unless --force
+    if (!force && inspectTaskFn) {
+      try {
+        const insp = await inspectTaskFn(task, root);
+        if (insp.dirty) {
+          action = "skipped";
+          reason = "dirty worktree — uncommitted changes";
+        } else if (insp.aheadOfMain > 0) {
+          action = "review";
+          reason = `worktree has ${insp.aheadOfMain} commit(s) ahead of main — moving to Review`;
+        }
+      } catch {
+        // Inspect may fail if worktree doesn't exist — that's fine, default to reset
+      }
+    }
+
+    const entry: SweptTask = {
       id: task.id,
       previousAssignee: task.assignee!,
       claimedAt: task.claimed_at!,
       ageMs,
       filePath: task.filePath,
-    });
+      action,
+      reason,
+    };
+    swept.push(entry);
 
-    // Reset to Ready
-    updateTaskStatus(task.filePath, STATUS.READY);
-    // Clear the claim
-    clearTaskLock(task.filePath);
+    if (action === "skipped") continue;
 
-    const today = now.toISOString().split("T")[0];
-    const ageHours = (ageMs / (60 * 60 * 1000)).toFixed(1);
-    appendAgentNote(task.filePath, today, "System", [
-      `Task swept by Sweeper Protocol — claim by "${task.assignee}" was ${ageHours}h old (threshold: 4h)`,
-    ]);
+    if (!dryRun) {
+      if (action === "review") {
+        updateTaskStatus(task.filePath, STATUS.REVIEW);
+      } else {
+        updateTaskStatus(task.filePath, STATUS.READY);
+      }
+      clearTaskLock(task.filePath);
+
+      const today = now.toISOString().split("T")[0];
+      const ageHours = (ageMs / (60 * 60 * 1000)).toFixed(1);
+      const actionLabel = action === "review" ? "moved to Review" : "reset to Ready";
+      appendAgentNote(task.filePath, today, "System", [
+        `Task swept by Sweeper Protocol — ${actionLabel}. ` +
+        `Claim by "${task.assignee}" was ${ageHours}h old (threshold: 4h).` +
+        (reason ? ` Reason: ${reason}` : ""),
+      ]);
+    }
+
+    changedCount++;
   }
 
   let pushed = true;
-  if (swept.length > 0 && shouldCommit) {
+  if (!dryRun && swept.length > 0 && shouldCommit) {
     pushed = await jitteredPush(root, `chore: sweep ${swept.length} stale task(s)`);
   }
 
   return {
     scanned: tasks.length,
     stale: swept,
-    changed: swept.length,
+    changed: changedCount,
     pushed,
+    dryRun,
   };
 }
 
-/**
- * CLI-friendly helper: run sweeper and print human-readable output.
- * Returns the SweepResult for programmatic use.
- */
 export async function runSweeperAndPrint(
   repoRoot?: string,
   options?: SweepOptions,
@@ -134,18 +167,26 @@ export async function runSweeperAndPrint(
     return result;
   }
 
-  logInfo(`Sweeper: Found ${result.changed} stale task(s) with claims older than 4 hours.`);
+  logInfo(`Sweeper: Found ${result.stale.length} stale task(s) with claims older than 4 hours${options?.dryRun ? " (dry-run)" : ""}.`);
 
   for (const swept of result.stale) {
     const ageHours = (swept.ageMs / (60 * 60 * 1000)).toFixed(1);
-    logSub(`Resetting ${swept.id} (claimed by "${swept.previousAssignee}" ${ageHours}h ago)`);
-    logSuccess(`  ${swept.id}: ${STATUS.IN_PROGRESS} → ${STATUS.READY} (claim cleared)`);
+    const actionLabel = swept.action === "review" ? "→ Review" : swept.action === "skipped" ? "— SKIPPED" : "→ Ready";
+    logSub(`${swept.id} (claimed by "${swept.previousAssignee}" ${ageHours}h ago) ${actionLabel}`);
+    if (swept.reason) {
+      logWarn(`  ${swept.reason}`);
+    }
+    if (swept.action !== "skipped") {
+      logSuccess(`  ${swept.id}: In Progress → ${swept.action === "review" ? "Review" : "Ready"}`);
+    }
   }
 
   if (!result.pushed) {
     logWarn("Sweeper: failed to push state changes after retries. State changes are committed locally.");
-  } else {
+  } else if (!options?.dryRun) {
     logSuccess(`Sweeper: Recovered ${result.changed} stale task(s).`);
+  } else {
+    logInfo(`Sweeper: ${result.changed} task(s) would be recovered (dry-run).`);
   }
 
   return result;

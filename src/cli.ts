@@ -153,7 +153,10 @@ program
   .command("sweep")
   .description("Sweeper Protocol: recover stale in-progress tasks (claimed >4h)")
   .option("--json", "Output in JSON format")
-  .action((opts: { json?: boolean }) => wrap(() => cmdSweep(opts))());
+  .option("--dry-run", "Preview what would happen without mutating state")
+  .option("--force", "Skip worktree classification, reset all stale tasks")
+  .action((opts: { json?: boolean; dryRun?: boolean; force?: boolean }) =>
+    wrap(() => cmdSweep({ json: opts.json, dryRun: opts.dryRun, force: opts.force }))());
 
 program
   .command("heartbeat <taskId>")

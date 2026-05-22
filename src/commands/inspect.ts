@@ -81,7 +81,7 @@ export async function cmdInspect(
   return result;
 }
 
-async function inspectTask(
+export async function inspectTask(
   task: ParsedTask,
   repoRoot: string,
 ): Promise<InspectResult> {
