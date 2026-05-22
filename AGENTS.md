@@ -5,7 +5,7 @@ This file provides operational instructions for coding agents working on the Tas
 ## Before Starting
 
 1. Read `TASKFORGE.md` — the full system specification
-2. Read the relevant task file under `tasks/`
+2. Read the relevant task file from the task-state worktree (`../task-state/`)
 3. Check `git status` to understand current branch state
 
 ## Development Workflow

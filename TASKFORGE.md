@@ -34,19 +34,25 @@ Human Interface
   ├─ Jira
   └─ Repo-native Markdown task files
 
-Repository
+Main Branch (source code, specs, docs)
   ├─ TASKFORGE.md          (this file)
   ├─ AGENTS.md             (if present)
-  ├─ tasks/
-  │   ├─ README.md
-  │   ├─ TEMPLATE.md
-  │   └─ TASK-NNN.md / FEATURE-NNN.md / BUG-NNN.md / etc.
   ├─ specs/
   ├─ docs/decisions/
   ├─ tests/
   ├─ logs/taskforge/
   └─ scripts/
       └─ taskforge              (thin wrapper → TypeScript CLI)
+
+Task State (on dedicated task-state branch, see §Task State Storage below)
+  ../task-state/
+  ├─ README.md
+  ├─ TEMPLATE.md
+  └─ TASK-NNN.md / FEATURE-NNN.md / BUG-NNN.md / etc.
+
+Agent Worktrees (per-task git worktrees)
+  ../worktrees/
+  └─ TASK-NNN/                 (one per active task)
 
 Execution Layer
   ├─ OpenCode or compatible CLI coding agent
@@ -56,6 +62,50 @@ Execution Layer
   ├─ CI
   └─ Pull requests
 ```
+
+## Task State Storage
+
+**This section is the authoritative description of how task files are stored. It supersedes any earlier references to a `tasks/` directory on the `main` branch.**
+
+### Ground Truth
+
+Task files live on a dedicated **`task-state`** git branch, **not** on `main`. The `task-state` branch is the single source of truth:
+
+- **Location**: A git worktree at `../task-state/` (sibling to the main repo)
+- **Contents**: Only task Markdown files (`TASK-NNN.md`, `FEATURE-NNN.md`, `BUG-NNN.md`, etc.), a `README.md`, and `TEMPLATE.md`
+- **Accessible from**: The main repo checkout and every agent worktree (all are siblings of `../task-state/`)
+- **Initialized by**: `taskforge init` — creates the branch, seeds template files, sets up the worktree
+
+```
+/Volumes/Transcend/devel/
+  ├── task-forge/               (main branch — source code)
+  ├── task-state/               (task-state branch — task data only)
+  └── worktrees/
+      └── TASK-NNN/             (agent worktree branches)
+```
+
+### Propagation Model
+
+Every mutation to a task file triggers an immediate **auto-commit + auto-push** to the `task-state` branch:
+
+| Operation | What happens |
+|---|---|
+| `taskforge start TASK-123` | Writes `lockedBy`/`lockedAt` → commits + pushes |
+| `taskforge done TASK-123` | Clears lock, updates status → commits + pushes |
+| `taskforge block TASK-123` | Clears lock, updates status → commits + pushes |
+| `taskforge unlock TASK-123 --force` | Clears lock → commits + pushes |
+| `taskforge sync` | Updates from GitHub → commits + pushes |
+| Dependency task creation | Creates file → commits + pushes |
+
+This ensures state propagates instantly to all agents. No agent ever reads stale data.
+
+### Why Not `main`'s `tasks/` Directory?
+
+The previous design stored task files in `tasks/` on `main`. This broke when agent worktrees were created before new tasks were committed — the worktree was a git snapshot and couldn't see task files created later. The `task-state` branch decouples task data from code history, making it accessible from any git context.
+
+### Conflict Handling
+
+Because the tooling serializes writes (only one agent mutates a task at a time, enforced by session-based locking from TASK-012), merge conflicts on the `task-state` branch should be rare. If a `git push` fails due to a conflict, the tooling aborts with a clear message and instructs the agent to retry after fetching the latest state.
 
 ## Task Types
 
@@ -114,7 +164,15 @@ Inbox → Needs Spec → Ready → In Progress → Review → Verify → Done
 
 ## Workspace Strategy
 
-Use git worktrees by default:
+Three separate git worktree areas coexist:
+
+### Task State Worktree (`../task-state/`)
+
+A permanent worktree on the `task-state` branch containing only task Markdown files. Created by `taskforge init`. All task read/write operations target this worktree. Every mutation is auto-committed and auto-pushed. See §**Task State Storage** for details.
+
+### Agent Worktrees (`../worktrees/TASK-NNN/`)
+
+Per-task isolated worktrees where implementation happens:
 
 ```bash
 git worktree add ../worktrees/TASK-123 -b agent/TASK-123-short-title
@@ -311,7 +369,7 @@ When launching an OpenCode session:
 ```
 You are operating under TaskForge Autonomous Coding Board.
 
-Read TASKFORGE.md, AGENTS.md if present, and the relevant task file under tasks/.
+Read TASKFORGE.md, AGENTS.md if present, and the relevant task file from the task-state worktree (../task-state/).
 
 Use git worktrees and task branches unless already inside the correct task worktree.
 
