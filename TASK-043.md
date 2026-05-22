@@ -1,11 +1,13 @@
 ---
 id: TASK-043
 type: Documentation
-status: Ready
+status: In Progress
 priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 02d3d81ec5
+claimed_at: '2026-05-22 09:28:09'
 ---
 
 # TASK-043: Document Agent Discipline Policy — No Direct Git, Doctor Mode Protocol
@@ -62,3 +64,11 @@ Low — documentation only.
 ## Continuation Policy
 
 Auto-continue.
+
+## Agent Notes
+
+### 2026-05-22 System
+- Task started via taskforge start TASK-043
+- Session: 02d3d81ec5
+- Branch: agent/TASK-043-document-agent-discipline-policy-no-dire--02d3d81ec5
+- Worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-043
