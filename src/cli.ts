@@ -10,6 +10,7 @@ import { cmdBlock } from "./commands/block.js";
 import { cmdDone, type DoneOptions } from "./commands/done.js";
 import { cmdUnlock, type UnlockOptions } from "./commands/unlock.js";
 import { cmdSweep } from "./commands/sweep.js";
+import { cmdHeartbeat, type HeartbeatOptions } from "./commands/heartbeat.js";
 import { cmdList, type ListOptions } from "./commands/list.js";
 import { cmdSync } from "./commands/sync.js";
 import { cmdDepsScan } from "./commands/deps/scan.js";
@@ -145,6 +146,16 @@ program
   .description("Sweeper Protocol: recover stale in-progress tasks (claimed >4h)")
   .option("--json", "Output in JSON format")
   .action((opts: { json?: boolean }) => wrap(() => cmdSweep(opts))());
+
+program
+  .command("heartbeat <taskId>")
+  .description("Extend the lease on an In Progress task by updating claimed_at")
+  .option("--force", "Skip ownership verification")
+  .option("--json", "Output in JSON format")
+  .action((taskId: string, opts: { force?: boolean; json?: boolean }) => {
+    const hbOpts: HeartbeatOptions = { force: opts.force ?? false, json: opts.json ?? false };
+    return wrap(() => cmdHeartbeat(taskId, hbOpts))();
+  });
 
 // Dependency Steward commands
 const deps = program.command("deps").description("Dependency health management");
