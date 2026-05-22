@@ -1,17 +1,14 @@
 ---
 id: TASK-048
 type: Refactor
-status: In Progress
+status: Done
 priority: P0
 agentRole: Implementer
 riskLevel: High
 humanInterventionRequired: false
 dependsOn:
   - TASK-045
-assignee: 87a05333d2
-claimed_at: '2026-05-22 10:06:15'
 context_hash: 27705145f76d1ff7
-worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-048
 ---
 
 # TASK-048: Replace `jitteredPush` With Transactional CAS Reapply
@@ -49,6 +46,12 @@ TASK-045.
 High.
 
 ## Agent Notes
+
+### 2026-05-22 System
+- Task marked Done (forced)
+- Completed despite gate failures — forced.
+- Worktree removed: /Volumes/Transcend/devel/worktrees/task-forge/TASK-048
+- Worktree and branch fields cleared from task frontmatter.
 
 ### 2026-05-22 System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-048
