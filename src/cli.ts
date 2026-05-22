@@ -286,7 +286,6 @@ function wrap(fn: () => Promise<unknown>): () => Promise<void> {
   };
 }
 
-program.parse();
 program
   .command("prompt <taskId>")
   .description("Emit a complete agent execution packet")
@@ -310,3 +309,5 @@ program
   .description("Validate .taskforge/config.json")
   .option("--json", "Output in JSON format")
   .action((opts: { json?: boolean }) => wrap(() => cmdConfigValidate(opts))());
+
+program.parse();
