@@ -1,13 +1,11 @@
 ---
 id: TASK-039
 type: Feature
-status: In Progress
+status: Ready
 priority: P2
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
-assignee: dcb1b97102
-claimed_at: '2026-05-22 08:24:27'
 ---
 
 # TASK-039: Control-File Change Detection — Prevent Stale-Context Work
