@@ -149,24 +149,42 @@ export async function ensureTaskStateBranch(repoRoot: string): Promise<string> {
 
     // Check if branch exists locally or remotely
     const branches = await git.branchLocal();
-    let branchExists = branches.all.includes("task-state");
+    const localExists = branches.all.includes("task-state");
 
-    if (!branchExists) {
-      // Try to fetch from remote first
+    // Check remote
+    let remoteExists = false;
+    if (!localExists) {
       try {
         await execa("git", ["fetch", "origin", "task-state"], { cwd: repoRoot });
-        branchExists = true;
+        remoteExists = true;
       } catch {
-        // Branch doesn't exist remotely either — will create orphan
+        remoteExists = false;
       }
     }
 
-    if (branchExists) {
+    if (localExists || remoteExists) {
       await execa("git", ["worktree", "add", stateDir, "task-state"], { cwd: repoRoot });
     } else {
-      // Create orphan branch: we need to make an initial commit
-      // so the branch is valid for checkout via worktree add
+      // Create the worktree/branch from HEAD, then strip to just task files
       await execa("git", ["worktree", "add", stateDir, "-b", "task-state"], { cwd: repoRoot });
+      try {
+        const wtGit = simpleGit(stateDir);
+        // Remove all tracked files (keep .git)
+        await wtGit.raw("rm", "-rf", ".");
+        // Place a gitkeep so the branch has content
+        const fs = await import("node:fs");
+        const path = await import("node:path");
+        fs.writeFileSync(
+          path.join(stateDir, ".gitkeep"),
+          "Task state branch — contains only task Markdown files.\n",
+          "utf-8",
+        );
+        await wtGit.add(".");
+        await wtGit.commit("chore: initialize task-state branch");
+        await execa("git", ["push", "-u", "origin", "task-state"], { cwd: stateDir });
+      } catch {
+        // Cleanup may fail if worktree was already modified — proceed
+      }
     }
   } catch {
     // Not a git repo or other git error — just ensure the directory exists
