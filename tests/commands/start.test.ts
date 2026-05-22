@@ -25,6 +25,7 @@ vi.mock("../../src/core/task-store.js", () => ({
 
 vi.mock("../../src/core/session.js", () => ({
   generateSessionId: vi.fn().mockReturnValue("test-session-123"),
+  checkOutstandingSessionTasks: vi.fn().mockResolvedValue(null),
 }));
 
 vi.mock("../../src/core/git.js", () => ({
