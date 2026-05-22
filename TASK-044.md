@@ -1,11 +1,14 @@
 ---
 id: TASK-044
 type: Chore
-status: Ready
+status: In Progress
 priority: P3
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: dbe3a71d5d
+claimed_at: '2026-05-22 20:04:48'
+context_hash: ed264b332d269eec
 ---
 
 # TASK-044: Remove Legacy `tasks/` Directory from Main
@@ -34,3 +37,10 @@ Low — cleanup only, no functional change.
 ## Continuation Policy
 
 Auto-continue.
+
+## Agent Notes
+
+### 2026-05-22 System
+- Task claimed via taskforge start TASK-044
+- Session: dbe3a71d5d
+- Branch: agent/TASK-044-remove-legacy-tasks-directory-from-main--dbe3a71d5d
