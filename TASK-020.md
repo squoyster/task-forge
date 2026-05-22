@@ -1,7 +1,7 @@
 ---
 id: TASK-020
 type: Feature
-status: Ready
+status: Done
 priority: P1
 agentRole: Implementer
 riskLevel: Medium
@@ -69,17 +69,17 @@ taskforge inspect --all                  # Inspect all active tasks
 
 ## Acceptance Criteria
 
-- [ ] Detects whether worktree exists at the expected path
-- [ ] Detects whether branch exists (local or remote)
-- [ ] Detects dirty (uncommitted) files in worktree
-- [ ] Reports commits ahead/behind the main branch
-- [ ] Reports the last commit hash on the branch
-- [ ] Reports whether claim is stale (`claimed_at > 4h`)
-- [ ] Reports claim age in hours
-- [ ] `--all` flag inspects all tasks with `In Progress` status
-- [ ] `--json` flag outputs structured result
-- [ ] Tests cover all detection scenarios (dirty, clean, missing, stale)
-- [ ] All existing tests pass
+- [x] Detects whether worktree exists at the expected path
+- [x] Detects whether branch exists (local or remote)
+- [x] Detects dirty (uncommitted) files in worktree
+- [x] Reports commits ahead/behind the main branch
+- [x] Reports the last commit hash on the branch
+- [x] Reports whether claim is stale (`claimed_at > 4h`)
+- [x] Reports claim age in hours
+- [x] `--all` flag inspects all tasks with `In Progress` status
+- [x] `--json` flag outputs structured result
+- [x] Tests cover all detection scenarios (dirty, clean, missing, stale)
+- [x] All existing tests pass
 
 ## Test / Verification Command
 
@@ -99,3 +99,16 @@ Medium — inspects real git state and file system state; test coverage must be 
 ## Continuation Policy
 
 Auto-continue unless a stopping condition occurs.
+
+## Agent Notes
+
+### 2026-05-21 | Implementer
+
+- Created `src/commands/inspect.ts` — `cmdInspect()` checks worktree existence, branch existence, dirty status (via `git status --porcelain`), ahead/behind main (via `git rev-list --count`), last commit hash (via `git rev-parse HEAD`), and claim staleness/age.
+- Supports `--all` flag to inspect all tasks with `In Progress` status.
+- Supports `--json` output following the JSON contract in the task spec.
+- Fixed date parsing for `claimed_at`: normalizes space-separated timestamps (used in YAML frontmatter) to ISO 8601 before `Date` parsing, avoiding cross-engine parsing inconsistencies.
+- Registered `taskforge inspect <taskId>` command in `src/cli.ts` with `--all` and `--json` options.
+- Created `tests/inspect.test.ts` with 10 tests: missing worktree, existing clean worktree, dirty detection, ahead/behind counts, stale claim (5h), fresh claim (1h), JSON output, not-found error, --all flag, --all with no tasks.
+- Note: Sweeper integration (using inspect to classify before sweeping) is deferred to a future task.
+- Verification gates pass: typecheck (0 errors), lint (0 errors), build (clean), 310 tests pass (30 files).
