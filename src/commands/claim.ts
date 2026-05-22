@@ -1,7 +1,7 @@
-import { loadTaskById, loadAllTasks, updateTaskStatus, updateTaskLock, appendAgentNote, clearTaskLock } from "../core/task-store.js";
+import { loadTaskById, loadAllTasks, updateTaskStatus, updateTaskLock, appendAgentNote } from "../core/task-store.js";
 import { validateTransition } from "../core/status-transition.js";
-import { jitteredPush } from "../core/git.js";
 import { pullTaskState } from "../core/git.js";
+import { withTaskStateTransaction } from "../core/task-state-transaction.js";
 import { generateSessionId } from "../core/session.js";
 import { sweepStaleTasks } from "../core/sweeper.js";
 import { STATUS } from "../util/status-constants.js";
@@ -116,39 +116,28 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
     `Session: ${sessionId}`,
   ]);
 
-  const pushed = await jitteredPush(repoRoot, `chore: claim ${taskId} [session: ${sessionId}]`, {
-    onConflict: async (_stateDir: string) => {
-      const currentTask = loadTaskById(taskId);
-      if (!currentTask) {
-        if (!json) logWarn(`Task ${taskId} disappeared after rebase. Aborting.`);
-        return false;
-      }
-      if (currentTask.assignee && currentTask.assignee !== sessionId) {
-        if (!json) {
-          logWarn(
-            `Another agent (session "${currentTask.assignee}") claimed ${taskId} while we were pushing. ` +
-            `Abandoning claim.`,
-          );
+  // Push using transactional CAS reapply
+  try {
+    await withTaskStateTransaction(
+      { command: `claim ${taskId}`, maxRetries: 3 },
+      async (tx) => {
+        const fresh = tx.loadTask(taskId);
+        if (!fresh) throw new Error(`Task ${taskId} not found during transaction`);
+        if (fresh.assignee && fresh.assignee !== sessionId) {
+          throw new Error(`Task ${taskId} was claimed by session "${fresh.assignee}" during our push`);
         }
-        clearTaskLock(task.filePath);
-        return false;
-      }
-      return true;
-    },
-  });
-
-  if (!pushed) {
+        tx.claimTask(taskId, sessionId);
+      },
+    );
+  } catch (err) {
     if (json) {
       printJson(jsonError(
-        `Failed to push claim for ${taskId}. The task may have been claimed by another agent.`,
+        `Failed to push claim: ${err instanceof Error ? err.message : String(err)}`,
         "PUSH_FAILED",
       ));
       return;
     }
-    logError(
-      `Failed to push claim for ${taskId}. The task may have been claimed by another agent. ` +
-      `Run 'taskforge next' to find another task.`,
-    );
+    logError(`Failed to push claim for ${taskId}. The task may have been claimed by another agent.`);
     return;
   }
 
