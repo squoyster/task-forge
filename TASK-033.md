@@ -1,11 +1,13 @@
 ---
 id: TASK-033
 type: Feature
-status: Ready
+status: In Progress
 priority: P3
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 04fef95005
+claimed_at: '2026-05-22 07:30:24'
 ---
 
 # TASK-033: Add `config validate` Command
@@ -47,3 +49,11 @@ Low — read-only validation (--fix is opt-in and conservative).
 ## Continuation Policy
 
 Auto-continue.
+
+## Agent Notes
+
+### 2026-05-22 System
+- Task started via taskforge start TASK-033
+- Session: 04fef95005
+- Branch: agent/TASK-033-add-config-validate-command--04fef95005
+- Worktree: /Volumes/Transcend/devel/worktrees/TASK-033
