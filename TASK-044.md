@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: dbe3a71d5d
 claimed_at: '2026-05-22 20:04:48'
 context_hash: ed264b332d269eec
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-044
 ---
 
 # TASK-044: Remove Legacy `tasks/` Directory from Main
@@ -39,6 +40,9 @@ Low — cleanup only, no functional change.
 Auto-continue.
 
 ## Agent Notes
+
+### 2026-05-22 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-044
 
 ### 2026-05-22 System
 - Task claimed via taskforge start TASK-044
