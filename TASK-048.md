@@ -1,13 +1,16 @@
 ---
 id: TASK-048
 type: Refactor
-status: Ready
+status: In Progress
 priority: P0
 agentRole: Implementer
 riskLevel: High
 humanInterventionRequired: false
 dependsOn:
   - TASK-045
+assignee: 87a05333d2
+claimed_at: '2026-05-22 10:06:15'
+context_hash: 27705145f76d1ff7
 ---
 
 # TASK-048: Replace `jitteredPush` With Transactional CAS Reapply
@@ -43,3 +46,10 @@ TASK-045.
 ## Risk Level
 
 High.
+
+## Agent Notes
+
+### 2026-05-22 System
+- Task claimed via taskforge start TASK-048
+- Session: 87a05333d2
+- Branch: agent/TASK-048-replace-jitteredpush-with-transactional--87a05333d2
