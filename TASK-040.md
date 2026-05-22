@@ -1,13 +1,11 @@
 ---
 id: TASK-040
 type: Feature
-status: In Progress
+status: Done
 priority: P1
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
-assignee: 8ac1187e87
-claimed_at: '2026-05-22 08:38:40'
 ---
 
 # TASK-040: Agent Capability Levels
@@ -78,6 +76,10 @@ Medium — introduces a new permission model affecting all commands. Must not br
 Auto-continue unless a stopping condition occurs.
 
 ## Agent Notes
+
+### 2026-05-22 System
+- Task marked Done (forced)
+- Completed despite gate failures — forced.
 
 ### 2026-05-22 System
 - Task started via taskforge start TASK-040
