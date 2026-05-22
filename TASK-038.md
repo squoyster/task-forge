@@ -1,11 +1,13 @@
 ---
 id: TASK-038
 type: Feature
-status: Ready
+status: In Progress
 priority: P2
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
+assignee: 3cc0521e75
+claimed_at: '2026-05-22 08:21:43'
 ---
 
 # TASK-038: Harden `doctor` — Integrate Inspect and Add Consistency Validation
@@ -87,3 +89,11 @@ Medium — adds new checks but doesn't mutate state.
 ## Continuation Policy
 
 Auto-continue.
+
+## Agent Notes
+
+### 2026-05-22 System
+- Task started via taskforge start TASK-038
+- Session: 3cc0521e75
+- Branch: agent/TASK-038-harden-doctor-integrate-inspect-and-add--3cc0521e75
+- Worktree: /Volumes/Transcend/devel/worktrees/TASK-038
