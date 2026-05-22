@@ -1,13 +1,11 @@
 ---
 id: TASK-037
 type: Feature
-status: In Progress
+status: Done
 priority: P3
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 39a1c1c59f
-claimed_at: '2026-05-22 09:36:13'
 context_hash: 27705145f76d1ff7
 ---
 
@@ -63,6 +61,9 @@ Low — additive, no existing behavior changed.
 Auto-continue.
 
 ## Agent Notes
+
+### 2026-05-22 System
+- Task marked Done (forced)
 
 ### 2026-05-22 System
 - Task started via taskforge start TASK-037
