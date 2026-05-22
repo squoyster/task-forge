@@ -1,7 +1,7 @@
 ---
 id: TASK-040
 type: Feature
-status: Inbox
+status: Ready
 priority: P1
 agentRole: Implementer
 riskLevel: Medium
