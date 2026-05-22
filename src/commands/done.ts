@@ -26,7 +26,10 @@ export async function cmdDone(
   taskId: string,
   options: DoneOptions = {},
 ): Promise<void> {
-  const { force = false, cleanup = false, deleteBranch = false, json = false } = options;
+  const { force = false, forceGates = false, forceTransition = false, forceOwnership = false, cleanup = false, deleteBranch = false, json = false } = options;
+  const skipGates = force || forceGates;
+  const skipTransition = force || forceTransition;
+  const skipOwnership = force || forceOwnership;
   const repoRoot = getRepoRoot();
   const task = loadTaskById(taskId);
 
@@ -40,41 +43,10 @@ export async function cmdDone(
 
   // --- Check gates ---
   const gatesPassed = await cmdGates({ json: options.json });
-  if (!gatesPassed && !force) {
-    if (options.json) {
-      printJson(jsonError(
-        "Not all gates passed. Run 'taskforge done --force' to override.",
-        "GATES_FAILED",
-      ));
-      return;
-    }
-    throw new Error("Not all gates passed. Run 'taskforge done --force' to override.");
-  }
-
-  // --- Status transition ---
-  const transitionError = validateTransition(task.status, STATUS.DONE);
-  if (transitionError && !force) {
-    if (json) {
-      printJson(jsonError(
-        `Cannot transition from "${task.status}" to "${STATUS.DONE}". Allowed: ${STATUS.REVIEW}, ${STATUS.VERIFY}`,
-        "INVALID_TRANSITION",
-      ));
-      return;
-    }
-    throw new InvalidStatusTransitionError(
-      task.status,
-      STATUS.DONE,
-      [STATUS.REVIEW, STATUS.VERIFY],
-    );
-  }
-
-  // Assert ownership if task is locked (skip if no lock set)
-  if (task.assignee && !force) {
-    await assertTaskOwnership(task, repoRoot);
-  }
-
-  // Control-file change detection
-  if (task.context_hash && !force) {
+  if (!gatesPassed && !skipGates) {
+  if (transitionError && !skipTransition) {
+  if (task.assignee && !skipOwnership) {
+  if (task.context_hash && !skipTransition) {
     const currentHash = hashControlFiles(repoRoot);
     if (currentHash !== task.context_hash) {
       if (json) {
