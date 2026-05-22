@@ -1,10 +1,10 @@
 ---
 id: TASK-015
 type: Feature
-status: In Progress
+status: Done
 priority: P1
 agentRole: Implementer
-riskLevel: Medium
+riskLevel: Low
 humanInterventionRequired: false
 assignee: f2b07d4831
 claimed_at: '2026-05-22 03:06:44'
@@ -36,16 +36,16 @@ Modified files:
 
 ## Acceptance Criteria
 
-- [ ] `jitteredPush()` helper exists in `git.ts`
-- [ ] `jitteredPush()` catches non-fast-forward push rejections
-- [ ] On rejection, executes `git pull --rebase` in the task-state worktree
-- [ ] Waits a random 2-10 second jitter period before retrying
-- [ ] Re-reads the task status after rebase
-- [ ] If another agent already claimed the task: aborts cleanly with a message
-- [ ] If task is still available: retries the push (up to 3 retries max)
-- [ ] `taskforge start` uses `jitteredPush()` for its claiming step
-- [ ] `taskforge sweep` uses `jitteredPush()` for its state changes
-- [ ] All existing tests continue to pass
+- [x] `jitteredPush()` helper exists in `git.ts`
+- [x] `jitteredPush()` catches non-fast-forward push rejections
+- [x] On rejection, executes `git pull --rebase` in the task-state worktree
+- [x] Waits a random 2-10 second jitter period before retrying
+- [x] Re-reads the task status after rebase (via `onConflict` callback)
+- [x] If another agent already claimed the task: aborts cleanly with a message
+- [x] If task is still available: retries the push (up to 3 retries max)
+- [x] `taskforge start` uses `jitteredPush()` for its claiming step
+- [x] `taskforge sweep` uses `jitteredPush()` for its state changes
+- [x] All existing tests continue to pass
 
 ## Test / Verification Command
 
@@ -72,3 +72,17 @@ Auto-continue unless a stopping condition occurs.
 - Session: f2b07d4831
 - Branch: agent/TASK-015-jittered-retries-for-optimistic-concurre--f2b07d4831
 - Worktree: /Volumes/Transcend/devel/worktrees/TASK-015
+- Implementation completed:
+  - Added `jitteredPush()` helper in `src/core/git.ts` with:
+    - Non-fast-forward detection via `isNonFastForwardRejection()`
+    - `git pull --rebase` on conflict
+    - 2-10s random jitter wait
+    - Up to 3 retries (configurable)
+    - `onConflict` callback for caller-owned conflict resolution
+  - Modified `start.ts` to use `jitteredPush()` with conflict callback
+    that re-reads task after rebase and aborts if another agent claimed it
+  - Modified `sweep.ts` to use `jitteredPush()` for sweep state changes
+  - Created `tests/jittered-push.test.ts` with 8 tests:
+    success, retry+succeed, exhaust retries, no retry on other errors,
+    onConflict abort, onConflict retry, no changes, missing state dir
+  - All 283 tests pass across 26 test files
