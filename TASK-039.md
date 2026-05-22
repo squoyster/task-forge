@@ -1,11 +1,13 @@
 ---
 id: TASK-039
 type: Feature
-status: Ready
+status: In Progress
 priority: P2
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
+assignee: dcb1b97102
+claimed_at: '2026-05-22 08:24:27'
 ---
 
 # TASK-039: Control-File Change Detection — Prevent Stale-Context Work
@@ -121,3 +123,11 @@ Medium — adds a new refusal condition to `done`/`report`/`block`, but `--force
 ## Continuation Policy
 
 Auto-continue.
+
+## Agent Notes
+
+### 2026-05-22 System
+- Task started via taskforge start TASK-039
+- Session: dcb1b97102
+- Branch: agent/TASK-039-control-file-change-detection-prevent-st--dcb1b97102
+- Worktree: /Volumes/Transcend/devel/worktrees/TASK-039
