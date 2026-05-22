@@ -6,8 +6,8 @@ priority: P1
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
-assignee: cc24a878b1
-claimed_at: '2026-05-22 08:02:50'
+assignee: 532cdaa306
+claimed_at: '2026-05-22 08:24:27'
 ---
 
 # TASK-036: Fix Ownership Assertion in `done` and `block` — Respect `--force`
@@ -62,6 +62,12 @@ Medium — changes a security guard, but `--force` already implies "I know what 
 Auto-continue.
 
 ## Agent Notes
+
+### 2026-05-22 System
+- Task started via taskforge start TASK-036
+- Session: 532cdaa306
+- Branch: agent/TASK-036-fix-ownership-assertion-in-done-and-bloc--532cdaa306
+- Worktree: /Volumes/Transcend/devel/worktrees/TASK-036
 
 ### 2026-05-22 System
 - Task started via taskforge start TASK-036
