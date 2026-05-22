@@ -16,6 +16,7 @@ import { cmdClaim, type ClaimOptions } from "./commands/claim.js";
 import { cmdReport, type ReportOptions } from "./commands/report.js";
 import { cmdCleanup, type CleanupOptions } from "./commands/cleanup-cmd.js";
 import { cmdPrompt } from "./commands/prompt.js";
+import { cmdNew, type NewOptions } from "./commands/new.js";
 import { cmdResume } from "./commands/resume.js";
 import { cmdDoctor } from "./commands/doctor.js";
 import { cmdConfigValidate } from "./commands/config-validate.js";
@@ -224,6 +225,25 @@ program
       json: opts.json ?? false,
     };
     return wrap(() => cmdCleanup(taskId, cleanupOpts))();
+  });
+
+program
+  .command("new <title>")
+  .description("Create a new task file with auto-incremented ID")
+  .option("--type <type>", "Task type (Task, Feature, Bug, etc.)", "Task")
+  .option("--priority <p>", "Priority (P0-P3)", "P2")
+  .option("--agent-role <role>", "Agent role", "Implementer")
+  .option("--body <text>", "Additional body text")
+  .option("--json", "Output in JSON format")
+  .action((title: string, opts: { type?: string; priority?: string; agentRole?: string; body?: string; json?: boolean }) => {
+    const newOpts: NewOptions = {
+      type: opts.type,
+      priority: opts.priority,
+      agentRole: opts.agentRole,
+      body: opts.body,
+      json: opts.json ?? false,
+    };
+    return wrap(() => cmdNew(title, newOpts))();
   });
 
 // Dependency Steward commands
