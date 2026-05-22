@@ -1,7 +1,7 @@
 ---
 id: TASK-016
 type: Refactor
-status: Deferred
+status: Rejected
 priority: P0
 agentRole: Implementer
 riskLevel: Medium
@@ -98,6 +98,9 @@ Medium — touches many files with a value-level change. Tests catch most issues
 Auto-continue unless a stopping condition occurs.
 
 ## Agent Notes
+
+### 2026-05-22 System
+- Task rejected: Replaced by TASK-021 — snake_case migration rejected in favor of human-readable canonical values
 
 ### 2026-05-22 System
 - Task started via taskforge start TASK-016
