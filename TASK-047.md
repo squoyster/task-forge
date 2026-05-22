@@ -1,15 +1,13 @@
 ---
 id: TASK-047
 type: Bug
-status: In Progress
+status: Done
 priority: P0
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
 dependsOn:
   - TASK-045
-assignee: 3428c352ed
-claimed_at: '2026-05-22 09:53:45'
 context_hash: 27705145f76d1ff7
 ---
 
@@ -42,6 +40,9 @@ TASK-045.
 Medium.
 
 ## Agent Notes
+
+### 2026-05-22 System
+- Task marked Done (forced)
 
 ### 2026-05-22 System
 - Task started via taskforge start TASK-047
