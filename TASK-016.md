@@ -1,11 +1,13 @@
 ---
 id: TASK-016
 type: Refactor
-status: Ready
+status: In Progress
 priority: P0
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
+assignee: b2c542a4c1
+claimed_at: '2026-05-22 03:26:03'
 ---
 
 # TASK-016: Normalize Task Status Values
@@ -89,3 +91,11 @@ Medium — touches many files with a value-level change. Tests catch most issues
 ## Continuation Policy
 
 Auto-continue unless a stopping condition occurs.
+
+## Agent Notes
+
+### 2026-05-22 System
+- Task started via taskforge start TASK-016
+- Session: b2c542a4c1
+- Branch: agent/TASK-016-normalize-task-status-values--b2c542a4c1
+- Worktree: /Volumes/Transcend/devel/worktrees/TASK-016
