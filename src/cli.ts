@@ -11,6 +11,7 @@ import { cmdDone, type DoneOptions } from "./commands/done.js";
 import { cmdUnlock, type UnlockOptions } from "./commands/unlock.js";
 import { cmdSweep } from "./commands/sweep.js";
 import { cmdHeartbeat, type HeartbeatOptions } from "./commands/heartbeat.js";
+import { cmdInspect, type InspectOptions } from "./commands/inspect.js";
 import { cmdList, type ListOptions } from "./commands/list.js";
 import { cmdSync } from "./commands/sync.js";
 import { cmdDepsScan } from "./commands/deps/scan.js";
@@ -155,6 +156,16 @@ program
   .action((taskId: string, opts: { force?: boolean; json?: boolean }) => {
     const hbOpts: HeartbeatOptions = { force: opts.force ?? false, json: opts.json ?? false };
     return wrap(() => cmdHeartbeat(taskId, hbOpts))();
+  });
+
+program
+  .command("inspect <taskId>")
+  .description("Inspect task worktree and branch state")
+  .option("--all", "Inspect all In Progress tasks")
+  .option("--json", "Output in JSON format")
+  .action((taskId: string, opts: { all?: boolean; json?: boolean }) => {
+    const inspectOpts: InspectOptions = { all: opts.all ?? false, json: opts.json ?? false };
+    return wrap(() => cmdInspect(taskId, inspectOpts))();
   });
 
 // Dependency Steward commands
