@@ -1,5 +1,5 @@
 import { loadTaskById, updateTaskStatus, appendAgentNote } from "../core/task-store.js";
-import { validateTransition } from "../core/status-transition.js";
+import { validateTransition, getAllowedTransitions } from "../core/status-transition.js";
 import { logSuccess } from "../util/logging.js";
 import { TaskNotFoundError, InvalidStatusTransitionError } from "../core/errors.js";
 
@@ -12,7 +12,7 @@ export async function cmdBlock(taskId: string, reason: string): Promise<void> {
 
   const transitionError = validateTransition(task.status, "Blocked");
   if (transitionError) {
-    const allowed = ["Ready", "In Progress"];
+    const allowed = getAllowedTransitions(task.status);
     throw new InvalidStatusTransitionError(task.status, "Blocked", allowed);
   }
 

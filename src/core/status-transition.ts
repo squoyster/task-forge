@@ -1,7 +1,7 @@
 const TRANSITIONS: Record<string, string[]> = {
   Inbox: ["Needs Spec", "Rejected"],
   "Needs Spec": ["Ready", "Deferred"],
-  Ready: ["In Progress", "Deferred"],
+  Ready: ["In Progress", "Blocked", "Deferred"],
   "In Progress": ["Review", "Verify", "Blocked", "Deferred"],
   Blocked: ["Ready", "In Progress"],
   Review: ["In Progress", "Verify", "Done"],

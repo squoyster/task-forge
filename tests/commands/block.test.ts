@@ -83,4 +83,11 @@ describe("cmdBlock", () => {
     expect(content).toContain("Agent Notes");
     expect(content).toContain("Task blocked: Blocking reason");
   });
+
+  it("blocks from Ready status", async () => {
+    const fp = makeTaskFile("TASK-001", { status: "Ready" });
+    await cmdBlock("TASK-001", "Planned work blocked");
+    const content = fs.readFileSync(fp, "utf-8");
+    expect(content).toContain("Blocked");
+  });
 });
