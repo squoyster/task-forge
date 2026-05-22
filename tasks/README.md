@@ -1,8 +1,11 @@
-# TaskForge Tasks
+# Legacy Task Directory — DEPRECATED
 
-This directory contains repo-native task specifications for TaskForge Autonomous Coding Board.
-
-The external project board is for visibility. These Markdown files are the agent execution contracts.
+> **Authoritative task state now lives in `../task-state/`, a dedicated git worktree on the `task-state` branch.**
+>
+> This `tasks/` directory on `main` is retained for backward-compatible reference only.
+> **Agents must never create or modify files in `main/tasks/`** — use `taskforge start TASK-NNN` which manages task files through the task-state worktree.
+>
+> See [TASKFORGE.md](../TASKFORGE.md) for the full specification.
 
 ## Status Flow
 
@@ -39,10 +42,10 @@ Inbox → Needs Spec → Ready → In Progress → Review → Verify → Done
 
 ## File Naming
 
-Each task file is named by its ID:
+Each task file on the `task-state` branch is named by its ID:
 
 ```
-tasks/TASK-001.md
-tasks/FEATURE-001.md
-tasks/BUG-001.md
+task-state/TASK-001.md
+task-state/FEATURE-001.md
+task-state/BUG-001.md
 ```
