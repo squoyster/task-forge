@@ -1,11 +1,13 @@
 ---
 id: TASK-013
 type: Feature
-status: Ready
+status: Done
 priority: P1
 agentRole: Implementer
 riskLevel: High
 humanInterventionRequired: false
+lockedBy: f4539169a5
+lockedAt: '2026-05-22 02:20:22'
 ---
 
 # TASK-013: Shared task-state branch for ground-truth task storage
@@ -72,3 +74,25 @@ High — changes the storage layer for ALL task files. Every read/write path mus
 ## Continuation Policy
 
 Auto-continue unless a stopping condition occurs.
+
+## Agent Notes
+
+### 2026-05-22 System
+- Task started via taskforge start TASK-013
+- Session: f4539169a5
+- Branch: agent/TASK-013-shared-task-state-branch-for-ground-trut--f4539169a5
+- Worktree: /Volumes/Transcend/devel/worktrees/TASK-013
+
+### 2026-05-22 Implementer
+- Added `getTaskStateDir()` to paths.ts — returns `../task-state` relative to repo root
+- Added `ensureTaskStateBranch()` to git.ts — creates `task-state` branch + worktree (idempotent, gracefully handles non-git dirs)
+- Added `commitAndPushTaskState()` to git.ts — auto-commits and pushes every mutation (gracefully handles non-git dirs)
+- Changed `task-store.ts` to read/write from `getTaskStateDir()` instead of `getTasksDir()`
+- Rewrote `init.ts`: creates task-state worktree, seeds template files there, migrates existing `tasks/` content
+- Added `commitAndPushTaskState()` calls to start.ts, done.ts, block.ts, unlock.ts, sync.ts, create-tasks.ts
+- Changed `create-tasks.ts` to use `getTaskStateDir()`
+- Updated all 12 test files with `uniqueDir` pattern for isolated task-state directories
+- Updated `paths.test.ts` with `getTaskStateDir` tests
+- Fixed `init.ts` config creation to handle non-git repo during `defaultBranch` detection
+- All 268 tests pass (24 files)
+- Updated TASKFORGE.md and AGENTS.md with task-state architecture documentation
