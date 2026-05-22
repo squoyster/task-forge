@@ -189,3 +189,17 @@ if (!isSafeToContinue(task, { isDestructive: true })) {
 import { createWorktree } from "./core/git.js";
 const { path, branch } = await createWorktree(repoRoot, task);
 ```
+
+## Custom Agents
+
+Custom opencode agents are defined in `.opencode/agent/`:
+
+| Agent | Role | Mode |
+|---|---|---|
+| `implementer` (default) | Implement one task in isolated worktree | primary |
+| `intake` | Convert raw requests into structured tasks | subagent |
+| `planner` | Decompose epics/features into executable tasks | subagent |
+| `reviewer` | Review code for correctness, security, scope | subagent |
+| `deps` | Dependency Steward — scan, audit, plan updates | subagent |
+
+Switch agents with: `Use the [agent-name] agent` or via the CLI `--agent` flag.
