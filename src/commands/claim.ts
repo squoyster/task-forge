@@ -1,6 +1,7 @@
 import { loadTaskById, updateTaskStatus, updateTaskLock, appendAgentNote, clearTaskLock } from "../core/task-store.js";
 import { validateTransition } from "../core/status-transition.js";
 import { jitteredPush } from "../core/git.js";
+import { pullTaskState } from "../core/git.js";
 import { generateSessionId } from "../core/session.js";
 import { sweepStaleTasks } from "../core/sweeper.js";
 import { STATUS } from "../util/status-constants.js";
@@ -21,6 +22,7 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
   const force = options?.force ?? false;
   const json = options?.json ?? false;
 
+  await pullTaskState(repoRoot);
   await sweepStaleTasks(repoRoot, { commit: true });
 
   const task = loadTaskById(taskId);

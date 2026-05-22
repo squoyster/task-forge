@@ -33,7 +33,8 @@ vi.mock("../../src/core/git.js", () => ({
     branch: "agent/TASK-001-test",
     created: true,
   }),
-  jitteredPush: vi.fn().mockResolvedValue(true),
+  jitteredPush: vi.fn(),
+  pullTaskState: vi.fn().mockResolvedValue(true),
 }));
 
 vi.mock("../../src/core/status-transition.js", () => ({

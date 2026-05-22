@@ -10,7 +10,9 @@ vi.mock("../src/core/git.js", () => ({
   removeWorktree: vi.fn(),
   removeBranch: vi.fn(),
   commitAndPushTaskState: vi.fn(),
+  pullTaskState: vi.fn(),
   jitteredPush: vi.fn(),
+  pullTaskState: vi.fn(),
   ensureTaskStateBranch: vi.fn(),
 }));
 

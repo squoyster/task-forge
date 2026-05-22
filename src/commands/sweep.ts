@@ -1,4 +1,5 @@
 import { sweepStaleTasks } from "../core/sweeper.js";
+import { pullTaskState } from "../core/git.js";
 import { inspectTask } from "./inspect.js";
 import { logInfo, logSuccess, logSub, logWarn } from "../util/logging.js";
 import { printJson, jsonOk } from "../util/json-result.js";
@@ -10,6 +11,7 @@ export interface SweepOptions {
 }
 
 export async function cmdSweep(options?: SweepOptions): Promise<void> {
+  await pullTaskState();
   const result = await sweepStaleTasks(undefined, {
     commit: true,
     dryRun: options?.dryRun,

@@ -8,6 +8,7 @@ import { setRepoRoot } from "../src/util/paths.js";
 // Mock the git module so we don't need real git operations
 vi.mock("../src/core/git.js", () => ({
   jitteredPush: vi.fn(),
+  pullTaskState: vi.fn(),
   ensureTaskStateBranch: vi.fn(),
 }));
 

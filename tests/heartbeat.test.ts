@@ -7,7 +7,8 @@ import { setRepoRoot } from "../src/util/paths.js";
 
 vi.mock("../src/core/git.js", () => ({
   getCurrentBranch: vi.fn().mockResolvedValue("agent/TASK-001-test--abc123def0"),
-  commitAndPushTaskState: vi.fn().mockResolvedValue(undefined),
+  commitAndPushTaskState: vi.fn(),
+  pullTaskState: vi.fn().mockResolvedValue(undefined),
 }));
 
 let uniqueDir: string;

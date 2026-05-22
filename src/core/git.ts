@@ -1,6 +1,6 @@
 import simpleGit from "simple-git";
 import { execa } from "execa";
-import { getWorktreePath, makeBranchName, getTaskStateDir } from "../util/paths.js";
+import { getWorktreePath, makeBranchName, getTaskStateDir, getRepoRoot } from "../util/paths.js";
 import type { ParsedTask } from "./task-store.js";
 import { logWarn } from "../util/logging.js";
 
@@ -225,6 +225,23 @@ export async function commitAndPushTaskState(repoRoot: string, message: string):
     }
   } catch {
     // Not a git repo or other git error — skip silently
+  }
+}
+
+/**
+ * Pull the latest task-state from origin before reading.
+ * Graceful: logs a warning on failure but never throws.
+ */
+export async function pullTaskState(repoRoot?: string): Promise<void> {
+  const root = repoRoot ?? getRepoRoot();
+  const stateDir = getTaskStateDir(root);
+  const fs = await import("node:fs");
+  if (!fs.existsSync(stateDir)) return;
+
+  try {
+    await execa("git", ["pull", "--rebase", "origin", "task-state"], { cwd: stateDir });
+  } catch {
+    // Network unreachable, no remote, or not a git repo — proceed with whatever is on disk
   }
 }
 

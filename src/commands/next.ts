@@ -1,6 +1,7 @@
 import { loadAllTasks } from "../core/task-store.js";
 import { selectNextTask, scoreTask, hasUnmetDependencies } from "../core/scheduler.js";
 import { sweepStaleTasks } from "../core/sweeper.js";
+import { pullTaskState } from "../core/git.js";
 import { logInfo, logHeader, logSub, logDivider } from "../util/logging.js";
 import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
 
@@ -9,6 +10,9 @@ export interface NextOptions {
 }
 
 export async function cmdNext(options?: NextOptions): Promise<void> {
+  // Pull latest task-state before reading
+  await pullTaskState();
+
   // Run sweeper before selecting next task
   await sweepStaleTasks(undefined, { commit: true });
 

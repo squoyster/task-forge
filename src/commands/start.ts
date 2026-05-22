@@ -4,6 +4,7 @@ import { createWorktree, jitteredPush } from "../core/git.js";
 import { makeBranchName } from "../util/paths.js";
 import { generateSessionId } from "../core/session.js";
 import { sweepStaleTasks } from "../core/sweeper.js";
+import { pullTaskState } from "../core/git.js";
 import { STATUS } from "../util/status-constants.js";
 import { logInfo, logSuccess, logWarn, logError, logHeader, logSub, logDivider } from "../util/logging.js";
 import { TaskNotFoundError, InvalidStatusTransitionError, WorktreeError } from "../core/errors.js";
@@ -18,7 +19,8 @@ export interface StartOptions {
 export async function cmdStart(taskId: string, options?: StartOptions): Promise<void> {
   const repoRoot = getRepoRoot();
 
-  // Run sweeper before loading/claiming task
+  // Pull latest task-state and sweep before claiming
+  await pullTaskState(repoRoot);
   await sweepStaleTasks(repoRoot, { commit: true });
 
   // Reload task after sweeping (it may have been reset to Ready)

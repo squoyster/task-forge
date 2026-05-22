@@ -9,7 +9,9 @@ vi.mock("../src/core/git.js", () => ({
   removeWorktree: vi.fn().mockResolvedValue(true),
   removeBranch: vi.fn().mockResolvedValue(true),
   commitAndPushTaskState: vi.fn(),
+  pullTaskState: vi.fn(),
   jitteredPush: vi.fn(),
+  pullTaskState: vi.fn(),
 }));
 
 let uniqueDir: string;

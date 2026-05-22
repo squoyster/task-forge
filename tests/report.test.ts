@@ -11,6 +11,7 @@ vi.mock("execa", () => ({
 
 vi.mock("../src/core/git.js", () => ({
   commitAndPushTaskState: vi.fn(),
+  pullTaskState: vi.fn(),
 }));
 
 import { execa } from "execa";

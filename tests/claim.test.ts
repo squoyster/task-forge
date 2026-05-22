@@ -6,7 +6,8 @@ import { cmdClaim } from "../src/commands/claim.js";
 import { setRepoRoot } from "../src/util/paths.js";
 
 vi.mock("../src/core/git.js", () => ({
-  jitteredPush: vi.fn().mockResolvedValue(true),
+  jitteredPush: vi.fn(),
+  pullTaskState: vi.fn().mockResolvedValue(true),
 }));
 
 let uniqueDir: string;
