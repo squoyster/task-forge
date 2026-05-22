@@ -5,6 +5,7 @@ import { loadConfig } from "../core/config.js";
 import { logHeader, logSuccess, logWarn, logInfo, logDivider } from "../util/logging.js";
 import { STATUS } from "../util/status-constants.js";
 import { inspectTask } from "./inspect.js";
+import { validateTaskState } from "../core/state-validator.js";
 import fs from "node:fs";
 
 interface DoctorIssue {
@@ -41,7 +42,12 @@ export async function cmdDoctor(options?: { json?: boolean; fix?: boolean }): Pr
     add("error", "Config.json is invalid or missing");
   }
 
-  // 3. Orphan worktrees
+  // 3. State invariant validation
+  const validation = validateTaskState(tasks);
+  for (const e of validation.errors) add("error", `[${e.code}] ${e.message}`, e.taskId);
+  for (const w of validation.warnings) add("warn", `[${w.code}] ${w.message}`, w.taskId);
+
+  // 4. Orphan worktrees
   for (const wt of worktrees) {
     const wtName = wt.path.split("/").pop()!;
     if (wtName === "task-state") continue;

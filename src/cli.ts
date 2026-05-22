@@ -21,6 +21,7 @@ import { cmdResume } from "./commands/resume.js";
 import { cmdDoctor } from "./commands/doctor.js";
 import { cmdConfigValidate } from "./commands/config-validate.js";
 import { cmdRelease, type ReleaseOptions } from "./commands/release.js";
+import { cmdValidateState } from "./commands/validate-state.js";
 import { cmdList, type ListOptions } from "./commands/list.js";
 import { cmdSync } from "./commands/sync.js";
 import { cmdDepsScan } from "./commands/deps/scan.js";
@@ -341,5 +342,12 @@ program
     const releaseOpts: ReleaseOptions = { json: opts.json ?? false };
     return wrap(() => cmdRelease(taskId, releaseOpts))();
   });
+
+program
+  .command("validate-state")
+  .description("Validate task-state for invariant violations")
+  .option("--json", "Output in JSON format")
+  .option("--strict", "Treat warnings as errors")
+  .action((opts: { json?: boolean; strict?: boolean }) => wrap(() => cmdValidateState(opts))());
 
 program.parse();
