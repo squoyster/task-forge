@@ -13,6 +13,7 @@ import { cmdSweep } from "./commands/sweep.js";
 import { cmdHeartbeat, type HeartbeatOptions } from "./commands/heartbeat.js";
 import { cmdInspect, type InspectOptions } from "./commands/inspect.js";
 import { cmdClaim, type ClaimOptions } from "./commands/claim.js";
+import { cmdReport, type ReportOptions } from "./commands/report.js";
 import { cmdList, type ListOptions } from "./commands/list.js";
 import { cmdSync } from "./commands/sync.js";
 import { cmdDepsScan } from "./commands/deps/scan.js";
@@ -191,6 +192,16 @@ program
       json: opts.json ?? false,
     };
     return wrap(() => cmdClaim(taskId, claimOpts))();
+  });
+
+program
+  .command("report <taskId>")
+  .description("Generate a structured completion report")
+  .option("--complete", "Transition task to Review after generating report")
+  .option("--json", "Output in JSON format")
+  .action((taskId: string, opts: { complete?: boolean; json?: boolean }) => {
+    const reportOpts: ReportOptions = { complete: opts.complete ?? false, json: opts.json ?? false };
+    return wrap(() => cmdReport(taskId, reportOpts))();
   });
 
 // Dependency Steward commands
