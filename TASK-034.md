@@ -43,15 +43,15 @@ The fix: pull task-state proactively before any read, so commands see the latest
 
 ## Acceptance Criteria
 
-- [ ] `pullTaskState()` pulls `origin/task-state` into the task-state worktree via `git pull --rebase`
-- [ ] Gracefully handles: no remote, no git repo, network errors (logs warning, proceeds)
-- [ ] `taskforge next` pulls before scanning tasks
-- [ ] `taskforge start` pulls before claiming and creating worktree
-- [ ] `taskforge claim` pulls before claiming
-- [ ] `taskforge sweep` pulls before scanning
-- [ ] Adds no measurable latency on fast networks (pull is fast when up-to-date)
-- [ ] All existing tests pass (mock `pullTaskState` as needed)
-- [ ] Tests cover: pull-before-read ordering, graceful failure on no remote
+- [x] `pullTaskState()` pulls `origin/task-state` into the task-state worktree via `git pull --rebase`
+- [x] Gracefully handles: no remote, no git repo, network errors (logs warning, proceeds)
+- [x] `taskforge next` pulls before scanning tasks
+- [x] `taskforge start` pulls before claiming and creating worktree
+- [x] `taskforge claim` pulls before claiming
+- [x] `taskforge sweep` pulls before scanning
+- [x] Adds no measurable latency on fast networks (pull is fast when up-to-date)
+- [x] All existing tests pass (mock `pullTaskState` as needed)
+- [x] Tests cover: pull-before-read ordering, graceful failure on no remote
 
 ## Test / Verification Command
 
@@ -78,3 +78,13 @@ Auto-continue unless a stopping condition occurs.
 - Session: 2710298d6d
 - Branch: agent/TASK-034-proactive-git-pull-before-reading-task-s--2710298d6d
 - Worktree: /Volumes/Transcend/devel/worktrees/TASK-034
+
+### 2026-05-22 Implementer
+- Verified all acceptance criteria are met — `pullTaskState()` is implemented and called in next/start/claim/sweep
+- Fixed lint error: removed unused `logSub` import from `src/commands/doctor.ts`
+- Fixed test mocks: `jitteredPush` in `claim.test.ts` changed from `vi.fn()` (returns undefined/falsy) to `vi.fn().mockResolvedValue(true)` so JSON output test passes
+- Fixed duplicate `pullTaskState` mock keys in `done.test.ts` and `cleanup.test.ts`
+- All 337 tests pass across 34 test files
+- All 4 verification gates pass: typecheck, lint, build, test
+- CHANGELOG.md updated with TASK-034 entry
+- Task marked Done
