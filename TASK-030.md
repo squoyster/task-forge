@@ -1,11 +1,13 @@
 ---
 id: TASK-030
 type: Feature
-status: Ready
+status: In Progress
 priority: P3
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 0951fe637d
+claimed_at: '2026-05-22 07:21:05'
 ---
 
 # TASK-030: Add `prompt` Command — Agent Execution Packet
@@ -73,3 +75,11 @@ Low — read-only command, no state mutation.
 ## Continuation Policy
 
 Auto-continue.
+
+## Agent Notes
+
+### 2026-05-22 System
+- Task started via taskforge start TASK-030
+- Session: 0951fe637d
+- Branch: agent/TASK-030-add-prompt-command-agent-execution-packe--0951fe637d
+- Worktree: /Volumes/Transcend/devel/worktrees/TASK-030
