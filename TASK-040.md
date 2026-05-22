@@ -1,11 +1,13 @@
 ---
 id: TASK-040
 type: Feature
-status: Ready
+status: In Progress
 priority: P1
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
+assignee: 8ac1187e87
+claimed_at: '2026-05-22 08:38:40'
 ---
 
 # TASK-040: Agent Capability Levels
@@ -74,3 +76,11 @@ Medium — introduces a new permission model affecting all commands. Must not br
 ## Continuation Policy
 
 Auto-continue unless a stopping condition occurs.
+
+## Agent Notes
+
+### 2026-05-22 System
+- Task started via taskforge start TASK-040
+- Session: 8ac1187e87
+- Branch: agent/TASK-040-agent-capability-levels--8ac1187e87
+- Worktree: /Volumes/Transcend/devel/worktrees/TASK-040
