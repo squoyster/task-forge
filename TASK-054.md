@@ -1,13 +1,11 @@
 ---
 id: TASK-054
 type: Bug
-status: In Progress
+status: Done
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 230361a448
-claimed_at: '2026-05-22 09:42:43'
 context_hash: 27705145f76d1ff7
 ---
 
@@ -22,6 +20,9 @@ Describe the desired outcome.
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-22 System
+- Task marked Done (forced)
 
 ### 2026-05-22 System
 - Task started via taskforge start TASK-054
