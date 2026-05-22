@@ -17,6 +17,7 @@ import { cmdReport, type ReportOptions } from "./commands/report.js";
 import { cmdCleanup, type CleanupOptions } from "./commands/cleanup-cmd.js";
 import { cmdPrompt } from "./commands/prompt.js";
 import { cmdResume } from "./commands/resume.js";
+import { cmdDoctor } from "./commands/doctor.js";
 import { cmdList, type ListOptions } from "./commands/list.js";
 import { cmdSync } from "./commands/sync.js";
 import { cmdDepsScan } from "./commands/deps/scan.js";
@@ -296,3 +297,9 @@ program
   .description("Re-enter an existing task workspace")
   .option("--json", "Output in JSON format")
   .action((taskId: string, opts: { json?: boolean }) => wrap(() => cmdResume(taskId, opts))());
+
+program
+  .command("doctor")
+  .description("Run diagnostic checks on repo and task-state health")
+  .option("--json", "Output in JSON format")
+  .action((opts: { json?: boolean }) => wrap(() => cmdDoctor(opts))());
