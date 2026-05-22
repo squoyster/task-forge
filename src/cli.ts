@@ -2,11 +2,12 @@
 import { Command } from "commander";
 import { cmdInit } from "./commands/init.js";
 import { cmdNext } from "./commands/next.js";
-import { cmdStart } from "./commands/start.js";
+import { cmdStart, type StartOptions } from "./commands/start.js";
 import { cmdStatus } from "./commands/status.js";
 import { cmdSummary } from "./commands/summary.js";
 import { cmdBlock } from "./commands/block.js";
 import { cmdDone, type DoneOptions } from "./commands/done.js";
+import { cmdUnlock, type UnlockOptions } from "./commands/unlock.js";
 import { cmdList, type ListOptions } from "./commands/list.js";
 import { cmdSync } from "./commands/sync.js";
 import { cmdDepsScan } from "./commands/deps/scan.js";
@@ -41,7 +42,11 @@ program
 program
   .command("start <taskId>")
   .description("Set up worktree, branch, and begin a task")
-  .action((taskId: string) => wrap(() => cmdStart(taskId))());
+  .option("--force", "Override stale lock if task is locked by another session")
+  .action((taskId: string, opts: { force?: boolean }) => {
+    const startOpts: StartOptions = { force: opts.force ?? false };
+    return wrap(() => cmdStart(taskId, startOpts))();
+  });
 
 program
   .command("status")
@@ -101,6 +106,15 @@ program
       json: opts.json ?? false,
     };
     return wrap(() => cmdList(listOpts))();
+  });
+
+program
+  .command("unlock <taskId>")
+  .description("Manually unlock a task (requires --force)")
+  .option("--force", "Force unlock the task")
+  .action((taskId: string, opts: { force?: boolean }) => {
+    const unlockOpts: UnlockOptions = { force: opts.force ?? false };
+    return wrap(() => cmdUnlock(taskId, unlockOpts))();
   });
 
 // Dependency Steward commands

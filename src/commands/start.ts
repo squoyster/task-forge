@@ -1,12 +1,17 @@
-import { loadTaskById, updateTaskStatus, appendAgentNote } from "../core/task-store.js";
+import { loadTaskById, updateTaskStatus, updateTaskLock, appendAgentNote } from "../core/task-store.js";
 import { validateTransition } from "../core/status-transition.js";
 import { createWorktree } from "../core/git.js";
 import { makeBranchName } from "../util/paths.js";
-import { logInfo, logSuccess, logHeader, logSub, logDivider } from "../util/logging.js";
+import { generateSessionId } from "../core/session.js";
+import { logInfo, logSuccess, logWarn, logError, logHeader, logSub, logDivider } from "../util/logging.js";
 import { TaskNotFoundError, InvalidStatusTransitionError, WorktreeError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
 
-export async function cmdStart(taskId: string): Promise<void> {
+export interface StartOptions {
+  force?: boolean;
+}
+
+export async function cmdStart(taskId: string, options?: StartOptions): Promise<void> {
   const repoRoot = getRepoRoot();
   const task = loadTaskById(taskId);
 
@@ -23,11 +28,28 @@ export async function cmdStart(taskId: string): Promise<void> {
     );
   }
 
-  // Create worktree and branch
+  // Lock check: if task is locked by another session, reject unless --force
+  if (task.lockedBy && !options?.force) {
+    logError(
+      `Task ${taskId} is locked by session "${task.lockedBy}" since ${task.lockedAt ?? "unknown"}. ` +
+      `Use --force to override (only if you are sure the lock is stale).`,
+    );
+    return;
+  }
+
+  // If --force, warn about overriding
+  if (task.lockedBy && options?.force) {
+    logWarn(`Overriding stale lock from session "${task.lockedBy}".`);
+  }
+
+  // Generate session ID
+  const sessionId = generateSessionId();
+
+  // Create worktree and branch with session ID in the name
   if (!task.branch) {
     const titleMatch = task.body.match(/^#\s+\S+:\s+(.+)$/m);
     const title = titleMatch ? titleMatch[1] : taskId;
-    task.branch = makeBranchName(taskId, title);
+    task.branch = makeBranchName(taskId, title, sessionId);
   }
 
   try {
@@ -45,6 +67,9 @@ export async function cmdStart(taskId: string): Promise<void> {
       `Could not create worktree: ${err instanceof Error ? err.message : String(err)}`,
     );
   }
+
+  // Set the lock
+  updateTaskLock(task.filePath, sessionId);
 
   // Update status to In Progress if it was Ready
   if (task.status === "Ready") {
@@ -64,6 +89,7 @@ export async function cmdStart(taskId: string): Promise<void> {
   const today = new Date().toISOString().split("T")[0];
   appendAgentNote(task.filePath, today, "System", [
     `Task started via taskforge start ${taskId}`,
+    `Session: ${sessionId}`,
     `Branch: ${task.branch}`,
     `Worktree: ${task.worktree ?? "none"}`,
   ]);
@@ -72,6 +98,7 @@ export async function cmdStart(taskId: string): Promise<void> {
   logDivider();
   logHeader(`## Task Started: ${taskId}`);
   logSub(`**Title:** ${taskId}`);
+  logSub(`**Session:** ${sessionId}`);
   logSub(`**Branch:** ${task.branch}`);
   logSub(`**Worktree:** ${task.worktree ?? "not created"}`);
   logDivider();
