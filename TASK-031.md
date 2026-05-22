@@ -1,11 +1,13 @@
 ---
 id: TASK-031
 type: Feature
-status: Ready
+status: In Progress
 priority: P3
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 9214c40c70
+claimed_at: '2026-05-22 07:25:21'
 ---
 
 # TASK-031: Add `resume` Command — Re-enter Existing Task Workspace
@@ -53,3 +55,11 @@ Low — read-only validation command.
 ## Continuation Policy
 
 Auto-continue.
+
+## Agent Notes
+
+### 2026-05-22 System
+- Task started via taskforge start TASK-031
+- Session: 9214c40c70
+- Branch: agent/TASK-031-add-resume-command-re-enter-existing-tas--9214c40c70
+- Worktree: /Volumes/Transcend/devel/worktrees/TASK-031
