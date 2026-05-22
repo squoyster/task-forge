@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: 0d55aa3e0c
 claimed_at: '2026-05-22 20:02:11'
 context_hash: 27705145f76d1ff7
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-055
 ---
 
 # TASK-055: Fold Git Operations into TaskForge Commands
@@ -22,6 +23,9 @@ Ensure every git operation an agent needs has a taskforge CLI command — elimin
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-22 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-055
 
 ### 2026-05-22 System
 - Task claimed via taskforge start TASK-055
