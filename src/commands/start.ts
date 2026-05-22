@@ -104,12 +104,65 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
   // Generate session ID
   const sessionId = generateSessionId();
 
-  // Create worktree and branch with session ID in the name
+  // --- Phase 1: Claim (durable — push before creating worktree) ---
+
+  // Set branch name
   if (!task.branch) {
     const titleMatch = task.body.match(/^#\s+\S+:\s+(.+)$/m);
     const title = titleMatch ? titleMatch[1] : taskId;
     task.branch = makeBranchName(taskId, title, sessionId);
   }
+
+  // Set the lock
+  updateTaskLock(task.filePath, sessionId);
+
+  // Store control-file hash
+  const current = parseTaskFile(task.filePath);
+  if (current) {
+    current.context_hash = hashControlFiles(repoRoot);
+    writeTaskFile(current);
+  }
+
+  // Update status to In Progress if it was Ready
+  if (task.status === STATUS.READY) {
+    const transitionError = validateTransition(task.status, STATUS.IN_PROGRESS);
+    if (transitionError) {
+      throw new InvalidStatusTransitionError(task.status, STATUS.IN_PROGRESS, [STATUS.IN_PROGRESS]);
+    }
+    updateTaskStatus(task.filePath, STATUS.IN_PROGRESS);
+  }
+
+  const today = new Date().toISOString().split("T")[0];
+  appendAgentNote(task.filePath, today, "System", [
+    `Task claimed via taskforge start ${taskId}${options?.force ? " (forced)" : ""}`,
+    `Session: ${sessionId}`,
+    `Branch: ${task.branch}`,
+  ]);
+
+  // Push claim durably
+  const pushed = await jitteredPush(repoRoot, `chore: claim ${taskId} [session: ${sessionId}]`, {
+    onConflict: async (_stateDir: string) => {
+      const currentTask = loadTaskById(taskId);
+      if (!currentTask) { if (!options?.json) logWarn(`Task ${taskId} disappeared after rebase. Aborting.`); return false; }
+      if (currentTask.assignee && currentTask.assignee !== sessionId) {
+        if (!options?.json) logWarn(`Another agent claimed ${taskId} while we were pushing. Abandoning claim.`);
+        clearTaskLock(task.filePath);
+        return false;
+      }
+      return true;
+    },
+  });
+
+  if (!pushed) {
+    if (options?.json) {
+      printJson(jsonError(`Failed to push claim for ${taskId}.`, "PUSH_FAILED"));
+      return;
+    }
+    logError(`Failed to push claim for ${taskId}. The task may have been claimed by another agent.`);
+    return;
+  }
+
+  // --- Phase 2: Workspace (only after claim is durably pushed) ---
 
   try {
     const result = await createWorktree(repoRoot, task);
@@ -136,82 +189,21 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
     );
   }
 
-  // Set the lock
-  updateTaskLock(task.filePath, sessionId);
-
-  // Store control-file hash for change detection
-  const current = parseTaskFile(task.filePath);
-  if (current) {
-    current.context_hash = hashControlFiles(repoRoot);
-    writeTaskFile(current);
+  // Record worktree metadata
+  const updated = parseTaskFile(task.filePath);
+  if (updated) {
+    updated.worktree = task.worktree;
+    writeTaskFile(updated);
   }
 
-  // Update status to In Progress if it was Ready
-  if (task.status === STATUS.READY) {
-    const transitionError = validateTransition(task.status, STATUS.IN_PROGRESS);
-    if (transitionError) {
-      throw new InvalidStatusTransitionError(
-        task.status,
-        STATUS.IN_PROGRESS,
-        [STATUS.IN_PROGRESS],
-      );
-    }
-    updateTaskStatus(task.filePath, STATUS.IN_PROGRESS);
-    if (!options?.json) {
-      logSuccess(`Status updated: ${STATUS.READY} → ${STATUS.IN_PROGRESS}`);
-    }
-  }
-
-  // Append agent note
-  const today = new Date().toISOString().split("T")[0];
   appendAgentNote(task.filePath, today, "System", [
-    `Task started via taskforge start ${taskId}`,
-    `Session: ${sessionId}`,
-    `Branch: ${task.branch}`,
-    `Worktree: ${task.worktree ?? "none"}`,
+    `Worktree created: ${task.worktree}`,
   ]);
 
-  // Push state changes to shared task-state branch with jittered retry
-  const pushed = await jitteredPush(repoRoot, `chore: start ${taskId} [session: ${sessionId}]`, {
-    onConflict: async (_stateDir: string) => {
-      // After rebase, re-read the task to check if another agent claimed it
-      const currentTask = loadTaskById(taskId);
-      if (!currentTask) {
-        if (!options?.json) logWarn(`Task ${taskId} disappeared after rebase. Aborting.`);
-        return false;
-      }
-      if (currentTask.assignee && currentTask.assignee !== sessionId) {
-        if (!options?.json) {
-          logWarn(
-            `Another agent (session "${currentTask.assignee}") claimed ${taskId} while we were pushing. ` +
-            `Abandoning claim.`,
-          );
-        }
-        // Clear our local lock
-        clearTaskLock(task.filePath);
-        return false;
-      }
-      // Task is still ours — retry the push
-      return true;
-    },
-  });
+  // Push metadata update
+  await jitteredPush(repoRoot, `chore: start ${taskId} [workspace]`);
 
-  if (!pushed) {
-    if (options?.json) {
-      printJson(jsonError(
-        `Failed to push claim for ${taskId}. The task may have been claimed by another agent.`,
-        "PUSH_FAILED",
-      ));
-      return;
-    }
-    logError(
-      `Failed to push claim for ${taskId}. The task may have been claimed by another agent. ` +
-      `Run 'taskforge next' to find another task.`,
-    );
-    return;
-  }
-
-  // Success — output JSON or human-readable
+  // Success output
   if (options?.json) {
     printJson(jsonOk({
       task: buildJsonTask(task),
