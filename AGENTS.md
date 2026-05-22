@@ -59,6 +59,50 @@ When completing a task, agents must update:
 
 3. **README.md** — If the task adds or changes a CLI command, update the command table.
 
+## Agent Discipline — Hard Rules
+
+These rules are enforced by system guardrails where possible. Violating them creates inconsistent state that requires doctor recovery.
+
+### 1. No Direct Git Manipulation on Task-State
+
+Agents must never run `git` commands directly on the task-state worktree or main repo to modify task state. All task-state changes must flow through taskforge CLI commands:
+
+| Action | Correct Command |
+|--------|----------------|
+| Claim a task | `taskforge claim` / `taskforge start` |
+| Mark complete | `taskforge done` |
+| Abandon claim | `taskforge release` |
+| Mark blocked | `taskforge block` |
+| Extend lease | `taskforge heartbeat` |
+
+The only allowed direct git usage: `git push/pull` on the agent's own feature branch within their worktree.
+
+### 2. No Direct Task-State File Editing
+
+Never edit `../task-state/*.md` files directly — no `sed`, no manual YAML edits, no `vim`. Status changes, lock clearing, and agent notes must go through the CLI lifecycle commands. Manual edits produce stale `assignee`/`claimed_at` fields on Done tasks, broken state invariants, and confused schedulers.
+
+### 3. Respect Guardrails Before Acting
+
+Before `next`, `claim`, or `start`, the system checks:
+- **Outstanding session tasks** (TASK-040): You cannot start new work while you own an unclosed task
+- **Doctor lock** (TASK-042): All agents pause during system recovery
+- **Verification gates** (TASK-018): `done` refuses if gates fail unless `--force`
+
+Agents must obey these blocks — they are not suggestions.
+
+### 4. Doctor Mode Protocol
+
+When an inconsistency is detected:
+1. Agent runs `taskforge doctor` to diagnose
+2. If critical errors found and `--fix` is passed, doctor creates a `.doctor-lock` and recovery task
+3. All normal agents pause (doctor-lock blocks `next`/`claim`/`start`)
+4. Doctor agent works the recovery task, marks it Done via `taskforge done`
+5. Done auto-removes the lock; agents pull and resume
+
+### 5. Never Bypass the CLI
+
+Do not use `--force` to skip guardrails unless you understand exactly what you're overriding. The CLI is the system of record for task state — bypassing it creates technical debt that another agent (or a human) must clean up.
+
 ## Code Conventions
 
 - **Language**: TypeScript with strict mode (`strict: true` in tsconfig)
