@@ -22,6 +22,8 @@ vi.mock("../../src/core/task-store.js", () => ({
   updateTaskStatus: vi.fn(),
   appendAgentNote: vi.fn(),
   clearTaskLock: vi.fn(),
+  parseTaskFile: vi.fn(),
+  writeTaskFile: vi.fn(),
 }));
 
 vi.mock("../../src/core/session.js", () => ({
