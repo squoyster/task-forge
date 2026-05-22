@@ -26,7 +26,8 @@ export function getTaskFilePath(repoRoot: string, id: string): string {
 }
 
 export function getWorktreesDir(repoRoot: string): string {
-  return path.resolve(repoRoot, "..", "worktrees");
+  const repoName = path.basename(repoRoot);
+  return path.resolve(repoRoot, "..", "worktrees", repoName);
 }
 
 export function getWorktreePath(repoRoot: string, id: string): string {

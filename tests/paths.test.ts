@@ -56,14 +56,14 @@ describe("getTaskFilePath", () => {
 });
 
 describe("getWorktreesDir", () => {
-  it("returns parent/worktrees", () => {
-    expect(getWorktreesDir("/test/repo")).toBe("/test/worktrees");
+  it("returns parent/worktrees/<project>", () => {
+    expect(getWorktreesDir("/test/repo")).toBe("/test/worktrees/repo");
   });
 });
 
 describe("getWorktreePath", () => {
   it("returns worktree path for a task ID", () => {
-    expect(getWorktreePath("/test/repo", "TASK-001")).toBe("/test/worktrees/TASK-001");
+    expect(getWorktreePath("/test/repo", "TASK-001")).toBe("/test/worktrees/repo/TASK-001");
   });
 });
 

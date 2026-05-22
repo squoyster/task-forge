@@ -81,7 +81,7 @@ beforeEach(() => {
   uniqueDir = fs.mkdtempSync(path.join(os.tmpdir(), "taskforge-inspect-test-"));
   const repoDir = path.join(uniqueDir, "repo");
   stateDir = path.resolve(repoDir, "..", "task-state");
-  worktreesDir = path.resolve(repoDir, "..", "worktrees");
+  worktreesDir = path.resolve(repoDir, "..", "worktrees", "repo");
   fs.mkdirSync(stateDir, { recursive: true });
   fs.mkdirSync(worktreesDir, { recursive: true });
   setRepoRoot(repoDir);
