@@ -22,16 +22,17 @@ vi.mock("../../src/integrations/github/projects.js", () => ({
 
 import { cmdSync } from "../../src/commands/sync.js";
 
-let tmpDir: string;
-let tasksDir: string;
+let uniqueDir: string;
+let stateDir: string;
 
 beforeEach(() => {
-  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "taskforge-sync-test-"));
-  tasksDir = path.join(tmpDir, "tasks");
-  fs.mkdirSync(tasksDir, { recursive: true });
+  uniqueDir = fs.mkdtempSync(path.join(os.tmpdir(), "taskforge-sync-test-"));
+  const repoDir = path.join(uniqueDir, "repo");
+  stateDir = path.resolve(repoDir, "..", "task-state");
+  fs.mkdirSync(stateDir, { recursive: true });
 
   // Set up a minimal .taskforge/config.json with GitHub enabled
-  const configDir = path.join(tmpDir, ".taskforge");
+  const configDir = path.join(repoDir, ".taskforge");
   fs.mkdirSync(configDir, { recursive: true });
   const config = {
     project: { name: "test-repo", defaultBranch: "main" },
@@ -51,11 +52,11 @@ beforeEach(() => {
     "utf-8",
   );
 
-  setRepoRoot(tmpDir);
+  setRepoRoot(repoDir);
 });
 
 afterEach(() => {
-  fs.rmSync(tmpDir, { recursive: true, force: true });
+  fs.rmSync(uniqueDir, { recursive: true, force: true });
 });
 
 function makeTaskFile(
@@ -77,7 +78,7 @@ function makeTaskFile(
     "",
     body,
   ];
-  const filePath = path.join(tasksDir, `${id}.md`);
+  const filePath = path.join(stateDir, `${id}.md`);
   fs.writeFileSync(filePath, lines.join("\n"), "utf-8");
 }
 
@@ -142,7 +143,7 @@ describe("cmdSync", () => {
 
   it("handles GitHub disabled in config", async () => {
     // Override config to disable GitHub
-    const configDir = path.join(tmpDir, ".taskforge");
+    const configDir = path.join(uniqueDir, "repo", ".taskforge");
     const config = JSON.parse(fs.readFileSync(path.join(configDir, "config.json"), "utf-8"));
     config.github.enabled = false;
     fs.writeFileSync(path.join(configDir, "config.json"), JSON.stringify(config, null, 2), "utf-8");
@@ -178,7 +179,7 @@ describe("cmdSync", () => {
 
     await cmdSync();
 
-    const taskContent = fs.readFileSync(path.join(tasksDir, "TASK-001.md"), "utf-8");
+    const taskContent = fs.readFileSync(path.join(stateDir, "TASK-001.md"), "utf-8");
     expect(taskContent).toContain("issue: 42");
   });
 
@@ -204,7 +205,7 @@ describe("cmdSync", () => {
     vi.mocked(syncTaskToProject).mockResolvedValue(true);
 
     // Add projectNumber to config
-    const configPath = path.join(tmpDir, ".taskforge", "config.json");
+    const configPath = path.join(uniqueDir, "repo", ".taskforge", "config.json");
     const config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
     config.github.projectNumber = 1;
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2), "utf-8");
@@ -243,7 +244,7 @@ describe("cmdSync", () => {
     vi.mocked(syncTaskToProject).mockResolvedValue(true);
 
     // Add projectNumber to config
-    const configPath = path.join(tmpDir, ".taskforge", "config.json");
+    const configPath = path.join(uniqueDir, "repo", ".taskforge", "config.json");
     const config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
     config.github.projectNumber = 1;
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2), "utf-8");
@@ -268,7 +269,7 @@ describe("cmdSync", () => {
     vi.mocked(syncTaskToProject).mockResolvedValue(true);
 
     // Add projectNumber and columnMapping to config
-    const configPath = path.join(tmpDir, ".taskforge", "config.json");
+    const configPath = path.join(uniqueDir, "repo", ".taskforge", "config.json");
     const config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
     config.github.projectNumber = 1;
     config.github.projects = {

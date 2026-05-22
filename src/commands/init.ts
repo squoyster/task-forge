@@ -1,11 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
-import { getRepoRoot, getTasksDir, getTaskforgeDir } from "../util/paths.js";
+import { getRepoRoot, getTaskforgeDir } from "../util/paths.js";
 import {
   TASKFORGE_TEMPLATE,
   TASK_TEMPLATE,
   TASKS_README_TEMPLATE,
 } from "../markdown/templates.js";
+import { ensureTaskStateBranch } from "../core/git.js";
 import { logSuccess, logInfo } from "../util/logging.js";
 
 interface FileSpec {
@@ -16,12 +17,10 @@ interface FileSpec {
 
 export async function cmdInit(_force = false): Promise<void> {
   const repoRoot = getRepoRoot();
-  const tasksDir = getTasksDir(repoRoot);
   const taskforgeDir = getTaskforgeDir(repoRoot);
 
   // Create directories (skipped silently if present)
   const dirs = [
-    tasksDir,
     taskforgeDir,
     path.join(repoRoot, "specs"),
     path.join(repoRoot, "docs", "decisions"),
@@ -33,26 +32,16 @@ export async function cmdInit(_force = false): Promise<void> {
     }
   }
 
-  // Create / recreate missing files
-  const files: FileSpec[] = [
+  // Create / recreate missing files in main repo
+  const mainFiles: FileSpec[] = [
     {
       path: path.join(repoRoot, "TASKFORGE.md"),
       label: "TASKFORGE.md",
       content: TASKFORGE_TEMPLATE,
     },
-    {
-      path: path.join(tasksDir, "README.md"),
-      label: "tasks/README.md",
-      content: TASKS_README_TEMPLATE,
-    },
-    {
-      path: path.join(tasksDir, "TEMPLATE.md"),
-      label: "tasks/TEMPLATE.md",
-      content: TASK_TEMPLATE,
-    },
   ];
 
-  for (const file of files) {
+  for (const file of mainFiles) {
     if (!fs.existsSync(file.path)) {
       fs.writeFileSync(file.path, file.content, "utf-8");
       logSuccess(`Created ${file.label}`);
@@ -61,12 +50,67 @@ export async function cmdInit(_force = false): Promise<void> {
     }
   }
 
+  // Create the task-state branch and worktree
+  logInfo("Setting up task-state branch...");
+  const stateDir = await ensureTaskStateBranch(repoRoot);
+  logSuccess(`Task-state worktree at: ${stateDir}`);
+
+  // Seed task-state worktree with template files
+  const stateFiles: FileSpec[] = [
+    {
+      path: path.join(stateDir, "README.md"),
+      label: "task-state/README.md",
+      content: TASKS_README_TEMPLATE,
+    },
+    {
+      path: path.join(stateDir, "TEMPLATE.md"),
+      label: "task-state/TEMPLATE.md",
+      content: TASK_TEMPLATE,
+    },
+  ];
+
+  let hasNewStateFiles = false;
+  for (const file of stateFiles) {
+    if (!fs.existsSync(file.path)) {
+      fs.writeFileSync(file.path, file.content, "utf-8");
+      logSuccess(`Created ${file.label}`);
+      hasNewStateFiles = true;
+    } else {
+      logInfo(`${file.label} already exists`);
+    }
+  }
+
+  // Commit and push initial state
+  if (hasNewStateFiles) {
+    const { commitAndPushTaskState } = await import("../core/git.js");
+    await commitAndPushTaskState(repoRoot, "chore: initialize task state");
+  }
+
+  // Migrate any existing task files from tasks/ to task-state/
+  const tasksDir = path.join(repoRoot, "tasks");
+  if (fs.existsSync(tasksDir)) {
+    const migrated = migrateExistingTasks(tasksDir, stateDir);
+    if (migrated > 0) {
+      logSuccess(`Migrated ${migrated} task file(s) from tasks/ to task-state/`);
+      const { commitAndPushTaskState } = await import("../core/git.js");
+      await commitAndPushTaskState(repoRoot, "chore: migrate task files from tasks/ to task-state branch");
+    }
+  }
+
   // Create config (preserves existing)
   const configPath = path.join(taskforgeDir, "config.json");
   if (!fs.existsSync(configPath)) {
+    let defaultBranch = "main";
+    try {
+      const git = await import("simple-git");
+      const branchResult = await git.default(repoRoot).branch();
+      defaultBranch = branchResult.current;
+    } catch {
+      // Not a git repo or other error — use sensible default
+    }
     const config = {
-      project: { name: path.basename(repoRoot), defaultBranch: "main" },
-      tasks: { directory: "tasks", idPrefix: "TASK", template: "tasks/TEMPLATE.md" },
+      project: { name: path.basename(repoRoot), defaultBranch },
+      tasks: { stateBranch: "task-state", stateDir: "../task-state", directory: "tasks", idPrefix: "TASK", template: "TEMPLATE.md" },
       worktrees: { root: "../worktrees", branchPrefix: "agent" },
       github: { enabled: false },
       opencode: { enabled: true, command: "opencode" },
@@ -80,4 +124,22 @@ export async function cmdInit(_force = false): Promise<void> {
 
   logSuccess("\nTaskForge initialized successfully.");
   logInfo("Run 'taskforge next' to find the next task to work on.");
+}
+
+function migrateExistingTasks(tasksDir: string, stateDir: string): number {
+  if (!fs.existsSync(tasksDir)) return 0;
+
+  let count = 0;
+  for (const entry of fs.readdirSync(tasksDir)) {
+    if (!entry.endsWith(".md")) continue;
+    if (entry === "README.md" || entry === "TEMPLATE.md") continue;
+
+    const src = path.join(tasksDir, entry);
+    const dest = path.join(stateDir, entry);
+    if (!fs.existsSync(dest)) {
+      fs.copyFileSync(src, dest);
+      count++;
+    }
+  }
+  return count;
 }

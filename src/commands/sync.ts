@@ -1,6 +1,7 @@
 import { loadAllTasks, updateTaskIssue } from "../core/task-store.js";
 import { loadConfig } from "../core/config.js";
 import { getRepoRoot } from "../util/paths.js";
+import { commitAndPushTaskState } from "../core/git.js";
 import { logInfo, logSuccess, logError } from "../util/logging.js";
 import {
   createIssue,
@@ -75,6 +76,9 @@ export async function cmdSync(): Promise<void> {
       }
     }
   }
+
+  // Push any task file changes (new issue numbers) to shared task-state branch
+  await commitAndPushTaskState(repoRoot, "chore: sync tasks with GitHub");
 
   // Sync to GitHub Projects board if projectNumber is configured
   if (config.github.projectNumber && syncedIssues.length > 0) {

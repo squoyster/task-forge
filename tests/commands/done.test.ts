@@ -5,18 +5,19 @@ import os from "node:os";
 import { cmdDone } from "../../src/commands/done.js";
 import { setRepoRoot } from "../../src/util/paths.js";
 
-let tmpDir: string;
-let tasksDir: string;
+let uniqueDir: string;
+let stateDir: string;
 
 beforeEach(() => {
-  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "taskforge-done-test-"));
-  tasksDir = path.join(tmpDir, "tasks");
-  fs.mkdirSync(tasksDir, { recursive: true });
-  setRepoRoot(tmpDir);
+  uniqueDir = fs.mkdtempSync(path.join(os.tmpdir(), "taskforge-done-test-"));
+  const repoDir = path.join(uniqueDir, "repo");
+  stateDir = path.resolve(repoDir, "..", "task-state");
+  fs.mkdirSync(stateDir, { recursive: true });
+  setRepoRoot(repoDir);
 });
 
 afterEach(() => {
-  fs.rmSync(tmpDir, { recursive: true, force: true });
+  fs.rmSync(uniqueDir, { recursive: true, force: true });
 });
 
 function makeTaskFile(id: string, overrides: Record<string, unknown> = {}): string {
@@ -36,7 +37,7 @@ function makeTaskFile(id: string, overrides: Record<string, unknown> = {}): stri
     "",
     body,
   ];
-  const filePath = path.join(tasksDir, `${id}.md`);
+  const filePath = path.join(stateDir, `${id}.md`);
   fs.writeFileSync(filePath, lines.join("\n"), "utf-8");
   return filePath;
 }

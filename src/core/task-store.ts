@@ -1,7 +1,7 @@
 import matter from "gray-matter";
 import fs from "node:fs";
 import { TaskSchema, type Task } from "./task.js";
-import { getTaskFilePath, getTasksDir, getRepoRoot } from "../util/paths.js";
+import { getTaskFilePath, getTaskStateDir, getRepoRoot } from "../util/paths.js";
 import { logWarn } from "../util/logging.js";
 
 export interface ParsedTask extends Task {
@@ -166,7 +166,7 @@ export function appendAgentNote(
 }
 
 export function listTaskFiles(repoRoot?: string): string[] {
-  const tasksDir = getTasksDir(repoRoot ?? getRepoRoot());
+  const tasksDir = getTaskStateDir(repoRoot ?? getRepoRoot());
   if (!fs.existsSync(tasksDir)) return [];
 
   return fs

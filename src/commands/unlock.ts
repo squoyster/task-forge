@@ -1,4 +1,6 @@
 import { loadTaskById, clearTaskLock, appendAgentNote } from "../core/task-store.js";
+import { commitAndPushTaskState } from "../core/git.js";
+import { getRepoRoot } from "../util/paths.js";
 import { logSuccess, logWarn, logError } from "../util/logging.js";
 import { TaskNotFoundError } from "../core/errors.js";
 
@@ -10,6 +12,7 @@ export async function cmdUnlock(
   taskId: string,
   options: UnlockOptions = {},
 ): Promise<void> {
+  const repoRoot = getRepoRoot();
   const task = loadTaskById(taskId);
 
   if (!task) {
@@ -37,4 +40,7 @@ export async function cmdUnlock(
   ]);
 
   logSuccess(`Task ${taskId} unlocked. Lock from session "${task.lockedBy}" has been cleared.`);
+
+  // Push state changes to shared task-state branch
+  await commitAndPushTaskState(repoRoot, `chore: unlock ${taskId}`);
 }

@@ -1,6 +1,6 @@
 import { loadTaskById, updateTaskStatus, updateTaskLock, appendAgentNote } from "../core/task-store.js";
 import { validateTransition } from "../core/status-transition.js";
-import { createWorktree } from "../core/git.js";
+import { createWorktree, commitAndPushTaskState } from "../core/git.js";
 import { makeBranchName } from "../util/paths.js";
 import { generateSessionId } from "../core/session.js";
 import { logInfo, logSuccess, logWarn, logError, logHeader, logSub, logDivider } from "../util/logging.js";
@@ -93,6 +93,9 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
     `Branch: ${task.branch}`,
     `Worktree: ${task.worktree ?? "none"}`,
   ]);
+
+  // Push state changes to shared task-state branch
+  await commitAndPushTaskState(repoRoot, `chore: start ${taskId} [session: ${sessionId}]`);
 
   // Print agent instructions
   logDivider();

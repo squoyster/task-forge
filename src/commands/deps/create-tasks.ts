@@ -1,6 +1,7 @@
 import { generateDepsPlan } from "./plan.js";
 import { getNextId, loadAllTasks, writeTaskFile } from "../../core/task-store.js";
-import { getTasksDir, getRepoRoot } from "../../util/paths.js";
+import { getTaskStateDir, getRepoRoot } from "../../util/paths.js";
+import { commitAndPushTaskState } from "../../core/git.js";
 import { logInfo, logSuccess, logDivider } from "../../util/logging.js";
 import path from "node:path";
 
@@ -28,7 +29,7 @@ export async function cmdDepsCreateTasks(): Promise<void> {
     const isCritical = plan.critical.includes(finding);
     const body = generateSecTaskBody(id, finding, isCritical);
 
-    const filePath = path.join(getTasksDir(repoRoot), `${id}.md`);
+    const filePath = path.join(getTaskStateDir(repoRoot), `${id}.md`);
     writeTaskFile({
       id,
       type: "Security",
@@ -52,7 +53,7 @@ export async function cmdDepsCreateTasks(): Promise<void> {
     const id = getNextId(repoRoot);
     const body = generateDepTaskBody(id, dep);
 
-    const filePath = path.join(getTasksDir(repoRoot), `${id}.md`);
+    const filePath = path.join(getTaskStateDir(repoRoot), `${id}.md`);
     writeTaskFile({
       id,
       type: "Dependency",
@@ -77,7 +78,7 @@ export async function cmdDepsCreateTasks(): Promise<void> {
     const id = getNextId(repoRoot);
     const body = generateOutdatedTaskBody(id, outdated);
 
-    const filePath = path.join(getTasksDir(repoRoot), `${id}.md`);
+    const filePath = path.join(getTaskStateDir(repoRoot), `${id}.md`);
     writeTaskFile({
       id,
       type: "Dependency",
@@ -99,6 +100,12 @@ export async function cmdDepsCreateTasks(): Promise<void> {
     logInfo("No new dependency tasks to create.");
   } else {
     logSuccess(`Created ${created} dependency task(s).`);
+  }
+
+  // Push new task files to shared task-state branch
+  if (created > 0) {
+    const statusMsg = `chore: create ${created} dependency task(s)`;
+    await commitAndPushTaskState(repoRoot, statusMsg);
   }
 }
 

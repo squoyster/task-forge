@@ -1,6 +1,6 @@
 import { loadTaskById, updateTaskStatus, clearTaskLock, appendAgentNote, parseTaskFile, writeTaskFile } from "../core/task-store.js";
 import { validateTransition } from "../core/status-transition.js";
-import { removeWorktree, removeBranch } from "../core/git.js";
+import { removeWorktree, removeBranch, commitAndPushTaskState } from "../core/git.js";
 import { logSuccess, logInfo, logWarn, logSub } from "../util/logging.js";
 import { TaskNotFoundError, InvalidStatusTransitionError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
@@ -56,6 +56,9 @@ export async function cmdDone(
   }
 
   appendAgentNote(task.filePath, today, "System", notes);
+
+  // Push state changes to shared task-state branch
+  await commitAndPushTaskState(repoRoot, `chore: done ${taskId}`);
 }
 
 async function performCleanup(

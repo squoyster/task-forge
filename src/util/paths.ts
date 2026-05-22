@@ -17,8 +17,12 @@ export function getTasksDir(repoRoot: string): string {
   return path.join(repoRoot, "tasks");
 }
 
+export function getTaskStateDir(repoRoot: string): string {
+  return path.resolve(repoRoot, "..", "task-state");
+}
+
 export function getTaskFilePath(repoRoot: string, id: string): string {
-  return path.join(getTasksDir(repoRoot), `${id}.md`);
+  return path.join(getTaskStateDir(repoRoot), `${id}.md`);
 }
 
 export function getWorktreesDir(repoRoot: string): string {

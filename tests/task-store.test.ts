@@ -16,18 +16,19 @@ import {
 import { setRepoRoot } from "../src/util/paths.js";
 import type { ParsedTask } from "../src/core/task-store.js";
 
-let tmpDir: string;
-let tasksDir: string;
+let uniqueDir: string;
+let stateDir: string;
 
 beforeEach(() => {
-  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "taskforge-test-"));
-  tasksDir = path.join(tmpDir, "tasks");
-  fs.mkdirSync(tasksDir, { recursive: true });
-  setRepoRoot(tmpDir);
+  uniqueDir = fs.mkdtempSync(path.join(os.tmpdir(), "taskforge-test-"));
+  const repoDir = path.join(uniqueDir, "repo");
+  stateDir = path.resolve(repoDir, "..", "task-state");
+  fs.mkdirSync(stateDir, { recursive: true });
+  setRepoRoot(repoDir);
 });
 
 afterEach(() => {
-  fs.rmSync(tmpDir, { recursive: true, force: true });
+  fs.rmSync(uniqueDir, { recursive: true, force: true });
 });
 
 function makeTaskFile(id: string, overrides: Record<string, unknown> = {}): string {
@@ -41,7 +42,7 @@ function makeTaskFile(id: string, overrides: Record<string, unknown> = {}): stri
   };
   const body = (bodyOverride as string | undefined) ?? `# ${id}: Test task ${id}\n\n## Goal\nDo something.\n\n## Agent Notes\n`;
   const lines = ["---", ...Object.entries(frontmatter).map(([k, v]) => `${k}: ${v}`), "---", "", body];
-  const filePath = path.join(tasksDir, `${id}.md`);
+  const filePath = path.join(stateDir, `${id}.md`);
   fs.writeFileSync(filePath, lines.join("\n"), "utf-8");
   return filePath;
 }
@@ -62,7 +63,7 @@ describe("parseTaskFile", () => {
   });
 
   it("extracts id from filename when frontmatter has no id", () => {
-    const fp = path.join(tasksDir, "TASK-099.md");
+    const fp = path.join(stateDir, "TASK-099.md");
     const content = "---\ntype: Bug\nstatus: Inbox\n---\n\n# Body";
     fs.writeFileSync(fp, content, "utf-8");
     const task = parseTaskFile(fp);
@@ -72,7 +73,7 @@ describe("parseTaskFile", () => {
   });
 
   it("maps alternate frontmatter field names", () => {
-    const fp = path.join(tasksDir, "TASK-020.md");
+    const fp = path.join(stateDir, "TASK-020.md");
     const content = "---\nid: TASK-020\nagent_role: Implementer\nrisk_level: High\nhuman_intervention_required: true\n---\n\nBody";
     fs.writeFileSync(fp, content, "utf-8");
     const task = parseTaskFile(fp);
@@ -83,7 +84,7 @@ describe("parseTaskFile", () => {
   });
 
   it("applies defaults for missing frontmatter fields", () => {
-    const fp = path.join(tasksDir, "TASK-030.md");
+    const fp = path.join(stateDir, "TASK-030.md");
     fs.writeFileSync(fp, "---\nid: TASK-030\n---\n\nBody", "utf-8");
     const task = parseTaskFile(fp);
     expect(task).not.toBeNull();
@@ -95,19 +96,19 @@ describe("parseTaskFile", () => {
   });
 
   it("returns null for invalid frontmatter (bad status)", () => {
-    const fp = path.join(tasksDir, "TASK-BAD.md");
+    const fp = path.join(stateDir, "TASK-BAD.md");
     fs.writeFileSync(fp, "---\nid: TASK-BAD\nstatus: InvalidStatus\n---\n\nBody", "utf-8");
     expect(parseTaskFile(fp)).toBeNull();
   });
 
   it("returns null for invalid frontmatter (bad priority)", () => {
-    const fp = path.join(tasksDir, "TASK-BAD.md");
+    const fp = path.join(stateDir, "TASK-BAD.md");
     fs.writeFileSync(fp, "---\nid: TASK-BAD\npriority: P5\n---\n\nBody", "utf-8");
     expect(parseTaskFile(fp)).toBeNull();
   });
 
   it("parses issue and pr numbers from frontmatter", () => {
-    const fp = path.join(tasksDir, "TASK-040.md");
+    const fp = path.join(stateDir, "TASK-040.md");
     fs.writeFileSync(fp, "---\nid: TASK-040\nissue: 42\npr: 100\n---\n\nBody", "utf-8");
     const task = parseTaskFile(fp);
     expect(task).not.toBeNull();
@@ -127,7 +128,7 @@ describe("parseTaskFile", () => {
 
 describe("writeTaskFile", () => {
   it("writes a task file that can be read back", () => {
-    const fp = path.join(tasksDir, "TASK-100.md");
+    const fp = path.join(stateDir, "TASK-100.md");
     const task: ParsedTask = {
       id: "TASK-100",
       type: "Bug",
@@ -149,7 +150,7 @@ describe("writeTaskFile", () => {
   });
 
   it("overrides body when provided", () => {
-    const fp = path.join(tasksDir, "TASK-101.md");
+    const fp = path.join(stateDir, "TASK-101.md");
     const task: ParsedTask = {
       id: "TASK-101",
       type: "Task",
@@ -166,7 +167,7 @@ describe("writeTaskFile", () => {
   });
 
   it("omits undefined optional fields from frontmatter", () => {
-    const fp = path.join(tasksDir, "TASK-102.md");
+    const fp = path.join(stateDir, "TASK-102.md");
     const task: ParsedTask = {
       id: "TASK-102",
       type: "Task",
@@ -187,7 +188,7 @@ describe("writeTaskFile", () => {
   });
 
   it("serializes and deserializes dependsOn", () => {
-    const fp = path.join(tasksDir, "TASK-110.md");
+    const fp = path.join(stateDir, "TASK-110.md");
     const task: ParsedTask = {
       id: "TASK-110",
       type: "Task",
@@ -271,11 +272,11 @@ describe("listTaskFiles", () => {
   it("returns .md files excluding README and TEMPLATE", () => {
     makeTaskFile("TASK-001");
     makeTaskFile("TASK-002");
-    fs.writeFileSync(path.join(tasksDir, "README.md"), "# README", "utf-8");
-    fs.writeFileSync(path.join(tasksDir, "TEMPLATE.md"), "# TEMPLATE", "utf-8");
-    fs.writeFileSync(path.join(tasksDir, "notes.txt"), "not md", "utf-8");
+    fs.writeFileSync(path.join(stateDir, "README.md"), "# README", "utf-8");
+    fs.writeFileSync(path.join(stateDir, "TEMPLATE.md"), "# TEMPLATE", "utf-8");
+    fs.writeFileSync(path.join(stateDir, "notes.txt"), "not md", "utf-8");
 
-    const files = listTaskFiles(tmpDir);
+    const files = listTaskFiles(path.join(uniqueDir, "repo"));
     expect(files).toHaveLength(2);
     expect(files.some((f) => f.endsWith("TASK-001.md"))).toBe(true);
     expect(files.some((f) => f.endsWith("TASK-002.md"))).toBe(true);
@@ -284,7 +285,7 @@ describe("listTaskFiles", () => {
   });
 
   it("returns empty array when tasks dir does not exist", () => {
-    const badDir = path.join(tmpDir, "nonexistent");
+    const badDir = path.join(uniqueDir, "repo", "nonexistent");
     const files = listTaskFiles(badDir);
     expect(files).toEqual([]);
   });
@@ -294,15 +295,15 @@ describe("loadAllTasks", () => {
   it("loads all valid task files", () => {
     makeTaskFile("TASK-010");
     makeTaskFile("TASK-020", { status: "In Progress" });
-    const tasks = loadAllTasks(tmpDir);
+    const tasks = loadAllTasks(path.join(uniqueDir, "repo"));
     expect(tasks).toHaveLength(2);
   });
 
   it("skips invalid task files", () => {
     makeTaskFile("TASK-010");
-    const bad = path.join(tasksDir, "BAD.md");
+    const bad = path.join(stateDir, "BAD.md");
     fs.writeFileSync(bad, "---\nid: BAD\nstatus: Invalid\n---\n\nBody", "utf-8");
-    const tasks = loadAllTasks(tmpDir);
+    const tasks = loadAllTasks(path.join(uniqueDir, "repo"));
     expect(tasks).toHaveLength(1);
   });
 });
@@ -310,13 +311,13 @@ describe("loadAllTasks", () => {
 describe("loadTaskById", () => {
   it("loads a task by ID", () => {
     makeTaskFile("TASK-050");
-    const task = loadTaskById("TASK-050", tmpDir);
+    const task = loadTaskById("TASK-050", path.join(uniqueDir, "repo"));
     expect(task).not.toBeNull();
     expect(task!.id).toBe("TASK-050");
   });
 
   it("returns null for non-existent task", () => {
-    expect(loadTaskById("TASK-999", tmpDir)).toBeNull();
+    expect(loadTaskById("TASK-999", path.join(uniqueDir, "repo"))).toBeNull();
   });
 });
 
@@ -324,21 +325,21 @@ describe("getNextId", () => {
   it("increments from existing task IDs", () => {
     makeTaskFile("TASK-001");
     makeTaskFile("TASK-005");
-    expect(getNextId(tmpDir)).toBe("TASK-006");
+    expect(getNextId(path.join(uniqueDir, "repo"))).toBe("TASK-006");
   });
 
   it("starts at TASK-001 when no tasks exist", () => {
-    expect(getNextId(tmpDir)).toBe("TASK-001");
+    expect(getNextId(path.join(uniqueDir, "repo"))).toBe("TASK-001");
   });
 
   it("ignores non-numeric suffix IDs", () => {
     makeTaskFile("TASK-ABC");
-    expect(getNextId(tmpDir)).toBe("TASK-001");
+    expect(getNextId(path.join(uniqueDir, "repo"))).toBe("TASK-001");
   });
 
   it("handles mixed ID patterns", () => {
     makeTaskFile("TASK-001");
     makeTaskFile("BUG-003");
-    expect(getNextId(tmpDir)).toBe("TASK-004");
+    expect(getNextId(path.join(uniqueDir, "repo"))).toBe("TASK-004");
   });
 });

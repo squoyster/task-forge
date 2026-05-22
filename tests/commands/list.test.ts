@@ -6,18 +6,19 @@ import { cmdList, filterTasks } from "../../src/commands/list.js";
 import { setRepoRoot } from "../../src/util/paths.js";
 import type { ParsedTask } from "../../src/core/task-store.js";
 
-let tmpDir: string;
-let tasksDir: string;
+let uniqueDir: string;
+let stateDir: string;
 
 beforeEach(() => {
-  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "taskforge-list-test-"));
-  tasksDir = path.join(tmpDir, "tasks");
-  fs.mkdirSync(tasksDir, { recursive: true });
-  setRepoRoot(tmpDir);
+  uniqueDir = fs.mkdtempSync(path.join(os.tmpdir(), "taskforge-list-test-"));
+  const repoDir = path.join(uniqueDir, "repo");
+  stateDir = path.resolve(repoDir, "..", "task-state");
+  fs.mkdirSync(stateDir, { recursive: true });
+  setRepoRoot(repoDir);
 });
 
 afterEach(() => {
-  fs.rmSync(tmpDir, { recursive: true, force: true });
+  fs.rmSync(uniqueDir, { recursive: true, force: true });
 });
 
 function makeTaskFile(
@@ -42,7 +43,7 @@ function makeTaskFile(
     "",
     body,
   ];
-  const filePath = path.join(tasksDir, `${id}.md`);
+  const filePath = path.join(stateDir, `${id}.md`);
   fs.writeFileSync(filePath, lines.join("\n"), "utf-8");
 }
 

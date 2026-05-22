@@ -1,5 +1,6 @@
 import { loadTaskById, updateTaskStatus, clearTaskLock, appendAgentNote } from "../core/task-store.js";
 import { validateTransition, getAllowedTransitions } from "../core/status-transition.js";
+import { commitAndPushTaskState } from "../core/git.js";
 import { logSuccess } from "../util/logging.js";
 import { TaskNotFoundError, InvalidStatusTransitionError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
@@ -35,4 +36,7 @@ export async function cmdBlock(taskId: string, reason: string): Promise<void> {
   ]);
 
   logSuccess(`Task ${taskId} blocked: ${reason}`);
+
+  // Push state changes to shared task-state branch
+  await commitAndPushTaskState(repoRoot, `chore: block ${taskId} — ${reason}`);
 }
