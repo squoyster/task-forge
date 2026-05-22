@@ -7,6 +7,7 @@ import { cmdStatus } from "./commands/status.js";
 import { cmdSummary } from "./commands/summary.js";
 import { cmdBlock } from "./commands/block.js";
 import { cmdDone, type DoneOptions } from "./commands/done.js";
+import { cmdList, type ListOptions } from "./commands/list.js";
 import { cmdSync } from "./commands/sync.js";
 import { cmdDepsScan } from "./commands/deps/scan.js";
 import { cmdDepsAudit } from "./commands/deps/audit-cmd.js";
@@ -82,6 +83,25 @@ program
   .command("sync")
   .description("Sync with external issue tracker")
   .action(wrap(cmdSync));
+
+program
+  .command("list")
+  .description("List and filter tasks")
+  .option("--status <status>", "Filter by status (e.g., Ready, In Progress, Done)")
+  .option("--priority <priority>", "Filter by priority (P0, P1, P2, P3)")
+  .option("--type <type>", "Filter by task type (Task, Bug, Feature, etc.)")
+  .option("--search <query>", "Filter by text search in ID or body")
+  .option("--json", "Output results as JSON")
+  .action((opts: { status?: string; priority?: string; type?: string; search?: string; json?: boolean }) => {
+    const listOpts: ListOptions = {
+      status: opts.status,
+      priority: opts.priority,
+      type: opts.type,
+      search: opts.search,
+      json: opts.json ?? false,
+    };
+    return wrap(() => cmdList(listOpts))();
+  });
 
 // Dependency Steward commands
 const deps = program.command("deps").description("Dependency health management");
