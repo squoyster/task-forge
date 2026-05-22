@@ -12,6 +12,7 @@ dependsOn:
 assignee: da2f6ad842
 claimed_at: '2026-05-22 19:59:18'
 context_hash: 27705145f76d1ff7
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-051
 ---
 
 # TASK-051: Implement Doctor-Mode Recovery as Privileged Transactional Operation
@@ -63,6 +64,9 @@ TASK-045, TASK-046, TASK-042 (doctor-lock infrastructure).
 Medium.
 
 ## Agent Notes
+
+### 2026-05-22 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-051
 
 ### 2026-05-22 System
 - Task claimed via taskforge start TASK-051
