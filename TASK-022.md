@@ -1,7 +1,7 @@
 ---
 id: TASK-022
 type: Feature
-status: Ready
+status: Done
 priority: P0
 agentRole: Implementer
 riskLevel: Medium
@@ -128,18 +128,18 @@ Refactor to call `sweepStaleTasks(...)` and render results.
 
 ## Acceptance Criteria
 
-- [ ] `taskforge sweep` still works manually
-- [ ] Sweeper logic lives in `src/core/sweeper.ts`, not only inside `cmdSweep()`
-- [ ] `taskforge next` automatically sweeps stale claims before selecting work
-- [ ] `taskforge start TASK-ID` automatically sweeps stale claims before loading/claiming
-- [ ] Task state is reloaded after sweeping before selection/claim decisions
-- [ ] Stale `In Progress` tasks older than 4 hours are reset to `Ready`
-- [ ] `assignee` and `claimed_at` are cleared on swept tasks
-- [ ] Swept tasks receive an agent/system note
-- [ ] Fresh claims are not touched
-- [ ] Non-`In Progress` tasks are not touched
-- [ ] Tests cover core sweeper behavior and auto-invocation from `next` and `start`
-- [ ] All verification gates pass
+- [x] `taskforge sweep` still works manually
+- [x] Sweeper logic lives in `src/core/sweeper.ts`, not only inside `cmdSweep()`
+- [x] `taskforge next` automatically sweeps stale claims before selecting work
+- [x] `taskforge start TASK-ID` automatically sweeps stale claims before loading/claiming
+- [x] Task state is reloaded after sweeping before selection/claim decisions
+- [x] Stale `In Progress` tasks older than 4 hours are reset to `Ready`
+- [x] `assignee` and `claimed_at` are cleared on swept tasks
+- [x] Swept tasks receive an agent/system note
+- [x] Fresh claims are not touched
+- [x] Non-`In Progress` tasks are not touched
+- [x] Tests cover core sweeper behavior and auto-invocation from `next` and `start`
+- [x] All verification gates pass
 
 ## Files Likely to Change
 
@@ -176,6 +176,19 @@ TASK-015 (Jittered retries) — jitteredPush is used for state propagation.
 ## Risk Level
 
 Medium — refactors existing sweep logic into new module; changes `next` and `start` entry points.
+
+## Agent Notes
+
+### 2026-05-21 Implementer
+
+- Implemented TASK-022: Run Sweeper Automatically Before Task Selection and Claiming
+- Created `src/core/sweeper.ts` with reusable `sweepStaleTasks()` function
+- Refactored `src/commands/sweep.ts` to use core sweeper (now thin wrapper)
+- Updated `src/commands/next.ts` to run sweeper before task selection
+- Updated `src/commands/start.ts` to run sweeper before task loading/claiming
+- Added `tests/commands/start.test.ts` for sweeper auto-invocation in start
+- Updated `tests/commands/next.test.ts` to verify sweeper auto-invocation
+- All verification gates pass: typecheck, lint, build, 286 tests
 
 ## Continuation Policy
 
