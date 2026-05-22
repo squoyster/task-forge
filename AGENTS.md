@@ -44,6 +44,21 @@ Before marking a task `Done`, all must pass:
 - `npm run lint` — zero errors
 - `npm test -- --run` — all tests pass
 
+## Mandatory Deliverables per Task
+
+When completing a task, agents must update:
+
+1. **CHANGELOG.md** — Add an entry under `## [Unreleased]` describing the change. Follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format:
+   - `### Added` — new features
+   - `### Changed` — changes to existing behavior
+   - `### Fixed` — bug fixes
+   - `### Deprecated` — features pending removal
+   - Each entry should reference the task ID: `**TASK-NNN: Short description** — detailed one-liner.`
+
+2. **Task file** — Append agent notes via `appendAgentNote()` and update acceptance criteria.
+
+3. **README.md** — If the task adds or changes a CLI command, update the command table.
+
 ## Code Conventions
 
 - **Language**: TypeScript with strict mode (`strict: true` in tsconfig)
