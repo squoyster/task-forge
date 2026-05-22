@@ -1,11 +1,13 @@
 ---
 id: TASK-028
 type: Feature
-status: Ready
+status: In Progress
 priority: P3
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 0152c675b7
+claimed_at: '2026-05-22 07:12:37'
 ---
 
 # TASK-028: Add Per-Task Event Log (NDJSON)
@@ -62,3 +64,11 @@ Low — additive, no existing behavior changed.
 ## Continuation Policy
 
 Auto-continue.
+
+## Agent Notes
+
+### 2026-05-22 System
+- Task started via taskforge start TASK-028
+- Session: 0152c675b7
+- Branch: agent/TASK-028-add-per-task-event-log-ndjson--0152c675b7
+- Worktree: /Volumes/Transcend/devel/worktrees/TASK-028
