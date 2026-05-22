@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
@@ -56,7 +56,7 @@ describe("cmdDone", () => {
 
   it("accepts force flag for invalid transitions", async () => {
     const fp = makeTaskFile("TASK-001", { status: "In Progress" });
-    await cmdDone("TASK-001", true);
+    await cmdDone("TASK-001", { force: true });
 
     const content = fs.readFileSync(fp, "utf-8");
     expect(content).toContain("Done");
