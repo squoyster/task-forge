@@ -2,7 +2,7 @@ import { loadAllTasks } from "../core/task-store.js";
 import { listWorktrees } from "../core/git.js";
 import { getRepoRoot, getWorktreePath } from "../util/paths.js";
 import { loadConfig } from "../core/config.js";
-import { logHeader, logSuccess, logWarn, logInfo, logSub, logDivider } from "../util/logging.js";
+import { logHeader, logSuccess, logWarn, logInfo, logDivider } from "../util/logging.js";
 import { STATUS } from "../util/status-constants.js";
 import fs from "node:fs";
 

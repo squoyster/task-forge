@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **TASK-034: Proactive git pull before reading task-state** — adds `pullTaskState()` helper that does `git pull --rebase origin task-state` in the task-state worktree before any task read. Called in `next`, `start`, `claim`, and `sweep` commands. Gracefully handles network errors, missing remotes, and non-git repos without throwing. Eliminates the stale-read race window where agents select already-claimed tasks.
+
 - **TASK-024: `claim` command** — standalone primitive that sets `assignee`/`claimed_at` on a task without creating a worktree or branch. Accepts `--force` to override existing claims, `--session` for explicit session IDs, `--json` for structured output. Uses `jitteredPush` with `onConflict` for optimistic concurrency (same as `start`). Enables `next → claim → start` workflow decomposition.
 
 - **TASK-023: Docs update** — `tasks/README.md` now carries a deprecation banner directing readers to `../task-state/` as the authoritative task store. `README.md` already correctly identified task-state as authoritative (verified, no changes needed).
