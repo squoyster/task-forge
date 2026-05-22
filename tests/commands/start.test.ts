@@ -17,6 +17,7 @@ vi.mock("../../src/core/sweeper.js", () => ({
 
 vi.mock("../../src/core/task-store.js", () => ({
   loadTaskById: vi.fn(),
+  loadAllTasks: vi.fn().mockReturnValue([]),
   updateTaskLock: vi.fn(),
   updateTaskStatus: vi.fn(),
   appendAgentNote: vi.fn(),
