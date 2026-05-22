@@ -11,6 +11,7 @@ import {
   setConfig,
 } from "../integrations/github/index.js";
 import { STATUS_LABELS } from "../integrations/github/types.js";
+import { syncTaskToProject } from "../integrations/github/projects.js";
 
 export async function cmdSync(): Promise<void> {
   const repoRoot = getRepoRoot();
@@ -32,6 +33,7 @@ export async function cmdSync(): Promise<void> {
   const githubConfig = {
     owner: config.github.owner ?? "",
     repo: config.github.repo ?? "",
+    projectNumber: config.github.projectNumber,
   };
 
   if (!githubConfig.owner || !githubConfig.repo) {
@@ -53,6 +55,9 @@ export async function cmdSync(): Promise<void> {
 
   await ensureLabels(githubConfig);
 
+  // Track tasks that were successfully linked to issues for project sync
+  const syncedIssues: Array<{ issueNumber: number; taskId: string; taskStatus: string }> = [];
+
   for (const task of tasks) {
     const titleMatch = task.body.match(/^#\s+\S+:\s+(.+)$/m);
     const title = titleMatch ? titleMatch[1] : task.id;
@@ -60,19 +65,65 @@ export async function cmdSync(): Promise<void> {
     if (task.issue) {
       await updateExistingIssue(githubConfig, task.issue, task);
       logSuccess(`Updated #${task.issue}: ${task.id} - ${title}`);
+      syncedIssues.push({ issueNumber: task.issue, taskId: task.id, taskStatus: task.status });
     } else {
       const issueNumber = await createNewIssue(githubConfig, task, title);
       if (issueNumber) {
         updateTaskIssue(task.filePath, issueNumber);
         logSuccess(`Created #${issueNumber}: ${task.id} - ${title}`);
+        syncedIssues.push({ issueNumber, taskId: task.id, taskStatus: task.status });
       }
     }
+  }
+
+  // Sync to GitHub Projects board if projectNumber is configured
+  if (config.github.projectNumber && syncedIssues.length > 0) {
+    await syncToProjectBoard(githubConfig, config, syncedIssues);
   }
 
   logInfo("");
   logInfo("## Sync Status");
   logInfo("");
-  logSuccess("All tasks synced to GitHub Issues.");
+
+  if (config.github.projectNumber) {
+    logSuccess(`All tasks synced to GitHub Issues and Project #${config.github.projectNumber}.`);
+  } else {
+    logSuccess("All tasks synced to GitHub Issues.");
+  }
+}
+
+/**
+ * Sync task statuses to the GitHub Projects v2 board.
+ */
+async function syncToProjectBoard(
+  githubConfig: { owner: string; repo: string; projectNumber?: number },
+  config: { github?: { projects?: { statusField: string; columnMapping?: Record<string, string> } } },
+  syncedIssues: Array<{ issueNumber: number; taskId: string; taskStatus: string }>,
+): Promise<void> {
+  const fieldName = config.github?.projects?.statusField ?? "Status";
+  const columnMapping = config.github?.projects?.columnMapping;
+
+  logInfo("");
+  logInfo(`## Syncing ${syncedIssues.length} task(s) to Project board`);
+  logInfo("");
+
+  for (const { issueNumber, taskId, taskStatus } of syncedIssues) {
+    // Map task status to project column name if mapping is configured
+    const projectStatus = columnMapping?.[taskStatus] ?? taskStatus;
+
+    const ok = await syncTaskToProject(
+      githubConfig,
+      issueNumber,
+      projectStatus,
+      fieldName,
+    );
+
+    if (ok) {
+      logSuccess(`Project #${issueNumber}: ${taskId} → ${projectStatus}`);
+    } else {
+      logError(`Failed to sync ${taskId} to project board.`);
+    }
+  }
 }
 
 async function createNewIssue(

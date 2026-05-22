@@ -1,11 +1,13 @@
 ---
 id: TASK-009
 type: Task
-status: Inbox
+status: Done
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+branch: agent/TASK-009-github-projects-sync
+worktree: ../worktrees/TASK-009
 ---
 
 # TASK-009: GitHub Projects board sync for status columns
@@ -32,13 +34,13 @@ Disallowed files/directories:
 
 ## Acceptance Criteria
 
-- [ ] `taskforge sync` syncs task status to GitHub Project board columns
-- [ ] Project board is configured via `.taskforge/config.json` (projectNumber, statusField, column mapping)
-- [ ] New tasks are added to the project board
-- [ ] Status changes update the board column
-- [ ] Sync is idempotent (re-running doesn't duplicate items)
-- [ ] Error handling for missing board permissions or invalid project number
-- [ ] Unit tests with mocked GitHub Project (v2) API calls
+- [x] `taskforge sync` syncs task status to GitHub Project board columns
+- [x] Project board is configured via `.taskforge/config.json` (projectNumber, statusField, column mapping)
+- [x] New tasks are added to the project board
+- [x] Status changes update the board column
+- [x] Sync is idempotent (re-running doesn't duplicate items)
+- [x] Error handling for missing board permissions or invalid project number
+- [x] Unit tests with mocked GitHub Project (v2) API calls
 
 ## Test / Verification Command
 
@@ -64,3 +66,18 @@ Low
 ## Continuation Policy
 
 Auto-continue unless a stopping condition occurs.
+
+## Agent Notes
+
+### 2026-05-21 Implementer
+- Added `projects` config section to ConfigSchema (statusField, columnMapping)
+- Created `src/integrations/github/projects.ts` — GitHub Projects v2 (GraphQL) API service module with:
+  - `getProjectNodeId()`, `getIssueNodeId()`, `getStatusFieldInfo()`
+  - `findProjectItemId()` for idempotent sync
+  - `addProjectItem()`, `updateItemStatus()`
+  - `syncTaskToProject()` high-level orchestrator
+- Extended `cmdSync` in `src/commands/sync.ts` to call project board sync after issue sync
+- Config mapping: `github.projectNumber` enables it, `github.projects.columnMapping` maps task statuses to column names
+- Project sync only runs when `projectNumber` is configured — existing issue-only sync is unchanged
+- Tests: 19 unit tests for projects module (mocked GraphQL), 4 new integration tests in sync.test.ts
+- Verification: typecheck, lint, build, 254 tests pass (22 test files)
