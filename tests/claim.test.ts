@@ -6,7 +6,7 @@ import { cmdClaim } from "../src/commands/claim.js";
 import { setRepoRoot } from "../src/util/paths.js";
 
 vi.mock("../src/core/git.js", () => ({
-  jitteredPush: vi.fn(),
+  jitteredPush: vi.fn().mockResolvedValue(true),
   pullTaskState: vi.fn().mockResolvedValue(true),
 }));
 

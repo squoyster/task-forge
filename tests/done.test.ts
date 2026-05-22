@@ -12,7 +12,6 @@ vi.mock("../src/core/git.js", () => ({
   commitAndPushTaskState: vi.fn(),
   pullTaskState: vi.fn(),
   jitteredPush: vi.fn(),
-  pullTaskState: vi.fn(),
   ensureTaskStateBranch: vi.fn(),
 }));
 
