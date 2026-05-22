@@ -1,4 +1,5 @@
 import { loadAllTasks } from "../core/task-store.js";
+import { hasUnmetDependencies, getDependents } from "../core/scheduler.js";
 import { logHeader, logSub, logDivider, logInfo } from "../util/logging.js";
 
 interface StatusRow {
@@ -16,6 +17,9 @@ interface StatusJson {
     title: string;
     priority: string;
     status: string;
+    dependsOn?: string[];
+    blockedBy?: string[];
+    blockedDependents?: string[];
   }[];
 }
 
@@ -45,6 +49,29 @@ function makeRow(t: { id: string; priority: string; body: string }): StatusRow {
   };
 }
 
+function makeDependencyInfo(t: ReturnType<typeof loadAllTasks>[0], allTasks: ReturnType<typeof loadAllTasks>): {
+  extra?: string;
+  blockedBy?: string[];
+  blockedDependents?: string[];
+} {
+  const unmet = hasUnmetDependencies(t, allTasks);
+  const dependents = getDependents(t.id, allTasks);
+  const parts: string[] = [];
+
+  if (unmet.length > 0) {
+    parts.push(`Waiting on: ${unmet.join(", ")}`);
+  }
+  if (dependents.length > 0) {
+    parts.push(`Blocks: ${dependents.map((d) => d.id).join(", ")}`);
+  }
+
+  return {
+    extra: parts.length > 0 ? parts.join(" | ") : undefined,
+    blockedBy: unmet.length > 0 ? unmet : undefined,
+    blockedDependents: dependents.length > 0 ? dependents.map((d) => d.id) : undefined,
+  };
+}
+
 function buildJson(tasks: ReturnType<typeof loadAllTasks>): StatusJson {
   const byStatus: Record<string, number> = {};
   const taskEntries: StatusJson["tasks"] = [];
@@ -52,7 +79,16 @@ function buildJson(tasks: ReturnType<typeof loadAllTasks>): StatusJson {
   for (const t of tasks) {
     byStatus[t.status] = (byStatus[t.status] || 0) + 1;
     const r = makeRow(t);
-    taskEntries.push({ id: r.id, title: r.title, priority: r.priority, status: t.status });
+    const depInfo = makeDependencyInfo(t, tasks);
+    taskEntries.push({
+      id: r.id,
+      title: r.title,
+      priority: r.priority,
+      status: t.status,
+      dependsOn: t.dependsOn,
+      blockedBy: depInfo.blockedBy,
+      blockedDependents: depInfo.blockedDependents,
+    });
   }
 
   return { total: tasks.length, byStatus, tasks: taskEntries };
@@ -85,9 +121,23 @@ export async function cmdStatus(json?: boolean): Promise<void> {
   const done = tasks.filter((t) => t.status === "Done");
   const humanNeeded = tasks.filter((t) => t.humanInterventionRequired);
 
-  printTable("Active Work", active.map(makeRow));
+  // Dependency-blocked tasks: actionable tasks with unmet dependencies
+  const depBlocked = tasks.filter(
+    (t) =>
+      (t.status === "Ready" || t.status === "In Progress" || t.status === "Review" || t.status === "Verify") &&
+      hasUnmetDependencies(t, tasks).length > 0,
+  );
+
+  printTable("Active Work", active.map((t) => {
+    const depInfo = makeDependencyInfo(t, tasks);
+    return { ...makeRow(t), extra: depInfo.extra };
+  }));
   printTable("Blocked", blocked.map(makeRow));
-  printTable("Ready Next", ready.map(makeRow));
+  printTable("Dependency-Blocked", depBlocked.map((t) => {
+    const depInfo = makeDependencyInfo(t, tasks);
+    return { ...makeRow(t), extra: depInfo.extra ?? "Waiting on dependencies" };
+  }));
+  printTable("Ready Next", ready.filter((t) => !depBlocked.includes(t)).map(makeRow));
 
   logHeader("## In Review");
   logDivider();
@@ -96,11 +146,15 @@ export async function cmdStatus(json?: boolean): Promise<void> {
   } else {
     for (const t of review) {
       const r = makeRow(t);
-      logSub(`- **${r.id}**: ${r.title} (Priority: ${r.priority}) [Review]`);
+      const depInfo = makeDependencyInfo(t, tasks);
+      const extra = depInfo.extra ? ` [${depInfo.extra}]` : "";
+      logSub(`- **${r.id}**: ${r.title} (Priority: ${r.priority}) [Review]${extra}`);
     }
     for (const t of verify) {
       const r = makeRow(t);
-      logSub(`- **${r.id}**: ${r.title} (Priority: ${r.priority}) [Verify]`);
+      const depInfo = makeDependencyInfo(t, tasks);
+      const extra = depInfo.extra ? ` [${depInfo.extra}]` : "";
+      logSub(`- **${r.id}**: ${r.title} (Priority: ${r.priority}) [Verify]${extra}`);
     }
   }
   logDivider();
@@ -126,6 +180,7 @@ export async function cmdStatus(json?: boolean): Promise<void> {
   logSub(`- **Total tasks:** ${tasks.length}`);
   logSub(`- **Active:** ${active.length}`);
   logSub(`- **Blocked:** ${blocked.length}`);
-  logSub(`- **Ready:** ${ready.length}`);
+  logSub(`- **Dependency-Blocked:** ${depBlocked.length}`);
+  logSub(`- **Ready:** ${ready.length - depBlocked.filter((t) => t.status === "Ready").length}`);
   logSub(`- **Done:** ${done.length}`);
 }

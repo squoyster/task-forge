@@ -36,6 +36,7 @@ export function parseTaskFile(filePath: string): ParsedTask | null {
       frontmatter.humanInterventionRequired ??
       frontmatter.human_intervention_required ??
       false,
+    dependsOn: frontmatter.dependsOn,
     branch: frontmatter.branch,
     worktree: frontmatter.worktree,
     issue: frontmatter.issue ? Number(frontmatter.issue) : undefined,
@@ -67,6 +68,7 @@ export function writeTaskFile(
     agentRole: task.agentRole,
     riskLevel: task.riskLevel,
     humanInterventionRequired: task.humanInterventionRequired,
+    dependsOn: task.dependsOn,
     branch: task.branch,
     worktree: task.worktree,
     issue: task.issue,

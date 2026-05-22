@@ -43,6 +43,7 @@ export const TaskSchema = z.object({
   agentRole: z.string().optional(),
   riskLevel: RiskLevel.default("Low"),
   humanInterventionRequired: z.boolean().default(false),
+  dependsOn: z.array(z.string()).optional(),
   branch: z.string().optional(),
   worktree: z.string().optional(),
   issue: z.number().optional(),

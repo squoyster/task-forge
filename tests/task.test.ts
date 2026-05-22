@@ -79,4 +79,31 @@ describe("TaskSchema", () => {
       expect(result.data.pr).toBe(100);
     }
   });
+
+  it("accepts dependsOn field", () => {
+    const result = TaskSchema.safeParse({
+      id: "TASK-003",
+      dependsOn: ["TASK-001", "TASK-002"],
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.dependsOn).toEqual(["TASK-001", "TASK-002"]);
+    }
+  });
+
+  it("accepts task without dependsOn", () => {
+    const result = TaskSchema.safeParse({ id: "TASK-001" });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.dependsOn).toBeUndefined();
+    }
+  });
+
+  it("rejects non-array dependsOn", () => {
+    const result = TaskSchema.safeParse({
+      id: "TASK-001",
+      dependsOn: "TASK-002",
+    });
+    expect(result.success).toBe(false);
+  });
 });
