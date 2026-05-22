@@ -1,11 +1,14 @@
 ---
 id: TASK-055
 type: Feature
-status: Ready
+status: In Progress
 priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 0d55aa3e0c
+claimed_at: '2026-05-22 20:02:11'
+context_hash: 27705145f76d1ff7
 ---
 
 # TASK-055: Fold Git Operations into TaskForge Commands
@@ -19,3 +22,8 @@ Ensure every git operation an agent needs has a taskforge CLI command — elimin
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-22 System
+- Task claimed via taskforge start TASK-055
+- Session: 0d55aa3e0c
+- Branch: agent/TASK-055-fold-git-operations-into-taskforge-comma--0d55aa3e0c
