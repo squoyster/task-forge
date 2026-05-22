@@ -1,13 +1,11 @@
 ---
 id: TASK-036
 type: Bug
-status: In Progress
+status: Done
 priority: P1
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
-assignee: 532cdaa306
-claimed_at: '2026-05-22 08:24:27'
 ---
 
 # TASK-036: Fix Ownership Assertion in `done` and `block` — Respect `--force`
@@ -62,6 +60,9 @@ Medium — changes a security guard, but `--force` already implies "I know what 
 Auto-continue.
 
 ## Agent Notes
+
+### 2026-05-22 System
+- Task marked Done (forced)
 
 ### 2026-05-22 System
 - Task started via taskforge start TASK-036
