@@ -1,7 +1,7 @@
 ---
 id: TASK-005
 type: Task
-status: Inbox
+status: Ready
 priority: P2
 agentRole: Implementer
 riskLevel: Low
