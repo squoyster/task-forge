@@ -29,6 +29,13 @@ export const ConfigSchema = z.object({
       owner: z.string().optional(),
       repo: z.string().optional(),
       projectNumber: z.number().optional(),
+      projects: z
+        .object({
+          statusField: z.string().default("Status"),
+          columnMapping: z.record(z.string()).optional(),
+        })
+        .optional()
+        .default({}),
       labels: z
         .object({
           task: z.string().default("taskforge"),

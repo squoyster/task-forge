@@ -15,6 +15,11 @@ vi.mock("../../src/integrations/github/index.js", () => ({
   generateIssueBody: vi.fn((_id: string, body: string) => body),
 }));
 
+// Mock the projects module to avoid real GraphQL calls
+vi.mock("../../src/integrations/github/projects.js", () => ({
+  syncTaskToProject: vi.fn(),
+}));
+
 import { cmdSync } from "../../src/commands/sync.js";
 
 let tmpDir: string;
@@ -77,6 +82,7 @@ function makeTaskFile(
 }
 
 import { createIssue, updateIssueLabels, updateIssueBody, ensureLabels } from "../../src/integrations/github/index.js";
+import { syncTaskToProject } from "../../src/integrations/github/projects.js";
 
 describe("cmdSync", () => {
   beforeEach(() => {
@@ -190,5 +196,98 @@ describe("cmdSync", () => {
         labels: expect.arrayContaining(["p0"]),
       }),
     );
+  });
+
+  it("syncs tasks to project board when projectNumber is configured", async () => {
+    vi.mocked(createIssue).mockResolvedValue({ number: 10, url: "" });
+    vi.mocked(ensureLabels).mockResolvedValue(undefined);
+    vi.mocked(syncTaskToProject).mockResolvedValue(true);
+
+    // Add projectNumber to config
+    const configPath = path.join(tmpDir, ".taskforge", "config.json");
+    const config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+    config.github.projectNumber = 1;
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2), "utf-8");
+
+    makeTaskFile("TASK-001");
+
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    await cmdSync();
+
+    expect(syncTaskToProject).toHaveBeenCalledWith(
+      { owner: "test-owner", repo: "test-repo", projectNumber: 1 },
+      10,
+      "Ready",
+      "Status",
+    );
+    logSpy.mockRestore();
+  });
+
+  it("skips project board sync when projectNumber is not configured", async () => {
+    vi.mocked(createIssue).mockResolvedValue({ number: 10, url: "" });
+    vi.mocked(ensureLabels).mockResolvedValue(undefined);
+
+    makeTaskFile("TASK-001");
+
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    await cmdSync();
+
+    expect(syncTaskToProject).not.toHaveBeenCalled();
+    logSpy.mockRestore();
+  });
+
+  it("syncs existing issues to project board", async () => {
+    vi.mocked(updateIssueLabels).mockResolvedValue(undefined);
+    vi.mocked(updateIssueBody).mockResolvedValue(undefined);
+    vi.mocked(ensureLabels).mockResolvedValue(undefined);
+    vi.mocked(syncTaskToProject).mockResolvedValue(true);
+
+    // Add projectNumber to config
+    const configPath = path.join(tmpDir, ".taskforge", "config.json");
+    const config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+    config.github.projectNumber = 1;
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2), "utf-8");
+
+    makeTaskFile("TASK-001", { issue: 5 });
+
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    await cmdSync();
+
+    expect(syncTaskToProject).toHaveBeenCalledWith(
+      { owner: "test-owner", repo: "test-repo", projectNumber: 1 },
+      5,
+      "Ready",
+      "Status",
+    );
+    logSpy.mockRestore();
+  });
+
+  it("uses columnMapping to translate status for project board", async () => {
+    vi.mocked(createIssue).mockResolvedValue({ number: 10, url: "" });
+    vi.mocked(ensureLabels).mockResolvedValue(undefined);
+    vi.mocked(syncTaskToProject).mockResolvedValue(true);
+
+    // Add projectNumber and columnMapping to config
+    const configPath = path.join(tmpDir, ".taskforge", "config.json");
+    const config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+    config.github.projectNumber = 1;
+    config.github.projects = {
+      statusField: "Status",
+      columnMapping: { Ready: "Todo", "In Progress": "Doing" },
+    };
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2), "utf-8");
+
+    makeTaskFile("TASK-001");
+
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    await cmdSync();
+
+    expect(syncTaskToProject).toHaveBeenCalledWith(
+      { owner: "test-owner", repo: "test-repo", projectNumber: 1 },
+      10,
+      "Todo",
+      "Status",
+    );
+    logSpy.mockRestore();
   });
 });
