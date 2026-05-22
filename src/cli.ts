@@ -106,21 +106,24 @@ program
 program
   .command("done <taskId>")
   .description("Mark a task as done")
-  .option("--force", "Force transition to Done even if not allowed")
+  .option("--force", "Override all guards (deprecated — use explicit flags)")
+  .option("--force-gates", "Override verification gate failures")
+  .option("--force-transition", "Override status transition validation")
+  .option("--force-ownership", "Override session ownership check")
   .option("--cleanup", "Remove worktree after marking done")
   .option("--delete-branch", "Delete the task branch after marking done (implies --cleanup)")
   .option("--json", "Output in JSON format")
-  .action((taskId: string, opts: { force?: boolean; cleanup?: boolean; deleteBranch?: boolean; json?: boolean }) => {
+  .action((taskId: string, opts: { force?: boolean; forceGates?: boolean; forceTransition?: boolean; forceOwnership?: boolean; cleanup?: boolean; deleteBranch?: boolean; json?: boolean }) => {
     const doneOpts: DoneOptions = {
       force: opts.force ?? false,
+      forceGates: opts.forceGates ?? false,
+      forceTransition: opts.forceTransition ?? false,
+      forceOwnership: opts.forceOwnership ?? false,
       cleanup: opts.cleanup ?? false,
       deleteBranch: opts.deleteBranch ?? false,
       json: opts.json ?? false,
     };
-    // --delete-branch implies --cleanup
-    if (doneOpts.deleteBranch && !doneOpts.cleanup) {
-      doneOpts.cleanup = true;
-    }
+    if (doneOpts.deleteBranch && !doneOpts.cleanup) doneOpts.cleanup = true;
     return wrap(() => cmdDone(taskId, doneOpts))();
   });
 

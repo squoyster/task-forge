@@ -14,6 +14,9 @@ import type { ParsedTask } from "../core/task-store.js";
 
 export interface DoneOptions {
   force?: boolean;
+  forceGates?: boolean;
+  forceTransition?: boolean;
+  forceOwnership?: boolean;
   cleanup?: boolean;
   deleteBranch?: boolean;
   json?: boolean;
