@@ -1,11 +1,13 @@
 ---
 id: TASK-005
 type: Task
-status: Ready
+status: Done
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+branch: agent/TASK-005-cleanup-done-flag
+worktree: ../worktrees/TASK-005
 ---
 
 # TASK-005: Add --cleanup flag to done command for worktree/branch removal
@@ -31,12 +33,12 @@ Disallowed files/directories:
 
 ## Acceptance Criteria
 
-- [ ] `taskforge done TASK-005` marks done without cleanup (existing behavior preserved)
-- [ ] `taskforge done --cleanup TASK-005` removes the worktree after marking done
-- [ ] `taskforge done --cleanup --delete-branch TASK-005` also removes the remote branch
-- [ ] Cleanup is safe (no-op) if worktree doesn't exist
-- [ ] Error messages are clear if cleanup fails
-- [ ] Unit tests cover cleanup success, branch deletion, and missing worktree
+- [x] `taskforge done TASK-005` marks done without cleanup (existing behavior preserved)
+- [x] `taskforge done --cleanup TASK-005` removes the worktree after marking done
+- [x] `taskforge done --cleanup --delete-branch TASK-005` also removes the remote branch
+- [x] Cleanup is safe (no-op) if worktree doesn't exist
+- [x] Error messages are clear if cleanup fails
+- [x] Unit tests cover cleanup success, branch deletion, and missing worktree
 
 ## Test / Verification Command
 
@@ -62,3 +64,13 @@ Low
 ## Continuation Policy
 
 Auto-continue unless a stopping condition occurs.
+
+## Agent Notes
+
+### 2026-05-22 Implementer
+- Implemented --cleanup and --delete-branch flags for taskforge done command
+- Modified src/core/git.ts: made removeWorktree safe (no-op if missing), added removeBranch function with optional remote deletion
+- Modified src/commands/done.ts: added DoneOptions interface, cleanup logic with safe error handling that preserves status on cleanup failure
+- Modified src/cli.ts: added --cleanup and --delete-branch options (--delete-branch implies --cleanup)
+- Added tests/done.test.ts: 10 test cases covering all acceptance criteria
+- Verification: typecheck, lint, build, all 132 tests pass (12 test files)
