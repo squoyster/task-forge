@@ -22,6 +22,7 @@ import { cmdDoctor } from "./commands/doctor.js";
 import { cmdConfigValidate } from "./commands/config-validate.js";
 import { cmdRelease, type ReleaseOptions } from "./commands/release.js";
 import { cmdValidateState } from "./commands/validate-state.js";
+import { cmdReject } from "./commands/reject.js";
 import { cmdList, type ListOptions } from "./commands/list.js";
 import { cmdSync } from "./commands/sync.js";
 import { cmdDepsScan } from "./commands/deps/scan.js";
@@ -345,6 +346,13 @@ program
     const releaseOpts: ReleaseOptions = { json: opts.json ?? false };
     return wrap(() => cmdRelease(taskId, releaseOpts))();
   });
+
+program
+  .command("reject <taskId> <reason>")
+  .description("Mark a task as rejected (obsolete, won't implement)")
+  .option("--json", "Output in JSON format")
+  .action((taskId: string, reason: string, opts: { json?: boolean }) =>
+    wrap(() => cmdReject(taskId, reason, opts))());
 
 program
   .command("validate-state")
