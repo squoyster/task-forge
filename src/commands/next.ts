@@ -1,8 +1,13 @@
 import { loadAllTasks } from "../core/task-store.js";
 import { selectNextTask, scoreTask, hasUnmetDependencies } from "../core/scheduler.js";
+import { sweepStaleTasks } from "../core/sweeper.js";
 import { logInfo, logHeader, logSub, logDivider } from "../util/logging.js";
 
 export async function cmdNext(): Promise<void> {
+  // Run sweeper before selecting next task
+  await sweepStaleTasks(undefined, { commit: true });
+
+  // Reload tasks after sweeping
   const tasks = loadAllTasks();
 
   if (tasks.length === 0) {

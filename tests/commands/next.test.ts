@@ -5,6 +5,19 @@ import os from "node:os";
 import { cmdNext } from "../../src/commands/next.js";
 import { setRepoRoot } from "../../src/util/paths.js";
 
+// Mock the sweeper module
+vi.mock("../../src/core/sweeper.js", () => ({
+  sweepStaleTasks: vi.fn().mockResolvedValue({
+    scanned: 0,
+    stale: [],
+    changed: 0,
+    pushed: true,
+  }),
+}));
+
+// Import after mocking
+import { sweepStaleTasks } from "../../src/core/sweeper.js";
+
 let uniqueDir: string;
 let stateDir: string;
 
@@ -14,6 +27,8 @@ beforeEach(() => {
   stateDir = path.resolve(repoDir, "..", "task-state");
   fs.mkdirSync(stateDir, { recursive: true });
   setRepoRoot(repoDir);
+
+  vi.clearAllMocks();
 });
 
 afterEach(() => {
@@ -41,6 +56,16 @@ function makeTaskFile(id: string, overrides: Record<string, unknown> = {}): void
 }
 
 describe("cmdNext", () => {
+  it("calls sweepStaleTasks before selecting task", async () => {
+    makeTaskFile("TASK-001", { status: "Ready" });
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    await cmdNext();
+
+    expect(sweepStaleTasks).toHaveBeenCalled();
+    logSpy.mockRestore();
+  });
+
   it("shows message when no tasks exist", async () => {
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     await cmdNext();

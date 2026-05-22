@@ -3,6 +3,7 @@ import { validateTransition } from "../core/status-transition.js";
 import { createWorktree, jitteredPush } from "../core/git.js";
 import { makeBranchName } from "../util/paths.js";
 import { generateSessionId } from "../core/session.js";
+import { sweepStaleTasks } from "../core/sweeper.js";
 import { logInfo, logSuccess, logWarn, logError, logHeader, logSub, logDivider } from "../util/logging.js";
 import { TaskNotFoundError, InvalidStatusTransitionError, WorktreeError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
@@ -13,6 +14,11 @@ export interface StartOptions {
 
 export async function cmdStart(taskId: string, options?: StartOptions): Promise<void> {
   const repoRoot = getRepoRoot();
+
+  // Run sweeper before loading/claiming task
+  await sweepStaleTasks(repoRoot, { commit: true });
+
+  // Reload task after sweeping (it may have been reset to Ready)
   const task = loadTaskById(taskId);
 
   if (!task) {
