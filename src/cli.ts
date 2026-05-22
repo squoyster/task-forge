@@ -20,6 +20,7 @@ import { cmdNew, type NewOptions } from "./commands/new.js";
 import { cmdResume } from "./commands/resume.js";
 import { cmdDoctor } from "./commands/doctor.js";
 import { cmdConfigValidate } from "./commands/config-validate.js";
+import { cmdRelease, type ReleaseOptions } from "./commands/release.js";
 import { cmdList, type ListOptions } from "./commands/list.js";
 import { cmdSync } from "./commands/sync.js";
 import { cmdDepsScan } from "./commands/deps/scan.js";
@@ -329,5 +330,14 @@ program
   .description("Validate .taskforge/config.json")
   .option("--json", "Output in JSON format")
   .action((opts: { json?: boolean }) => wrap(() => cmdConfigValidate(opts))());
+
+program
+  .command("release <taskId>")
+  .description("Voluntarily release a task claim and reset to Ready")
+  .option("--json", "Output in JSON format")
+  .action((taskId: string, opts: { json?: boolean }) => {
+    const releaseOpts: ReleaseOptions = { json: opts.json ?? false };
+    return wrap(() => cmdRelease(taskId, releaseOpts))();
+  });
 
 program.parse();
