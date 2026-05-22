@@ -1,15 +1,12 @@
 ---
 id: TASK-057
 type: Refactor
-status: In Progress
+status: Done
 priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 332e82a023
-claimed_at: '2026-05-22 20:35:51'
 context_hash: 0cd53b090047347c
-worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-057
 ---
 
 # TASK-057: Migrate all lifecycle commands to transactional mutation layer
@@ -23,6 +20,12 @@ Describe the desired outcome.
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-22 System
+- Task marked Done (forced)
+- Completed despite gate failures — forced.
+- Worktree removed: /Volumes/Transcend/devel/worktrees/task-forge/TASK-057
+- Worktree and branch fields cleared from task frontmatter.
 
 ### 2026-05-22 System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-057

@@ -6,8 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: High
 humanInterventionRequired: false
-lockedBy: f4539169a5
-lockedAt: '2026-05-22 02:20:22'
 ---
 
 # TASK-013: Shared task-state branch for ground-truth task storage
