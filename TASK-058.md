@@ -1,15 +1,12 @@
 ---
 id: TASK-058
 type: Documentation
-status: In Progress
+status: Done
 priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 6f4a6f5e8e
-claimed_at: '2026-05-22 20:51:17'
 context_hash: 0cd53b090047347c
-worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-058
 ---
 
 # TASK-058: Update architectural docs to match implementation
@@ -23,6 +20,12 @@ Update TASKFORGE.md, README.md, and CHANGELOG.md to reflect the current implemen
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-22 System
+- Task marked Done (forced)
+- Completed despite gate failures — forced.
+- Worktree removed: /Volumes/Transcend/devel/worktrees/task-forge/TASK-058
+- Worktree and branch fields cleared from task frontmatter.
 
 ### 2026-05-22 System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-058
