@@ -12,6 +12,7 @@ dependsOn:
 assignee: 6b6f55b314
 claimed_at: '2026-05-22 19:53:49'
 context_hash: 27705145f76d1ff7
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-050
 ---
 
 # TASK-050: Split Generic `--force` Into Explicit Privileged Override Modes
@@ -46,6 +47,9 @@ TASK-045, TASK-046.
 Medium.
 
 ## Agent Notes
+
+### 2026-05-22 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-050
 
 ### 2026-05-22 System
 - Task claimed via taskforge start TASK-050
