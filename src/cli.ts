@@ -14,6 +14,7 @@ import { cmdHeartbeat, type HeartbeatOptions } from "./commands/heartbeat.js";
 import { cmdInspect, type InspectOptions } from "./commands/inspect.js";
 import { cmdClaim, type ClaimOptions } from "./commands/claim.js";
 import { cmdReport, type ReportOptions } from "./commands/report.js";
+import { cmdCleanup, type CleanupOptions } from "./commands/cleanup-cmd.js";
 import { cmdList, type ListOptions } from "./commands/list.js";
 import { cmdSync } from "./commands/sync.js";
 import { cmdDepsScan } from "./commands/deps/scan.js";
@@ -202,6 +203,23 @@ program
   .action((taskId: string, opts: { complete?: boolean; json?: boolean }) => {
     const reportOpts: ReportOptions = { complete: opts.complete ?? false, json: opts.json ?? false };
     return wrap(() => cmdReport(taskId, reportOpts))();
+  });
+
+program
+  .command("cleanup <taskId>")
+  .description("Remove task worktree and branch with safety checks")
+  .option("--dry-run", "Preview what would be removed without mutating")
+  .option("--apply", "Execute cleanup (fails if unsafe)")
+  .option("--force", "Skip all safety checks")
+  .option("--json", "Output in JSON format")
+  .action((taskId: string, opts: { dryRun?: boolean; apply?: boolean; force?: boolean; json?: boolean }) => {
+    const cleanupOpts: CleanupOptions = {
+      dryRun: opts.dryRun ?? false,
+      apply: opts.apply ?? false,
+      force: opts.force ?? false,
+      json: opts.json ?? false,
+    };
+    return wrap(() => cmdCleanup(taskId, cleanupOpts))();
   });
 
 // Dependency Steward commands
