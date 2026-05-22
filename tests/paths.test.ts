@@ -3,6 +3,7 @@ import {
   getRepoRoot,
   setRepoRoot,
   getTasksDir,
+  getTaskStateDir,
   getTaskFilePath,
   getWorktreesDir,
   getWorktreePath,
@@ -38,9 +39,19 @@ describe("getTasksDir", () => {
   });
 });
 
+describe("getTaskStateDir", () => {
+  it("returns parent/task-state relative to repo", () => {
+    expect(getTaskStateDir("/test/repo")).toBe("/test/task-state");
+  });
+
+  it("resolves correctly for nested repo paths", () => {
+    expect(getTaskStateDir("/a/b/repo")).toBe("/a/b/task-state");
+  });
+});
+
 describe("getTaskFilePath", () => {
-  it("returns the full path for a task ID", () => {
-    expect(getTaskFilePath("/test/repo", "TASK-001")).toBe("/test/repo/tasks/TASK-001.md");
+  it("returns the full path in the task-state directory", () => {
+    expect(getTaskFilePath("/test/repo", "TASK-001")).toBe("/test/task-state/TASK-001.md");
   });
 });
 

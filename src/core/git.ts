@@ -1,6 +1,6 @@
 import simpleGit from "simple-git";
 import { execa } from "execa";
-import { getWorktreePath, makeBranchName } from "../util/paths.js";
+import { getWorktreePath, makeBranchName, getTaskStateDir } from "../util/paths.js";
 import type { ParsedTask } from "./task-store.js";
 
 export interface WorktreeResult {
@@ -127,6 +127,85 @@ export async function commitChanges(
   const status = await git.status();
   if (status.files.length > 0) {
     await git.commit(message);
+  }
+}
+
+/**
+ * Ensure the task-state branch and worktree exist.
+ * Creates an orphan branch if neither exists yet.
+ * Returns the worktree path, or the state dir if git is unavailable.
+ */
+export async function ensureTaskStateBranch(repoRoot: string): Promise<string> {
+  const stateDir = getTaskStateDir(repoRoot);
+
+  try {
+    const git = simpleGit(repoRoot);
+
+    // Check if worktree already exists
+    const worktrees = await git.raw("worktree", "list", "--porcelain");
+    if (worktrees.includes(stateDir)) {
+      return stateDir;
+    }
+
+    // Check if branch exists locally or remotely
+    const branches = await git.branchLocal();
+    let branchExists = branches.all.includes("task-state");
+
+    if (!branchExists) {
+      // Try to fetch from remote first
+      try {
+        await execa("git", ["fetch", "origin", "task-state"], { cwd: repoRoot });
+        branchExists = true;
+      } catch {
+        // Branch doesn't exist remotely either — will create orphan
+      }
+    }
+
+    if (branchExists) {
+      await execa("git", ["worktree", "add", stateDir, "task-state"], { cwd: repoRoot });
+    } else {
+      // Create orphan branch: we need to make an initial commit
+      // so the branch is valid for checkout via worktree add
+      await execa("git", ["worktree", "add", stateDir, "-b", "task-state"], { cwd: repoRoot });
+    }
+  } catch {
+    // Not a git repo or other git error — just ensure the directory exists
+    const fs = await import("node:fs");
+    if (!fs.existsSync(stateDir)) {
+      fs.mkdirSync(stateDir, { recursive: true });
+    }
+  }
+
+  return stateDir;
+}
+
+/**
+ * Commit all changes in the task-state worktree and push to remote.
+ * Gracefully no-ops if the worktree doesn't exist or isn't a git repo.
+ */
+export async function commitAndPushTaskState(repoRoot: string, message: string): Promise<void> {
+  const stateDir = getTaskStateDir(repoRoot);
+
+  // First check if the worktree directory exists
+  const fs = await import("node:fs");
+  if (!fs.existsSync(stateDir)) {
+    return; // Not yet initialized — skip silently
+  }
+
+  try {
+    const git = simpleGit(stateDir);
+    await git.add(".");
+    const status = await git.status();
+    if (status.files.length > 0) {
+      await git.commit(message);
+    }
+    try {
+      await execa("git", ["push", "origin", "task-state"], { cwd: stateDir });
+    } catch {
+      // Remote may not exist or be unreachable — local commit is enough
+    }
+  } catch {
+    // Not a git repo or other git error — skip silently
   }
 }
 

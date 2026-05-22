@@ -5,20 +5,21 @@ import os from "node:os";
 import { cmdStatus } from "../src/commands/status.js";
 import { setRepoRoot } from "../src/util/paths.js";
 
-let tmpDir: string;
-let tasksDir: string;
+let uniqueDir: string;
+let stateDir: string;
 let originalArgv: string[];
 beforeEach(() => {
-  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "taskforge-test-"));
-  tasksDir = path.join(tmpDir, "tasks");
-  fs.mkdirSync(tasksDir, { recursive: true });
-  setRepoRoot(tmpDir);
+  uniqueDir = fs.mkdtempSync(path.join(os.tmpdir(), "taskforge-test-"));
+  const repoDir = path.join(uniqueDir, "repo");
+  stateDir = path.resolve(repoDir, "..", "task-state");
+  fs.mkdirSync(stateDir, { recursive: true });
+  setRepoRoot(repoDir);
 
   originalArgv = process.argv;
 });
 
 afterEach(() => {
-  fs.rmSync(tmpDir, { recursive: true, force: true });
+  fs.rmSync(uniqueDir, { recursive: true, force: true });
   process.argv = originalArgv;
 });
 
@@ -33,7 +34,7 @@ function makeTaskFile(id: string, overrides: Record<string, unknown> = {}): void
   };
   const body = bodyOverride as string | undefined ?? `# ${id}: Test task ${id}\n\n## Goal\nDo something.\n`;
   const lines = ["---", ...Object.entries(frontmatter).map(([k, v]) => `${k}: ${v}`), "---", "", body];
-  fs.writeFileSync(path.join(tasksDir, `${id}.md`), lines.join("\n"), "utf-8");
+  fs.writeFileSync(path.join(stateDir, `${id}.md`), lines.join("\n"), "utf-8");
 }
 
 describe("cmdStatus --json", () => {

@@ -9,24 +9,27 @@ import { setRepoRoot } from "../src/util/paths.js";
 vi.mock("../src/core/git.js", () => ({
   removeWorktree: vi.fn(),
   removeBranch: vi.fn(),
+  commitAndPushTaskState: vi.fn(),
+  ensureTaskStateBranch: vi.fn(),
 }));
 
 import { removeWorktree, removeBranch } from "../src/core/git.js";
 
-let tmpDir: string;
-let tasksDir: string;
+let uniqueDir: string;
+let stateDir: string;
 
 beforeEach(() => {
-  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "taskforge-done-test-"));
-  tasksDir = path.join(tmpDir, "tasks");
-  fs.mkdirSync(tasksDir, { recursive: true });
-  setRepoRoot(tmpDir);
+  uniqueDir = fs.mkdtempSync(path.join(os.tmpdir(), "taskforge-done-test-"));
+  const repoDir = path.join(uniqueDir, "repo");
+  stateDir = path.resolve(repoDir, "..", "task-state");
+  fs.mkdirSync(stateDir, { recursive: true });
+  setRepoRoot(repoDir);
 
   vi.clearAllMocks();
 });
 
 afterEach(() => {
-  fs.rmSync(tmpDir, { recursive: true, force: true });
+  fs.rmSync(uniqueDir, { recursive: true, force: true });
 });
 
 function makeTaskFile(
@@ -51,7 +54,7 @@ function makeTaskFile(
     "",
     body,
   ];
-  const filePath = path.join(tasksDir, `${id}.md`);
+  const filePath = path.join(stateDir, `${id}.md`);
   fs.writeFileSync(filePath, lines.join("\n"), "utf-8");
   return filePath;
 }
@@ -105,7 +108,7 @@ describe("cmdDone", () => {
     });
     await cmdDone("TASK-005", { cleanup: true });
 
-    expect(removeWorktree).toHaveBeenCalledWith(tmpDir, "TASK-005");
+    expect(removeWorktree).toHaveBeenCalledWith(path.join(uniqueDir, "repo"), "TASK-005");
     // Status should still be Done
     const task = readTaskFile(fp);
     expect(task.frontmatter.status).toBe("Done");
@@ -121,9 +124,9 @@ describe("cmdDone", () => {
     });
     await cmdDone("TASK-005", { cleanup: true, deleteBranch: true });
 
-    expect(removeWorktree).toHaveBeenCalledWith(tmpDir, "TASK-005");
+    expect(removeWorktree).toHaveBeenCalledWith(path.join(uniqueDir, "repo"), "TASK-005");
     expect(removeBranch).toHaveBeenCalledWith(
-      tmpDir,
+      path.join(uniqueDir, "repo"),
       "agent/TASK-005-cleanup",
     );
   });
@@ -139,7 +142,7 @@ describe("cmdDone", () => {
       cmdDone("TASK-005", { cleanup: true }),
     ).resolves.not.toThrow();
 
-    expect(removeWorktree).toHaveBeenCalledWith(tmpDir, "TASK-005");
+    expect(removeWorktree).toHaveBeenCalledWith(path.join(uniqueDir, "repo"), "TASK-005");
     const task = readTaskFile(fp);
     expect(task.frontmatter.status).toBe("Done");
   });
