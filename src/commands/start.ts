@@ -1,8 +1,9 @@
-import { loadTaskById, updateTaskStatus, updateTaskLock, appendAgentNote, clearTaskLock } from "../core/task-store.js";
+import { loadTaskById, loadAllTasks, updateTaskStatus, updateTaskLock, appendAgentNote, clearTaskLock } from "../core/task-store.js";
 import { validateTransition } from "../core/status-transition.js";
 import { createWorktree, jitteredPush } from "../core/git.js";
 import { makeBranchName } from "../util/paths.js";
 import { generateSessionId } from "../core/session.js";
+import { checkOutstandingSessionTasks } from "../core/session.js";
 import { sweepStaleTasks } from "../core/sweeper.js";
 import { pullTaskState } from "../core/git.js";
 import { STATUS } from "../util/status-constants.js";
@@ -48,6 +49,21 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
       STATUS.IN_PROGRESS,
       [STATUS.READY, STATUS.IN_PROGRESS],
     );
+  }
+
+  // Hard guardrail: check outstanding session tasks (exclude current for resume)
+  const outstanding = await checkOutstandingSessionTasks(loadAllTasks(repoRoot), repoRoot, taskId);
+  if (outstanding) {
+    if (options?.json) {
+      printJson(jsonError(
+        `You still own task ${outstanding}. Close it first with 'taskforge done ${outstanding}'.`,
+        "OUTSTANDING_TASK",
+      ));
+      return;
+    }
+    logWarn(`You still own task ${outstanding}.`);
+    logInfo(`Run 'taskforge done ${outstanding}' to mark it complete first.`);
+    return;
   }
 
   // Lock check: if task is locked by another session, reject unless --force

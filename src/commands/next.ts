@@ -2,7 +2,8 @@ import { loadAllTasks } from "../core/task-store.js";
 import { selectNextTask, scoreTask, hasUnmetDependencies } from "../core/scheduler.js";
 import { sweepStaleTasks } from "../core/sweeper.js";
 import { pullTaskState } from "../core/git.js";
-import { logInfo, logHeader, logSub, logDivider } from "../util/logging.js";
+import { checkOutstandingSessionTasks } from "../core/session.js";
+import { logInfo, logHeader, logSub, logDivider, logWarn } from "../util/logging.js";
 import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
 
 export interface NextOptions {
@@ -18,6 +19,23 @@ export async function cmdNext(options?: NextOptions): Promise<void> {
 
   // Reload tasks after sweeping
   const tasks = loadAllTasks();
+
+  // Hard guardrail: check outstanding session tasks
+  const repoRoot = undefined as unknown as string;
+  const outstandingTask = await checkOutstandingSessionTasks(tasks, repoRoot);
+  if (outstandingTask) {
+    if (options?.json) {
+      printJson(jsonError(
+        `You still own task ${outstandingTask}. Run 'taskforge done ${outstandingTask}' or 'taskforge release ${outstandingTask}' first.`,
+        "OUTSTANDING_TASK",
+      ));
+      return;
+    }
+    logWarn(`You still own task ${outstandingTask}.`);
+    logInfo(`Run 'taskforge done ${outstandingTask}' to mark it complete,`);
+    logInfo(`or 'taskforge release ${outstandingTask}' to abandon the claim.`);
+    return;
+  }
 
   if (tasks.length === 0) {
     if (options?.json) {

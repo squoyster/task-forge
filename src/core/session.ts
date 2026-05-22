@@ -1,7 +1,9 @@
 import crypto from "node:crypto";
 import { getCurrentBranch } from "./git.js";
 import type { Task } from "./task.js";
+import type { ParsedTask } from "./task-store.js";
 import { TaskForgeError } from "./errors.js";
+import { STATUS } from "../util/status-constants.js";
 
 /**
  * Generate a 10-character hex session ID (5 bytes).
@@ -49,4 +51,37 @@ export async function assertTaskOwnership(
       "OWNERSHIP_MISMATCH",
     );
   }
+}
+
+/**
+ * Hard guardrail: check if the current session has any outstanding
+ * In Progress tasks that were not properly closed via the CLI.
+ * Returns the blocking task ID if found, null if clear.
+ *
+ * This prevents an agent from starting a new task when they still
+ * have an un-closed task — regardless of manual file edits.
+ */
+export async function checkOutstandingSessionTasks(
+  tasks: ParsedTask[],
+  repoRoot: string,
+  excludeTaskId?: string,
+): Promise<string | null> {
+  try {
+    const branch = await getCurrentBranch(repoRoot);
+    const sessionId = parseSessionIdFromBranch(branch);
+    if (!sessionId) return null;
+
+    for (const t of tasks) {
+      if (t.id === excludeTaskId) continue;
+      if (t.assignee === sessionId && t.status === STATUS.IN_PROGRESS) {
+        return t.id;
+      }
+      if (t.assignee === sessionId && t.status !== STATUS.IN_PROGRESS) {
+        return t.id;
+      }
+    }
+  } catch {
+    return null;
+  }
+  return null;
 }

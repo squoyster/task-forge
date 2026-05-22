@@ -1,4 +1,4 @@
-import { loadTaskById, updateTaskStatus, updateTaskLock, appendAgentNote, clearTaskLock } from "../core/task-store.js";
+import { loadTaskById, loadAllTasks, updateTaskStatus, updateTaskLock, appendAgentNote, clearTaskLock } from "../core/task-store.js";
 import { validateTransition } from "../core/status-transition.js";
 import { jitteredPush } from "../core/git.js";
 import { pullTaskState } from "../core/git.js";
@@ -10,6 +10,7 @@ import { TaskNotFoundError, InvalidStatusTransitionError } from "../core/errors.
 import { getRepoRoot } from "../util/paths.js";
 import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
 import { eventLogEvent } from "../core/event-log.js";
+import { checkOutstandingSessionTasks } from "../core/session.js";
 
 export interface ClaimOptions {
   force?: boolean;
@@ -46,6 +47,21 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
     throw new Error(
       `Cannot claim task with status "${task.status}". Must be "${STATUS.READY}" or "${STATUS.IN_PROGRESS}".`,
     );
+  }
+
+  // Hard guardrail: check outstanding session tasks
+  const outstanding = await checkOutstandingSessionTasks(loadAllTasks(repoRoot), repoRoot, taskId);
+  if (outstanding) {
+    if (json) {
+      printJson(jsonError(
+        `You still own task ${outstanding}. Close it first with 'taskforge done ${outstanding}'.`,
+        "OUTSTANDING_TASK",
+      ));
+      return;
+    }
+    logError(`You still own task ${outstanding}.`);
+    logInfo(`Run 'taskforge done ${outstanding}' to mark it complete first.`);
+    return;
   }
 
   if (task.assignee && !force) {
