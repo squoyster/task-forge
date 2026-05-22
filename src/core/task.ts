@@ -65,6 +65,7 @@ export const TaskSchema = z.object({
   blocked_by: BlockedBy.optional(),
   blocked_since: z.union([z.string(), z.date()]).optional(),
   block_category: BlockCategory.optional(),
+  context_hash: z.string().optional(),
   issue: z.number().optional(),
   pr: z.number().optional(),
 });

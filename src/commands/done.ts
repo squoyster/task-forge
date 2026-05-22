@@ -9,6 +9,7 @@ import { assertTaskOwnership } from "../core/session.js";
 import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
 import { cmdGates } from "./gates.js";
 import { isDoctorLocked, removeDoctorLock } from "../core/doctor-lock.js";
+import { hashControlFiles } from "../core/control-files.js";
 import type { ParsedTask } from "../core/task-store.js";
 
 export interface DoneOptions {
@@ -67,6 +68,24 @@ export async function cmdDone(
   // Assert ownership if task is locked (skip if no lock set)
   if (task.assignee && !force) {
     await assertTaskOwnership(task, repoRoot);
+  }
+
+  // Control-file change detection
+  if (task.context_hash && !force) {
+    const currentHash = hashControlFiles(repoRoot);
+    if (currentHash !== task.context_hash) {
+      if (json) {
+        printJson(jsonError(
+          "Control files have changed since task was started. Review changes before marking Done. Use --force to override.",
+          "CONTEXT_CHANGED",
+        ));
+        return;
+      }
+      throw new Error(
+        "Control files have changed since this task was started. " +
+        "Review the changes before marking Done, or use --force to override.",
+      );
+    }
   }
 
   updateTaskStatus(task.filePath, STATUS.DONE);

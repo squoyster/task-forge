@@ -103,8 +103,12 @@ dependencies: z
        test: z.string().default("npm test -- --run"),
      })
      .optional()
-     .default({}),
- });
+      .default({}),
+    controlFiles: z
+      .array(z.string())
+      .optional()
+      .default([]),
+  });
 
 export type Config = z.infer<typeof ConfigSchema>;
 

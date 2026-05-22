@@ -1,10 +1,11 @@
-import { loadTaskById, loadAllTasks, updateTaskStatus, updateTaskLock, appendAgentNote, clearTaskLock } from "../core/task-store.js";
+import { loadTaskById, loadAllTasks, updateTaskStatus, updateTaskLock, appendAgentNote, clearTaskLock, parseTaskFile, writeTaskFile } from "../core/task-store.js";
 import { validateTransition } from "../core/status-transition.js";
 import { createWorktree, jitteredPush } from "../core/git.js";
 import { makeBranchName } from "../util/paths.js";
 import { generateSessionId } from "../core/session.js";
 import { checkOutstandingSessionTasks } from "../core/session.js";
 import { isDoctorLocked } from "../core/doctor-lock.js";
+import { hashControlFiles } from "../core/control-files.js";
 import { sweepStaleTasks } from "../core/sweeper.js";
 import { pullTaskState } from "../core/git.js";
 import { STATUS } from "../util/status-constants.js";
@@ -137,6 +138,13 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
 
   // Set the lock
   updateTaskLock(task.filePath, sessionId);
+
+  // Store control-file hash for change detection
+  const current = parseTaskFile(task.filePath);
+  if (current) {
+    current.context_hash = hashControlFiles(repoRoot);
+    writeTaskFile(current);
+  }
 
   // Update status to In Progress if it was Ready
   if (task.status === STATUS.READY) {
