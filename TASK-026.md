@@ -1,11 +1,13 @@
 ---
 id: TASK-026
 type: Feature
-status: Ready
+status: In Progress
 priority: P2
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
+assignee: 825b0d9041
+claimed_at: '2026-05-22 06:58:31'
 ---
 
 # TASK-026: Safe Sweep with Dry-Run and Worktree Classification
@@ -59,3 +61,11 @@ Medium — changes core sweeper behavior but makes it safer.
 ## Continuation Policy
 
 Auto-continue.
+
+## Agent Notes
+
+### 2026-05-22 System
+- Task started via taskforge start TASK-026
+- Session: 825b0d9041
+- Branch: agent/TASK-026-safe-sweep-with-dry-run-and-worktree-cla--825b0d9041
+- Worktree: /Volumes/Transcend/devel/worktrees/TASK-026
