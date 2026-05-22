@@ -90,10 +90,10 @@ Every mutation to a task file triggers an immediate **auto-commit + auto-push** 
 
 | Operation | What happens |
 |---|---|
-| `taskforge start TASK-123` | Writes `lockedBy`/`lockedAt` → commits + pushes |
-| `taskforge done TASK-123` | Clears lock, updates status → commits + pushes |
-| `taskforge block TASK-123` | Clears lock, updates status → commits + pushes |
-| `taskforge unlock TASK-123 --force` | Clears lock → commits + pushes |
+| `taskforge start TASK-123` | Writes `assignee`/`claimed_at` → commits + pushes |
+| `taskforge done TASK-123` | Clears `assignee`/`claimed_at`, updates status → commits + pushes |
+| `taskforge block TASK-123` | Clears `assignee`/`claimed_at`, updates status → commits + pushes |
+| `taskforge unlock TASK-123 --force` | Clears `assignee`/`claimed_at` → commits + pushes |
 | `taskforge sync` | Updates from GitHub → commits + pushes |
 | Dependency task creation | Creates file → commits + pushes |
 
@@ -103,9 +103,46 @@ This ensures state propagates instantly to all agents. No agent ever reads stale
 
 The previous design stored task files in `tasks/` on `main`. This broke when agent worktrees were created before new tasks were committed — the worktree was a git snapshot and couldn't see task files created later. The `task-state` branch decouples task data from code history, making it accessible from any git context.
 
-### Conflict Handling
+### Field Names
 
-Because the tooling serializes writes (only one agent mutates a task at a time, enforced by session-based locking from TASK-012), merge conflicts on the `task-state` branch should be rare. If a `git push` fails due to a conflict, the tooling aborts with a clear message and instructs the agent to retry after fetching the latest state.
+Task frontmatter uses the following lock-related fields:
+
+| Field | Type | Description |
+|---|---|---|
+| `assignee` | string (optional) | Session GUID (10-char hex) of the agent currently working on this task. This is a **session identifier**, not a durable human/agent identity. The exact same value is embedded in the branch name (`--<sessionId>`) for ownership verification. |
+| `claimed_at` | string or Date (optional) | UTC timestamp when the task was claimed (`YYYY-MM-DD HH:MM:SS` format, YAML-safe). js-yaml may auto-parse this as a Date object; the schema accepts both. |
+
+These fields replace the earlier `lockedBy`/`lockedAt` naming convention.
+
+### The Sweeper Protocol (Deadlock Recovery)
+
+Because agents can crash or disconnect, a deadlock recovery mechanism runs **before** any agent searches for new work:
+
+1. **Scan**: Read all tasks with `status: in_progress` from the `task-state` branch
+2. **Check**: For each, compare `claimed_at` against the current UTC time
+3. **Threshold**: If `claimed_at` is older than **4 hours**, the agent is presumed dead
+4. **Recover**: Reset the task to `status: Ready`, clear `assignee`/`claimed_at`
+5. **Propagate**: Commit and push the state change (via `commitAndPushTaskState()`)
+
+The 4-hour threshold assumes no single sub-task takes longer than 4 hours without a status update. Agents that need more time should periodically update their task's `claimed_at` to reset the clock.
+
+This protocol runs automatically inside `taskforge start` and `taskforge next`, and can also be invoked explicitly via `taskforge sweep`.
+
+### Optimistic Concurrency with Jittered Retries
+
+When multiple agents compete for the same task, the claiming process uses optimistic concurrency:
+
+1. Update frontmatter (`assignee`, `claimed_at`, `status: in_progress`)
+2. Commit and push to the `task-state` branch
+3. **If push rejected** (non-fast-forward):
+   - `git pull --rebase` to catch up with the latest state
+   - Wait a random **2–10 second jitter** period
+   - Re-read the task status from the rebased state
+   - If still `Ready`: retry the push
+   - If another agent claimed it: drop the task, find another in the Ready queue
+4. Up to **3 retries** before giving up
+
+This pattern (common in Kubernetes controllers and etcd-based systems) prevents split-brain without requiring a central lock server.
 
 ## Task Types
 
@@ -351,6 +388,8 @@ Always keep repo-native task specs even when using an external issue tracker.
 | `taskforge status` | Show project status summary |
 | `taskforge block TASK-123 "reason"` | Mark task as blocked |
 | `taskforge done TASK-123` | Mark task as done |
+| `taskforge unlock TASK-123 --force` | Manually unlock a task (requires --force) |
+| `taskforge sweep` | Sweeper Protocol — detect and recover stale locks |
 | `taskforge summary` | Show full project summary |
 | `taskforge sync` | Sync with external issue tracker |
 | `taskforge deps scan` | Run broad dependency health checks |
