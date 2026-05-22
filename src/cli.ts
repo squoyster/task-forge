@@ -12,6 +12,7 @@ import { cmdUnlock, type UnlockOptions } from "./commands/unlock.js";
 import { cmdSweep } from "./commands/sweep.js";
 import { cmdHeartbeat, type HeartbeatOptions } from "./commands/heartbeat.js";
 import { cmdInspect, type InspectOptions } from "./commands/inspect.js";
+import { cmdClaim, type ClaimOptions } from "./commands/claim.js";
 import { cmdList, type ListOptions } from "./commands/list.js";
 import { cmdSync } from "./commands/sync.js";
 import { cmdDepsScan } from "./commands/deps/scan.js";
@@ -166,6 +167,21 @@ program
   .action((taskId: string, opts: { all?: boolean; json?: boolean }) => {
     const inspectOpts: InspectOptions = { all: opts.all ?? false, json: opts.json ?? false };
     return wrap(() => cmdInspect(taskId, inspectOpts))();
+  });
+
+program
+  .command("claim <taskId>")
+  .description("Claim a task (set assignee and claimed_at) without creating a worktree")
+  .option("--force", "Override an existing claim")
+  .option("--session <id>", "Use a specific session ID instead of generating one")
+  .option("--json", "Output in JSON format")
+  .action((taskId: string, opts: { force?: boolean; session?: string; json?: boolean }) => {
+    const claimOpts: ClaimOptions = {
+      force: opts.force ?? false,
+      session: opts.session,
+      json: opts.json ?? false,
+    };
+    return wrap(() => cmdClaim(taskId, claimOpts))();
   });
 
 // Dependency Steward commands
