@@ -1,6 +1,6 @@
 import { loadTaskById, updateTaskStatus, appendAgentNote } from "../core/task-store.js";
 import { validateTransition } from "../core/status-transition.js";
-import { logSuccess, logInfo } from "../util/logging.js";
+import { logSuccess } from "../util/logging.js";
 import { TaskNotFoundError, InvalidStatusTransitionError } from "../core/errors.js";
 
 export async function cmdDone(taskId: string, force = false): Promise<void> {

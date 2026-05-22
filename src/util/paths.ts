@@ -1,24 +1,4 @@
 import path from "node:path";
-import fs from "node:fs";
-import { fileURLToPath } from "node:url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-function findRepoRoot(startDir: string): string {
-  let current = startDir;
-  while (current !== path.parse(current).root) {
-    if (
-      fs.existsSync(path.join(current, "package.json")) ||
-      fs.existsSync(path.join(current, "TASKFORGE.md")) ||
-      fs.existsSync(path.join(current, ".git"))
-    ) {
-      return current;
-    }
-    current = path.dirname(current);
-  }
-  return startDir;
-}
 
 let _repoRoot: string | null = null;
 
@@ -73,5 +53,6 @@ export function makeBranchName(id: string, title: string): string {
     .replace(/-+/g, "-")
     .slice(0, 40)
     .replace(/-$/, "");
-  return `agent/${id}-${slug}`;
+  const suffix = slug ? `-${slug}` : "";
+  return `agent/${id}${suffix}`;
 }

@@ -1,8 +1,8 @@
 import { loadTaskById, updateTaskStatus, appendAgentNote } from "../core/task-store.js";
 import { validateTransition } from "../core/status-transition.js";
 import { createWorktree } from "../core/git.js";
-import { makeBranchName, getWorktreePath } from "../util/paths.js";
-import { logInfo, logSuccess, logWarn, logHeader, logSub, logDivider } from "../util/logging.js";
+import { makeBranchName } from "../util/paths.js";
+import { logInfo, logSuccess, logHeader, logSub, logDivider } from "../util/logging.js";
 import { TaskNotFoundError, InvalidStatusTransitionError, WorktreeError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
 

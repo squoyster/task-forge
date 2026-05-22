@@ -1,8 +1,4 @@
 import { execa } from "execa";
-import fs from "node:fs";
-import path from "node:path";
-import { getRepoRoot } from "../../util/paths.js";
-import type { Config } from "../../core/config.js";
 
 export interface AuditResult {
   ok: boolean;
@@ -59,7 +55,7 @@ export async function runAudit(
             });
           }
         }
-      } else if (parsed.metadata) {
+      } else if (parsed.metadata && parsed.advisories !== undefined) {
         // pnpm audit format
         const advisories = parsed.advisories ?? {};
         for (const [advId, adv] of Object.entries(advisories) as [string, Record<string, unknown>][]) {
@@ -76,7 +72,7 @@ export async function runAudit(
         }
       }
     } catch {
-      // If JSON parsing fails, return raw output
+      // If JSON parsing fails, return raw output but still mark as ok if command succeeded
     }
 
     return {
@@ -84,7 +80,8 @@ export async function runAudit(
       findings,
       raw,
     };
-  } catch {
-    return { ok: false, findings: [], raw: "Audit command failed or not available." };
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    return { ok: false, findings: [], raw: `Audit command failed: ${msg}` };
   }
 }

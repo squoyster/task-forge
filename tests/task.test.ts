@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { TaskSchema, TaskStatus, TaskPriority, TaskType, RiskLevel } from "../src/core/task.js";
+import { TaskSchema, TaskType, RiskLevel } from "../src/core/task.js";
 
 describe("TaskSchema", () => {
   it("parses a valid task", () => {

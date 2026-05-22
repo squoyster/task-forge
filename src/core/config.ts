@@ -95,7 +95,6 @@ export type Config = z.infer<typeof ConfigSchema>;
 export const DEFAULT_CONFIG: Config = ConfigSchema.parse({});
 
 import fs from "node:fs";
-import path from "node:path";
 import { getConfigJsonPath } from "../util/paths.js";
 
 export function loadConfig(repoRoot: string): Config {

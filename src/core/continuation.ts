@@ -6,24 +6,6 @@ export interface StoppingCondition {
   category: string;
 }
 
-const STOP_CATEGORIES = [
-  "ambiguous_product_decision",
-  "conflicting_requirements",
-  "destructive_data_operation",
-  "production_deployment",
-  "paid_api_usage",
-  "cloud_resource_cost",
-  "credential_access",
-  "security_sensitive",
-  "legal_compliance",
-  "data_migration",
-  "broad_architecture_change",
-  "license_change",
-  "repeated_failure",
-  "unrelated_test_failure",
-  "missing_critical_info",
-];
-
 export function checkStoppingConditions(
   task: ParsedTask,
   context: {

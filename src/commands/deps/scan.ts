@@ -1,7 +1,4 @@
 import { generateDepsPlan, formatPlan } from "./plan.js";
-import { runAudit } from "./audit.js";
-import { runOutdated } from "./outdated.js";
-import { checkDeprecated } from "./deprecated.js";
 import { loadConfig } from "../../core/config.js";
 import { getRepoRoot } from "../../util/paths.js";
 import { logInfo, logHeader, logSub, logDivider } from "../../util/logging.js";

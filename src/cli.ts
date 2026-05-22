@@ -62,6 +62,11 @@ program
   .option("--force", "Force transition to Done even if not allowed")
   .action((taskId: string, opts: { force?: boolean }) => wrap(() => cmdDone(taskId, opts.force ?? false))());
 
+program
+  .command("sync")
+  .description("Sync with external issue tracker")
+  .action(wrap(cmdSync));
+
 // Dependency Steward commands
 const deps = program.command("deps").description("Dependency health management");
 
@@ -73,7 +78,9 @@ deps
 deps
   .command("audit")
   .description("Run package-manager-native audit")
-  .action(wrap(cmdDepsAudit));
+  .option("--severity <level>", "Filter by severity level (critical, high, medium, low, info)")
+  .option("--create-tasks", "Automatically create tasks for found vulnerabilities")
+  .action((opts) => wrap(() => cmdDepsAudit(opts.severity, opts.createTasks ?? false))());
 
 deps
   .command("outdated")

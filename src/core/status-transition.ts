@@ -1,5 +1,3 @@
-import type { Task } from "./task.js";
-
 const TRANSITIONS: Record<string, string[]> = {
   Inbox: ["Needs Spec", "Rejected"],
   "Needs Spec": ["Ready", "Deferred"],

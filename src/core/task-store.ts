@@ -96,6 +96,18 @@ export function updateTaskStatus(
   return task;
 }
 
+export function updateTaskIssue(
+  filePath: string,
+  issueNumber: number,
+): ParsedTask | null {
+  const task = parseTaskFile(filePath);
+  if (!task) return null;
+
+  task.issue = issueNumber;
+  writeTaskFile(task);
+  return task;
+}
+
 export function appendAgentNote(
   filePath: string,
   date: string,

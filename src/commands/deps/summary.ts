@@ -1,5 +1,5 @@
 import { generateDepsPlan } from "./plan.js";
-import { logInfo, logHeader, logSub, logDivider } from "../../util/logging.js";
+import { logHeader, logSub, logDivider } from "../../util/logging.js";
 
 export async function cmdDepsSummary(): Promise<void> {
   const plan = await generateDepsPlan();

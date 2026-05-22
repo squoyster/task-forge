@@ -1,8 +1,7 @@
 import { generateDepsPlan } from "./plan.js";
 import { getNextId, loadAllTasks, writeTaskFile } from "../../core/task-store.js";
 import { getTasksDir, getRepoRoot } from "../../util/paths.js";
-import { logInfo, logSuccess, logWarn, logHeader, logSub, logDivider } from "../../util/logging.js";
-import fs from "node:fs";
+import { logInfo, logSuccess, logDivider } from "../../util/logging.js";
 import path from "node:path";
 
 export async function cmdDepsCreateTasks(): Promise<void> {

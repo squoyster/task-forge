@@ -5,3 +5,4 @@ dist/
 .taskforge/*.sqlite-wal
 worktrees/
 *.log
+session-*.md

@@ -1,7 +1,7 @@
 ---
 id: TASK-001
 type: Task
-status: Ready
+status: Done
 priority: P1
 agentRole: Implementer
 riskLevel: Low
@@ -65,6 +65,14 @@ No
 Auto-continue unless a stopping condition occurs.
 
 ## Agent Notes
+
+### 2026-05-21 System
+- Task marked Done
+
+### 2026-05-21 System
+- Task started via taskforge start TASK-001
+- Branch: agent/TASK-001-initialize-taskforge-workflow
+- Worktree: /Volumes/Transcend/devel/worktrees/TASK-001
 
 ## Result
 

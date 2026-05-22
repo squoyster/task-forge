@@ -1,5 +1,4 @@
 import { execa } from "execa";
-import type { Config } from "../../core/config.js";
 
 export interface OutdatedResult {
   packages: OutdatedPackage[];

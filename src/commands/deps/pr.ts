@@ -1,7 +1,7 @@
 import { runOutdated, type OutdatedPackage } from "./outdated.js";
 import { loadConfig } from "../../core/config.js";
-import { getRepoRoot, makeBranchName } from "../../util/paths.js";
-import { logInfo, logSuccess, logWarn, logError, logHeader, logSub, logDivider } from "../../util/logging.js";
+import { getRepoRoot } from "../../util/paths.js";
+import { logInfo, logSuccess, logWarn, logHeader, logSub, logDivider } from "../../util/logging.js";
 import { execa } from "execa";
 import simpleGit from "simple-git";
 import fs from "node:fs";
@@ -136,7 +136,6 @@ async function processPackage(
     }
 
     // Go back to original branch
-    const currentBranch = (await git.branch()).current;
     await git.checkout("main");
 
     return {

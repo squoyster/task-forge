@@ -1,7 +1,7 @@
 import { runOutdated } from "./outdated.js";
 import { loadConfig } from "../../core/config.js";
 import { getRepoRoot } from "../../util/paths.js";
-import { logInfo, logHeader, logSub, logDivider } from "../../util/logging.js";
+import { logHeader, logSub, logDivider } from "../../util/logging.js";
 
 export async function cmdDepsOutdated(): Promise<void> {
   const repoRoot = getRepoRoot();

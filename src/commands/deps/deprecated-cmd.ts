@@ -1,6 +1,6 @@
 import { checkDeprecated } from "./deprecated.js";
 import { getRepoRoot } from "../../util/paths.js";
-import { logInfo, logHeader, logSub, logDivider } from "../../util/logging.js";
+import { logHeader, logSub, logDivider } from "../../util/logging.js";
 
 export async function cmdDepsDeprecated(): Promise<void> {
   const repoRoot = getRepoRoot();
