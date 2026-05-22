@@ -4,6 +4,7 @@ import { createWorktree, jitteredPush } from "../core/git.js";
 import { makeBranchName } from "../util/paths.js";
 import { generateSessionId } from "../core/session.js";
 import { checkOutstandingSessionTasks } from "../core/session.js";
+import { isDoctorLocked } from "../core/doctor-lock.js";
 import { sweepStaleTasks } from "../core/sweeper.js";
 import { pullTaskState } from "../core/git.js";
 import { STATUS } from "../util/status-constants.js";
@@ -49,6 +50,18 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
       STATUS.IN_PROGRESS,
       [STATUS.READY, STATUS.IN_PROGRESS],
     );
+  }
+
+  // Doctor-lock check
+  const lock = isDoctorLocked(repoRoot);
+  if (lock.locked) {
+    if (options?.json) {
+      printJson(jsonError(`System is in doctor recovery mode: ${lock.reason}`, "DOCTOR_LOCKED"));
+      return;
+    }
+    logWarn(`System is in doctor recovery mode: ${lock.reason}`);
+    logInfo(`All agents are paused until recovery is complete.`);
+    return;
   }
 
   // Hard guardrail: check outstanding session tasks (exclude current for resume)

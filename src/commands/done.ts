@@ -8,6 +8,7 @@ import { getRepoRoot } from "../util/paths.js";
 import { assertTaskOwnership } from "../core/session.js";
 import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
 import { cmdGates } from "./gates.js";
+import { isDoctorLocked, removeDoctorLock } from "../core/doctor-lock.js";
 import type { ParsedTask } from "../core/task-store.js";
 
 export interface DoneOptions {
@@ -86,6 +87,12 @@ const today = new Date().toISOString().split("T")[0];
       ...(!gatesPassed && force ? { warning: "Gates failed but overridden with --force" } : {}),
     }));
     return;
+  }
+
+  // Auto-remove doctor lock if completing a recovery task
+  if (isDoctorLocked(repoRoot).locked) {
+    removeDoctorLock(repoRoot);
+    if (!json) logInfo("Doctor lock removed — recovery task completed.");
   }
 
   logSuccess(`Task ${taskId} marked as Done.`);

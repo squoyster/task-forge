@@ -11,6 +11,7 @@ import { getRepoRoot } from "../util/paths.js";
 import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
 import { eventLogEvent } from "../core/event-log.js";
 import { checkOutstandingSessionTasks } from "../core/session.js";
+import { isDoctorLocked } from "../core/doctor-lock.js";
 
 export interface ClaimOptions {
   force?: boolean;
@@ -47,6 +48,17 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
     throw new Error(
       `Cannot claim task with status "${task.status}". Must be "${STATUS.READY}" or "${STATUS.IN_PROGRESS}".`,
     );
+  }
+
+  // Doctor-lock check
+  const lock = isDoctorLocked(repoRoot);
+  if (lock.locked) {
+    if (json) {
+      printJson(jsonError(`System is in doctor recovery mode: ${lock.reason}`, "DOCTOR_LOCKED"));
+      return;
+    }
+    logWarn(`System is in doctor recovery mode: ${lock.reason}`);
+    return;
   }
 
   // Hard guardrail: check outstanding session tasks

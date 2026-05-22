@@ -3,6 +3,7 @@ import { selectNextTask, scoreTask, hasUnmetDependencies } from "../core/schedul
 import { sweepStaleTasks } from "../core/sweeper.js";
 import { pullTaskState } from "../core/git.js";
 import { checkOutstandingSessionTasks } from "../core/session.js";
+import { isDoctorLocked } from "../core/doctor-lock.js";
 import { logInfo, logHeader, logSub, logDivider, logWarn } from "../util/logging.js";
 import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
 
@@ -19,6 +20,21 @@ export async function cmdNext(options?: NextOptions): Promise<void> {
 
   // Reload tasks after sweeping
   const tasks = loadAllTasks();
+
+  // Doctor-lock: refuse if system is in recovery
+  const lock = isDoctorLocked();
+  if (lock.locked) {
+    if (options?.json) {
+      printJson(jsonError(
+        `System is in doctor recovery mode: ${lock.reason}. All agents paused.`,
+        "DOCTOR_LOCKED",
+      ));
+      return;
+    }
+    logWarn(`System is in doctor recovery mode: ${lock.reason}`);
+    logInfo(`All agents are paused until recovery is complete.`);
+    return;
+  }
 
   // Hard guardrail: check outstanding session tasks
   const repoRoot = undefined as unknown as string;

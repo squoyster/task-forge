@@ -58,7 +58,7 @@ docs/decisions/       # Architecture decision records
 logs/taskforge/       # Task execution logs
 tests/                # Vitest test suite
 ../task-state/        # Authoritative task state (shared sibling worktree)
-../worktrees/         # Per-task isolated agent workspaces
+../worktrees/          # Per-task isolated agent workspaces (sibling, git-required)
 ```
 
 > **Note:** The authoritative task state lives in `../task-state/`, a dedicated git worktree on the `task-state` branch. The `tasks/` directory on `main` is legacy/backward-compatible only. Agents must never create or modify `main/tasks/*.md` — use `taskforge start TASK-NNN` which manages task files through the task-state worktree automatically. See [TASKFORGE.md](TASKFORGE.md) for full details.
