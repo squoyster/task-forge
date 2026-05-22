@@ -6,7 +6,6 @@ priority: P0
 agentRole: Implementer
 riskLevel: High
 humanInterventionRequired: false
-dependsOn:
 ---
 
 # TASK-045: Centralize Task-State Mutation Through Transactional Control Layer
