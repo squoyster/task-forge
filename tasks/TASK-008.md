@@ -1,11 +1,13 @@
 ---
 id: TASK-008
 type: Task
-status: Inbox
+status: Done
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+branch: agent/TASK-008-command-test-coverage
+worktree: ../worktrees/TASK-008
 ---
 
 # TASK-008: Implement command-level test coverage
@@ -31,12 +33,12 @@ Disallowed files/directories:
 
 ## Acceptance Criteria
 
-- [ ] Tests exist for: status, summary, next, done, init, block, sync commands
-- [ ] Logging output is verifiable (capture log calls or inspect console)
-- [ ] Edge cases covered: empty task list, missing files, invalid IDs, transition errors
-- [ ] Sync command tests mock GitHub API calls (no real network)
-- [ ] All 9 existing test files continue to pass
-- [ ] No modification to source files (tests only)
+- [x] Tests exist for: status, summary, next, done, init, block, sync commands
+- [x] Logging output is verifiable (capture log calls or inspect console)
+- [x] Edge cases covered: empty task list, missing files, invalid IDs, transition errors
+- [x] Sync command tests mock GitHub API calls (no real network)
+- [x] All 9 existing test files continue to pass
+- [x] No modification to source files (tests only)
 
 ## Test / Verification Command
 
@@ -62,3 +64,18 @@ Low
 ## Continuation Policy
 
 Auto-continue unless a stopping condition occurs.
+
+## Agent Notes
+
+### 2026-05-22 Implementer
+- Added 7 command-level test files under tests/commands/ with 52 test cases total
+- tests/commands/status.test.ts (9 tests): empty, with tasks, JSON mode, Review/Verify, Blocked, Inbox, Needs Spec, Completed sections
+- tests/commands/summary.test.ts (10 tests): empty, various statuses, JSON mode, next-action recommendations
+- tests/commands/next.test.ts (10 tests): empty, no actionable, selects In Progress > Ready, selects P0, shows score/goal/file, Verify/Review priority
+- tests/commands/done.test.ts (5 tests): basic done, force flag, invalid transition, agent note logging
+- tests/commands/init.test.ts (6 tests): creates files/dirs, preserves existing, recreates missing
+- tests/commands/block.test.ts (5 tests): marks blocked with reason, invalid transitions, agent note logging
+- tests/commands/sync.test.ts (7 tests): creates/updates issues, GitHub disabled, error handling, P0 labels, frontmatter writing
+- All tests use temp directories (makeTaskFile pattern) and mock GitHub API calls
+- No source files were modified — tests only
+- Verification: typecheck, lint, build, all 174 tests pass (18 test files)
