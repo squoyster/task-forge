@@ -50,7 +50,6 @@ taskforge deps scan
 
 ```
 TASKFORGE.md          # System specification
-tasks/                # Legacy task specs (backward-compatible only)
 src/                  # TypeScript CLI source
 scripts/              # Thin Bash wrapper → TypeScript CLI
 specs/                # Design specifications
