@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: ada40eb918
 claimed_at: '2026-05-23 19:01:14'
 context_hash: f3613895c8a77f2e
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-129
 ---
 
 # TASK-129: Replace simple-git and execa with GitPort in core (TASK-107 follow-up)
@@ -27,6 +28,12 @@ context_hash: f3613895c8a77f2e
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-129
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-129
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-129
