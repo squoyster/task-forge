@@ -139,3 +139,19 @@ If this check fails, the push is rejected — even for users in the push restric
 - `docs/control-plane-hardening.md` — Threat model, attack surface, trust boundaries
 - `TASKFORGE.md` § Control-Plane Architecture — Transaction layer, session guardrails
 - `AGENTS.md` § Agent Discipline — No direct git manipulation on task-state
+
+## Automation
+
+An automation script is available for CI or `taskforge init` integration:
+
+```bash
+export GITHUB_TOKEN="ghp_..."      # PAT with admin:repo scope
+./scripts/setup-branch-protection.sh squoyster task-forge
+```
+
+Dry-run to preview without applying:
+```bash
+DRY_RUN=true ./scripts/setup-branch-protection.sh squoyster task-forge
+```
+
+The script configures protection for both `main` and `task-state` branches. Push restrictions (who can push) must still be configured manually or via additional `gh api` calls targeting the specific bot token ID.
