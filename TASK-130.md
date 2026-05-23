@@ -1,11 +1,14 @@
 ---
 id: TASK-130
 type: Feature
-status: Ready
+status: In Progress
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 8f1890e1d8
+claimed_at: '2026-05-23 19:01:20'
+context_hash: f3613895c8a77f2e
 ---
 
 # TASK-130: Add upstream bug creation on gate failure (TASK-108 follow-up)
@@ -23,3 +26,13 @@ humanInterventionRequired: false
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-130
+- Session: 8f1890e1d8
+- Branch: agent/TASK-130-add-upstream-bug-creation-on-gate-failur--8f1890e1d8
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-130
+- Session: 8f1890e1d8
+- Branch: agent/TASK-130-add-upstream-bug-creation-on-gate-failur--8f1890e1d8
