@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: 93a3d54c28
 claimed_at: '2026-05-23 18:25:30'
 context_hash: f3613895c8a77f2e
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-118
 ---
 
 # TASK-118: Add documentation index and user extension guide
@@ -31,6 +32,12 @@ Create navigable documentation entry point. docs/README.md, docs/getting-started
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-118
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-118
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-118
