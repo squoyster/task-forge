@@ -1,14 +1,13 @@
 ---
 id: TASK-091
 type: Bug
-status: In Progress
+status: Done
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: b5ee8dbbd3
-claimed_at: '2026-05-23 04:20:55'
 context_hash: 8c607774d14d0be5
+branch: agent/TASK-091-fix-done-test-git-repo-not-found-failure--b5ee8dbbd3
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-091
 ---
 
@@ -34,6 +33,10 @@ worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-091
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task marked Done (forced)
+- Completed despite gate failures — forced.
 
 ### 2026-05-23 System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-091
