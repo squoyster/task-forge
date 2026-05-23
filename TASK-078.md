@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: 355598eba2
 claimed_at: '2026-05-23 02:44:35'
 context_hash: 8c607774d14d0be5
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-078
 ---
 
 # TASK-078: Add host launcher for containerized TaskForge execution
@@ -22,6 +23,12 @@ Provide host-side launcher (scripts/taskforge-container) that wraps container ex
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-078
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-078
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-078
