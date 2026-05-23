@@ -1,11 +1,14 @@
 ---
 id: TASK-080
 type: Feature
-status: Ready
+status: In Progress
 priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: cf929ae4fd
+claimed_at: '2026-05-23 04:31:25'
+context_hash: 8c607774d14d0be5
 ---
 
 # TASK-080: Add project conversion doctor checks
@@ -19,3 +22,13 @@ Add taskforge doctor project command. Validate AGENTS.md policy block, task-stat
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-080
+- Session: cf929ae4fd
+- Branch: agent/TASK-080-add-project-conversion-doctor-checks--cf929ae4fd
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-080
+- Session: cf929ae4fd
+- Branch: agent/TASK-080-add-project-conversion-doctor-checks--cf929ae4fd
