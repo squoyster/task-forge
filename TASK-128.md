@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: 61ac49bf36
 claimed_at: '2026-05-23 19:01:09'
 context_hash: f3613895c8a77f2e
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-128
 ---
 
 # TASK-128: Wire GitHub sync through BoardProvider (TASK-106 follow-up)
@@ -26,6 +27,12 @@ context_hash: f3613895c8a77f2e
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-128
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-128
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-128
