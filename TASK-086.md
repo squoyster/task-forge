@@ -22,6 +22,12 @@ Extend .taskforge/config.json with runtime section (mode: native|container, imag
 
 ## Agent Notes
 
+### 2026-05-23 02:25 System
+- Created follow-up tasks for 15 pre-existing test failures discovered during gate checks:
+- - TASK-091: Fix done-test git-repo-not-found failures (11 tests)
+- - TASK-092: Fix task-state-transaction conflict re-run timeout (1 test)
+- - TASK-093: Fix claim-json and sweep assertion test failures (3 tests)
+
 ### 2026-05-23 System
 - Task marked Done (forced)
 - Completed despite gate failures — forced.
