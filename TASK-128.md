@@ -1,11 +1,14 @@
 ---
 id: TASK-128
 type: Refactor
-status: Ready
+status: In Progress
 priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 61ac49bf36
+claimed_at: '2026-05-23 19:01:09'
+context_hash: f3613895c8a77f2e
 ---
 
 # TASK-128: Wire GitHub sync through BoardProvider (TASK-106 follow-up)
@@ -23,3 +26,13 @@ humanInterventionRequired: false
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-128
+- Session: 61ac49bf36
+- Branch: agent/TASK-128-wire-github-sync-through-boardprovider-t--61ac49bf36
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-128
+- Session: 61ac49bf36
+- Branch: agent/TASK-128-wire-github-sync-through-boardprovider-t--61ac49bf36
