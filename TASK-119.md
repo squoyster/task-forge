@@ -1,6 +1,6 @@
 ---
 id: TASK-119
-type: Safety
+type: Security
 status: Ready
 priority: P2
 agentRole: Implementer
