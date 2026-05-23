@@ -1,11 +1,14 @@
 ---
 id: TASK-088
 type: Test
-status: Ready
+status: In Progress
 priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: a14b0310d0
+claimed_at: '2026-05-23 10:59:23'
+context_hash: 8c607774d14d0be5
 ---
 
 # TASK-088: Add smoke-test harness for containerized project conversion
@@ -19,3 +22,13 @@ Create automated smoke test proving a plain git repo converts to TaskForge proje
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-088
+- Session: a14b0310d0
+- Branch: agent/TASK-088-add-smoke-test-harness-for-containerized--a14b0310d0
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-088
+- Session: a14b0310d0
+- Branch: agent/TASK-088-add-smoke-test-harness-for-containerized--a14b0310d0
