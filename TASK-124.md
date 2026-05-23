@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: 6b215d0b93
 claimed_at: '2026-05-23 18:34:42'
 context_hash: f3613895c8a77f2e
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-124
 ---
 
 # TASK-124: Complete transaction-only mutation for remaining commands (TASK-105 follow-up)
@@ -51,6 +52,12 @@ TASK-105 established dirty-tracking in the transaction layer and refactored clai
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-124
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-124
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-124
