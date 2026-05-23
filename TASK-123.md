@@ -1,11 +1,14 @@
 ---
 id: TASK-123
 type: Task
-status: Ready
+status: In Progress
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: a5c4e7a1a0
+claimed_at: '2026-05-23 14:10:18'
+context_hash: 8c607774d14d0be5
 ---
 
 # TASK-123: Enforce AC-driven implementation discipline in agent guide
@@ -45,3 +48,13 @@ Update AGENTS.md to mandate that agents must enumerate and satisfy all acceptanc
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-123
+- Session: a5c4e7a1a0
+- Branch: agent/TASK-123-enforce-ac-driven-implementation-discipl--a5c4e7a1a0
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-123
+- Session: a5c4e7a1a0
+- Branch: agent/TASK-123-enforce-ac-driven-implementation-discipl--a5c4e7a1a0
