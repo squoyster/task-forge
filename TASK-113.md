@@ -1,6 +1,6 @@
 ---
 id: TASK-113
-type: Packaging
+type: Infrastructure
 status: Ready
 priority: P1
 agentRole: Implementer

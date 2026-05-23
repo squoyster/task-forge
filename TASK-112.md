@@ -1,6 +1,6 @@
 ---
 id: TASK-112
-type: Maintainability
+type: Maintenance
 status: Ready
 priority: P2
 agentRole: Implementer

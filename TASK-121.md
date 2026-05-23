@@ -1,6 +1,6 @@
 ---
 id: TASK-121
-type: Provider
+type: Refactor
 status: Ready
 priority: P2
 agentRole: Implementer
