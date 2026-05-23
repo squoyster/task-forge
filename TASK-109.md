@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: dd58b51a56
 claimed_at: '2026-05-23 17:54:50'
 context_hash: f3613895c8a77f2e
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-109
 ---
 
 # TASK-109: Normalize config schema around task state, workspaces, and providers
@@ -38,6 +39,12 @@ Replace stale config concepts with explicit task-state, workspace, and provider 
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-109
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-109
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-109
