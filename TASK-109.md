@@ -1,11 +1,14 @@
 ---
 id: TASK-109
 type: Refactor
-status: Ready
+status: In Progress
 priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: dd58b51a56
+claimed_at: '2026-05-23 17:54:50'
+context_hash: f3613895c8a77f2e
 ---
 
 # TASK-109: Normalize config schema around task state, workspaces, and providers
@@ -35,3 +38,13 @@ Replace stale config concepts with explicit task-state, workspace, and provider 
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-109
+- Session: dd58b51a56
+- Branch: agent/TASK-109-normalize-config-schema-around-task-stat--dd58b51a56
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-109
+- Session: dd58b51a56
+- Branch: agent/TASK-109-normalize-config-schema-around-task-stat--dd58b51a56
