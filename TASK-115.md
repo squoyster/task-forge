@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: a2bab0084b
 claimed_at: '2026-05-23 18:25:14'
 context_hash: f3613895c8a77f2e
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-115
 ---
 
 # TASK-115: Add provider contract tests and documentation examples
@@ -30,6 +31,12 @@ Create reusable contract tests for BoardProvider, AgentProvider, GitPort, Packag
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-115
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-115
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-115
