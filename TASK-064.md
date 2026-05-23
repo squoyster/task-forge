@@ -1,15 +1,12 @@
 ---
 id: TASK-064
 type: Feature
-status: In Progress
+status: Done
 priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 758a443d39
-claimed_at: '2026-05-23 00:44:54'
 context_hash: 6eb8f67de42c153d
-worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-064
 ---
 
 # TASK-064: Generate OpenCode project configuration
@@ -23,6 +20,12 @@ Generate or merge opencode.json for OpenCode projects. Normal agents: allow read
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task marked Done (forced)
+- Completed despite gate failures — forced.
+- Worktree removed: /Volumes/Transcend/devel/worktrees/task-forge/TASK-064
+- Worktree and branch fields cleared from task frontmatter.
 
 ### 2026-05-23 System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-064
