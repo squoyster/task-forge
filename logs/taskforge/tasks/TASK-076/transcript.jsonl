@@ -1,0 +1,1 @@
+{"timestamp":"2026-05-23T01:42:36.418Z","event":"task.command.completed","summary":"Task TASK-076 marked as Done","metadata":{"notes":["Task marked Done (forced)","Completed despite gate failures — forced."]},"taskId":"TASK-076"}
