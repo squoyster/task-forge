@@ -1,0 +1,2 @@
+{"timestamp":"2026-05-23T03:06:34.117Z","event":"git.commit","summary":"fix: resolve repo root from worktrees via git common dir","taskId":"TASK-098"}
+{"timestamp":"2026-05-23T03:07:54.241Z","event":"task.command.completed","summary":"Task TASK-098 marked as Done","metadata":{"notes":["Task marked Done (forced)","Completed despite gate failures — forced."]},"taskId":"TASK-098"}

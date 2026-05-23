@@ -43,15 +43,18 @@ Implementation agents should **never** have direct push access to `task-state`. 
 ```yaml
 # Recommended GitHub branch protection rules for task-state
 protections:
-  - require_pull_request: false  # TaskForge uses direct push via CLI
-  - required_linear_history: true
-  - allow_force_pushes: false
-  - restrict_pushes:
-      - recovery-bot-token
-      - admin-users
-  - required_status_checks:
+  - require_pull_request: false           # TaskForge uses direct push via CLI
+  - required_linear_history: true          # MANDATORY — prevents merge commits
+  - allow_force_pushes: false              # MANDATORY — protects history
+  - allow_deletions: false                 # MANDATORY — protects data
+  - required_status_checks:                # MANDATORY — validates invariants
       - "task-state-validate"
+  - restrict_pushes:                       # OPTIONAL — belt-and-suspenders
+      - recovery-bot-token                 # Only needed if agent tokens have elevated scopes
+      - admin-users
 ```
+
+Push restrictions are optional. The primary enforcement comes from the CI `task-state-validate` workflow (rejects invalid state regardless of who pushed) and the CLI transaction layer (ownership checks, status transitions, CAS retry). Push restrictions add defense-in-depth for repos where agent tokens accidentally have `write:task-state` scope. See `docs/github-task-state-protection.md` for detailed setup guidance.
 
 ### `main` branch
 

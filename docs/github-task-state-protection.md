@@ -24,17 +24,32 @@ Enter `task-state` as the branch name pattern.
 
 ### 2. Configure Protection Rules
 
-| Setting | Value | Why |
-|---------|-------|-----|
-| **Require a pull request before merging** | ❌ Off | TaskForge writes to task-state via transaction layer, not PRs |
-| **Require linear history** | ✅ On | Prevents merge commits that could hide conflicting changes |
-| **Allow force pushes** | ❌ Off | Force push to task-state destroys history and sweep audit trails |
-| **Allow deletions** | ❌ Off | Deleting task-state loses all task data |
-| **Restrict who can push to matching branches** | ✅ On | Only recovery bots and admins should push directly |
+| Setting | Value | Importance | Why |
+|---------|-------|------------|-----|
+| **Require a pull request before merging** | ❌ Off | — | TaskForge writes to task-state via transaction layer, not PRs |
+| **Require linear history** | ✅ On | **Required** | Prevents merge commits that could hide conflicting changes |
+| **Allow force pushes** | ❌ Off | **Required** | Force push to task-state destroys history and sweep audit trails |
+| **Allow deletions** | ❌ Off | **Required** | Deleting task-state loses all task data |
+| **Restrict who can push** | *Optional* | Nice-to-have | Adds hardware enforcement if agent tokens have over-scoped permissions |
 
-### 3. Configure Push Restrictions
+### 3. Push Restrictions (Optional)
 
-Add only these entities:
+Push restrictions are a **belt-and-suspenders** measure. The primary enforcement against invalid task-state changes comes from:
+
+1. **CI validation** — the `task-state-validate` status check rejects any push that violates state invariants, regardless of who pushed
+2. **CLI transaction layer** — `withTaskStateTransaction` enforces ownership checks, status transitions, and CAS retry before any push reaches the remote
+
+Push restrictions add a third layer: GitHub itself refuses the push unless the actor is explicitly whitelisted. This is useful when:
+
+- Agent tokens accidentally have `write:task-state` or broader scopes
+- You want defense-in-depth against a misconfigured CI token
+- You operate in a regulated environment requiring hardware-level push controls
+
+If your agent tokens are correctly scoped (`read:repo` for implementers, `write:task-state` only for recovery bots), push restrictions are unnecessary — the token scope alone prevents unauthorized pushes.
+
+To configure push restrictions (requires GitHub Team/Enterprise plan):
+
+Add only these entities to the push allowlist:
 
 | Who | Why |
 |-----|-----|
