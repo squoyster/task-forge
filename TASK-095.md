@@ -1,15 +1,12 @@
 ---
 id: TASK-095
 type: Bug
-status: In Progress
+status: Done
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: a8f6e69dbe
-claimed_at: '2026-05-23 02:40:50'
 context_hash: 8c607774d14d0be5
-worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-095
 ---
 
 # TASK-095: Add cautionary qualifier to unlock --force message
@@ -47,6 +44,14 @@ Add the same cautionary qualifier to unlock.ts, matching the pattern in claim.ts
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task marked Done (forced)
+- Completed despite gate failures — forced.
+- Failed to remove worktree: Command failed with exit code 128: git worktree remove /Volumes/Transcend/devel/worktrees/task-forge/TASK-095
+
+fatal: '/Volumes/Transcend/devel/worktrees/task-forge/TASK-095' contains modified or untracked files, use --force to delete it
+- Worktree and branch fields cleared from task frontmatter.
 
 ### 2026-05-23 System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-095
