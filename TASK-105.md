@@ -1,7 +1,7 @@
 ---
 id: TASK-105
 type: Refactor
-status: Blocked
+status: Ready
 priority: P0
 agentRole: Implementer
 riskLevel: High
