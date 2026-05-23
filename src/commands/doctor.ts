@@ -6,6 +6,9 @@ import { logHeader, logSuccess, logWarn, logInfo, logDivider } from "../util/log
 import { STATUS } from "../util/status-constants.js";
 import { inspectTask } from "./inspect.js";
 import { validateTaskState } from "../core/state-validator.js";
+import { checkHooks } from "../core/hooks.js";
+import { hasManagedBlock } from "../core/templates.js";
+import path from "node:path";
 import fs from "node:fs";
 
 interface DoctorIssue {
@@ -116,6 +119,59 @@ export async function cmdDoctor(options?: { json?: boolean; fix?: boolean }): Pr
         add("info", `Sweepable — would reset to Ready`, t.id);
       }
     }
+  }
+
+  // 8. Agent policy check — AGENTS.md managed block
+  const agentsMdPath = path.join(repoRoot, "AGENTS.md");
+  if (fs.existsSync(agentsMdPath)) {
+    const content = fs.readFileSync(agentsMdPath, "utf-8");
+    if (hasManagedBlock(content, "managed-agent-policy")) {
+      ok.push("AGENTS.md has managed-agent-policy block");
+    } else {
+      add("warn", "AGENTS.md missing managed-agent-policy block");
+    }
+  } else {
+    add("warn", "AGENTS.md not found — run 'taskforge init' to create");
+  }
+
+  // 9. Agent policy check — opencode.json permissions
+  const openCodeJsonPath = path.join(repoRoot, "opencode.json");
+  if (fs.existsSync(openCodeJsonPath)) {
+    try {
+      const ocConfig = JSON.parse(fs.readFileSync(openCodeJsonPath, "utf-8"));
+      const bashPerms = ocConfig?.permission?.bash ?? {};
+      const editPerms = ocConfig?.permission?.edit ?? {};
+      if (bashPerms["git *"] === "deny" && editPerms["../task-state/**"] === "deny") {
+        ok.push("opencode.json has correct agent permissions");
+      } else {
+        add("warn", "opencode.json agent permissions incomplete");
+      }
+      if (ocConfig?.agent?.doctor) {
+        ok.push("opencode.json has doctor agent configured");
+      } else {
+        add("warn", "opencode.json missing doctor agent");
+      }
+    } catch {
+      add("warn", "opencode.json is not valid JSON");
+    }
+  }
+
+  // 10. Git hooks check
+  const hooksResult = checkHooks(repoRoot);
+  if (hooksResult.ok) {
+    ok.push("Git hooks installed and executable");
+  } else {
+    for (const issue of hooksResult.issues) {
+      add("warn", issue);
+    }
+  }
+
+  // 11. Audit directory check
+  const auditDir = path.join(repoRoot, "logs", "taskforge", "audit");
+  if (fs.existsSync(auditDir)) {
+    add("info", "Audit directory exists");
+  } else {
+    add("info", "Audit directory not yet created (will be created on first event)");
   }
 
   // Output
