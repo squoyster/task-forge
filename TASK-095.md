@@ -1,0 +1,45 @@
+---
+id: TASK-095
+type: Bug
+status: Ready
+priority: P2
+agentRole: Implementer
+riskLevel: Low
+humanInterventionRequired: false
+---
+
+# TASK-095: Add cautionary qualifier to unlock --force message
+
+## Goal
+
+## Background
+
+Three commands handle the same situation (task already claimed by another session) with inconsistent messaging quality:
+
+```
+claim.ts:87-89  → "Use --force to override (only if you are sure the claim is stale)."
+start.ts:93-96  → "Use --force to override (only if you are sure the claim is stale)."
+unlock.ts:48-50 → "Use --force to unlock."
+```
+
+The unlock message lacks the cautionary qualifier. Since unlock is MORE dangerous (it forcibly clears a lock without the sweeper's safety checks), it should have MORE context, not less.
+
+## Fix
+
+Add the same cautionary qualifier to unlock.ts, matching the pattern in claim.ts and start.ts. Additionally, since unlock is a more destructive operation, consider adding stronger wording about when it is appropriate (only for known-stale locks, not active sessions).
+
+## Scope
+
+- `src/commands/unlock.ts` (~line 48-50)
+- `tests/unlock.test.ts` — verify updated message
+
+## Acceptance Criteria
+
+- [ ] unlock --force message includes cautionary qualifier like claim.ts/start.ts
+- [ ] Message explains when --force is appropriate (stale claims only)"
+
+## Acceptance Criteria
+
+- [ ]
+
+## Agent Notes
