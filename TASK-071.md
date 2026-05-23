@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: 0824f125bd
 claimed_at: '2026-05-23 01:01:38'
 context_hash: 6eb8f67de42c153d
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-071
 ---
 
 # TASK-071: Add doctor diagnostics for agent policy
@@ -22,6 +23,12 @@ Extend taskforge doctor with agent-policy, opencode, hooks, and audit sub-diagno
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-071
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-071
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-071
