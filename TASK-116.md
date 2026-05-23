@@ -1,11 +1,14 @@
 ---
 id: TASK-116
 type: Documentation
-status: Ready
+status: In Progress
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: a1b9b5dc48
+claimed_at: '2026-05-23 18:25:19'
+context_hash: f3613895c8a77f2e
 ---
 
 # TASK-116: Document command next-action semantics and state-transition outcomes
@@ -31,3 +34,13 @@ docs/architecture/next-action-model.md, docs/commands/agent-facing-commands.md, 
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-116
+- Session: a1b9b5dc48
+- Branch: agent/TASK-116-document-command-next-action-semantics-a--a1b9b5dc48
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-116
+- Session: a1b9b5dc48
+- Branch: agent/TASK-116-document-command-next-action-semantics-a--a1b9b5dc48
