@@ -6,8 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: a8d89408f5
-claimed_at: '2026-05-23 00:43:01'
 context_hash: 6eb8f67de42c153d
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-064
 ---
@@ -23,6 +21,9 @@ Generate or merge opencode.json for OpenCode projects. Normal agents: allow read
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task unlocked (forced) — previous claim was held by session "a8d89408f5"
 
 ### 2026-05-23 System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-064
