@@ -1,11 +1,14 @@
 ---
 id: TASK-092
 type: Bug
-status: Ready
+status: In Progress
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 5ec62a0afa
+claimed_at: '2026-05-23 11:27:02'
+context_hash: 8c607774d14d0be5
 ---
 
 # TASK-092: Fix task-state-transaction conflict re-run timeout
@@ -28,6 +31,16 @@ humanInterventionRequired: false
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-092
+- Session: 5ec62a0afa
+- Branch: agent/TASK-092-fix-task-state-transaction-conflict-re-r--5ec62a0afa
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-092
+- Session: 5ec62a0afa
+- Branch: agent/TASK-092-fix-task-state-transaction-conflict-re-r--5ec62a0afa
 
 ### 2026-05-23 02:34 System
 - Discovered during TASK-086 (project runtime configuration) — pre-existing test failures and CLI message audit findings.
