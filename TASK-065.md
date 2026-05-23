@@ -1,11 +1,14 @@
 ---
 id: TASK-065
 type: Feature
-status: Ready
+status: In Progress
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 9aecb564f7
+claimed_at: '2026-05-23 00:49:09'
+context_hash: 6eb8f67de42c153d
 ---
 
 # TASK-065: Generate OpenCode agent files
@@ -19,3 +22,13 @@ Generate .opencode/agents/implementer.md, reviewer.md, qa.md, doctor.md with Tas
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-065
+- Session: 9aecb564f7
+- Branch: agent/TASK-065-generate-opencode-agent-files--9aecb564f7
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-065
+- Session: 9aecb564f7
+- Branch: agent/TASK-065-generate-opencode-agent-files--9aecb564f7
