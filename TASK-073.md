@@ -1,11 +1,14 @@
 ---
 id: TASK-073
 type: Refactor
-status: Ready
+status: In Progress
 priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: d5280662e4
+claimed_at: '2026-05-23 01:03:58'
+context_hash: 6eb8f67de42c153d
 ---
 
 # TASK-073: Remove conflicting direct-git guidance for normal agents
@@ -19,3 +22,13 @@ Eliminate instructions telling normal agents they may use git directly. Search d
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-073
+- Session: d5280662e4
+- Branch: agent/TASK-073-remove-conflicting-direct-git-guidance-f--d5280662e4
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-073
+- Session: d5280662e4
+- Branch: agent/TASK-073-remove-conflicting-direct-git-guidance-f--d5280662e4
