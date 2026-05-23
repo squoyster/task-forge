@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: a1b9b5dc48
 claimed_at: '2026-05-23 18:25:19'
 context_hash: f3613895c8a77f2e
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-116
 ---
 
 # TASK-116: Document command next-action semantics and state-transition outcomes
@@ -34,6 +35,12 @@ docs/architecture/next-action-model.md, docs/commands/agent-facing-commands.md, 
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-116
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-116
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-116
