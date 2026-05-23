@@ -1,11 +1,13 @@
 ---
 id: TASK-106
 type: Refactor
-status: In Progress
+status: Blocked
 priority: P0
 agentRole: Implementer
-riskLevel: Low
+riskLevel: Medium
 humanInterventionRequired: false
+dependsOn:
+  - TASK-121
 assignee: f4d6a21583
 claimed_at: '2026-05-23 17:40:03'
 context_hash: f3613895c8a77f2e
@@ -46,6 +48,13 @@ Separate TaskForge core from concrete integrations. GitHub, OpenCode, and packag
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- src/core/ports/ created: BoardProvider interface + provider registry
+- src/providers/board/github-board-provider.ts: GitHub provider skeleton
+- tests/provider-registry.test.ts: 5 tests for config-driven selection
+- Blocked pending TASK-121: AC1 (full GitHub removal from core) and AC2 (provider wired into sync.ts) require GitHub provider to be isolated first
+- Ports directory has zero GitHub-specific imports
 
 ### 2026-05-23 System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-106
