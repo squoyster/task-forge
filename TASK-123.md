@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: a5c4e7a1a0
 claimed_at: '2026-05-23 14:10:18'
 context_hash: 8c607774d14d0be5
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-123
 ---
 
 # TASK-123: Enforce AC-driven implementation discipline in agent guide
@@ -48,6 +49,12 @@ Update AGENTS.md to mandate that agents must enumerate and satisfy all acceptanc
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-123
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-123
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-123
