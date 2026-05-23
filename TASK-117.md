@@ -1,13 +1,11 @@
 ---
 id: TASK-117
 type: Documentation
-status: In Progress
+status: Done
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: a8c5468972
-claimed_at: '2026-05-23 18:25:25'
 context_hash: f3613895c8a77f2e
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-117
 ---
@@ -34,6 +32,10 @@ docs/architecture/audit-model.md, docs/audit/per-task-audit-logs.md, docs/audit/
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task marked Done (forced)
+- Completed despite gate failures — forced.
 
 ### 2026-05-23 System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-117
