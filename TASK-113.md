@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: 788e9f4d02
 claimed_at: '2026-05-23 17:48:43'
 context_hash: f3613895c8a77f2e
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-113
 ---
 
 # TASK-113: Make CLI available as both taskforge and task-forge
@@ -28,6 +29,12 @@ Rationalization Roadmap: TASK-RAT-008
 - [ ] Agent prompts accept either command but prefer taskforge internally
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-113
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-113
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-113
