@@ -33,6 +33,7 @@ import { cmdDepsPlan } from "./commands/deps/plan.js";
 import { cmdDepsCreateTasks } from "./commands/deps/create-tasks.js";
 import { cmdDepsPr } from "./commands/deps/pr.js";
 import { cmdDepsSummary } from "./commands/deps/summary.js";
+import { cmdAudit, cmdTranscript, cmdTimeline } from "./commands/audit.js";
 import { TaskForgeError } from "./core/errors.js";
 import { logError } from "./util/logging.js";
 
@@ -380,7 +381,34 @@ program
   .command("validate-state")
   .description("Validate task-state for invariant violations")
   .option("--json", "Output in JSON format")
-  .option("--strict", "Treat warnings as errors")
-  .action((opts: { json?: boolean; strict?: boolean }) => wrap(() => cmdValidateState(opts))());
+  .action((opts: { json?: boolean }) =>
+    wrap(async () => {
+      const { cmdValidateState } = await import("./commands/validate-state.js");
+      await cmdValidateState(opts);
+    })(),
+  );
+
+program
+  .command("audit <taskId>")
+  .description("Show audit events for a task")
+  .option("--json", "Output in JSON format")
+  .action((taskId: string, opts: { json?: boolean }) =>
+    wrap(async () => { cmdAudit(taskId, opts); })(),
+  );
+
+program
+  .command("transcript <taskId>")
+  .description("Show readable transcript for a task")
+  .option("--json", "Output in JSON format")
+  .action((taskId: string, opts: { json?: boolean }) =>
+    wrap(async () => { cmdTranscript(taskId, opts); })(),
+  );
+
+program
+  .command("timeline <taskId>")
+  .description("Show event timeline summary for a task")
+  .action((taskId: string) =>
+    wrap(async () => { cmdTimeline(taskId); })(),
+  );
 
 program.parse();

@@ -8,6 +8,7 @@ import { TaskNotFoundError, InvalidStatusTransitionError } from "../core/errors.
 import { getRepoRoot } from "../util/paths.js";
 import { assertTaskOwnership } from "../core/session.js";
 import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
+import { createTaskEvent, appendTaskTranscript } from "../core/audit.js";
 import { cmdGates } from "./gates.js";
 import { isDoctorLocked, removeDoctorLock } from "../core/doctor-lock.js";
 import { hashControlFiles } from "../core/control-files.js";
@@ -119,6 +120,11 @@ const today = new Date().toISOString().split("T")[0];
   }
 
   logSuccess(`Task ${taskId} marked as Done.`);
+
+  appendTaskTranscript(repoRoot, taskId, createTaskEvent(taskId, "task.command.completed", {
+    summary: `Task ${taskId} marked as Done`,
+    metadata: { previousStatus: previousStatus, notes },
+  }));
 
   // --- Cleanup: remove worktree ---
   if (cleanup) {
