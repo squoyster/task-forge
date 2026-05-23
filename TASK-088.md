@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: a14b0310d0
 claimed_at: '2026-05-23 10:59:23'
 context_hash: 8c607774d14d0be5
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-088
 ---
 
 # TASK-088: Add smoke-test harness for containerized project conversion
@@ -22,6 +23,12 @@ Create automated smoke test proving a plain git repo converts to TaskForge proje
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-088
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-088
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-088
