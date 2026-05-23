@@ -1,11 +1,14 @@
 ---
 id: TASK-087
 type: Documentation
-status: Ready
+status: In Progress
 priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 9f50d77b23
+claimed_at: '2026-05-23 10:53:39'
+context_hash: 8c607774d14d0be5
 ---
 
 # TASK-087: Define OpenCode execution strategy for containerized TaskForge
@@ -19,3 +22,13 @@ Create docs/architecture/opencode-container-execution.md. Compare host OpenCode 
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-087
+- Session: 9f50d77b23
+- Branch: agent/TASK-087-define-opencode-execution-strategy-for-c--9f50d77b23
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-087
+- Session: 9f50d77b23
+- Branch: agent/TASK-087-define-opencode-execution-strategy-for-c--9f50d77b23
