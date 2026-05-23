@@ -1,13 +1,11 @@
 ---
 id: TASK-110
 type: Refactor
-status: In Progress
+status: Done
 priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: f8d0213c7b
-claimed_at: '2026-05-23 17:57:15'
 context_hash: f3613895c8a77f2e
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-110
 ---
@@ -36,6 +34,10 @@ Move OpenCode-specific behavior out of core command flows. OpenCodeAgentProvider
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task marked Done (forced)
+- Completed despite gate failures — forced.
 
 ### 2026-05-23 System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-110
