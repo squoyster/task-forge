@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: 65b9fd8909
 claimed_at: '2026-05-23 11:50:30'
 context_hash: 8c607774d14d0be5
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-097
 ---
 
 # TASK-097: Include diagnostic context in JSON error responses
@@ -57,6 +58,12 @@ Add a `details` field to JSON error responses that includes the explanatory text
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-097
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-097
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-097
