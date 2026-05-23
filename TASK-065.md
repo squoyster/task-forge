@@ -1,15 +1,12 @@
 ---
 id: TASK-065
 type: Feature
-status: In Progress
+status: Done
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 9aecb564f7
-claimed_at: '2026-05-23 00:49:09'
 context_hash: 6eb8f67de42c153d
-worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-065
 ---
 
 # TASK-065: Generate OpenCode agent files
@@ -23,6 +20,12 @@ Generate .opencode/agents/implementer.md, reviewer.md, qa.md, doctor.md with Tas
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task marked Done (forced)
+- Completed despite gate failures — forced.
+- Worktree removed: /Volumes/Transcend/devel/worktrees/task-forge/TASK-065
+- Worktree and branch fields cleared from task frontmatter.
 
 ### 2026-05-23 System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-065
