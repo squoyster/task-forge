@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: a8f6e69dbe
 claimed_at: '2026-05-23 02:40:50'
 context_hash: 8c607774d14d0be5
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-095
 ---
 
 # TASK-095: Add cautionary qualifier to unlock --force message
@@ -46,6 +47,12 @@ Add the same cautionary qualifier to unlock.ts, matching the pattern in claim.ts
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-095
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-095
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-095
