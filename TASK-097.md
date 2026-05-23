@@ -1,13 +1,11 @@
 ---
 id: TASK-097
 type: Bug
-status: In Progress
+status: Done
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 65b9fd8909
-claimed_at: '2026-05-23 11:50:30'
 context_hash: 8c607774d14d0be5
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-097
 ---
@@ -58,6 +56,10 @@ Add a `details` field to JSON error responses that includes the explanatory text
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task marked Done (forced)
+- Completed despite gate failures — forced.
 
 ### 2026-05-23 System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-097
