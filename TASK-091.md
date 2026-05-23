@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: b5ee8dbbd3
 claimed_at: '2026-05-23 04:20:55'
 context_hash: 8c607774d14d0be5
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-091
 ---
 
 # TASK-091: Fix done-test git-repo-not-found failures
@@ -33,6 +34,12 @@ context_hash: 8c607774d14d0be5
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-091
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-091
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-091
