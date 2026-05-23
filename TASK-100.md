@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: 2d36eb6374
 claimed_at: '2026-05-23 04:14:48'
 context_hash: 8c607774d14d0be5
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-100
 ---
 
 # TASK-100: Fix start command not persisting branch field to task frontmatter
@@ -22,6 +23,12 @@ Describe the desired outcome.
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-100
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-100
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-100
