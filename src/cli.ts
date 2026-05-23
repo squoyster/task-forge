@@ -34,6 +34,7 @@ import { cmdDepsCreateTasks } from "./commands/deps/create-tasks.js";
 import { cmdDepsPr } from "./commands/deps/pr.js";
 import { cmdDepsSummary } from "./commands/deps/summary.js";
 import { cmdAudit, cmdTranscript, cmdTimeline } from "./commands/audit.js";
+import { cmdDiff, cmdCheckpoint, cmdSubmit, cmdPr } from "./commands/git-facade.js";
 import { TaskForgeError } from "./core/errors.js";
 import { logError } from "./util/logging.js";
 
@@ -409,6 +410,35 @@ program
   .description("Show event timeline summary for a task")
   .action((taskId: string) =>
     wrap(async () => { cmdTimeline(taskId); })(),
+  );
+
+program
+  .command("diff <taskId>")
+  .description("Show current worktree diff for a task")
+  .action((taskId: string) =>
+    wrap(async () => { await cmdDiff(taskId); })(),
+  );
+
+program
+  .command("checkpoint <taskId>")
+  .description("Create a commit on the task branch")
+  .requiredOption("-m, --message <text>", "Commit message")
+  .action((taskId: string, opts: { message: string }) =>
+    wrap(async () => { await cmdCheckpoint(taskId, opts.message); })(),
+  );
+
+program
+  .command("submit <taskId>")
+  .description("Push the task branch")
+  .action((taskId: string) =>
+    wrap(async () => { await cmdSubmit(taskId); })(),
+  );
+
+program
+  .command("pr <taskId>")
+  .description("Create a PR for the task")
+  .action((taskId: string) =>
+    wrap(async () => { await cmdPr(taskId); })(),
   );
 
 program.parse();
