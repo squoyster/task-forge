@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: 61fad21b00
 claimed_at: '2026-05-23 11:30:22'
 context_hash: 8c607774d14d0be5
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-093
 ---
 
 # TASK-093: Fix claim-json and sweep assertion test failures
@@ -40,6 +41,12 @@ context_hash: 8c607774d14d0be5
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-093
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-093
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-093
