@@ -7,7 +7,9 @@ import {
   TASKS_README_TEMPLATE,
 } from "../markdown/templates.js";
 import { ensureTaskStateBranch } from "../core/git.js";
-import { logSuccess, logInfo } from "../util/logging.js";
+import { logSuccess, logInfo, logWarn } from "../util/logging.js";
+import { getAdapter } from "../agent-frameworks/registry.js";
+import { loadConfig } from "../core/config.js";
 
 interface FileSpec {
   path: string;
@@ -15,8 +17,25 @@ interface FileSpec {
   content: string;
 }
 
-export async function cmdInit(_force = false): Promise<void> {
+export interface InitOptions {
+  agentFramework?: string;
+  policy?: "permissive" | "managed" | "locked-down";
+  installHooks?: boolean;
+  audit?: boolean;
+  guard?: boolean;
+  dryRun?: boolean;
+  repair?: boolean;
+}
+
+export async function cmdInit(options: InitOptions = {}): Promise<void> {
   const repoRoot = getRepoRoot();
+  const config = loadConfig(repoRoot);
+  const agentFramework = options.agentFramework ?? config.agentFramework.id ?? "auto";
+  const policy = options.policy ?? config.agentFramework.policy ?? "managed";
+  const installHooks = options.installHooks ?? config.agentFramework.installHooks ?? true;
+  const audit = options.audit ?? config.agentFramework.audit ?? true;
+  const guard = options.guard ?? config.agentFramework.guard ?? true;
+  const dryRun = options.dryRun ?? false;
   const taskforgeDir = getTaskforgeDir(repoRoot);
 
   // Create directories (skipped silently if present)
@@ -122,8 +141,69 @@ export async function cmdInit(_force = false): Promise<void> {
     logInfo(".taskforge/config.json already exists");
   }
 
+  // Agent framework initialization
+  if (agentFramework !== "none") {
+    logInfo(`\nInitializing agent framework: ${agentFramework} (policy: ${policy})`);
+    await initAgentFramework(repoRoot, {
+      agentFramework,
+      policy,
+      installHooks,
+      audit,
+      guard,
+      dryRun,
+    });
+  }
+
   logSuccess("\nTaskForge initialized successfully.");
   logInfo("Run 'taskforge next' to find the next task to work on.");
+}
+
+async function initAgentFramework(
+  repoRoot: string,
+  options: {
+    agentFramework: string;
+    policy: "permissive" | "managed" | "locked-down";
+    installHooks: boolean;
+    audit: boolean;
+    guard: boolean;
+    dryRun: boolean;
+  },
+): Promise<void> {
+  let frameworkId = options.agentFramework;
+
+  if (frameworkId === "auto") {
+    const { opencodeAdapter } = await import("../agent-frameworks/opencode.js");
+    const detection = await opencodeAdapter.detect(repoRoot);
+    frameworkId = detection.detected ? "opencode" : "generic";
+    logInfo(`Auto-detected framework: ${frameworkId}`);
+  }
+
+  const adapter = getAdapter(frameworkId);
+  if (!adapter) {
+    logWarn(`Unknown agent framework: ${frameworkId}. Available: ${["generic", "opencode"].join(", ")}`);
+    return;
+  }
+
+  const ctx = {
+    projectRoot: repoRoot,
+    configPaths: [],
+    policy: options.policy,
+    installHooks: options.installHooks,
+    audit: options.audit,
+    guard: options.guard,
+    dryRun: options.dryRun,
+  };
+
+  if (options.dryRun) {
+    const plan = await adapter.plan(ctx);
+    logInfo("\nDry run — files that would be created/updated:");
+    for (const file of plan.files) {
+      logInfo(`  [${file.action}] ${file.path} — ${file.description}`);
+    }
+  } else {
+    await adapter.apply(ctx);
+    logSuccess(`Agent framework ${adapter.displayName} initialized.`);
+  }
 }
 
 function migrateExistingTasks(tasksDir: string, stateDir: string): number {

@@ -47,7 +47,29 @@ program
   .command("init")
   .description("Initialize TaskForge in this repository")
   .option("--force", "Recreate missing configuration files and templates")
-  .action((opts: { force?: boolean }) => wrap(() => cmdInit(opts.force ?? false))());
+  .option("--agent-framework <id>", "Agent framework: opencode, generic, auto, or none")
+  .option("--policy <level>", "Policy: permissive, managed, or locked-down")
+  .option("--install-hooks", "Install git hooks")
+  .option("--no-install-hooks", "Skip git hooks")
+  .option("--audit", "Enable audit plugin")
+  .option("--no-audit", "Disable audit plugin")
+  .option("--guard", "Enable guard plugin")
+  .option("--no-guard", "Disable guard plugin")
+  .option("--dry-run", "Show planned changes without writing")
+  .option("--repair", "Repair missing or stale generated files")
+  .action((opts: Record<string, unknown>) => {
+    wrap(() =>
+      cmdInit({
+        agentFramework: opts.agentFramework as string | undefined,
+        policy: opts.policy as "permissive" | "managed" | "locked-down" | undefined,
+        installHooks: opts.installHooks as boolean | undefined,
+        audit: opts.audit as boolean | undefined,
+        guard: opts.guard as boolean | undefined,
+        dryRun: opts.dryRun as boolean | undefined,
+        repair: opts.repair as boolean | undefined,
+      }),
+    )();
+  });
 
 program
   .command("next")
