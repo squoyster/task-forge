@@ -1,11 +1,14 @@
 ---
 id: TASK-098
 type: Bug
-status: Ready
+status: In Progress
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: e7fc9e7ece
+claimed_at: '2026-05-23 03:00:51'
+context_hash: 8c607774d14d0be5
 ---
 
 # TASK-098: Fix taskforge checkpoint/submit/diff from within agent worktrees
@@ -57,3 +60,13 @@ Option C: Store the repo root in the task frontmatter during `start` and have fa
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-098
+- Session: e7fc9e7ece
+- Branch: agent/TASK-098-fix-taskforge-checkpointsubmitdiff-from--e7fc9e7ece
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-098
+- Session: e7fc9e7ece
+- Branch: agent/TASK-098-fix-taskforge-checkpointsubmitdiff-from--e7fc9e7ece
