@@ -1,11 +1,14 @@
 ---
 id: TASK-117
 type: Documentation
-status: Ready
+status: In Progress
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: a8c5468972
+claimed_at: '2026-05-23 18:25:25'
+context_hash: f3613895c8a77f2e
 ---
 
 # TASK-117: Document audit log and transcript extension model
@@ -30,3 +33,13 @@ docs/architecture/audit-model.md, docs/audit/per-task-audit-logs.md, docs/audit/
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-117
+- Session: a8c5468972
+- Branch: agent/TASK-117-document-audit-log-and-transcript-extens--a8c5468972
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-117
+- Session: a8c5468972
+- Branch: agent/TASK-117-document-audit-log-and-transcript-extens--a8c5468972
