@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: e7fc9e7ece
 claimed_at: '2026-05-23 03:00:51'
 context_hash: 8c607774d14d0be5
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-098
 ---
 
 # TASK-098: Fix taskforge checkpoint/submit/diff from within agent worktrees
@@ -60,6 +61,12 @@ Option C: Store the repo root in the task frontmatter during `start` and have fa
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-098
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-098
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-098
