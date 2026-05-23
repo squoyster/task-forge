@@ -25,6 +25,12 @@ Generate or merge opencode.json for OpenCode projects. Normal agents: allow read
 ## Agent Notes
 
 ### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-064
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-064
+
+### 2026-05-23 System
 - Task claimed via taskforge start TASK-064
 - Session: 758a443d39
 - Branch: agent/TASK-064-generate-opencode-project-configuration--758a443d39
