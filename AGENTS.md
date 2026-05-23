@@ -22,7 +22,11 @@ Acceptance criteria (ACs) define the contract between the task author and the im
 ### During Implementation
 
 1. Work through the checklist — do not jump ahead.
-2. When you believe an AC is satisfied, mark it with evidence: a passing test name, a file path, or a reproducible command.
+2. When you believe an AC is satisfied, mark it with **explicit traceability**:
+   - **Source file** (e.g., `src/commands/claim.ts`)
+   - **Identifier** — a function name, test name, exported constant, or approximate line number that can be located even if line numbers shift (e.g., `auditCommand()`, `test "reports json output"`, `~L140`)
+   - **Rationale** — one sentence on how the code satisfies the AC
+   - This traceability lets agents and reviewers quickly determine whether every AC was addressed without reading the entire diff.
 3. If an AC cannot be satisfied within scope:
    - Document why in the task file agent notes
    - Create a follow-up task with the remaining AC
@@ -30,9 +34,13 @@ Acceptance criteria (ACs) define the contract between the task author and the im
 
 ### Before Marking Done
 
-1. Every AC must have **evidence of satisfaction** — not inference, not assumption.
-2. If using `--force` to bypass gates: document in agent notes which ACs are unmet and why, and create follow-up tasks.
-3. The verification gates (`typecheck`, `lint`, `build`, `test`) prove you did not *break* anything. The AC checklist proves you *built* everything.
+1. Every AC must have **evidence of satisfaction** recorded in the task file's Acceptance Criteria section, including the source file and identifier.
+2. The completed checklist in the task file must be parseable by any agent or reviewer — do not bury evidence in prose, use structured checkmarks:
+   ```
+   - [x] AC description — `src/commands/claim.ts` `auditCommand(~L142)`: writes task.command.completed event
+   ```
+3. If using `--force` to bypass gates: document in agent notes which ACs are unmet and why, and create follow-up tasks.
+4. The verification gates (`typecheck`, `lint`, `build`, `test`) prove you did not *break* anything. The AC checklist proves you *built* everything.
 
 ### Anti-Pattern: Throughput Over Correctness
 
