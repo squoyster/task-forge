@@ -1,14 +1,16 @@
 ---
 id: TASK-105
 type: Refactor
-status: Ready
+status: In Progress
 priority: P0
 agentRole: Implementer
 riskLevel: High
 humanInterventionRequired: false
 dependsOn:
   - TASK-124
-context_hash: 8c607774d14d0be5
+assignee: 93130ca332
+claimed_at: '2026-05-23 18:47:19'
+context_hash: f3613895c8a77f2e
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-105
 ---
 
@@ -43,6 +45,16 @@ Current start/claim flows mutate files directly before transaction commit. This 
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-105
+- Session: 93130ca332
+- Branch: agent/TASK-105-rewrite-task-state-mutation-to-use-trans--93130ca332
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-105
+- Session: 93130ca332
+- Branch: agent/TASK-105-rewrite-task-state-mutation-to-use-trans--93130ca332
 
 ### 2026-05-23 System
 - Transaction dirty-tracking added (persistAndCommit now writes only dirty tasks)
