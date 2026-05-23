@@ -79,6 +79,7 @@ See [TASKFORGE.md](TASKFORGE.md) for the full specification, including the Sweep
 | Command | Description |
 |---|---|
 | `taskforge init` | Initialize TaskForge in this repo |
+| `taskforge init --agent-framework opencode` | Init with OpenCode agent policy |
 | `taskforge next` | Return highest-priority safe task |
 | `taskforge claim TASK-N` | Claim a task (set assignee) without creating worktree |
 | `taskforge start TASK-N` | Set up worktree, branch, begin task |
@@ -94,6 +95,20 @@ See [TASKFORGE.md](TASKFORGE.md) for the full specification, including the Sweep
 | `taskforge release TASK-N` | Voluntarily release a claim |
 | `taskforge reject TASK-N "reason"` | Mark a task as rejected (obsolete, won't implement) |
 | `taskforge sweep` | Sweeper Protocol — recover stale in-progress tasks |
+| `taskforge validate-state` | Validate task-state for invariant violations |
+| `taskforge doctor` | Run diagnostic checks on repo health |
+| `taskforge prompt TASK-N` | Emit agent execution packet |
+| `taskforge config-validate` | Validate .taskforge/config.json |
+| `taskforge cleanup TASK-N` | Remove task worktree and branch safely |
+| `taskforge report TASK-N` | Generate structured completion report |
+| `taskforge new "Title"` | Create a new task file |
+| `taskforge diff TASK-N` | Show worktree diff (git facade) |
+| `taskforge checkpoint TASK-N -m "msg"` | Commit on task branch with trailers |
+| `taskforge submit TASK-N` | Push task branch (git facade) |
+| `taskforge pr TASK-N` | Create PR for task (git facade) |
+| `taskforge audit TASK-N` | Show audit events for a task |
+| `taskforge transcript TASK-N` | Show readable transcript for a task |
+| `taskforge timeline TASK-N` | Show event timeline summary for a task |
 | `taskforge sync` | Sync with external issue tracker |
 | `taskforge deps scan` | Run broad dependency health checks |
 | `taskforge deps audit` | Run package-manager-native audit |
