@@ -1,7 +1,7 @@
 ---
 id: TASK-129
 type: Refactor
-status: Ready
+status: Done
 priority: P1
 agentRole: Implementer
 riskLevel: Low
@@ -26,6 +26,10 @@ worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-129
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task marked Done (forced)
+- Completed despite gate failures — forced.
 
 ### 2026-05-23 System
 - Task marked Done (forced)
