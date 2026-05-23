@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: 80154dc068
 claimed_at: '2026-05-23 18:25:36'
 context_hash: f3613895c8a77f2e
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-119
 ---
 
 # TASK-119: Add strict/warn/offline failure policy
@@ -28,6 +29,12 @@ Stop silently degrading in multi-agent coordination paths. FailurePolicy: strict
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-119
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-119
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-119
