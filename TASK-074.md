@@ -1,15 +1,12 @@
 ---
 id: TASK-074
 type: Documentation
-status: In Progress
+status: Done
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 98e45468f1
-claimed_at: '2026-05-23 01:07:18'
 context_hash: 2d40ee019028e7ff
-worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-074
 ---
 
 # TASK-074: Documentation for agent framework initialization
@@ -23,6 +20,12 @@ Document the new TaskForge agent integration system. Add docs/agent-framework-in
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task marked Done (forced)
+- Completed despite gate failures — forced.
+- Worktree removed: /Volumes/Transcend/devel/worktrees/task-forge/TASK-074
+- Worktree and branch fields cleared from task frontmatter.
 
 ### 2026-05-23 System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-074
