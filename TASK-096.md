@@ -1,11 +1,14 @@
 ---
 id: TASK-096
 type: Bug
-status: Ready
+status: In Progress
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 87d82809d1
+claimed_at: '2026-05-23 11:48:19'
+context_hash: 8c607774d14d0be5
 ---
 
 # TASK-096: Add clarifying context to doctor-lock warnings in claim and start
@@ -46,6 +49,16 @@ Add "All agents are paused until recovery is complete." to the doctor-lock outpu
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-096
+- Session: 87d82809d1
+- Branch: agent/TASK-096-add-clarifying-context-to-doctor-lock-wa--87d82809d1
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-096
+- Session: 87d82809d1
+- Branch: agent/TASK-096-add-clarifying-context-to-doctor-lock-wa--87d82809d1
 
 ### 2026-05-23 02:34 System
 - Discovered during TASK-086 (project runtime configuration) — pre-existing test failures and CLI message audit findings.
