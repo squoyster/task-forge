@@ -1,11 +1,13 @@
 ---
 id: TASK-105
 type: Refactor
-status: Done
+status: Blocked
 priority: P0
 agentRole: Implementer
-riskLevel: Low
+riskLevel: High
 humanInterventionRequired: false
+dependsOn:
+  - TASK-124
 context_hash: 8c607774d14d0be5
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-105
 ---
@@ -41,6 +43,11 @@ Current start/claim flows mutate files directly before transaction commit. This 
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Transaction dirty-tracking added (persistAndCommit now writes only dirty tasks)
+- claim.ts refactored to move all mutations into transaction layer
+- Blocked pending TASK-124: remaining commands + duplicate-note tests + next-action guidance
 
 ### 2026-05-23 System
 - Task marked Done (forced)
