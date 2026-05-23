@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: 851214aa6c
 claimed_at: '2026-05-23 01:22:31'
 context_hash: b8735c6ec8dfb371
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-076
 ---
 
 # TASK-076: Add container-first deployment architecture documentation
@@ -22,6 +23,12 @@ Document canonical container-first deployment: one-time system setup, per-projec
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-076
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-076
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-076
