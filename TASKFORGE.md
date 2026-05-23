@@ -410,7 +410,7 @@ You are operating under TaskForge Autonomous Coding Board.
 
 Read TASKFORGE.md, AGENTS.md if present, and the relevant task file from the task-state worktree (../task-state/).
 
-Use git worktrees and task branches unless already inside the correct task worktree.
+Use `taskforge start TASK-ID` to create isolated worktrees. Normal agents should not use git directly — use `taskforge checkpoint`, `taskforge submit`, `taskforge diff` instead.
 
 Continue automatically through safe local steps:
 - inspect, implement, test, fix, retest, commit

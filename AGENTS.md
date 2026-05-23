@@ -75,7 +75,7 @@ Agents must never run `git` commands directly on the task-state worktree or main
 | Mark blocked | `taskforge block` |
 | Extend lease | `taskforge heartbeat` |
 
-The only allowed direct git usage: `git push/pull` on the agent's own feature branch within their worktree.
+Normal agents must use TaskForge facade commands instead of direct git: `taskforge checkpoint` (replaces `git commit`), `taskforge submit` (replaces `git push`), `taskforge diff` (read-only diff). Doctor agents may use selected git commands under doctor protocol.
 
 ### Git Operations Matrix
 
@@ -193,11 +193,11 @@ Valid transitions are enforced by `status-transition.ts`.
 
 ## Git Worktree Workflow
 
-Always use git worktrees for task implementation:
+Always use `taskforge start TASK-ID` to create isolated workspaces:
 
 ```bash
-git worktree add ../worktrees/TASK-123 -b agent/TASK-123-short-title
-cd ../worktrees/TASK-123
+taskforge start TASK-123
+cd ../worktrees/<project>/TASK-123
 npm install
 ```
 
