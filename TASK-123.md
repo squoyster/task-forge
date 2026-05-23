@@ -38,9 +38,10 @@ Update AGENTS.md to mandate that agents must enumerate and satisfy all acceptanc
 
 ## Acceptance Criteria
 
-- [ ] AGENTS.md contains explicit AC-driven workflow instructions
-- [ ] Document warns against throughput-prioritization anti-pattern
-- [ ] No change to existing command behavior
+- [x] AGENTS.md contains explicit AC-driven workflow instructions — `AGENTS.md` `## Acceptance Criteria Contract (~L14-70)`: Before/During/Before-Done phases with explicit traceability requirements
+- [x] AGENTS.md requires source file + identifier traceability for each completed AC — `AGENTS.md` `### During Implementation (~L25)`: source file, identifier (function/test/line), rationale
+- [x] AGENTS.md defines structured checkmark format for task file ACs — `AGENTS.md` `### Before Marking Done (~L35)`: `- [x] AC — \`file\` \`id\`: description` format
+- [x] Document warns against throughput-prioritization anti-pattern — `AGENTS.md` `### Anti-Pattern (~L41)` + `### 6. Prioritize Correctness (~L163)`
 
 ## Acceptance Criteria
 
