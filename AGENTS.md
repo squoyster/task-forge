@@ -7,6 +7,42 @@ This file provides operational instructions for coding agents working on the Tas
 1. Read `TASKFORGE.md` — the full system specification
 2. Read the relevant task file from the task-state worktree (`../task-state/`)
 3. Check `git status` to understand current branch state
+4. **Extract every Acceptance Criterion into an explicit checklist** — do not proceed until you can enumerate exactly what constitutes "done"
+
+## Acceptance Criteria Contract
+
+Acceptance criteria (ACs) define the contract between the task author and the implementer. **Satisfying ACs is the implementer's primary obligation.** Throughput, task queue depth, or urgency do not excuse skipped ACs.
+
+### Before Writing Code
+
+1. Read the task file and extract every `- [ ]` item from the Acceptance Criteria section into an explicit checklist.
+2. If ACs are missing or ambiguous, **block the task** with category `ambiguous_spec` and request clarification. Do not guess.
+3. Map each AC to the specific files or modules it will touch.
+
+### During Implementation
+
+1. Work through the checklist — do not jump ahead.
+2. When you believe an AC is satisfied, mark it with evidence: a passing test name, a file path, or a reproducible command.
+3. If an AC cannot be satisfied within scope:
+   - Document why in the task file agent notes
+   - Create a follow-up task with the remaining AC
+   - Add the follow-up task ID as `dependsOn` on the current task if it blocks completion
+
+### Before Marking Done
+
+1. Every AC must have **evidence of satisfaction** — not inference, not assumption.
+2. If using `--force` to bypass gates: document in agent notes which ACs are unmet and why, and create follow-up tasks.
+3. The verification gates (`typecheck`, `lint`, `build`, `test`) prove you did not *break* anything. The AC checklist proves you *built* everything.
+
+### Anti-Pattern: Throughput Over Correctness
+
+Do NOT reason: *"There are N pending tasks, so I'll move fast and skip some ACs."* This is actively harmful:
+
+- Skipped ACs compound — each downstream task inherits the gap
+- Errors from missing ACs cost more to fix later than the time saved now
+- Force-closing tasks creates invisible debt that blocks other agents
+
+**Correctness over velocity. Every time.**
 
 ## Development Workflow
 
@@ -44,11 +80,15 @@ Before marking a task `Done`, all must pass:
 - `npm run lint` — zero errors
 - `npm test -- --run` — all tests pass
 
+**Gates prove nothing was broken. They do not prove the task was completed.** Passing gates without satisfying all ACs is an incomplete task. The AC checklist is the authoritative completion measure — gates are a safety net.
+
 ## Mandatory Deliverables per Task
 
 When completing a task, agents must update:
 
-1. **CHANGELOG.md** — Add an entry under `## [Unreleased]` describing the change. Follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format:
+1. **Acceptance criteria** — Each AC must be checked off (`- [x]`) with a brief note on how it was satisfied (test name, file path, or command). If an AC cannot be satisfied, document the unmet AC with a reason and create a follow-up task.
+
+2. **CHANGELOG.md** — Add an entry under `## [Unreleased]` describing the change. Follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format:
    - `### Added` — new features
    - `### Changed` — changes to existing behavior
    - `### Fixed` — bug fixes
@@ -116,6 +156,17 @@ When an inconsistency is detected:
 ### 5. Never Bypass the CLI
 
 Do not use `--force` to skip guardrails unless you understand exactly what you're overriding. The CLI is the system of record for task state — bypassing it creates technical debt that another agent (or a human) must clean up.
+
+### 6. Prioritize Correctness Over Throughput
+
+Do not skip acceptance criteria or prematurely mark tasks Done because there are many pending tasks in the queue. This reasoning is actively harmful:
+
+- Skipped ACs compound — each downstream task inherits the gap.
+- Errors from missing ACs cost significantly more to fix later than the time saved by rushing.
+- Force-closing tasks with unmet ACs creates invisible technical debt that blocks other agents.
+- The verification gates (typecheck, lint, build, test) only prove nothing was broken — they do not prove the task is complete.
+
+**A task is Done only when every acceptance criterion has been satisfied with evidence.** Task queue depth is irrelevant to this standard.
 
 ## Code Conventions
 
