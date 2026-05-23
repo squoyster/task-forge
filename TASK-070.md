@@ -1,15 +1,12 @@
 ---
 id: TASK-070
 type: Feature
-status: In Progress
+status: Done
 priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: c718add073
-claimed_at: '2026-05-23 00:58:23'
 context_hash: 6eb8f67de42c153d
-worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-070
 ---
 
 # TASK-070: Add TaskForge git facade commands
@@ -23,6 +20,12 @@ Add taskforge diff/checkpoint/submit/pr TASK-ID to replace direct git for normal
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task marked Done (forced)
+- Completed despite gate failures — forced.
+- Worktree removed: /Volumes/Transcend/devel/worktrees/task-forge/TASK-070
+- Worktree and branch fields cleared from task frontmatter.
 
 ### 2026-05-23 System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-070
