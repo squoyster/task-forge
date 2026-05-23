@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: 5e58faef05
 claimed_at: '2026-05-23 11:42:27'
 context_hash: 8c607774d14d0be5
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-094
 ---
 
 # TASK-094: Improve gate-failure guidance in done command
@@ -66,6 +67,12 @@ The CLI currently cannot distinguish between regressions (your change broke some
 - [ ] No change to `--force` behavior when no `--reason` is given (backward compatible)
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-094
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-094
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-094
