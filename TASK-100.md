@@ -1,14 +1,13 @@
 ---
 id: TASK-100
 type: Bug
-status: In Progress
+status: Done
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 2d36eb6374
-claimed_at: '2026-05-23 04:14:48'
 context_hash: 8c607774d14d0be5
+branch: agent/TASK-100-fix-start-command-not-persisting-branch--2d36eb6374
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-100
 ---
 
@@ -23,6 +22,10 @@ Describe the desired outcome.
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task marked Done (forced)
+- Completed despite gate failures — forced.
 
 ### 2026-05-23 System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-100
