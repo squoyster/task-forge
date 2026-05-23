@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: 750d6c6b67
 claimed_at: '2026-05-23 10:43:50'
 context_hash: 8c607774d14d0be5
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-082
 ---
 
 # TASK-082: Add credential strategy for containerized git operations
@@ -22,6 +23,12 @@ Support SSH agent forwarding, GITHUB_TOKEN env, host git config mount. Do NOT co
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-082
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-082
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-082
