@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: a8c5468972
 claimed_at: '2026-05-23 18:25:25'
 context_hash: f3613895c8a77f2e
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-117
 ---
 
 # TASK-117: Document audit log and transcript extension model
@@ -33,6 +34,12 @@ docs/architecture/audit-model.md, docs/audit/per-task-audit-logs.md, docs/audit/
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-117
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-117
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-117
