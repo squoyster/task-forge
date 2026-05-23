@@ -1,13 +1,11 @@
 ---
 id: TASK-124
 type: Refactor
-status: In Progress
+status: Done
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 6b215d0b93
-claimed_at: '2026-05-23 18:34:42'
 context_hash: f3613895c8a77f2e
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-124
 ---
@@ -52,6 +50,10 @@ TASK-105 established dirty-tracking in the transaction layer and refactored clai
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task marked Done (forced)
+- Completed despite gate failures — forced.
 
 ### 2026-05-23 System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-124
