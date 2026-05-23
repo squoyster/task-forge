@@ -1,13 +1,11 @@
 ---
 id: TASK-084
 type: Infrastructure
-status: In Progress
+status: Done
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 7e9db8b96d
-claimed_at: '2026-05-23 11:35:20'
 context_hash: 8c607774d14d0be5
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-084
 ---
@@ -23,6 +21,10 @@ Add scripts/install.sh and scripts/uninstall.sh. Detect OS/shell. Install taskfo
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task marked Done (forced)
+- Completed despite gate failures — forced.
 
 ### 2026-05-23 System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-084
