@@ -153,6 +153,9 @@ export const opencodeAdapter: AgentFrameworkAdapter = {
       dryRun: ctx.dryRun,
       installHooks: ctx.installHooks,
     });
+
+    const { installAgentFiles } = await import("../core/agent-files.js");
+    installAgentFiles(ctx.projectRoot, ctx.dryRun);
   },
 
   async doctor(ctx: AgentFrameworkDoctorContext): Promise<Diagnostic[]> {
