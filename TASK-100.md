@@ -1,11 +1,14 @@
 ---
 id: TASK-100
 type: Bug
-status: Ready
+status: In Progress
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 2d36eb6374
+claimed_at: '2026-05-23 04:14:48'
+context_hash: 8c607774d14d0be5
 ---
 
 # TASK-100: Fix start command not persisting branch field to task frontmatter
@@ -19,3 +22,13 @@ Describe the desired outcome.
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-100
+- Session: 2d36eb6374
+- Branch: agent/TASK-100-fix-start-command-not-persisting-branch--2d36eb6374
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-100
+- Session: 2d36eb6374
+- Branch: agent/TASK-100-fix-start-command-not-persisting-branch--2d36eb6374
