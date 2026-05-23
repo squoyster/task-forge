@@ -63,6 +63,12 @@ Option C: Store the repo root in the task frontmatter during `start` and have fa
 ## Agent Notes
 
 ### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-098
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-098
+
+### 2026-05-23 System
 - Task claimed via taskforge start TASK-098 (forced)
 - Session: d32769774a
 - Branch: agent/TASK-098-fix-taskforge-checkpointsubmitdiff-from--d32769774a
