@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: b5101003ca
 claimed_at: '2026-05-23 13:54:24'
 context_hash: 8c607774d14d0be5
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-105
 ---
 
 # TASK-105: Rewrite task-state mutation to use transactions only
@@ -42,6 +43,12 @@ Current start/claim flows mutate files directly before transaction commit. This 
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-105
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-105
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-105
