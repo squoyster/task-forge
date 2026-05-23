@@ -1,7 +1,7 @@
 ---
 id: TASK-129
 type: Refactor
-status: Done
+status: Ready
 priority: P1
 agentRole: Implementer
 riskLevel: Low

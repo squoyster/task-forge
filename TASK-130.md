@@ -1,7 +1,7 @@
 ---
 id: TASK-130
 type: Feature
-status: Done
+status: Ready
 priority: P2
 agentRole: Implementer
 riskLevel: Low

@@ -1,7 +1,7 @@
 ---
 id: TASK-132
 type: Refactor
-status: Done
+status: Ready
 priority: P2
 agentRole: Implementer
 riskLevel: Low
