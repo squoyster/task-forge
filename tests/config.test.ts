@@ -66,6 +66,83 @@ describe("ConfigSchema", () => {
       expect(result.data.github.enabled).toBe(false);
     }
   });
+
+  it("provides agentFramework defaults", () => {
+    const result = ConfigSchema.safeParse({});
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.agentFramework.policy).toBe("managed");
+      expect(result.data.agentFramework.installHooks).toBe(true);
+      expect(result.data.agentFramework.audit).toBe(true);
+      expect(result.data.agentFramework.guard).toBe(true);
+      expect(result.data.agentFramework.policyVersion).toBe(1);
+      expect(result.data.agentFramework.id).toBeUndefined();
+    }
+  });
+
+  it("parses full agentFramework config", () => {
+    const result = ConfigSchema.safeParse({
+      agentFramework: {
+        id: "opencode",
+        policy: "locked-down",
+        installHooks: false,
+        audit: false,
+        guard: true,
+        policyVersion: 2,
+      },
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.agentFramework.id).toBe("opencode");
+      expect(result.data.agentFramework.policy).toBe("locked-down");
+      expect(result.data.agentFramework.installHooks).toBe(false);
+      expect(result.data.agentFramework.audit).toBe(false);
+      expect(result.data.agentFramework.guard).toBe(true);
+      expect(result.data.agentFramework.policyVersion).toBe(2);
+    }
+  });
+
+  it("rejects invalid agentFramework policy", () => {
+    const result = ConfigSchema.safeParse({
+      agentFramework: { policy: "nonexistent" },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts generic framework id", () => {
+    const result = ConfigSchema.safeParse({
+      agentFramework: { id: "generic" },
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.agentFramework.id).toBe("generic");
+    }
+  });
+
+  it("accepts future framework ids", () => {
+    const result = ConfigSchema.safeParse({
+      agentFramework: { id: "claude-code" },
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.agentFramework.id).toBe("claude-code");
+    }
+  });
+
+  it("loads existing config without agentFramework", () => {
+    const legacyConfig = {
+      project: { name: "old-project" },
+      continuation: { autoContinue: false },
+    };
+    const result = ConfigSchema.safeParse(legacyConfig);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.project.name).toBe("old-project");
+      expect(result.data.continuation.autoContinue).toBe(false);
+      expect(result.data.agentFramework.policy).toBe("managed");
+      expect(result.data.agentFramework.installHooks).toBe(true);
+    }
+  });
 });
 
 describe("DEFAULT_CONFIG", () => {

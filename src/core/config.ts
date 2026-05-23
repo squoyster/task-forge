@@ -108,6 +108,21 @@ dependencies: z
       .array(z.string())
       .optional()
       .default([]),
+    agentFramework: z
+      .object({
+        id: z
+          .union([z.literal("generic"), z.literal("opencode"), z.string()])
+          .optional(),
+        policy: z
+          .enum(["permissive", "managed", "locked-down"])
+          .default("managed"),
+        installHooks: z.boolean().default(true),
+        audit: z.boolean().default(true),
+        guard: z.boolean().default(true),
+        policyVersion: z.number().default(1),
+      })
+      .optional()
+      .default({}),
   });
 
 export type Config = z.infer<typeof ConfigSchema>;
