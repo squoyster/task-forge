@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: c50f2c6c54
 claimed_at: '2026-05-23 03:12:59'
 context_hash: 8c607774d14d0be5
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-099
 ---
 
 # TASK-099: Fix missing await on assertTaskOwnership in git-facade
@@ -22,6 +23,12 @@ Describe the desired outcome.
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-099
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-099
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-099
