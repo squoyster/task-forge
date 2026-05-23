@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: 874b0b3109
 claimed_at: '2026-05-23 11:53:49'
 context_hash: 8c607774d14d0be5
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-090
 ---
 
 # TASK-090: Update existing init tasks to include deployment/runtime assumptions
@@ -22,6 +23,12 @@ Review prior agent-framework tasks/docs to account for containerized CLI, host O
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-090
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-090
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-090
