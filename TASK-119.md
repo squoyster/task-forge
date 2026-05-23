@@ -1,6 +1,6 @@
 ---
 id: TASK-119
-type: Migration
+type: Safety
 status: Ready
 priority: P2
 agentRole: Implementer
@@ -8,17 +8,14 @@ riskLevel: Low
 humanInterventionRequired: false
 ---
 
-# TASK-119: Add compatibility migration for legacy tasks/ directory
+# TASK-119: Add strict/warn/offline failure policy
 
 ## Goal
 
-## Rationalization Roadmap: TASK-RAT-014
+## Rationalization Roadmap: TASK-RAT-012
 
 ### Objective
-Add taskforge migrate-tasks command for legacy main/tasks/*.md to task-state branch migration.
-
-### Acceptance Criteria
-- Legacy tasks migrated safely. Duplicate IDs detected. Agents never create new main-branch task files. Suggest migration before starting new work.
+Stop silently degrading in multi-agent coordination paths. FailurePolicy: strict | warn | offline. Defaults: claim/start/done = strict, status/list = warn, --offline = offline.
 
 ## Acceptance Criteria
 
