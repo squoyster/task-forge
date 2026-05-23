@@ -131,3 +131,11 @@ See [TASKFORGE.md](TASKFORGE.md) for the full specification, including the Sweep
 - **Build**: tsup
 
 See [TASKFORGE.md](TASKFORGE.md) for the full specification.
+
+## Documentation
+
+- `docs/deployment/container-runtime.md` — Container-first deployment guide
+- `docs/agent-framework-integration.md` — Agent framework setup
+- `docs/control-plane-hardening.md` — Security threat model and hardening
+- `docs/architecture/` — Architectural decisions
+- `docs/decisions/` — Architecture decision records
