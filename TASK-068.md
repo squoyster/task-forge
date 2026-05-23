@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: b90be185a3
 claimed_at: '2026-05-23 00:55:59'
 context_hash: 6eb8f67de42c153d
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-068
 ---
 
 # TASK-068: Add OpenCode audit plugin generation
@@ -22,6 +23,12 @@ Generate .opencode/plugins/taskforge-audit.ts that captures per-session and per-
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-068
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-068
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-068
