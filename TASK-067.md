@@ -1,13 +1,11 @@
 ---
 id: TASK-067
 type: Feature
-status: In Progress
+status: Done
 priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 40e4e48127
-claimed_at: '2026-05-23 00:53:00'
 context_hash: 6eb8f67de42c153d
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-067
 ---
