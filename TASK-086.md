@@ -1,11 +1,14 @@
 ---
 id: TASK-086
 type: Feature
-status: Ready
+status: In Progress
 priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 642e16732c
+claimed_at: '2026-05-23 02:06:15'
+context_hash: 8c607774d14d0be5
 ---
 
 # TASK-086: Add project runtime configuration
@@ -19,3 +22,13 @@ Extend .taskforge/config.json with runtime section (mode: native|container, imag
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-086
+- Session: 642e16732c
+- Branch: agent/TASK-086-add-project-runtime-configuration--642e16732c
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-086
+- Session: 642e16732c
+- Branch: agent/TASK-086-add-project-runtime-configuration--642e16732c
