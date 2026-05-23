@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: d5280662e4
 claimed_at: '2026-05-23 01:03:58'
 context_hash: 6eb8f67de42c153d
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-073
 ---
 
 # TASK-073: Remove conflicting direct-git guidance for normal agents
@@ -22,6 +23,12 @@ Eliminate instructions telling normal agents they may use git directly. Search d
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-073
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-073
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-073
