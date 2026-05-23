@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: c718add073
 claimed_at: '2026-05-23 00:58:23'
 context_hash: 6eb8f67de42c153d
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-070
 ---
 
 # TASK-070: Add TaskForge git facade commands
@@ -22,6 +23,12 @@ Add taskforge diff/checkpoint/submit/pr TASK-ID to replace direct git for normal
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-070
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-070
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-070
