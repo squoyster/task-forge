@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: b87f788ab6
 claimed_at: '2026-05-23 01:05:45'
 context_hash: 2d40ee019028e7ff
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-072
 ---
 
 # TASK-072: Integration tests for init-generated OpenCode policy
@@ -22,6 +23,12 @@ Add tests proving generated OpenCode integration enforces intended policy. Creat
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-072
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-072
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-072
