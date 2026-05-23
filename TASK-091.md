@@ -1,11 +1,14 @@
 ---
 id: TASK-091
 type: Bug
-status: Ready
+status: In Progress
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: b5ee8dbbd3
+claimed_at: '2026-05-23 04:20:55'
+context_hash: 8c607774d14d0be5
 ---
 
 # TASK-091: Fix done-test git-repo-not-found failures
@@ -30,6 +33,16 @@ humanInterventionRequired: false
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-091
+- Session: b5ee8dbbd3
+- Branch: agent/TASK-091-fix-done-test-git-repo-not-found-failure--b5ee8dbbd3
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-091
+- Session: b5ee8dbbd3
+- Branch: agent/TASK-091-fix-done-test-git-repo-not-found-failure--b5ee8dbbd3
 
 ### 2026-05-23 02:34 System
 - Discovered during TASK-086 (project runtime configuration) — pre-existing test failures and CLI message audit findings.
