@@ -1,13 +1,11 @@
 ---
 id: TASK-096
 type: Bug
-status: In Progress
+status: Done
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 87d82809d1
-claimed_at: '2026-05-23 11:48:19'
 context_hash: 8c607774d14d0be5
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-096
 ---
@@ -50,6 +48,10 @@ Add "All agents are paused until recovery is complete." to the doctor-lock outpu
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task marked Done (forced)
+- Completed despite gate failures — forced.
 
 ### 2026-05-23 System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-096
