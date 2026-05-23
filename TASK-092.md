@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: 5ec62a0afa
 claimed_at: '2026-05-23 11:27:02'
 context_hash: 8c607774d14d0be5
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-092
 ---
 
 # TASK-092: Fix task-state-transaction conflict re-run timeout
@@ -31,6 +32,12 @@ context_hash: 8c607774d14d0be5
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-092
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-092
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-092
