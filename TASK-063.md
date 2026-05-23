@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: 4e4c77e19c
 claimed_at: '2026-05-23 00:41:31'
 context_hash: 6eb8f67de42c153d
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-063
 ---
 
 # TASK-063: Add managed block patching for AGENTS.md
@@ -22,6 +23,12 @@ Make taskforge init create or patch AGENTS.md with a TASKFORGE:BEGIN/END managed
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-063
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-063
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-063
