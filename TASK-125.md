@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: 12fb293258
 claimed_at: '2026-05-23 18:52:46'
 context_hash: f3613895c8a77f2e
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-125
 ---
 
 # TASK-125: Wire global audit log and transcript attachment (TASK-103 follow-up)
@@ -26,6 +27,12 @@ context_hash: f3613895c8a77f2e
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-125
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-125
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-125
