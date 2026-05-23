@@ -1,11 +1,14 @@
 ---
 id: TASK-084
 type: Infrastructure
-status: Ready
+status: In Progress
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 7e9db8b96d
+claimed_at: '2026-05-23 11:35:20'
+context_hash: 8c607774d14d0be5
 ---
 
 # TASK-084: Add install script for TaskForge launcher
@@ -19,3 +22,13 @@ Add scripts/install.sh and scripts/uninstall.sh. Detect OS/shell. Install taskfo
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-084
+- Session: 7e9db8b96d
+- Branch: agent/TASK-084-add-install-script-for-taskforge-launche--7e9db8b96d
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-084
+- Session: 7e9db8b96d
+- Branch: agent/TASK-084-add-install-script-for-taskforge-launche--7e9db8b96d
