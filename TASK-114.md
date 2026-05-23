@@ -1,6 +1,6 @@
 ---
 id: TASK-114
-type: Provider
+type: Migration
 status: Ready
 priority: P2
 agentRole: Implementer
@@ -8,11 +8,11 @@ riskLevel: Low
 humanInterventionRequired: false
 ---
 
-# TASK-114: Improve GitHub provider hygiene and compatibility
+# TASK-114: Add compatibility migration for legacy tasks/ directory
 
 ## Goal
 
-## Rationalization Roadmap: TASK-RAT-013\n\n### Objective\nClean up GitHub provider internals after provider boundary exists. Split into github-client, github-issues-provider, github-projects-v2-provider. Support user and org-owned Projects v2.\n\n### Acceptance Criteria\n- GitHub provider is isolated\n- GitHub issue body references task-state source of truth\n- GitHub Projects v2 works for configured owner type or fails with clear next action
+## Rationalization Roadmap: TASK-RAT-014\n\n### Objective\nAdd taskforge migrate-tasks command for legacy main/tasks/*.md to task-state branch migration.\n\n### Acceptance Criteria\n- Legacy tasks can be migrated safely\n- Duplicate task IDs detected\n- Agents instructed never to create new main-branch task files\n- If only legacy tasks exist, suggest migration before starting new work
 
 ## Acceptance Criteria
 
