@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: 5b380b7b2e
 claimed_at: '2026-05-23 02:02:00'
 context_hash: 8c607774d14d0be5
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-083
 ---
 
 # TASK-083: Add container-aware path mapping utilities
@@ -22,6 +23,12 @@ Centralize host/container path mapping in src/core/runtime-paths.ts. Detect git 
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-083
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-083
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-083
