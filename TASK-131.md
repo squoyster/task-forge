@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: d88cefe9b1
 claimed_at: '2026-05-23 19:01:26'
 context_hash: f3613895c8a77f2e
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-131
 ---
 
 # TASK-131: Make path utilities config-aware (TASK-109 follow-up)
@@ -26,6 +27,12 @@ context_hash: f3613895c8a77f2e
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-131
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-131
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-131
