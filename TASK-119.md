@@ -1,6 +1,6 @@
 ---
 id: TASK-119
-type: Provider
+type: Safety
 status: Ready
 priority: P2
 agentRole: Implementer
@@ -8,14 +8,17 @@ riskLevel: Low
 humanInterventionRequired: false
 ---
 
-# TASK-119: Improve GitHub provider hygiene and compatibility
+# TASK-119: Add strict/warn/offline failure policy
 
 ## Goal
 
-## Rationalization Roadmap: TASK-RAT-013
+## Rationalization Roadmap: TASK-RAT-012
 
 ### Objective
-Split GitHub provider into github-client, github-issues-provider, github-projects-v2-provider. Support user and org-owned Projects v2.
+Stop silently degrading in multi-agent coordination paths. FailurePolicy: strict | warn | offline. Defaults: claim/start/done = strict, status/list = warn, --offline = offline.
+
+### Acceptance Criteria
+- Config parse/push/pull failures are visible. Agent receives clear next action. Offline mode is explicit.
 
 ## Acceptance Criteria
 
