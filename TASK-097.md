@@ -1,11 +1,14 @@
 ---
 id: TASK-097
 type: Bug
-status: Ready
+status: In Progress
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 65b9fd8909
+claimed_at: '2026-05-23 11:50:30'
+context_hash: 8c607774d14d0be5
 ---
 
 # TASK-097: Include diagnostic context in JSON error responses
@@ -54,6 +57,16 @@ Add a `details` field to JSON error responses that includes the explanatory text
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-097
+- Session: 65b9fd8909
+- Branch: agent/TASK-097-include-diagnostic-context-in-json-error--65b9fd8909
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-097
+- Session: 65b9fd8909
+- Branch: agent/TASK-097-include-diagnostic-context-in-json-error--65b9fd8909
 
 ### 2026-05-23 02:34 System
 - Discovered during TASK-086 (project runtime configuration) — pre-existing test failures and CLI message audit findings.
