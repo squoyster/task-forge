@@ -1,7 +1,7 @@
 ---
 id: TASK-059
 type: Feature
-status: Ready
+status: Rejected
 priority: P1
 agentRole: Implementer
 riskLevel: Low
@@ -19,3 +19,6 @@ Describe the desired outcome.
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task rejected: Recreating with proper body
