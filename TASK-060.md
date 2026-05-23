@@ -1,7 +1,7 @@
 ---
 id: TASK-060
 type: Feature
-status: Ready
+status: Rejected
 priority: P1
 agentRole: Implementer
 riskLevel: Low
@@ -19,3 +19,6 @@ Add agentFramework section to .taskforge/config.json with zod validation, defaul
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task rejected: Duplicate - recreating in proper order
