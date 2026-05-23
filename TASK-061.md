@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: 51c2849b70
 claimed_at: '2026-05-23 00:34:42'
 context_hash: 6eb8f67de42c153d
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-061
 ---
 
 # TASK-061: Template rendering utility for agent config generation
@@ -22,6 +23,12 @@ Create a small template rendering utility for generated agent config, hooks, plu
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-061
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-061
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-061
