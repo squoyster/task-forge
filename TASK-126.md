@@ -1,11 +1,14 @@
 ---
 id: TASK-126
 type: Feature
-status: Ready
+status: In Progress
 priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 3c715f9988
+claimed_at: '2026-05-23 18:56:19'
+context_hash: f3613895c8a77f2e
 ---
 
 # TASK-126: Wire next-actions into all agent-facing commands (TASK-104 follow-up)
@@ -23,3 +26,13 @@ humanInterventionRequired: false
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-126
+- Session: 3c715f9988
+- Branch: agent/TASK-126-wire-next-actions-into-all-agent-facing--3c715f9988
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-126
+- Session: 3c715f9988
+- Branch: agent/TASK-126-wire-next-actions-into-all-agent-facing--3c715f9988
