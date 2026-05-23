@@ -22,6 +22,13 @@ Extend .taskforge/config.json with runtime section (mode: native|container, imag
 
 ## Agent Notes
 
+### 2026-05-23 02:33 System
+- Additional follow-up tasks created from CLI message audit:
+- - TASK-094: Improve gate-failure guidance in done command (replace --force suggestion with correct guidance)
+- - TASK-095: Add cautionary qualifier to unlock --force message (match claim.ts/start.ts pattern)
+- - TASK-096: Add clarifying context to doctor-lock warnings in claim and start
+- - TASK-097: Include diagnostic context in JSON error responses (details field)
+
 ### 2026-05-23 02:25 System
 - Created follow-up tasks for 15 pre-existing test failures discovered during gate checks:
 - - TASK-091: Fix done-test git-repo-not-found failures (11 tests)

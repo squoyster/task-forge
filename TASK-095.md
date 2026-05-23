@@ -1,11 +1,14 @@
 ---
 id: TASK-095
 type: Bug
-status: Ready
+status: In Progress
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: a8f6e69dbe
+claimed_at: '2026-05-23 02:40:50'
+context_hash: 8c607774d14d0be5
 ---
 
 # TASK-095: Add cautionary qualifier to unlock --force message
@@ -43,3 +46,16 @@ Add the same cautionary qualifier to unlock.ts, matching the pattern in claim.ts
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-095
+- Session: a8f6e69dbe
+- Branch: agent/TASK-095-add-cautionary-qualifier-to-unlock-force--a8f6e69dbe
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-095
+- Session: a8f6e69dbe
+- Branch: agent/TASK-095-add-cautionary-qualifier-to-unlock-force--a8f6e69dbe
+
+### 2026-05-23 02:34 System
+- Discovered during TASK-086 (project runtime configuration) — pre-existing test failures and CLI message audit findings.

@@ -28,3 +28,6 @@ humanInterventionRequired: false
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 02:34 System
+- Discovered during TASK-086 (project runtime configuration) — pre-existing test failures and CLI message audit findings.
