@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: 87d82809d1
 claimed_at: '2026-05-23 11:48:19'
 context_hash: 8c607774d14d0be5
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-096
 ---
 
 # TASK-096: Add clarifying context to doctor-lock warnings in claim and start
@@ -49,6 +50,12 @@ Add "All agents are paused until recovery is complete." to the doctor-lock outpu
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-096
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-096
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-096
