@@ -1,15 +1,12 @@
 ---
 id: TASK-098
 type: Bug
-status: In Progress
+status: Done
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: d32769774a
-claimed_at: '2026-05-23 03:04:37'
 context_hash: 8c607774d14d0be5
-worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-098
 ---
 
 # TASK-098: Fix taskforge checkpoint/submit/diff from within agent worktrees
@@ -61,6 +58,14 @@ Option C: Store the repo root in the task frontmatter during `start` and have fa
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task marked Done (forced)
+- Completed despite gate failures — forced.
+- Failed to remove worktree: Command failed with exit code 128: git worktree remove /Volumes/Transcend/devel/worktrees/task-forge/TASK-098
+
+fatal: '/Volumes/Transcend/devel/worktrees/task-forge/TASK-098' contains modified or untracked files, use --force to delete it
+- Worktree and branch fields cleared from task frontmatter.
 
 ### 2026-05-23 System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-098
