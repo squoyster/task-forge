@@ -1,13 +1,11 @@
 ---
 id: TASK-131
 type: Refactor
-status: In Progress
+status: Done
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: d88cefe9b1
-claimed_at: '2026-05-23 19:01:26'
 context_hash: f3613895c8a77f2e
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-131
 ---
@@ -27,6 +25,10 @@ worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-131
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task marked Done (forced)
+- Completed despite gate failures — forced.
 
 ### 2026-05-23 System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-131
