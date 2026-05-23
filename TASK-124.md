@@ -1,11 +1,14 @@
 ---
 id: TASK-124
 type: Refactor
-status: Ready
+status: In Progress
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 6b215d0b93
+claimed_at: '2026-05-23 18:34:42'
+context_hash: f3613895c8a77f2e
 ---
 
 # TASK-124: Complete transaction-only mutation for remaining commands (TASK-105 follow-up)
@@ -48,3 +51,13 @@ TASK-105 established dirty-tracking in the transaction layer and refactored clai
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-124
+- Session: 6b215d0b93
+- Branch: agent/TASK-124-complete-transaction-only-mutation-for-r--6b215d0b93
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-124
+- Session: 6b215d0b93
+- Branch: agent/TASK-124-complete-transaction-only-mutation-for-r--6b215d0b93
