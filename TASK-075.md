@@ -1,11 +1,14 @@
 ---
 id: TASK-075
 type: Feature
-status: Ready
+status: In Progress
 priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 2e90d35199
+claimed_at: '2026-05-23 00:32:28'
+context_hash: 6eb8f67de42c153d
 ---
 
 # TASK-075: Extend config schema for agent framework integration
@@ -19,3 +22,13 @@ Add agentFramework section to .taskforge/config.json with zod validation. Shape:
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-075
+- Session: 2e90d35199
+- Branch: agent/TASK-075-extend-config-schema-for-agent-framework--2e90d35199
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-075
+- Session: 2e90d35199
+- Branch: agent/TASK-075-extend-config-schema-for-agent-framework--2e90d35199
