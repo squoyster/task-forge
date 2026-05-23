@@ -1,11 +1,14 @@
 ---
 id: TASK-066
 type: Feature
-status: Ready
+status: In Progress
 priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: d8575285aa
+claimed_at: '2026-05-23 00:46:54'
+context_hash: 6eb8f67de42c153d
 ---
 
 # TASK-066: Install git hooks via TaskForge init
@@ -19,3 +22,13 @@ Generate and install .taskforge/hooks/pre-commit, pre-push, post-commit as backs
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-066
+- Session: d8575285aa
+- Branch: agent/TASK-066-install-git-hooks-via-taskforge-init--d8575285aa
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-066
+- Session: d8575285aa
+- Branch: agent/TASK-066-install-git-hooks-via-taskforge-init--d8575285aa
