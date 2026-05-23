@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: 0a5bb1985a
 claimed_at: '2026-05-23 18:14:48'
 context_hash: f3613895c8a77f2e
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-112
 ---
 
 # TASK-112: Modularize CLI command registration
@@ -28,6 +29,12 @@ Rationalization Roadmap: TASK-RAT-011
 - [ ] Plugin commands can be registered without editing core CLI bootstrap
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-112
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-112
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-112
