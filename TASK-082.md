@@ -1,11 +1,14 @@
 ---
 id: TASK-082
 type: Feature
-status: Ready
+status: In Progress
 priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 750d6c6b67
+claimed_at: '2026-05-23 10:43:50'
+context_hash: 8c607774d14d0be5
 ---
 
 # TASK-082: Add credential strategy for containerized git operations
@@ -19,3 +22,13 @@ Support SSH agent forwarding, GITHUB_TOKEN env, host git config mount. Do NOT co
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-082
+- Session: 750d6c6b67
+- Branch: agent/TASK-082-add-credential-strategy-for-containerize--750d6c6b67
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-082
+- Session: 750d6c6b67
+- Branch: agent/TASK-082-add-credential-strategy-for-containerize--750d6c6b67
