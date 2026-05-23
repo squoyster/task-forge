@@ -1,11 +1,14 @@
 ---
 id: TASK-093
 type: Bug
-status: Ready
+status: In Progress
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 61fad21b00
+claimed_at: '2026-05-23 11:30:22'
+context_hash: 8c607774d14d0be5
 ---
 
 # TASK-093: Fix claim-json and sweep assertion test failures
@@ -37,6 +40,16 @@ humanInterventionRequired: false
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-093
+- Session: 61fad21b00
+- Branch: agent/TASK-093-fix-claim-json-and-sweep-assertion-test--61fad21b00
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-093
+- Session: 61fad21b00
+- Branch: agent/TASK-093-fix-claim-json-and-sweep-assertion-test--61fad21b00
 
 ### 2026-05-23 02:34 System
 - Discovered during TASK-086 (project runtime configuration) — pre-existing test failures and CLI message audit findings.
