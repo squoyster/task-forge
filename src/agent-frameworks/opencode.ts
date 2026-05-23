@@ -146,6 +146,13 @@ export const opencodeAdapter: AgentFrameworkAdapter = {
 
     const { installOpenCodeConfig } = await import("../core/opencode-config.js");
     installOpenCodeConfig(ctx.projectRoot, ctx.policy, ctx.audit, ctx.guard, ctx.dryRun);
+
+    const { installGitHooks } = await import("../core/hooks.js");
+    installGitHooks({
+      projectRoot: ctx.projectRoot,
+      dryRun: ctx.dryRun,
+      installHooks: ctx.installHooks,
+    });
   },
 
   async doctor(ctx: AgentFrameworkDoctorContext): Promise<Diagnostic[]> {
