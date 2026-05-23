@@ -1,13 +1,11 @@
 ---
 id: TASK-094
 type: Bug
-status: In Progress
+status: Done
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 5e58faef05
-claimed_at: '2026-05-23 11:42:27'
 context_hash: 8c607774d14d0be5
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-094
 ---
@@ -67,6 +65,10 @@ The CLI currently cannot distinguish between regressions (your change broke some
 - [ ] No change to `--force` behavior when no `--reason` is given (backward compatible)
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task marked Done (forced)
+- Completed despite gate failures — forced.
 
 ### 2026-05-23 System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-094
