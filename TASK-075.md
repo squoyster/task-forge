@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: 2e90d35199
 claimed_at: '2026-05-23 00:32:28'
 context_hash: 6eb8f67de42c153d
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-075
 ---
 
 # TASK-075: Extend config schema for agent framework integration
@@ -22,6 +23,12 @@ Add agentFramework section to .taskforge/config.json with zod validation. Shape:
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-075
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-075
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-075
