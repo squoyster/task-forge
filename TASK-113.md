@@ -1,6 +1,6 @@
 ---
 id: TASK-113
-type: Refactor
+type: Packaging
 status: Ready
 priority: P1
 agentRole: Implementer
@@ -8,14 +8,20 @@ riskLevel: Low
 humanInterventionRequired: false
 ---
 
-# TASK-113: Move Dependency Steward into optional plugin
+# TASK-113: Make CLI available as both taskforge and task-forge
 
 ## Goal
 
-## Rationalization Roadmap: TASK-RAT-010\n\n### Objective\nKeep dependency scanning useful but remove it from core. Create src/plugins/dependency-steward/, register commands only when plugin enabled, move package-manager code behind PackageProvider.\n\n### Acceptance Criteria\n- Core does not import package-manager-specific scanner code\n- Dependency plugin can be disabled\n- Findings can still generate TaskForge tasks\n- Missing external scanners produce clear next actions
+Allow users and agents to invoke the CLI using either name: taskforge or task-forge. Update package.json bin mapping for both names, ensure help text mentions both names, add smoke test verifying both binaries resolve.
+
+## Background
+
+Rationalization Roadmap: TASK-RAT-008
 
 ## Acceptance Criteria
 
-- [ ]
+- [ ] Both commands invoke identical CLI behavior
+- [ ] Documentation uses taskforge as canonical and notes task-forge alias
+- [ ] Agent prompts accept either command but prefer taskforge internally
 
 ## Agent Notes

@@ -1,21 +1,27 @@
 ---
 id: TASK-112
-type: Refactor
+type: Maintainability
 status: Ready
-priority: P1
+priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 ---
 
-# TASK-112: Make OpenCode an optional AgentProvider
+# TASK-112: Modularize CLI command registration
 
 ## Goal
 
-## Rationalization Roadmap: TASK-RAT-009\n\n### Objective\nMove OpenCode-specific behavior out of core command flows. OpenCodeAgentProvider provides start instructions, prompt packet formatting, transcript export guidance, and optional detection.\n\n### Acceptance Criteria\n- cmdStart does not hardcode opencode\n- cmdPrompt uses selected agent provider\n- Generic mode remains useful for any CLI coding agent\n- If OpenCode provider selected but command missing, emit next action to install or switch to generic
+Reduce cli.ts into a small bootstrapper and move command registration into modules. Suggested modules: taskCommands, workspaceCommands, gateCommands, auditCommands, providerCommands, dependencyCommands, configCommands.
+
+## Background
+
+Rationalization Roadmap: TASK-RAT-011
 
 ## Acceptance Criteria
 
-- [ ]
+- [ ] cli.ts only builds app context, registers modules, and parses args
+- [ ] Existing command names remain compatible
+- [ ] Plugin commands can be registered without editing core CLI bootstrap
 
 ## Agent Notes
