@@ -1,11 +1,14 @@
 ---
 id: TASK-094
 type: Bug
-status: Ready
+status: In Progress
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 5e58faef05
+claimed_at: '2026-05-23 11:42:27'
+context_hash: 8c607774d14d0be5
 ---
 
 # TASK-094: Improve gate-failure guidance in done command
@@ -63,6 +66,16 @@ The CLI currently cannot distinguish between regressions (your change broke some
 - [ ] No change to `--force` behavior when no `--reason` is given (backward compatible)
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-094
+- Session: 5e58faef05
+- Branch: agent/TASK-094-improve-gate-failure-guidance-in-done-co--5e58faef05
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-094
+- Session: 5e58faef05
+- Branch: agent/TASK-094-improve-gate-failure-guidance-in-done-co--5e58faef05
 
 ### 2026-05-23 02:34 System
 - Discovered during TASK-086 (project runtime configuration) — pre-existing test failures and CLI message audit findings.
