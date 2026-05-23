@@ -156,6 +156,16 @@ export const opencodeAdapter: AgentFrameworkAdapter = {
 
     const { installAgentFiles } = await import("../core/agent-files.js");
     installAgentFiles(ctx.projectRoot, ctx.dryRun);
+
+    if (ctx.audit) {
+      const { installAuditPlugin } = await import("../core/audit-plugin.js");
+      installAuditPlugin(ctx.projectRoot, ctx.dryRun);
+    }
+
+    if (ctx.guard) {
+      const { installGuardPlugin } = await import("../core/guard-plugin.js");
+      installGuardPlugin(ctx.projectRoot, ctx.policy, ctx.dryRun);
+    }
   },
 
   async doctor(ctx: AgentFrameworkDoctorContext): Promise<Diagnostic[]> {

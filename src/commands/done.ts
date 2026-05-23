@@ -123,7 +123,7 @@ const today = new Date().toISOString().split("T")[0];
 
   appendTaskTranscript(repoRoot, taskId, createTaskEvent(taskId, "task.command.completed", {
     summary: `Task ${taskId} marked as Done`,
-    metadata: { previousStatus: previousStatus, notes },
+    metadata: { notes },
   }));
 
   // --- Cleanup: remove worktree ---
