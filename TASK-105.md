@@ -47,6 +47,12 @@ Current start/claim flows mutate files directly before transaction commit. This 
 ## Agent Notes
 
 ### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-105
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-105
+
+### 2026-05-23 System
 - Task claimed via taskforge start TASK-105
 - Session: 93130ca332
 - Branch: agent/TASK-105-rewrite-task-state-mutation-to-use-trans--93130ca332
