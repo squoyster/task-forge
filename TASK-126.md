@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: 3c715f9988
 claimed_at: '2026-05-23 18:56:19'
 context_hash: f3613895c8a77f2e
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-126
 ---
 
 # TASK-126: Wire next-actions into all agent-facing commands (TASK-104 follow-up)
@@ -26,6 +27,12 @@ context_hash: f3613895c8a77f2e
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-126
+
+### 2026-05-23 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-126
 
 ### 2026-05-23 System
 - Task claimed via taskforge start TASK-126
