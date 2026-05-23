@@ -1,11 +1,14 @@
 ---
 id: TASK-122
 type: Refactor
-status: Ready
+status: In Progress
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 5ab32932de
+claimed_at: '2026-05-23 18:31:28'
+context_hash: f3613895c8a77f2e
 ---
 
 # TASK-122: Add compatibility migration for legacy tasks/ directory
@@ -26,3 +29,13 @@ Rationalization Roadmap: TASK-RAT-014
 - [ ] If only legacy tasks exist, suggest migration before starting new work
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-122
+- Session: 5ab32932de
+- Branch: agent/TASK-122-add-compatibility-migration-for-legacy-t--5ab32932de
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-122
+- Session: 5ab32932de
+- Branch: agent/TASK-122-add-compatibility-migration-for-legacy-t--5ab32932de
