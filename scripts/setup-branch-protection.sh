@@ -24,20 +24,6 @@ if [ -z "$OWNER" ] || [ -z "$REPO" ]; then
     usage
 fi
 
-if [ -z "${GITHUB_TOKEN:-}" ]; then
-    red "Error: GITHUB_TOKEN environment variable is required."
-    red "Create a PAT at https://github.com/settings/tokens with admin:repo scope."
-    exit 1
-fi
-
-gh_cmd() {
-    if [ "$DRY_RUN" = "true" ]; then
-        echo "[dry-run] gh api $*"
-        return 0
-    fi
-    gh api "$@" 2>/dev/null
-}
-
 require_gh() {
     if ! command -v gh >/dev/null 2>&1; then
         red "Error: GitHub CLI (gh) is required. Install: https://cli.github.com/"
@@ -47,35 +33,64 @@ require_gh() {
         red "Error: gh is not authenticated. Run: gh auth login"
         exit 1
     fi
+    if [ -z "${GITHUB_TOKEN:-}" ]; then
+        export GITHUB_TOKEN="$(gh auth token 2>/dev/null || echo "")"
+        if [ -z "$GITHUB_TOKEN" ]; then
+            red "Error: GITHUB_TOKEN not set and gh auth token failed."
+            exit 1
+        fi
+    fi
 }
 
 config_main() {
     green "Configuring main branch protection for $OWNER/$REPO..."
-    gh_cmd "repos/$OWNER/$REPO/branches/main/protection" \
+    if [ "$DRY_RUN" = "true" ]; then
+        echo "[dry-run] PUT repos/$OWNER/$REPO/branches/main/protection"
+        return 0
+    fi
+    gh api "repos/$OWNER/$REPO/branches/main/protection" \
         -X PUT \
-        -F required_status_checks='{"strict":true,"contexts":[]}' \
-        -F enforce_admins=false \
-        -F required_pull_request_reviews='{"dismiss_stale_reviews":true,"require_code_owner_reviews":false,"required_approving_review_count":1}' \
-        -F restrictions=null \
-        -F required_linear_history=true \
-        -F allow_force_pushes=false \
-        -F allow_deletions=false \
-        -F lock_branch=false
+        --input - <<'JSON'
+{
+  "required_status_checks": null,
+  "enforce_admins": false,
+  "required_pull_request_reviews": {
+    "dismiss_stale_reviews": true,
+    "require_code_owner_reviews": false,
+    "required_approving_review_count": 1
+  },
+  "restrictions": null,
+  "required_linear_history": true,
+  "allow_force_pushes": false,
+  "allow_deletions": false,
+  "lock_branch": false
+}
+JSON
 }
 
 config_task_state() {
     green "Configuring task-state branch protection for $OWNER/$REPO..."
-
-    gh_cmd "repos/$OWNER/$REPO/branches/task-state/protection" \
+    if [ "$DRY_RUN" = "true" ]; then
+        echo "[dry-run] PUT repos/$OWNER/$REPO/branches/task-state/protection"
+        return 0
+    fi
+    gh api "repos/$OWNER/$REPO/branches/task-state/protection" \
         -X PUT \
-        -F required_status_checks='{"strict":true,"contexts":["task-state-validate"]}' \
-        -F enforce_admins=false \
-        -F required_pull_request_reviews=null \
-        -F restrictions=null \
-        -F required_linear_history=true \
-        -F allow_force_pushes=false \
-        -F allow_deletions=false \
-        -F lock_branch=false
+        --input - <<'JSON'
+{
+  "required_status_checks": {
+    "strict": true,
+    "contexts": ["task-state-validate"]
+  },
+  "enforce_admins": false,
+  "required_pull_request_reviews": null,
+  "restrictions": null,
+  "required_linear_history": true,
+  "allow_force_pushes": false,
+  "allow_deletions": false,
+  "lock_branch": false
+}
+JSON
 }
 
 verify_protection() {
