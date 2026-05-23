@@ -27,6 +27,10 @@ Create docs/architecture/opencode-container-execution.md. Compare host OpenCode 
 - Completed despite gate failures — forced.
 
 ### 2026-05-23 System
+- Task marked Done (forced)
+- Completed despite gate failures — forced.
+
+### 2026-05-23 System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-087
 
 ### 2026-05-23 System
