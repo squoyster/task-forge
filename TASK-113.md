@@ -1,11 +1,14 @@
 ---
 id: TASK-113
 type: Infrastructure
-status: Ready
+status: In Progress
 priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 788e9f4d02
+claimed_at: '2026-05-23 17:48:43'
+context_hash: f3613895c8a77f2e
 ---
 
 # TASK-113: Make CLI available as both taskforge and task-forge
@@ -25,3 +28,13 @@ Rationalization Roadmap: TASK-RAT-008
 - [ ] Agent prompts accept either command but prefer taskforge internally
 
 ## Agent Notes
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-113
+- Session: 788e9f4d02
+- Branch: agent/TASK-113-make-cli-available-as-both-taskforge-and--788e9f4d02
+
+### 2026-05-23 System
+- Task claimed via taskforge start TASK-113
+- Session: 788e9f4d02
+- Branch: agent/TASK-113-make-cli-available-as-both-taskforge-and--788e9f4d02
