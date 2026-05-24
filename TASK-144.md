@@ -11,6 +11,7 @@ dependsOn:
 assignee: d5d4519137
 claimed_at: '2026-05-24 02:10:35'
 context_hash: 3a03a0322eb9729c
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-144
 ---
 # Add Block-for-Human Next Action
 
@@ -23,6 +24,12 @@ Give agents a clear stop condition for ambiguous, unsafe, or human-decision-requ
 - [ ] Any command that detects a required human decision emits `nextAction.kind = "BLOCK_FOR_HUMAN"` and `nextAction.stop = true` in JSON output.
 
 ## Agent Notes
+
+### 2026-05-24 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-144
+
+### 2026-05-24 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-144
 
 ### 2026-05-24 System
 - Task claimed via taskforge start TASK-144
