@@ -11,6 +11,7 @@ dependsOn:
 assignee: 8bbc273d71
 claimed_at: '2026-05-24 02:04:15'
 context_hash: 3a03a0322eb9729c
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-143
 ---
 # Add Upstream Failure Classification to Gates
 
@@ -43,6 +44,12 @@ Pick the cleanest design consistent with the CLI.
 - [ ] A gates failure can be explicitly classified as upstream, causing JSON output to emit `nextAction.kind = "CREATE_BUG_TASK_AND_CONTINUE"` with an instruction to create a bug task and continue only if safe.
 
 ## Agent Notes
+
+### 2026-05-24 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-143
+
+### 2026-05-24 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-143
 
 ### 2026-05-24 System
 - Task claimed via taskforge start TASK-143
