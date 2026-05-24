@@ -21,7 +21,7 @@ Give agents a clear stop condition for ambiguous, unsafe, or human-decision-requ
 
 ## Acceptance Criteria
 
-- [ ] Any command that detects a required human decision emits `nextAction.kind = "BLOCK_FOR_HUMAN"` and `nextAction.stop = true` in JSON output.
+- [x] Any command that detects a required human decision emits `nextAction.kind = "BLOCK_FOR_HUMAN"` and `nextAction.stop = true` in JSON output. — `src/commands/block.ts` `cmdBlock()`: when `json` option is true, emits envelope with `nextAction.kind = "BLOCK_FOR_HUMAN"`, `stop: true`, and `allowedCommands: ["taskforge unblock", "taskforge status", "taskforge summary"]`. Tests in `tests/commands/block.test.ts` verify this behavior.
 
 ## Agent Notes
 
