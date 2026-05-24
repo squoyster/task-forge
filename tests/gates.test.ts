@@ -157,4 +157,30 @@ describe("cmdGates", () => {
     expect(result).toBe(false);
     expect(execa).not.toHaveBeenCalled();
   });
+
+  it("emits CREATE_BUG_TASK_AND_CONTINUE when --classify-upstream is used", async () => {
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    writeConfig({
+      typecheck: "echo ok",
+      lint: "echo fail",
+    });
+
+    vi.mocked(execa)
+      .mockResolvedValueOnce({} as never)
+      .mockRejectedValueOnce(new Error("command failed"));
+
+    await cmdGates({ json: true, only: "typecheck,lint", classifyUpstream: "Pre-existing lint failures from TASK-091" });
+
+    const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
+    expect(output.ok).toBe(false);
+    expect(output.state).toBe("gates_failed_upstream");
+    expect(output.data.allPassed).toBe(false);
+    expect(output.data.upstreamReason).toBe("Pre-existing lint failures from TASK-091");
+    expect(output.nextAction?.kind).toBe("CREATE_BUG_TASK_AND_CONTINUE");
+    expect(output.nextAction?.stop).toBe(false);
+    expect(output.nextAction?.allowedCommands).toEqual(["taskforge new", "taskforge gates"]);
+
+    logSpy.mockRestore();
+  });
 });

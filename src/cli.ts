@@ -106,10 +106,12 @@ program
   .description("Run configured verification gates")
   .option("--json", "Output results in JSON format")
   .option("--only <names>", "Run only specific gates (comma-separated)")
-  .action((opts: { json?: boolean; only?: string }) => {
+  .option("--classify-upstream <reason>", "Classify failure as upstream issue")
+  .action((opts: { json?: boolean; only?: string; classifyUpstream?: string }) => {
     const gateOpts: GatesOptions = {
       json: opts.json ?? false,
       only: opts.only,
+      classifyUpstream: opts.classifyUpstream,
     };
     return wrap(() => cmdGates(gateOpts))();
   });

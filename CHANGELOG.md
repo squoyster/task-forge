@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **TASK-143: Upstream failure classification for gates** — `taskforge gates --json --classify-upstream "reason"` classifies a gate failure as upstream, emitting `nextAction.kind = "CREATE_BUG_TASK_AND_CONTINUE"` with `stop: false` and `allowedCommands: ["taskforge new", "taskforge gates"]`. Supports the workflow where broken test suites or unrelated failures become new bug tasks.
+
 - **TASK-142: Gates emit FIX_CURRENT_TASK next action on failure** — `taskforge gates --json` now emits `nextAction.kind = "FIX_CURRENT_TASK"` with `stop: true` and `allowedCommands: ["taskforge gates"]` when any gate fails, directing agents to fix local issues before proceeding.
 
 - **TASK-141: Command result envelope type** — Added `CommandResultEnvelope<T>` interface in `src/core/envelope.ts` with `ok`, `state`, `data`, and `nextAction` (kind, instruction, stop, allowedCommands) fields, plus `envelopeOk()` and `envelopeError()` factory functions. Provides a standard command feedback contract for directing agent behavior.

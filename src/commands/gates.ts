@@ -8,6 +8,7 @@ import { envelopeOk } from "../core/envelope.js";
 export interface GatesOptions {
   only?: string;
   json?: boolean;
+  classifyUpstream?: string;
 }
 
 export interface GateResult {
@@ -104,6 +105,27 @@ export async function cmdGates(options?: GatesOptions): Promise<boolean> {
           allowedCommands: ["taskforge done", "taskforge block", "taskforge checkpoint"],
         },
       ));
+    } else if (options?.classifyUpstream) {
+      printJson({
+        ok: false,
+        state: "gates_failed_upstream",
+        data: {
+          gates: results.map((r) => ({
+            name: r.name,
+            command: r.command,
+            passed: r.passed,
+            duration: r.duration,
+          })),
+          allPassed: passed,
+          upstreamReason: options.classifyUpstream,
+        },
+        nextAction: {
+          kind: "CREATE_BUG_TASK_AND_CONTINUE",
+          instruction: `Classified as upstream failure: ${options.classifyUpstream}. Create a bug task and continue only if safe.`,
+          stop: false,
+          allowedCommands: ["taskforge new", "taskforge gates"],
+        },
+      });
     } else {
       printJson({
         ok: false,
