@@ -8,8 +8,6 @@ riskLevel: Medium
 humanInterventionRequired: false
 dependsOn:
   - TASK-147
-assignee: 1669e092bf
-claimed_at: '2026-05-24 03:31:28'
 context_hash: 3a03a0322eb9729c
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-149
 ---
@@ -24,6 +22,9 @@ Reduce conflict surface and avoid rewriting unrelated task files.
 - [ ] `withTaskStateTransaction` writes only task files that were explicitly modified in the transaction dirty set.
 
 ## Agent Notes
+
+### 2026-05-24 System
+- Task unlocked (forced) — previous claim was held by session "1669e092bf"
 
 ### 2026-05-24 System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-149
