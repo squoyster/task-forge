@@ -89,6 +89,6 @@ export function buildJsonTask(task: {
 /**
  * Print a JSON result object to stdout.
  */
-export function printJson(result: JsonResult): void {
+export function printJson(result: unknown): void {
   console.log(JSON.stringify(result, null, 2));
 }

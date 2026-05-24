@@ -97,10 +97,12 @@ describe("cmdGates", () => {
 
     const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
     expect(output.ok).toBe(true);
-    expect(output.gates).toHaveLength(2);
-    expect(output.gates[0]).toMatchObject({ name: "typecheck", passed: true, command: "echo ok" });
-    expect(output.gates[1]).toMatchObject({ name: "lint", passed: true, command: "echo ok" });
-    expect(output.allPassed).toBe(true);
+    expect(output.data.gates).toHaveLength(2);
+    expect(output.data.gates[0]).toMatchObject({ name: "typecheck", passed: true, command: "echo ok" });
+    expect(output.data.gates[1]).toMatchObject({ name: "lint", passed: true, command: "echo ok" });
+    expect(output.data.allPassed).toBe(true);
+    expect(output.nextAction?.kind).toBe("CONTINUE");
+    expect(output.nextAction?.stop).toBe(false);
 
     logSpy.mockRestore();
   });
@@ -120,11 +122,14 @@ describe("cmdGates", () => {
     await cmdGates({ json: true, only: "typecheck,lint" });
 
     const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
-    expect(output.ok).toBe(true);
-    expect(output.gates).toHaveLength(2);
-    expect(output.gates[0].passed).toBe(true);
-    expect(output.gates[1].passed).toBe(false);
-    expect(output.allPassed).toBe(false);
+    expect(output.ok).toBe(false);
+    expect(output.data.gates).toHaveLength(2);
+    expect(output.data.gates[0].passed).toBe(true);
+    expect(output.data.gates[1].passed).toBe(false);
+    expect(output.data.allPassed).toBe(false);
+    expect(output.nextAction?.kind).toBe("FIX_CURRENT_TASK");
+    expect(output.nextAction?.stop).toBe(true);
+    expect(output.nextAction?.allowedCommands).toEqual(["taskforge gates"]);
 
     logSpy.mockRestore();
   });

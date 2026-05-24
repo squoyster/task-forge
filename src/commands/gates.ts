@@ -2,7 +2,8 @@ import { execa } from "execa";
 import { loadConfig } from "../core/config.js";
 import { logHeader, logDivider, logError, logSuccess } from "../util/logging.js";
 import { getRepoRoot } from "../util/paths.js";
-import { printJson, jsonOk } from "../util/json-result.js";
+import { printJson } from "../util/json-result.js";
+import { envelopeOk } from "../core/envelope.js";
 
 export interface GatesOptions {
   only?: string;
@@ -84,15 +85,46 @@ export async function cmdGates(options?: GatesOptions): Promise<boolean> {
       logError(`${failedCount}/${results.length} gate(s) failed.`);
     }
   } else {
-    printJson(jsonOk({
-      gates: results.map((r) => ({
-        name: r.name,
-        command: r.command,
-        passed: r.passed,
-        duration: r.duration,
-      })),
-      allPassed: passed,
-    }));
+    if (passed) {
+      printJson(envelopeOk(
+        "gates_passed",
+        {
+          gates: results.map((r) => ({
+            name: r.name,
+            command: r.command,
+            passed: r.passed,
+            duration: r.duration,
+          })),
+          allPassed: passed,
+        },
+        {
+          kind: "CONTINUE",
+          instruction: "All gates passed. Proceed with next steps.",
+          stop: false,
+          allowedCommands: ["taskforge done", "taskforge block", "taskforge checkpoint"],
+        },
+      ));
+    } else {
+      printJson({
+        ok: false,
+        state: "gates_failed",
+        data: {
+          gates: results.map((r) => ({
+            name: r.name,
+            command: r.command,
+            passed: r.passed,
+            duration: r.duration,
+          })),
+          allPassed: passed,
+        },
+        nextAction: {
+          kind: "FIX_CURRENT_TASK",
+          instruction: "Fix local failures and rerun gates before proceeding.",
+          stop: true,
+          allowedCommands: ["taskforge gates"],
+        },
+      });
+    }
   }
 
   return passed;
