@@ -21,7 +21,7 @@ Make task-state mutation auditable by default.
 
 ## Acceptance Criteria
 
-- [ ] Every successful `withTaskStateTransaction` appends at least one structured audit event describing the transaction name, changed task IDs, actor/session if known, and resulting commit SHA if available.
+- [x] Every successful `withTaskStateTransaction` appends at least one structured audit event describing the transaction name, changed task IDs, actor/session if known, and resulting commit SHA if available. — `src/core/task-state-transaction.ts` `withTaskStateTransaction()`: after successful push, emits `transaction.committed` audit event via `appendAuditEvent()` with `command`, `changedTaskIds`, `commitSha`, and `actor` (sessionId). `TransactionImpl` tracks modified task IDs via `getModifiedTaskIds()`. Tests in `tests/task-state-transaction.test.ts` verify audit event emission with expected fields.
 
 ## Agent Notes
 
