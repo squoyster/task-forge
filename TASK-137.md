@@ -11,6 +11,7 @@ dependsOn:
 assignee: d796203029
 claimed_at: '2026-05-24 00:43:20'
 context_hash: e318700d2a0c3978
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-137
 ---
 # Reject Done Transition When AC Items Are Unchecked
 
@@ -32,6 +33,12 @@ A task cannot be considered complete while one or more explicit acceptance crite
 - [ ] `taskforge done TASK-ID` refuses to complete a task when any nonblank acceptance criterion under `## Acceptance Criteria` remains unchecked.
 
 ## Agent Notes
+
+### 2026-05-24 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-137
+
+### 2026-05-24 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-137
 
 ### 2026-05-24 System
 - Task claimed via taskforge start TASK-137
