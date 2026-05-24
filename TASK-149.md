@@ -21,7 +21,7 @@ Reduce conflict surface and avoid rewriting unrelated task files.
 
 ## Acceptance Criteria
 
-- [ ] `withTaskStateTransaction` writes only task files that were explicitly modified in the transaction dirty set.
+- [x] `withTaskStateTransaction` writes only task files that were explicitly modified in the transaction dirty set. — `src/core/task-state-transaction.ts` `persistAndCommit()`: iterates `modifiedTaskIds` dirty set instead of `this.tasks.values()`, writing only files for tasks modified via `updateTask`, `claimTask`, or `clearClaim`. Tests in `tests/task-state-transaction.test.ts` verify mtime of unmodified task files stays unchanged.
 
 ## Agent Notes
 
