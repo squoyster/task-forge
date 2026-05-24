@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: 5de9ad4433
 claimed_at: '2026-05-24 02:13:11'
 context_hash: 3a03a0322eb9729c
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-145
 ---
 # Remove Direct Task Markdown Mutation from Start Before Transaction
 
@@ -25,6 +26,12 @@ Make `start` comply with transactional task-state mutation.
 - [ ] `cmdStart` no longer calls direct mutation helpers such as `updateTaskLock`, `updateTaskStatus`, `writeTaskFile`, or `appendAgentNote` before successful transactional claim completion.
 
 ## Agent Notes
+
+### 2026-05-24 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-145
+
+### 2026-05-24 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-145
 
 ### 2026-05-24 System
 - Task claimed via taskforge start TASK-145
