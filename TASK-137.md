@@ -30,7 +30,7 @@ A task cannot be considered complete while one or more explicit acceptance crite
 
 ## Acceptance Criteria
 
-- [ ] `taskforge done TASK-ID` refuses to complete a task when any nonblank acceptance criterion under `## Acceptance Criteria` remains unchecked.
+- [x] `taskforge done TASK-ID` refuses to complete a task when any nonblank acceptance criterion under `## Acceptance Criteria` remains unchecked. — `src/commands/done.ts` `cmdDone(~L120-130)`: checks `hasUncheckedAcceptanceCriteria(task.body)` after blank-criteria validation; throws `UncheckedAcceptanceCriteriaError` in human mode or emits JSON error with `UNCHECKED_ACCEPTANCE_CRITERIA` code and actionable instruction.
 
 ## Agent Notes
 
