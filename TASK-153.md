@@ -21,7 +21,7 @@ Complete per-session audit storage.
 
 ## Acceptance Criteria
 
-- [ ] The generated OpenCode audit plugin writes session events to `logs/taskforge/sessions/<sessionId>.jsonl`.
+- [x] The generated OpenCode audit plugin writes session events to `logs/taskforge/sessions/<sessionId>.jsonl`. — `src/core/audit-plugin.ts` `generateAuditPlugin()`: added `writeSessionEvent()` function that appends to `logs/taskforge/sessions/${sessionId}.jsonl`; `onSessionStart` calls both `writeAuditEvent` and `writeSessionEvent`. Test in `tests/plugins.test.ts` verifies session log path in generated output.
 
 ## Agent Notes
 
