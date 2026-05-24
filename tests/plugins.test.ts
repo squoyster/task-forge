@@ -15,6 +15,18 @@ describe("audit plugin", () => {
     expect(content).toContain("REDACTED");
   });
 
+  it("writes task events to logs/taskforge/tasks/<taskId>/transcript.jsonl", () => {
+    const content = generateAuditPlugin();
+    expect(content).toContain("logs/taskforge/tasks/");
+    expect(content).toContain("transcript.jsonl");
+  });
+
+  it("writes task events to logs/taskforge/tasks/<taskId>/transcript.jsonl", () => {
+    const content = generateAuditPlugin();
+    expect(content).toContain("logs/taskforge/tasks/");
+    expect(content).toContain("transcript.jsonl");
+  });
+
   it("installs plugin file", () => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "tf-plug-"));
     installAuditPlugin(tmp, false);
