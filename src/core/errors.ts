@@ -36,3 +36,13 @@ export class ValidationError extends TaskForgeError {
     super(message, "VALIDATION_ERROR");
   }
 }
+
+export class MissingAcceptanceCriteriaError extends TaskForgeError {
+  constructor(taskId: string) {
+    super(
+      `Task ${taskId} cannot be marked Done: no "## Acceptance Criteria" section found. ` +
+        "Add acceptance criteria to the task file before completing, or request clarification if the ACs are ambiguous.",
+      "MISSING_ACCEPTANCE_CRITERIA",
+    );
+  }
+}

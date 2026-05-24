@@ -196,6 +196,10 @@ export function loadTaskById(id: string, repoRoot?: string): ParsedTask | null {
   return parseTaskFile(filePath);
 }
 
+export function hasAcceptanceCriteriaSection(body: string): boolean {
+  return /## Acceptance Criteria/i.test(body);
+}
+
 export function getNextId(repoRoot?: string): string {
   const tasks = loadAllTasks(repoRoot);
   const maxNum = tasks.reduce((max, t) => {

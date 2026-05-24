@@ -52,7 +52,7 @@ function makeTaskFile(
   };
   const body =
     (bodyOverride as string | undefined) ??
-    `# ${id}: Test task ${id}\n\n## Goal\nDo something.\n\n## Agent Notes\n`;
+    `# ${id}: Test task ${id}\n\n## Goal\nDo something.\n\n## Acceptance Criteria\n- [ ] Do something\n\n## Agent Notes\n`;
   const lines = [
     "---",
     ...Object.entries(frontmatter).map(([k, v]) => `${k}: ${v}`),
@@ -209,6 +209,41 @@ describe("cmdDone", () => {
     await expect(
       cmdDone("TASK-005", { cleanup: true, deleteBranch: true }),
     ).resolves.not.toThrow();
+
+    const task = readTaskFile(fp);
+    expect(task.frontmatter.status).toBe("Done");
+  });
+
+  it("rejects done when Acceptance Criteria section is missing", async () => {
+    const body = `# TASK-005: Test task TASK-005\n\n## Goal\nDo something.\n\n## Agent Notes\n`;
+    makeTaskFile("TASK-005", { body });
+    await expect(cmdDone("TASK-005")).rejects.toThrow(
+      /no "## Acceptance Criteria" section found/i,
+    );
+  });
+
+  it("rejects done with JSON error when AC section is missing", async () => {
+    const body = `# TASK-005: Test task\n\n## Goal\nDo something.\n\n## Agent Notes\n`;
+    makeTaskFile("TASK-005", { body });
+
+    const logs: string[] = [];
+    const consoleSpy = vi.spyOn(console, "log").mockImplementation((...args: unknown[]) => {
+      logs.push(args.map(String).join(" "));
+    });
+    await cmdDone("TASK-005", { json: true });
+    consoleSpy.mockRestore();
+
+    expect(logs.length).toBeGreaterThan(0);
+    const output = JSON.parse(logs[0]);
+    expect(output.ok).toBe(false);
+    expect(output.code).toBe("MISSING_ACCEPTANCE_CRITERIA");
+    expect(output.error).toContain("Add acceptance criteria");
+  });
+
+  it("allows force done when AC section is missing", async () => {
+    const body = `# TASK-005: Test task TASK-005\n\n## Goal\nDo something.\n\n## Agent Notes\n`;
+    const fp = makeTaskFile("TASK-005", { body });
+    await cmdDone("TASK-005", { force: true });
 
     const task = readTaskFile(fp);
     expect(task.frontmatter.status).toBe("Done");
