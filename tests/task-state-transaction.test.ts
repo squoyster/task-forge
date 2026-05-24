@@ -125,4 +125,18 @@ describe("withTaskStateTransaction", () => {
 
     expect(callCount).toBe(2);
   });
+
+  it("aborts transaction on invariant validation errors", async () => {
+    makeTaskFile("TASK-001", { status: "Done", assignee: "old-session" });
+
+    await expect(
+      withTaskStateTransaction(
+        { command: "test-invalid", maxRetries: 1 },
+        (tx) => {
+          // Mutation that leaves invalid state untouched (already invalid on disk)
+          tx.loadTask("TASK-001");
+        },
+      ),
+    ).rejects.toThrow(/DONE_WITH_ASSIGNEE/);
+  });
 });

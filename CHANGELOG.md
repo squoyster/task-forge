@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **TASK-147: Validate invariants before transaction commit** — `withTaskStateTransaction` now runs `validateTaskState` after mutation and before commit, aborting the transaction with a descriptive error if any invariant violations are detected.
+
 - **TASK-140: Validate-state rule for invalid Done tasks** — `taskforge validate-state` now exits nonzero when any `Done` task has missing, blank, or unchecked acceptance criteria, treating AC integrity as a hard state invariant.
 
 - **TASK-139: Report invalid Done tasks in Doctor** — `taskforge doctor` now checks all `Done` tasks for missing, blank, or unchecked acceptance criteria and reports them with machine-readable codes (`AC_MISSING`, `AC_BLANK`, `AC_UNCHECKED`). JSON output includes the `code` field for every issue.
