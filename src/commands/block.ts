@@ -6,7 +6,8 @@ import { logSuccess, logSub } from "../util/logging.js";
 import { TaskNotFoundError, InvalidStatusTransitionError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
 import { assertTaskOwnership } from "../core/session.js";
-import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
+import { printJson, jsonError, buildJsonTask } from "../util/json-result.js";
+import { envelopeOk } from "../core/envelope.js";
 
 export interface BlockOptions {
   json?: boolean;
@@ -76,9 +77,16 @@ export async function cmdBlock(
 
   if (options.json) {
     const final = loadTaskById(taskId);
-    printJson(jsonOk({
-      task: final ? buildJsonTask(final) : buildJsonTask(current),
-    }));
+    printJson(envelopeOk(
+      "task_blocked",
+      { task: final ? buildJsonTask(final) : buildJsonTask(current) },
+      {
+        kind: "BLOCK_FOR_HUMAN",
+        instruction: `Task ${taskId} blocked: ${reason}. A human decision is required before proceeding.`,
+        stop: true,
+        allowedCommands: ["taskforge unblock", "taskforge status", "taskforge summary"],
+      },
+    ));
     return;
   }
 

@@ -123,4 +123,21 @@ describe("cmdBlock", () => {
     const content = fs.readFileSync(fp, "utf-8");
     expect(content).toContain("Task blocked [missing_secret]: Need access");
   });
+
+  it("emits BLOCK_FOR_HUMAN next action in JSON mode", async () => {
+    makeTaskFile("TASK-001");
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    await cmdBlock("TASK-001", "Waiting on human decision", { json: true });
+
+    const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
+    expect(output.ok).toBe(true);
+    expect(output.state).toBe("task_blocked");
+    expect(output.nextAction?.kind).toBe("BLOCK_FOR_HUMAN");
+    expect(output.nextAction?.stop).toBe(true);
+    expect(output.nextAction?.instruction).toContain("TASK-001 blocked");
+    expect(output.nextAction?.allowedCommands).toEqual(["taskforge unblock", "taskforge status", "taskforge summary"]);
+
+    logSpy.mockRestore();
+  });
 });
