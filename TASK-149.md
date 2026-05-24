@@ -26,6 +26,12 @@ Reduce conflict surface and avoid rewriting unrelated task files.
 ## Agent Notes
 
 ### 2026-05-24 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-149
+
+### 2026-05-24 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-149
+
+### 2026-05-24 System
 - Task claimed via taskforge start TASK-149
 - Session: 1cfbc44676
 - Branch: agent/TASK-149-task-149--1cfbc44676
