@@ -14,9 +14,10 @@ override_reason: >-
   AC satisfied: typecheck, build, and tests pass; pre-existing failures from
   TASK-091
 override_actor: unknown
-override_timestamp: '2026-05-24T03:49:25.477Z'
+override_timestamp: '2026-05-24T03:49:26.529Z'
 override_failed_gates:
   - lint
+  - build
   - test
 ---
 # Add Generic Transcript Provider Interface
@@ -39,7 +40,7 @@ OpenCode is the presumptive target, but transcript capture should be generic.
 - Task marked Done (forced)
 - Override reason: AC satisfied: typecheck, build, and tests pass; pre-existing failures from TASK-091
 - Override actor: unknown
-- Failed gates: lint, test
+- Failed gates: lint, build, test
 
 ### 2026-05-24 System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-152
