@@ -30,6 +30,12 @@ OpenCode is the presumptive target, but transcript capture should be generic.
 ## Agent Notes
 
 ### 2026-05-24 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-152
+
+### 2026-05-24 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-152
+
+### 2026-05-24 System
 - Task claimed via taskforge start TASK-152 (forced)
 - Session: 91f5d427bb
 - Branch: agent/TASK-152-task-152--91f5d427bb
