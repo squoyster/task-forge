@@ -14,10 +14,9 @@ override_reason: >-
   AC satisfied: typecheck, build, and all 11 plugin tests pass; pre-existing
   failures from TASK-091
 override_actor: unknown
-override_timestamp: '2026-05-24T04:27:25.104Z'
+override_timestamp: '2026-05-24T04:27:25.932Z'
 override_failed_gates:
   - lint
-  - build
   - test
 ---
 # Write OpenCode Transcript Events to Per-Session Logs
@@ -36,7 +35,7 @@ Complete per-session audit storage.
 - Task marked Done (forced)
 - Override reason: AC satisfied: typecheck, build, and all 11 plugin tests pass; pre-existing failures from TASK-091
 - Override actor: unknown
-- Failed gates: lint, build, test
+- Failed gates: lint, test
 
 ### 2026-05-24 System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-153
