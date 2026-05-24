@@ -11,6 +11,7 @@ dependsOn:
 assignee: 1711b15b37
 claimed_at: '2026-05-24 00:32:56'
 context_hash: 3bbf09c32badaf02
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-136
 ---
 # Reject Done Transition When AC Items Are Blank
 
@@ -32,6 +33,12 @@ Many task files contain only `- [ ]` under ACs. That is not a verifiable accepta
 - [ ] `taskforge done TASK-ID` refuses to complete a task containing any blank acceptance criterion checkbox such as `- [ ]` or `- [x]` with no criterion text.
 
 ## Agent Notes
+
+### 2026-05-24 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-136
+
+### 2026-05-24 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-136
 
 ### 2026-05-24 System
 - Task claimed via taskforge start TASK-136
