@@ -33,7 +33,7 @@ The repository already contains `Done` tasks with empty ACs and forced completio
 
 ## Acceptance Criteria
 
-- [ ] `taskforge doctor --json` reports every `Done` task that has missing, blank, or unchecked acceptance criteria using a stable machine-readable diagnostic code.
+- [x] `taskforge doctor --json` reports every `Done` task that has missing, blank, or unchecked acceptance criteria using a stable machine-readable diagnostic code. — `src/commands/doctor.ts` `cmdDoctor(~L178-188)`: scans all `Done` tasks and emits `AC_MISSING`, `AC_BLANK`, or `AC_UNCHECKED` codes; JSON output includes `code` field for every issue.
 
 ## Agent Notes
 
