@@ -1,5 +1,6 @@
 import type { ParsedTask } from "./task-store.js";
 import { STATUS } from "../util/status-constants.js";
+import { hasAcceptanceCriteriaSection, hasBlankAcceptanceCriteria, hasUncheckedAcceptanceCriteria } from "./task-store.js";
 
 export type ValidationSeverity = "error" | "warning";
 
@@ -35,6 +36,17 @@ export function validateTaskState(tasks: ParsedTask[]): StateValidationResult {
     }
     if (t.status === STATUS.DONE && t.claimed_at) {
       errors.push({ severity: "error", code: "DONE_WITH_CLAIM", taskId: t.id, message: "Done but still has claimed_at", suggestedFix: "Clear the claim field" });
+    }
+
+    // Done tasks must have valid acceptance criteria
+    if (t.status === STATUS.DONE) {
+      if (!hasAcceptanceCriteriaSection(t.body)) {
+        errors.push({ severity: "error", code: "AC_MISSING", taskId: t.id, message: "Done task missing acceptance criteria section", suggestedFix: "Add acceptance criteria or request clarification" });
+      } else if (hasBlankAcceptanceCriteria(t.body)) {
+        errors.push({ severity: "error", code: "AC_BLANK", taskId: t.id, message: "Done task has blank acceptance criteria", suggestedFix: "Replace placeholder checkboxes with verifiable conditions" });
+      } else if (hasUncheckedAcceptanceCriteria(t.body)) {
+        errors.push({ severity: "error", code: "AC_UNCHECKED", taskId: t.id, message: "Done task has unchecked acceptance criteria", suggestedFix: "Check off each criterion with evidence" });
+      }
     }
 
     // Ready must not have assignee
