@@ -1,10 +1,10 @@
-import { loadTaskById, updateTaskStatus, clearTaskLock, appendAgentNote, parseTaskFile, writeTaskFile, hasAcceptanceCriteriaSection } from "../core/task-store.js";
+import { loadTaskById, updateTaskStatus, clearTaskLock, appendAgentNote, parseTaskFile, writeTaskFile, hasAcceptanceCriteriaSection, hasBlankAcceptanceCriteria } from "../core/task-store.js";
 import { validateTransition } from "../core/status-transition.js";
 import { removeWorktree, removeBranch } from "../core/git.js";
 import { withTaskStateTransaction } from "../core/task-state-transaction.js";
 import { STATUS } from "../util/status-constants.js";
 import { logSuccess, logInfo, logWarn, logSub } from "../util/logging.js";
-import { TaskNotFoundError, InvalidStatusTransitionError, MissingAcceptanceCriteriaError } from "../core/errors.js";
+import { TaskNotFoundError, InvalidStatusTransitionError, MissingAcceptanceCriteriaError, BlankAcceptanceCriteriaError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
 import { assertTaskOwnership } from "../core/session.js";
 import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
@@ -103,6 +103,18 @@ export async function cmdDone(
       return;
     }
     throw new MissingAcceptanceCriteriaError(taskId);
+  }
+
+  // Blank acceptance criteria check
+  if (hasBlankAcceptanceCriteria(task.body) && !force) {
+    const message =
+      `Task ${taskId} cannot be marked Done: one or more acceptance criteria are blank. ` +
+      "Replace placeholder checkboxes with verifiable conditions before completing.";
+    if (json) {
+      printJson(jsonError(message, "BLANK_ACCEPTANCE_CRITERIA"));
+      return;
+    }
+    throw new BlankAcceptanceCriteriaError(taskId);
   }
 
   updateTaskStatus(task.filePath, STATUS.DONE);

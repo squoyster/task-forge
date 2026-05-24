@@ -248,4 +248,39 @@ describe("cmdDone", () => {
     const task = readTaskFile(fp);
     expect(task.frontmatter.status).toBe("Done");
   });
+
+  it("rejects done when Acceptance Criteria items are blank", async () => {
+    const body = `# TASK-005: Test task\n\n## Goal\nDo something.\n\n## Acceptance Criteria\n- [ ]\n- [x]\n\n## Agent Notes\n`;
+    makeTaskFile("TASK-005", { body });
+    await expect(cmdDone("TASK-005")).rejects.toThrow(
+      /one or more acceptance criteria are blank/i,
+    );
+  });
+
+  it("rejects done with JSON error when AC items are blank", async () => {
+    const body = `# TASK-005: Test task\n\n## Goal\nDo something.\n\n## Acceptance Criteria\n- [ ]\n\n## Agent Notes\n`;
+    makeTaskFile("TASK-005", { body });
+
+    const logs: string[] = [];
+    const consoleSpy = vi.spyOn(console, "log").mockImplementation((...args: unknown[]) => {
+      logs.push(args.map(String).join(" "));
+    });
+    await cmdDone("TASK-005", { json: true });
+    consoleSpy.mockRestore();
+
+    expect(logs.length).toBeGreaterThan(0);
+    const output = JSON.parse(logs[0]);
+    expect(output.ok).toBe(false);
+    expect(output.code).toBe("BLANK_ACCEPTANCE_CRITERIA");
+    expect(output.error).toContain("Replace placeholder checkboxes");
+  });
+
+  it("allows force done when AC items are blank", async () => {
+    const body = `# TASK-005: Test task\n\n## Goal\nDo something.\n\n## Acceptance Criteria\n- [ ]\n\n## Agent Notes\n`;
+    const fp = makeTaskFile("TASK-005", { body });
+    await cmdDone("TASK-005", { force: true });
+
+    const task = readTaskFile(fp);
+    expect(task.frontmatter.status).toBe("Done");
+  });
 });

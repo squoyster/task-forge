@@ -46,3 +46,13 @@ export class MissingAcceptanceCriteriaError extends TaskForgeError {
     );
   }
 }
+
+export class BlankAcceptanceCriteriaError extends TaskForgeError {
+  constructor(taskId: string) {
+    super(
+      `Task ${taskId} cannot be marked Done: one or more acceptance criteria are blank. ` +
+        "Replace placeholder checkboxes with verifiable conditions before completing.",
+      "BLANK_ACCEPTANCE_CRITERIA",
+    );
+  }
+}
