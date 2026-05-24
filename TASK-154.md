@@ -1,17 +1,23 @@
 ---
 id: TASK-154
 type: Bug
-status: In Progress
+status: Done
 priority: P1
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
 dependsOn:
   - TASK-152
-assignee: fb88018728
-claimed_at: '2026-05-24 04:28:49'
 context_hash: 3a03a0322eb9729c
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-154
+override_reason: >-
+  AC already satisfied by existing code; added explicit test; pre-existing
+  failures from TASK-091
+override_actor: unknown
+override_timestamp: '2026-05-24T04:30:50.646Z'
+override_failed_gates:
+  - lint
+  - test
 ---
 # Write OpenCode Transcript Events to Per-Task Logs
 
@@ -24,6 +30,12 @@ Complete per-task audit storage.
 - [x] The generated OpenCode audit plugin writes task events to `logs/taskforge/tasks/<taskId>/transcript.jsonl`. — `src/core/audit-plugin.ts` `generateAuditPlugin()`: `writeAuditEvent()` writes to `logs/taskforge/tasks/${taskId}/transcript.jsonl`. Test in `tests/plugins.test.ts` verifies task log path in generated output.
 
 ## Agent Notes
+
+### 2026-05-24 System
+- Task marked Done (forced)
+- Override reason: AC already satisfied by existing code; added explicit test; pre-existing failures from TASK-091
+- Override actor: unknown
+- Failed gates: lint, test
 
 ### 2026-05-24 System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-154
