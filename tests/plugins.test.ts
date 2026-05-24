@@ -15,6 +15,14 @@ describe("audit plugin", () => {
     expect(content).toContain("REDACTED");
   });
 
+  it("records file edit events with required fields", () => {
+    const content = generateAuditPlugin();
+    expect(content).toContain("writeFileEvent");
+    expect(content).toContain("file.edited");
+    expect(content).toContain("filePath");
+    expect(content).toContain("sessionId");
+  });
+
   it("installs plugin file", () => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "tf-plug-"));
     installAuditPlugin(tmp, false);

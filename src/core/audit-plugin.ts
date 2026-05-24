@@ -52,6 +52,40 @@ function writeAuditEvent(event: Record<string, unknown>): void {
   } catch {}
 }
 
+function writeFileEvent(filePath: string, sessionId?: string): void {
+  try {
+    const taskId = resolveTaskId();
+    const dir = \`logs/taskforge/tasks/\${taskId}\`;
+    require("fs").mkdirSync(dir, { recursive: true });
+    const event = {
+      timestamp: new Date().toISOString(),
+      event: "file.edited",
+      taskId,
+      sessionId: sessionId ?? undefined,
+      filePath,
+    };
+    const line = JSON.stringify(event) + "\\n";
+    require("fs").appendFileSync(\`\${dir}/transcript.jsonl\`, line);
+  } catch {}
+}
+
+function writeFileEvent(filePath: string, sessionId?: string): void {
+  try {
+    const taskId = resolveTaskId();
+    const dir = \`logs/taskforge/tasks/\${taskId}\`;
+    require("fs").mkdirSync(dir, { recursive: true });
+    const event = {
+      timestamp: new Date().toISOString(),
+      event: "file.edited",
+      taskId,
+      sessionId: sessionId ?? undefined,
+      filePath,
+    };
+    const line = JSON.stringify(event) + "\\n";
+    require("fs").appendFileSync(\`\${dir}/transcript.jsonl\`, line);
+  } catch {}
+}
+
 const taskforgeAudit: Plugin = {
   name: "taskforge-audit",
   version: "1.0.0",
