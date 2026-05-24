@@ -33,7 +33,7 @@ function makeTaskFile(id: string, overrides: Record<string, unknown> = {}): stri
     priority: "P2",
     ...frontmatterOverrides,
   };
-  const body = (bodyOverride as string | undefined) ?? `# ${id}: Test task ${id}\n\n## Goal\nDo something.\n\n## Agent Notes\n`;
+  const body = (bodyOverride as string | undefined) ?? `# ${id}: Test task ${id}\n\n## Goal\nDo something.\n\n## Acceptance Criteria\n- [ ] Do something\n\n## Agent Notes\n`;
   const lines = [
     "---",
     ...Object.entries(frontmatter).map(([k, v]) => `${k}: ${v}`),
