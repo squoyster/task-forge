@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: '7512307550'
 claimed_at: '2026-05-24 01:43:30'
 context_hash: 3a03a0322eb9729c
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-141
 ---
 # Add Command Next-Action Envelope Type
 
@@ -43,6 +44,12 @@ interface CommandResultEnvelope<T = unknown> {
 - [ ] A shared command result envelope type exists and includes `ok`, `state`, `nextAction.kind`, `nextAction.instruction`, `nextAction.stop`, and `nextAction.allowedCommands`.
 
 ## Agent Notes
+
+### 2026-05-24 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-141
+
+### 2026-05-24 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-141
 
 ### 2026-05-24 System
 - Task claimed via taskforge start TASK-141
