@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **TASK-139: Report invalid Done tasks in Doctor** — `taskforge doctor` now checks all `Done` tasks for missing, blank, or unchecked acceptance criteria and reports them with machine-readable codes (`AC_MISSING`, `AC_BLANK`, `AC_UNCHECKED`). JSON output includes the `code` field for every issue.
+
 - **TASK-138: Structured override metadata for forced completion** — `taskforge done --force` now requires `--reason 'explanation'` and records structured override metadata (`override_reason`, `override_actor`, `override_timestamp`, `override_failed_gates`) in task frontmatter. JSON output includes an `override` object with these fields.
 
 - **TASK-137: Reject Done when AC items are unchecked** — `taskforge done` now rejects completion if any nonblank acceptance criterion remains unchecked (`- [ ]`). Unchecked ACs emit `UNCHECKED_ACCEPTANCE_CRITERIA` error instructing the agent to check off each criterion with evidence. Force override available via `--force`.
