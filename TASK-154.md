@@ -1,13 +1,16 @@
 ---
 id: TASK-154
 type: Bug
-status: Ready
+status: In Progress
 priority: P1
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
 dependsOn:
   - TASK-152
+assignee: ea1e36cd03
+claimed_at: '2026-05-24 04:28:19'
+context_hash: 3a03a0322eb9729c
 ---
 # Write OpenCode Transcript Events to Per-Task Logs
 
@@ -20,3 +23,13 @@ Complete per-task audit storage.
 - [ ] The generated OpenCode audit plugin writes task events to `logs/taskforge/tasks/<taskId>/transcript.jsonl`.
 
 ## Agent Notes
+
+### 2026-05-24 System
+- Task claimed via taskforge start TASK-154
+- Session: ea1e36cd03
+- Branch: agent/TASK-154-task-154--ea1e36cd03
+
+### 2026-05-24 System
+- Task claimed via taskforge start TASK-154
+- Session: ea1e36cd03
+- Branch: agent/TASK-154-task-154--ea1e36cd03
