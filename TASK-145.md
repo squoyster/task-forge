@@ -23,7 +23,7 @@ Make `start` comply with transactional task-state mutation.
 
 ## Acceptance Criteria
 
-- [ ] `cmdStart` no longer calls direct mutation helpers such as `updateTaskLock`, `updateTaskStatus`, `writeTaskFile`, or `appendAgentNote` before successful transactional claim completion.
+- [x] `cmdStart` no longer calls direct mutation helpers such as `updateTaskLock`, `updateTaskStatus`, `writeTaskFile`, or `appendAgentNote` before successful transactional claim completion. — `src/commands/start.ts` `cmdStart()`: removed all direct calls to `updateTaskLock`, `updateTaskStatus`, `writeTaskFile`, and `appendAgentNote` before the first transaction. All mutations now happen inside `withTaskStateTransaction` callbacks via `tx.claimTask`, `tx.updateTask`, and `tx.appendNote`. Removed unused imports. Tests in `tests/commands/start.test.ts` still pass.
 
 ## Agent Notes
 
