@@ -11,6 +11,7 @@ dependsOn:
 assignee: '6230044873'
 claimed_at: '2026-05-24 03:30:20'
 context_hash: 3a03a0322eb9729c
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-149
 ---
 # Add Dirty-Task Write Set to Transactions
 
@@ -23,6 +24,12 @@ Reduce conflict surface and avoid rewriting unrelated task files.
 - [ ] `withTaskStateTransaction` writes only task files that were explicitly modified in the transaction dirty set.
 
 ## Agent Notes
+
+### 2026-05-24 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-149
+
+### 2026-05-24 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-149
 
 ### 2026-05-24 System
 - Task claimed via taskforge start TASK-149
