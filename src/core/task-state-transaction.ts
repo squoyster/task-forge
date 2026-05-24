@@ -3,6 +3,7 @@ import simpleGit from "simple-git";
 import { loadAllTasks, writeTaskFile, appendAgentNote } from "./task-store.js";
 import { getTaskStateDir, getRepoRoot } from "../util/paths.js";
 import { eventLogEvent } from "./event-log.js";
+import { appendAuditEvent } from "./audit.js";
 import { validateTransition } from "./status-transition.js";
 import { STATUS } from "../util/status-constants.js";
 import { logWarn } from "../util/logging.js";
@@ -17,6 +18,7 @@ export interface TaskStateTransaction {
   assertCanTransition(task: ParsedTask, targetStatus: string): void;
   claimTask(taskId: string, sessionId: string): void;
   clearClaim(taskId: string): void;
+  getModifiedTaskIds(): string[];
 }
 
 export interface TransactionOptions {
@@ -32,11 +34,16 @@ class TransactionImpl implements TaskStateTransaction {
   private tasks: Map<string, ParsedTask> = new Map();
   private notesAppended: Map<string, string[]> = new Map();
   private modified = false;
+  private modifiedTaskIds: Set<string> = new Set();
 
   constructor(tasks: ParsedTask[]) {
     for (const t of tasks) {
       this.tasks.set(t.id, t);
     }
+  }
+
+  getModifiedTaskIds(): string[] {
+    return [...this.modifiedTaskIds];
   }
 
   loadTask(id: string): ParsedTask | null {
@@ -50,6 +57,7 @@ class TransactionImpl implements TaskStateTransaction {
   updateTask(task: ParsedTask): void {
     this.tasks.set(task.id, task);
     this.modified = true;
+    this.modifiedTaskIds.add(task.id);
   }
 
   appendNote(taskId: string, role: string, notes: string[]): void {
@@ -73,6 +81,7 @@ class TransactionImpl implements TaskStateTransaction {
     task.claimed_at = new Date().toISOString().replace("T", " ").replace(/\.\d+Z$/, "");
     if (task.status === STATUS.READY) task.status = STATUS.IN_PROGRESS;
     this.modified = true;
+    this.modifiedTaskIds.add(taskId);
   }
 
   clearClaim(taskId: string): void {
@@ -81,6 +90,7 @@ class TransactionImpl implements TaskStateTransaction {
     task.assignee = undefined;
     task.claimed_at = undefined;
     this.modified = true;
+    this.modifiedTaskIds.add(taskId);
   }
 
   commit(stateDir: string, message: string): Promise<void> {
@@ -146,6 +156,27 @@ export async function withTaskStateTransaction<T>(
     // Push
     try {
       await execa("git", ["push", "origin", "task-state"], { cwd: stateDir });
+
+      // Emit structured audit event for successful transaction
+      try {
+        const git = simpleGit(stateDir);
+        const commitSha = await git.revparse(["HEAD"]);
+        appendAuditEvent(root, {
+          timestamp: new Date().toISOString(),
+          event: "transaction.committed",
+          sessionId: options.actor,
+          summary: `Transaction "${command}" committed ${tx.getModifiedTaskIds().length} task(s)`,
+          metadata: {
+            command,
+            changedTaskIds: tx.getModifiedTaskIds(),
+            commitSha,
+            attempt: attempt + 1,
+          },
+        });
+      } catch {
+        // Audit emission failure should not fail the transaction
+      }
+
       return result; // Success
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);

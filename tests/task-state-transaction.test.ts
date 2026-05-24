@@ -14,9 +14,14 @@ vi.mock("simple-git", () => {
   const mockGit = {
     add: vi.fn().mockResolvedValue(undefined),
     commit: vi.fn().mockResolvedValue(undefined),
+    revparse: vi.fn().mockResolvedValue("deadbeef1234"),
   };
   return { default: vi.fn(() => mockGit) };
 });
+
+vi.mock("../src/core/audit.js", () => ({
+  appendAuditEvent: vi.fn(),
+}));
 
 let uniqueDir: string;
 let stateDir: string;
@@ -124,5 +129,30 @@ describe("withTaskStateTransaction", () => {
     ).resolves.not.toThrow();
 
     expect(callCount).toBe(2);
+  });
+
+  it("emits audit event on successful transaction", async () => {
+    makeTaskFile("TASK-001", { status: "Ready" });
+
+    await withTaskStateTransaction(
+      { command: "test-audit", maxRetries: 1, actor: "session-xyz" },
+      (tx) => {
+        tx.claimTask("TASK-001", "session-xyz");
+      },
+    );
+
+    const { appendAuditEvent } = await import("../src/core/audit.js");
+    expect(appendAuditEvent).toHaveBeenCalled();
+    const call = vi.mocked(appendAuditEvent).mock.calls[0];
+    expect(call?.[1]).toMatchObject({
+      event: "transaction.committed",
+      sessionId: "session-xyz",
+      summary: expect.stringContaining("test-audit"),
+      metadata: expect.objectContaining({
+        command: "test-audit",
+        changedTaskIds: ["TASK-001"],
+        commitSha: "deadbeef1234",
+      }),
+    });
   });
 });
