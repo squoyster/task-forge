@@ -1,4 +1,4 @@
-import { loadAllTasks } from "../core/task-store.js";
+import { loadAllTasks, hasAcceptanceCriteriaSection, hasBlankAcceptanceCriteria, hasUncheckedAcceptanceCriteria } from "../core/task-store.js";
 import { listWorktrees } from "../core/git.js";
 import { getRepoRoot, getWorktreePath } from "../util/paths.js";
 import { loadConfig } from "../core/config.js";
@@ -13,6 +13,7 @@ import fs from "node:fs";
 
 interface DoctorIssue {
   severity: "error" | "warn" | "info";
+  code: string;
   message: string;
   taskId?: string;
 }
@@ -25,8 +26,8 @@ export async function cmdDoctor(options?: { json?: boolean; fix?: boolean }): Pr
   const issues: DoctorIssue[] = [];
   const ok: string[] = [];
 
-  function add(severity: DoctorIssue["severity"], msg: string, taskId?: string) {
-    issues.push({ severity, message: msg, taskId });
+  function add(severity: DoctorIssue["severity"], msg: string, taskId?: string, code = "GENERIC") {
+    issues.push({ severity, code, message: msg, taskId });
   }
 
   // 1. Task-state exists
@@ -174,11 +175,23 @@ export async function cmdDoctor(options?: { json?: boolean; fix?: boolean }): Pr
     add("info", "Audit directory not yet created (will be created on first event)");
   }
 
+  // 12. Done tasks with invalid acceptance criteria
+  const doneTasks = tasks.filter((t) => t.status === STATUS.DONE);
+  for (const t of doneTasks) {
+    if (!hasAcceptanceCriteriaSection(t.body)) {
+      add("warn", "Done task missing acceptance criteria section", t.id, "AC_MISSING");
+    } else if (hasBlankAcceptanceCriteria(t.body)) {
+      add("warn", "Done task has blank acceptance criteria", t.id, "AC_BLANK");
+    } else if (hasUncheckedAcceptanceCriteria(t.body)) {
+      add("warn", "Done task has unchecked acceptance criteria", t.id, "AC_UNCHECKED");
+    }
+  }
+
   // Output
   if (options?.json) {
     console.log(JSON.stringify({
       ok: issues.filter((i) => i.severity === "error").length === 0,
-      issues: issues.map((i) => ({ severity: i.severity, taskId: i.taskId, message: i.message })),
+      issues: issues.map((i) => ({ severity: i.severity, code: i.code, taskId: i.taskId, message: i.message })),
       checks: ok,
       counts: {
         total: tasks.length,
