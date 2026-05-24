@@ -15,6 +15,27 @@ describe("audit plugin", () => {
     expect(content).toContain("REDACTED");
   });
 
+  it("writes session events to logs/taskforge/sessions/<sessionId>.jsonl", () => {
+    const content = generateAuditPlugin();
+    expect(content).toContain("logs/taskforge/sessions");
+    expect(content).toContain("writeSessionEvent");
+    expect(content).toContain("${sessionId}.jsonl");
+  });
+
+  it("writes session events to logs/taskforge/sessions/<sessionId>.jsonl", () => {
+    const content = generateAuditPlugin();
+    expect(content).toContain("logs/taskforge/sessions");
+    expect(content).toContain("writeSessionEvent");
+    expect(content).toContain("${sessionId}.jsonl");
+  });
+
+  it("writes session events to logs/taskforge/sessions/<sessionId>.jsonl", () => {
+    const content = generateAuditPlugin();
+    expect(content).toContain("logs/taskforge/sessions");
+    expect(content).toContain("writeSessionEvent");
+    expect(content).toContain("${sessionId}.jsonl");
+  });
+
   it("installs plugin file", () => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "tf-plug-"));
     installAuditPlugin(tmp, false);

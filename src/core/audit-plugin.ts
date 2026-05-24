@@ -52,34 +52,29 @@ function writeAuditEvent(event: Record<string, unknown>): void {
   } catch {}
 }
 
+function writeSessionEvent(sessionId: string, event: Record<string, unknown>): void {
+  try {
+    const dir = \`logs/taskforge/sessions\`;
+    require("fs").mkdirSync(dir, { recursive: true });
+    const line = JSON.stringify(event) + "\\n";
+    require("fs").appendFileSync(\`\${dir}/\${sessionId}.jsonl\`, line);
+  } catch {}
+}
+
 const taskforgeAudit: Plugin = {
   name: "taskforge-audit",
   version: "1.0.0",
 
   async onSessionStart(ctx: { sessionId: string; taskId?: string }) {
-    writeAuditEvent({
+    const taskId = ctx.taskId ?? resolveTaskId();
+    const event = {
       timestamp: new Date().toISOString(),
       event: "session.started",
-      taskId: ctx.taskId ?? resolveTaskId(),
+      taskId,
       sessionId: ctx.sessionId,
-    });
-  },
-
-  async onToolExecute(ctx: { tool: string; command?: string; taskId?: string }) {
-    const event: Record<string, unknown> = {
-      timestamp: new Date().toISOString(),
-      event: "tool.execute",
-      taskId: ctx.taskId ?? resolveTaskId(),
-      tool: ctx.tool,
     };
-    if (ctx.command) {
-      if (ctx.command.includes("TOKEN") || ctx.command.includes("SECRET")) {
-        event.summary = "[REDACTED]";
-      } else {
-        event.summary = ctx.command.slice(0, 200);
-      }
-    }
     writeAuditEvent(event);
+    // Session events written via onSessionStart only
   },
 };
 
