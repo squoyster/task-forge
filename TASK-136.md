@@ -30,7 +30,7 @@ Many task files contain only `- [ ]` under ACs. That is not a verifiable accepta
 
 ## Acceptance Criteria
 
-- [ ] `taskforge done TASK-ID` refuses to complete a task containing any blank acceptance criterion checkbox such as `- [ ]` or `- [x]` with no criterion text.
+- [x] `taskforge done TASK-ID` refuses to complete a task containing any blank acceptance criterion checkbox such as `- [ ]` or `- [x]` with no criterion text. — `src/commands/done.ts` `cmdDone(~L108-118)`: checks `hasBlankAcceptanceCriteria(task.body)` after section validation; throws `BlankAcceptanceCriteriaError` in human mode or emits JSON error with `BLANK_ACCEPTANCE_CRITERIA` code and actionable instruction.
 
 ## Agent Notes
 
