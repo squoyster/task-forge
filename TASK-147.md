@@ -21,7 +21,7 @@ Prevent invalid task-state commits.
 
 ## Acceptance Criteria
 
-- [ ] `withTaskStateTransaction` runs task-state invariant validation after mutation and before commit, aborting the transaction on validation errors.
+- [x] `withTaskStateTransaction` runs task-state invariant validation after mutation and before commit, aborting the transaction on validation errors. — `src/core/task-state-transaction.ts` `withTaskStateTransaction()`: after `mutate(tx)` completes, calls `validateTaskState(tx.loadAllTasks())`. If `!validation.ok`, throws `Error` with all violation codes and messages. Transaction commit is skipped when validation fails. Tests in `tests/task-state-transaction.test.ts` verify abort on `DONE_WITH_ASSIGNEE` violation.
 
 ## Agent Notes
 
