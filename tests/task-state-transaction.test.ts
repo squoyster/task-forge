@@ -14,6 +14,7 @@ vi.mock("simple-git", () => {
   const mockGit = {
     add: vi.fn().mockResolvedValue(undefined),
     commit: vi.fn().mockResolvedValue(undefined),
+    revparse: vi.fn().mockResolvedValue("abc123def456"),
   };
   return { default: vi.fn(() => mockGit) };
 });
@@ -124,5 +125,21 @@ describe("withTaskStateTransaction", () => {
     ).resolves.not.toThrow();
 
     expect(callCount).toBe(2);
+  });
+
+  it("captures base HEAD and includes it in transaction events", async () => {
+    makeTaskFile("TASK-001", { status: "Ready" });
+
+    await withTaskStateTransaction(
+      { command: "test-head", maxRetries: 1 },
+      (tx) => {
+        tx.appendEvent("TASK-001", "test_event", { foo: "bar" });
+      },
+    );
+
+    // Verify simple-git revparse was called
+    const { default: simpleGit } = await import("simple-git");
+    const mockGit = simpleGit();
+    expect(mockGit.revparse).toHaveBeenCalledWith(["HEAD"]);
   });
 });

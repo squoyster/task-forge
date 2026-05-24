@@ -32,11 +32,13 @@ class TransactionImpl implements TaskStateTransaction {
   private tasks: Map<string, ParsedTask> = new Map();
   private notesAppended: Map<string, string[]> = new Map();
   private modified = false;
+  public baseHead: string | undefined;
 
-  constructor(tasks: ParsedTask[]) {
+  constructor(tasks: ParsedTask[], baseHead?: string) {
     for (const t of tasks) {
       this.tasks.set(t.id, t);
     }
+    this.baseHead = baseHead;
   }
 
   loadTask(id: string): ParsedTask | null {
@@ -58,7 +60,7 @@ class TransactionImpl implements TaskStateTransaction {
   }
 
   appendEvent(taskId: string, event: string, data?: Record<string, unknown>): void {
-    eventLogEvent(taskId, event, data);
+    eventLogEvent(taskId, event, { ...data, baseHead: this.baseHead });
   }
 
   assertCanTransition(task: ParsedTask, targetStatus: string): void {
@@ -129,7 +131,17 @@ export async function withTaskStateTransaction<T>(
 
     // Load fresh state
     const tasks = loadAllTasks(root);
-    const tx = new TransactionImpl(tasks);
+
+    // Capture base HEAD for conflict detection diagnostics
+    let baseHead: string | undefined;
+    try {
+      const git = simpleGit(stateDir);
+      baseHead = await git.revparse(["HEAD"]);
+    } catch {
+      // OK if no commits yet
+    }
+
+    const tx = new TransactionImpl(tasks, baseHead);
 
     // Apply mutation
     const result = await mutate(tx);
