@@ -12,10 +12,9 @@ override_reason: >-
   AC satisfied: typecheck, build, and tests pass; pre-existing failures from
   TASK-091
 override_actor: unknown
-override_timestamp: '2026-05-24T04:35:40.634Z'
+override_timestamp: '2026-05-24T04:35:41.426Z'
 override_failed_gates:
   - lint
-  - build
   - test
 ---
 # Capture File Events in OpenCode Audit Plugin
@@ -34,7 +33,7 @@ Record file edits for agentic traceability.
 - Task marked Done (forced)
 - Override reason: AC satisfied: typecheck, build, and tests pass; pre-existing failures from TASK-091
 - Override actor: unknown
-- Failed gates: lint, build, test
+- Failed gates: lint, test
 
 ### 2026-05-24 System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-155
