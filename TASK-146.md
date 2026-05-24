@@ -19,7 +19,7 @@ Make transaction conflict detection explicit.
 
 ## Acceptance Criteria
 
-- [ ] `withTaskStateTransaction` records the task-state branch base HEAD before mutation and includes that base HEAD in transaction diagnostics or audit metadata.
+- [x] `withTaskStateTransaction` records the task-state branch base HEAD before mutation and includes that base HEAD in transaction diagnostics or audit metadata. — `src/core/task-state-transaction.ts` `withTaskStateTransaction()`: captures HEAD SHA via `git.revparse(["HEAD"])` after pulling and passes it to `TransactionImpl`. `TransactionImpl.appendEvent()` includes `baseHead` in event metadata. Tests in `tests/task-state-transaction.test.ts` verify revparse is called during transaction.
 
 ## Agent Notes
 
