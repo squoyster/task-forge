@@ -33,7 +33,7 @@ Current task notes show `Task marked Done (forced)` and `Completed despite gate 
 
 ## Acceptance Criteria
 
-- [ ] A forced completion requires a nonempty override reason and records structured override metadata including actor, timestamp, reason, and failed gate names if present.
+- [x] A forced completion requires a nonempty override reason and records structured override metadata including actor, timestamp, reason, and failed gate names if present. — `src/commands/done.ts` `cmdDone(~L152-173)`: validates `reason` when `force` is true; calls `getCurrentBranch()` and `parseSessionIdFromBranch()` to get actor; filters `gateResults` for failed names; writes `override_reason`, `override_actor`, `override_timestamp`, `override_failed_gates` to task frontmatter via `writeTaskFile()`.
 
 ## Agent Notes
 
