@@ -25,7 +25,7 @@ When a gate fails because of the current task, the agent should repair the issue
 
 ## Acceptance Criteria
 
-- [ ] `taskforge gates --json` emits `nextAction.kind = "FIX_CURRENT_TASK"` when any configured gate fails and no upstream-failure override is supplied.
+- [x] `taskforge gates --json` emits `nextAction.kind = "FIX_CURRENT_TASK"` when any configured gate fails and no upstream-failure override is supplied. — `src/commands/gates.ts` `cmdGates()`: when `json` is true and `passed` is false, emits envelope with `nextAction.kind = "FIX_CURRENT_TASK"`, `stop: true`, `allowedCommands: ["taskforge gates"]`. Tests in `tests/gates.test.ts` verify this behavior.
 
 ## Agent Notes
 
