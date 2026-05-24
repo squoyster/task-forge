@@ -1,10 +1,10 @@
-import { loadTaskById, updateTaskStatus, clearTaskLock, appendAgentNote, parseTaskFile, writeTaskFile } from "../core/task-store.js";
+import { loadTaskById, updateTaskStatus, clearTaskLock, appendAgentNote, parseTaskFile, writeTaskFile, hasAcceptanceCriteriaSection } from "../core/task-store.js";
 import { validateTransition } from "../core/status-transition.js";
 import { removeWorktree, removeBranch } from "../core/git.js";
 import { withTaskStateTransaction } from "../core/task-state-transaction.js";
 import { STATUS } from "../util/status-constants.js";
 import { logSuccess, logInfo, logWarn, logSub } from "../util/logging.js";
-import { TaskNotFoundError, InvalidStatusTransitionError } from "../core/errors.js";
+import { TaskNotFoundError, InvalidStatusTransitionError, MissingAcceptanceCriteriaError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
 import { assertTaskOwnership } from "../core/session.js";
 import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
@@ -91,6 +91,18 @@ export async function cmdDone(
         "Review the changes before marking Done, or use --force to override.",
       );
     }
+  }
+
+  // Acceptance Criteria section check
+  if (!hasAcceptanceCriteriaSection(task.body) && !force) {
+    const message =
+      `Task ${taskId} cannot be marked Done: no "## Acceptance Criteria" section found. ` +
+      "Add acceptance criteria to the task file before completing, or request clarification if the ACs are ambiguous.";
+    if (json) {
+      printJson(jsonError(message, "MISSING_ACCEPTANCE_CRITERIA"));
+      return;
+    }
+    throw new MissingAcceptanceCriteriaError(taskId);
   }
 
   updateTaskStatus(task.filePath, STATUS.DONE);
