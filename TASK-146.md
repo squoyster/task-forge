@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: e1e7afddf2
 claimed_at: '2026-05-24 02:18:26'
 context_hash: 3a03a0322eb9729c
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-146
 ---
 # Capture Base HEAD in Task-State Transactions
 
@@ -21,6 +22,12 @@ Make transaction conflict detection explicit.
 - [ ] `withTaskStateTransaction` records the task-state branch base HEAD before mutation and includes that base HEAD in transaction diagnostics or audit metadata.
 
 ## Agent Notes
+
+### 2026-05-24 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-146
+
+### 2026-05-24 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-146
 
 ### 2026-05-24 System
 - Task claimed via taskforge start TASK-146
