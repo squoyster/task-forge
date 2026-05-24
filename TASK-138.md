@@ -1,7 +1,7 @@
 ---
 id: TASK-138
 type: Feature
-status: In Progress
+status: Done
 priority: P0
 agentRole: Implementer
 riskLevel: Medium
@@ -10,8 +10,6 @@ dependsOn:
   - TASK-135
   - TASK-136
   - TASK-137
-assignee: 8bb53bcb17
-claimed_at: '2026-05-24 00:47:55'
 context_hash: 2586a35be56df0c8
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-138
 ---
@@ -36,6 +34,10 @@ Current task notes show `Task marked Done (forced)` and `Completed despite gate 
 - [x] A forced completion requires a nonempty override reason and records structured override metadata including actor, timestamp, reason, and failed gate names if present. — `src/commands/done.ts` `cmdDone(~L152-173)`: validates `reason` when `force` is true; calls `getCurrentBranch()` and `parseSessionIdFromBranch()` to get actor; filters `gateResults` for failed names; writes `override_reason`, `override_actor`, `override_timestamp`, `override_failed_gates` to task frontmatter via `writeTaskFile()`.
 
 ## Agent Notes
+
+### 2026-05-24 System
+- Task marked Done (forced)
+- Completed despite gate failures — forced.
 
 ### 2026-05-24 System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-138
