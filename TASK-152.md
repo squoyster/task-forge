@@ -11,6 +11,7 @@ dependsOn:
 assignee: 1f64f5b44e
 claimed_at: '2026-05-24 03:37:06'
 context_hash: 3a03a0322eb9729c
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-152
 ---
 # Add Generic Transcript Provider Interface
 
@@ -27,6 +28,12 @@ OpenCode is the presumptive target, but transcript capture should be generic.
 - [ ] A generic `TranscriptProvider` or equivalent interface exists for importing or appending session transcript events independent of OpenCode.
 
 ## Agent Notes
+
+### 2026-05-24 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-152
+
+### 2026-05-24 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-152
 
 ### 2026-05-24 System
 - Task claimed via taskforge start TASK-152
