@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **TASK-137: Reject Done when AC items are unchecked** — `taskforge done` now rejects completion if any nonblank acceptance criterion remains unchecked (`- [ ]`). Unchecked ACs emit `UNCHECKED_ACCEPTANCE_CRITERIA` error instructing the agent to check off each criterion with evidence. Force override available via `--force`.
+
 - **TASK-136: Reject Done when AC items are blank** — `taskforge done` now rejects completion if any acceptance criterion checkbox is blank (e.g., `- [ ]` with no text). Blank ACs emit `BLANK_ACCEPTANCE_CRITERIA` error instructing the agent to replace placeholders with verifiable conditions. Force override available via `--force`.
 
 - **TASK-135: Reject Done when AC section is missing** — `taskforge done` now validates that the task file contains a `## Acceptance Criteria` section before allowing completion. Missing ACs emit `MISSING_ACCEPTANCE_CRITERIA` error with actionable guidance to add or request ACs. Force override available via `--force`.
