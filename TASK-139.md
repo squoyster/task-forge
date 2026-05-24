@@ -13,6 +13,7 @@ dependsOn:
 assignee: 85c595ea98
 claimed_at: '2026-05-24 01:02:49'
 context_hash: 8609dbc230669fef
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-139
 ---
 # Report Invalid Done Tasks in Doctor
 
@@ -35,6 +36,12 @@ The repository already contains `Done` tasks with empty ACs and forced completio
 - [ ] `taskforge doctor --json` reports every `Done` task that has missing, blank, or unchecked acceptance criteria using a stable machine-readable diagnostic code.
 
 ## Agent Notes
+
+### 2026-05-24 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-139
+
+### 2026-05-24 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-139
 
 ### 2026-05-24 System
 - Task claimed via taskforge start TASK-139
