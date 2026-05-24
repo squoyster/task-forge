@@ -13,6 +13,7 @@ dependsOn:
 assignee: 8bb53bcb17
 claimed_at: '2026-05-24 00:47:55'
 context_hash: 2586a35be56df0c8
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-138
 ---
 # Add Structured Override Metadata for Forced Completion
 
@@ -35,6 +36,12 @@ Current task notes show `Task marked Done (forced)` and `Completed despite gate 
 - [ ] A forced completion requires a nonempty override reason and records structured override metadata including actor, timestamp, reason, and failed gate names if present.
 
 ## Agent Notes
+
+### 2026-05-24 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-138
+
+### 2026-05-24 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-138
 
 ### 2026-05-24 System
 - Task claimed via taskforge start TASK-138
