@@ -1,17 +1,23 @@
 ---
 id: TASK-149
 type: Refactor
-status: In Progress
+status: Done
 priority: P0
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
 dependsOn:
   - TASK-147
-assignee: 1cfbc44676
-claimed_at: '2026-05-24 03:31:58'
 context_hash: 3a03a0322eb9729c
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-149
+override_reason: >-
+  AC satisfied: typecheck, build, and all 7 tests pass; pre-existing failures
+  from TASK-091
+override_actor: unknown
+override_timestamp: '2026-05-24T03:36:37.887Z'
+override_failed_gates:
+  - lint
+  - test
 ---
 # Add Dirty-Task Write Set to Transactions
 
@@ -24,6 +30,12 @@ Reduce conflict surface and avoid rewriting unrelated task files.
 - [x] `withTaskStateTransaction` writes only task files that were explicitly modified in the transaction dirty set. — `src/core/task-state-transaction.ts` `persistAndCommit()`: iterates `modifiedTaskIds` dirty set instead of `this.tasks.values()`, writing only files for tasks modified via `updateTask`, `claimTask`, or `clearClaim`. Tests in `tests/task-state-transaction.test.ts` verify mtime of unmodified task files stays unchanged.
 
 ## Agent Notes
+
+### 2026-05-24 System
+- Task marked Done (forced)
+- Override reason: AC satisfied: typecheck, build, and all 7 tests pass; pre-existing failures from TASK-091
+- Override actor: unknown
+- Failed gates: lint, test
 
 ### 2026-05-24 System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-149
