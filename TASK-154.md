@@ -21,7 +21,7 @@ Complete per-task audit storage.
 
 ## Acceptance Criteria
 
-- [ ] The generated OpenCode audit plugin writes task events to `logs/taskforge/tasks/<taskId>/transcript.jsonl`.
+- [x] The generated OpenCode audit plugin writes task events to `logs/taskforge/tasks/<taskId>/transcript.jsonl`. — `src/core/audit-plugin.ts` `generateAuditPlugin()`: `writeAuditEvent()` writes to `logs/taskforge/tasks/${taskId}/transcript.jsonl`. Test in `tests/plugins.test.ts` verifies task log path in generated output.
 
 ## Agent Notes
 
