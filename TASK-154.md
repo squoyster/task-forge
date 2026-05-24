@@ -26,6 +26,12 @@ Complete per-task audit storage.
 ## Agent Notes
 
 ### 2026-05-24 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-154
+
+### 2026-05-24 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-154
+
+### 2026-05-24 System
 - Task claimed via taskforge start TASK-154
 - Session: 6230864b81
 - Branch: agent/TASK-154-task-154--6230864b81
