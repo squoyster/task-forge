@@ -11,6 +11,7 @@ dependsOn:
 assignee: 43c03fe9b7
 claimed_at: '2026-05-24 03:49:46'
 context_hash: 3a03a0322eb9729c
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-153
 ---
 # Write OpenCode Transcript Events to Per-Session Logs
 
@@ -23,6 +24,12 @@ Complete per-session audit storage.
 - [ ] The generated OpenCode audit plugin writes session events to `logs/taskforge/sessions/<sessionId>.jsonl`.
 
 ## Agent Notes
+
+### 2026-05-24 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-153
+
+### 2026-05-24 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-153
 
 ### 2026-05-24 System
 - Task claimed via taskforge start TASK-153
