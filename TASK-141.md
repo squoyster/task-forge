@@ -41,7 +41,7 @@ interface CommandResultEnvelope<T = unknown> {
 
 ## Acceptance Criteria
 
-- [ ] A shared command result envelope type exists and includes `ok`, `state`, `nextAction.kind`, `nextAction.instruction`, `nextAction.stop`, and `nextAction.allowedCommands`.
+- [x] A shared command result envelope type exists and includes `ok`, `state`, `nextAction.kind`, `nextAction.instruction`, `nextAction.stop`, and `nextAction.allowedCommands`. — `src/core/envelope.ts` `CommandResultEnvelope<T>` interface (lines 5–16): defines all required fields; `envelopeOk()` and `envelopeError()` factory functions provide convenient construction. Tests in `tests/envelope.test.ts` verify field presence and behavior.
 
 ## Agent Notes
 
