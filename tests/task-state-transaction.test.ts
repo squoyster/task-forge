@@ -155,4 +155,33 @@ describe("withTaskStateTransaction", () => {
       }),
     });
   });
+
+  it("writes only modified task files (dirty set)", async () => {
+    const fp1 = makeTaskFile("TASK-001", { status: "Ready" });
+    const fp2 = makeTaskFile("TASK-002", { status: "Ready" });
+
+    // Record original mtimes
+    const mtime1Before = fs.statSync(fp1).mtimeMs;
+    const mtime2Before = fs.statSync(fp2).mtimeMs;
+
+    // Small delay to ensure mtime difference is detectable
+    await new Promise((r) => setTimeout(r, 10));
+
+    await withTaskStateTransaction(
+      { command: "test-dirty", maxRetries: 1 },
+      (tx) => {
+        tx.claimTask("TASK-001", "session-abc");
+        // TASK-002 is loaded but NOT modified
+        tx.loadTask("TASK-002");
+      },
+    );
+
+    // TASK-001 file should have been written (newer mtime)
+    const mtime1After = fs.statSync(fp1).mtimeMs;
+    expect(mtime1After).toBeGreaterThan(mtime1Before);
+
+    // TASK-002 file should NOT have been written (same mtime)
+    const mtime2After = fs.statSync(fp2).mtimeMs;
+    expect(mtime2After).toBe(mtime2Before);
+  });
 });

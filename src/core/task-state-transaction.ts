@@ -100,8 +100,12 @@ class TransactionImpl implements TaskStateTransaction {
   private async persistAndCommit(stateDir: string, message: string): Promise<void> {
     if (!this.modified) return;
 
-    for (const task of this.tasks.values()) {
-      writeTaskFile(task);
+    // Write only task files in the dirty set
+    for (const taskId of this.modifiedTaskIds) {
+      const task = this.tasks.get(taskId);
+      if (task) {
+        writeTaskFile(task);
+      }
     }
 
     const today = new Date().toISOString().split("T")[0];
