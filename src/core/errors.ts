@@ -56,3 +56,13 @@ export class BlankAcceptanceCriteriaError extends TaskForgeError {
     );
   }
 }
+
+export class UncheckedAcceptanceCriteriaError extends TaskForgeError {
+  constructor(taskId: string) {
+    super(
+      `Task ${taskId} cannot be marked Done: one or more acceptance criteria remain unchecked. ` +
+        "Check off each criterion with evidence before completing.",
+      "UNCHECKED_ACCEPTANCE_CRITERIA",
+    );
+  }
+}
