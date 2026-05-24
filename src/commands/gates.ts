@@ -1,6 +1,6 @@
 import { execa } from "execa";
 import { loadConfig } from "../core/config.js";
-import { logHeader, logDivider, logInfo, logError, logSuccess } from "../util/logging.js";
+import { logHeader, logDivider, logError, logSuccess } from "../util/logging.js";
 import { getRepoRoot } from "../util/paths.js";
 import { printJson, jsonOk } from "../util/json-result.js";
 
@@ -9,18 +9,20 @@ export interface GatesOptions {
   json?: boolean;
 }
 
-interface GateResult {
+export interface GateResult {
   name: string;
   command: string;
   passed: boolean;
   duration: number;
 }
 
-export async function cmdGates(options?: GatesOptions): Promise<boolean> {
+/**
+ * Run gates and return results without printing output.
+ */
+export async function runGates(options?: GatesOptions): Promise<{ passed: boolean; results: GateResult[] }> {
   const repoRoot = getRepoRoot();
   const config = loadConfig(repoRoot);
 
-  // Gate name → command mapping, in default execution order
   const availableGates: Record<string, string> = {
     typecheck: config.gates?.typecheck ?? "npm run typecheck",
     lint: config.gates?.lint ?? "npm run lint",
@@ -28,7 +30,6 @@ export async function cmdGates(options?: GatesOptions): Promise<boolean> {
     test: config.gates?.test ?? "npm test -- --run",
   };
 
-  // Filter to requested subset
   let gateNames: string[];
   if (options?.only) {
     gateNames = options.only.split(",").map((g) => g.trim());
@@ -36,28 +37,12 @@ export async function cmdGates(options?: GatesOptions): Promise<boolean> {
     gateNames = Object.keys(availableGates);
   }
 
-  // Validate gate names
   const invalidGates = gateNames.filter((g) => !(g in availableGates));
   if (invalidGates.length > 0) {
-    if (options?.json) {
-      printJson(jsonOk({
-        gates: [],
-        error: `Unknown gates: ${invalidGates.join(", ")}. Available: ${Object.keys(availableGates).join(", ")}`,
-      }));
-      return false;
-    }
-    logError(`Unknown gates: ${invalidGates.join(", ")}`);
-    logInfo(`Available gates: ${Object.keys(availableGates).join(", ")}`);
-    return false;
+    return { passed: false, results: [] };
   }
 
   const results: GateResult[] = [];
-
-  if (!options?.json) {
-    logHeader("# TaskForge Gates");
-    logDivider();
-  }
-
   let allPassed = true;
 
   for (const name of gateNames) {
@@ -68,24 +53,37 @@ export async function cmdGates(options?: GatesOptions): Promise<boolean> {
       await execa(command, { shell: true, cwd: repoRoot });
       const duration = Number(process.hrtime.bigint() - start) / 1e6;
       results.push({ name, command, passed: true, duration });
-      if (!options?.json) {
-        logSuccess(`✓ ${name} (${duration.toFixed(0)}ms): ${command}`);
-      }
-    } catch (err) {
+    } catch {
       const duration = Number(process.hrtime.bigint() - start) / 1e6;
       results.push({ name, command, passed: false, duration });
       allPassed = false;
-      if (!options?.json) {
-        logError(`✗ ${name} (${duration.toFixed(0)}ms): ${command}`);
-        if (err instanceof Error && err.message) {
-          logError(`   ${err.message}`);
-        }
-      }
     }
   }
 
-  // Output
-  if (options?.json) {
+  return { passed: allPassed, results };
+}
+
+export async function cmdGates(options?: GatesOptions): Promise<boolean> {
+  const { passed, results } = await runGates(options);
+
+  if (!options?.json) {
+    logHeader("# TaskForge Gates");
+    logDivider();
+    for (const r of results) {
+      if (r.passed) {
+        logSuccess(`✓ ${r.name} (${r.duration.toFixed(0)}ms): ${r.command}`);
+      } else {
+        logError(`✗ ${r.name} (${r.duration.toFixed(0)}ms): ${r.command}`);
+      }
+    }
+    logDivider();
+    if (passed) {
+      logSuccess(`All ${results.length} gate(s) passed.`);
+    } else {
+      const failedCount = results.filter((r) => !r.passed).length;
+      logError(`${failedCount}/${results.length} gate(s) failed.`);
+    }
+  } else {
     printJson(jsonOk({
       gates: results.map((r) => ({
         name: r.name,
@@ -93,17 +91,9 @@ export async function cmdGates(options?: GatesOptions): Promise<boolean> {
         passed: r.passed,
         duration: r.duration,
       })),
-      allPassed,
+      allPassed: passed,
     }));
-  } else {
-    logDivider();
-    if (allPassed) {
-      logSuccess(`All ${results.length} gate(s) passed.`);
-    } else {
-      const failedCount = results.filter((r) => !r.passed).length;
-      logError(`${failedCount}/${results.length} gate(s) failed.`);
-    }
   }
 
-  return allPassed;
+  return passed;
 }

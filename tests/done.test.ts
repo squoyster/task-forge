@@ -9,6 +9,7 @@ import { setRepoRoot } from "../src/util/paths.js";
 vi.mock("../src/core/git.js", () => ({
   removeWorktree: vi.fn(),
   removeBranch: vi.fn(),
+  getCurrentBranch: vi.fn().mockResolvedValue("agent/TASK-005-test--abc123def0"),
   commitAndPushTaskState: vi.fn(),
   pullTaskState: vi.fn(),
   jitteredPush: vi.fn(),
@@ -17,6 +18,7 @@ vi.mock("../src/core/git.js", () => ({
 
 vi.mock("../src/commands/gates.js", () => ({
   cmdGates: vi.fn().mockResolvedValue(true),
+  runGates: vi.fn().mockResolvedValue({ passed: true, results: [] }),
 }));
 
 import { removeWorktree, removeBranch } from "../src/core/git.js";
@@ -52,7 +54,7 @@ function makeTaskFile(
   };
   const body =
     (bodyOverride as string | undefined) ??
-    `# ${id}: Test task ${id}\n\n## Goal\nDo something.\n\n## Agent Notes\n`;
+    `# ${id}: Test task ${id}\n\n## Goal\nDo something.\n\n## Acceptance Criteria\n- [ ] Do something\n\n## Agent Notes\n`;
   const lines = [
     "---",
     ...Object.entries(frontmatter).map(([k, v]) => `${k}: ${v}`),
@@ -98,7 +100,7 @@ describe("cmdDone", () => {
 
   it("accepts force option for invalid transitions", async () => {
     const fp = makeTaskFile("TASK-005", { status: "In Progress" });
-    await cmdDone("TASK-005", { force: true });
+    await cmdDone("TASK-005", { force: true, reason: "Transition not applicable" });
 
     const task = readTaskFile(fp);
     expect(task.frontmatter.status).toBe("Done");
@@ -212,5 +214,150 @@ describe("cmdDone", () => {
 
     const task = readTaskFile(fp);
     expect(task.frontmatter.status).toBe("Done");
+  });
+
+  it("rejects done when Acceptance Criteria section is missing", async () => {
+    const body = `# TASK-005: Test task TASK-005\n\n## Goal\nDo something.\n\n## Agent Notes\n`;
+    makeTaskFile("TASK-005", { body });
+    await expect(cmdDone("TASK-005")).rejects.toThrow(
+      /no "## Acceptance Criteria" section found/i,
+    );
+  });
+
+  it("rejects done with JSON error when AC section is missing", async () => {
+    const body = `# TASK-005: Test task\n\n## Goal\nDo something.\n\n## Agent Notes\n`;
+    makeTaskFile("TASK-005", { body });
+
+    const logs: string[] = [];
+    const consoleSpy = vi.spyOn(console, "log").mockImplementation((...args: unknown[]) => {
+      logs.push(args.map(String).join(" "));
+    });
+    await cmdDone("TASK-005", { json: true });
+    consoleSpy.mockRestore();
+
+    expect(logs.length).toBeGreaterThan(0);
+    const output = JSON.parse(logs[0]);
+    expect(output.ok).toBe(false);
+    expect(output.code).toBe("MISSING_ACCEPTANCE_CRITERIA");
+    expect(output.error).toContain("Add acceptance criteria");
+  });
+
+  it("allows force done when AC section is missing", async () => {
+    const body = `# TASK-005: Test task TASK-005\n\n## Goal\nDo something.\n\n## Agent Notes\n`;
+    const fp = makeTaskFile("TASK-005", { body });
+    await cmdDone("TASK-005", { force: true, reason: "Missing AC section override" });
+
+    const task = readTaskFile(fp);
+    expect(task.frontmatter.status).toBe("Done");
+  });
+
+  it("rejects done when Acceptance Criteria items are blank", async () => {
+    const body = `# TASK-005: Test task\n\n## Goal\nDo something.\n\n## Acceptance Criteria\n- [ ]\n- [x]\n\n## Agent Notes\n`;
+    makeTaskFile("TASK-005", { body });
+    await expect(cmdDone("TASK-005")).rejects.toThrow(
+      /one or more acceptance criteria are blank/i,
+    );
+  });
+
+  it("rejects done with JSON error when AC items are blank", async () => {
+    const body = `# TASK-005: Test task\n\n## Goal\nDo something.\n\n## Acceptance Criteria\n- [ ]\n\n## Agent Notes\n`;
+    makeTaskFile("TASK-005", { body });
+
+    const logs: string[] = [];
+    const consoleSpy = vi.spyOn(console, "log").mockImplementation((...args: unknown[]) => {
+      logs.push(args.map(String).join(" "));
+    });
+    await cmdDone("TASK-005", { json: true });
+    consoleSpy.mockRestore();
+
+    expect(logs.length).toBeGreaterThan(0);
+    const output = JSON.parse(logs[0]);
+    expect(output.ok).toBe(false);
+    expect(output.code).toBe("BLANK_ACCEPTANCE_CRITERIA");
+    expect(output.error).toContain("Replace placeholder checkboxes");
+  });
+
+  it("allows force done when AC items are blank", async () => {
+    const body = `# TASK-005: Test task\n\n## Goal\nDo something.\n\n## Acceptance Criteria\n- [ ]\n\n## Agent Notes\n`;
+    const fp = makeTaskFile("TASK-005", { body });
+    await cmdDone("TASK-005", { force: true, reason: "Blank AC override" });
+
+    const task = readTaskFile(fp);
+    expect(task.frontmatter.status).toBe("Done");
+  });
+
+  it("rejects done when Acceptance Criteria items are unchecked", async () => {
+    const body = `# TASK-005: Test task\n\n## Goal\nDo something.\n\n## Acceptance Criteria\n- [ ] Do something\n- [x] Verify something\n\n## Agent Notes\n`;
+    makeTaskFile("TASK-005", { body });
+    await expect(cmdDone("TASK-005")).rejects.toThrow(
+      /one or more acceptance criteria remain unchecked/i,
+    );
+  });
+
+  it("rejects done with JSON error when AC items are unchecked", async () => {
+    const body = `# TASK-005: Test task\n\n## Goal\nDo something.\n\n## Acceptance Criteria\n- [ ] Do something\n\n## Agent Notes\n`;
+    makeTaskFile("TASK-005", { body });
+
+    const logs: string[] = [];
+    const consoleSpy = vi.spyOn(console, "log").mockImplementation((...args: unknown[]) => {
+      logs.push(args.map(String).join(" "));
+    });
+    await cmdDone("TASK-005", { json: true });
+    consoleSpy.mockRestore();
+
+    expect(logs.length).toBeGreaterThan(0);
+    const output = JSON.parse(logs[0]);
+    expect(output.ok).toBe(false);
+    expect(output.code).toBe("UNCHECKED_ACCEPTANCE_CRITERIA");
+    expect(output.error).toContain("Check off each criterion");
+  });
+
+  it("allows force done when AC items are unchecked", async () => {
+    const body = `# TASK-005: Test task\n\n## Goal\nDo something.\n\n## Acceptance Criteria\n- [ ] Do something\n\n## Agent Notes\n`;
+    const fp = makeTaskFile("TASK-005", { body });
+    await cmdDone("TASK-005", { force: true, reason: "Unchecked AC override" });
+
+    const task = readTaskFile(fp);
+    expect(task.frontmatter.status).toBe("Done");
+  });
+
+  it("rejects force done without a reason", async () => {
+    const body = `# TASK-005: Test task\n\n## Goal\nDo something.\n\n## Acceptance Criteria\n- [ ]\n\n## Agent Notes\n`;
+    makeTaskFile("TASK-005", { body });
+    await expect(cmdDone("TASK-005", { force: true })).rejects.toThrow(
+      /cannot be force-completed without a reason/i,
+    );
+  });
+
+  it("records structured override metadata on force done with reason", async () => {
+    const body = `# TASK-005: Test task\n\n## Goal\nDo something.\n\n## Acceptance Criteria\n- [ ]\n\n## Agent Notes\n`;
+    const fp = makeTaskFile("TASK-005", { body });
+    await cmdDone("TASK-005", { force: true, reason: "ACs were not applicable" });
+
+    const task = readTaskFile(fp);
+    expect(task.frontmatter.status).toBe("Done");
+    expect(task.frontmatter.override_reason).toBe("ACs were not applicable");
+    expect(task.frontmatter.override_actor).toBeDefined();
+    expect(task.frontmatter.override_timestamp).toBeDefined();
+  });
+
+  it("includes override metadata in JSON output when forced", async () => {
+    const body = `# TASK-005: Test task\n\n## Goal\nDo something.\n\n## Acceptance Criteria\n- [ ]\n\n## Agent Notes\n`;
+    makeTaskFile("TASK-005", { body });
+
+    const logs: string[] = [];
+    const consoleSpy = vi.spyOn(console, "log").mockImplementation((...args: unknown[]) => {
+      logs.push(args.map(String).join(" "));
+    });
+    await cmdDone("TASK-005", { force: true, reason: "Testing override", json: true });
+    consoleSpy.mockRestore();
+
+    expect(logs.length).toBeGreaterThan(0);
+    const output = JSON.parse(logs[0]);
+    expect(output.ok).toBe(true);
+    expect(output.override).toBeDefined();
+    expect(output.override.reason).toBe("Testing override");
+    expect(output.override.actor).toBeDefined();
+    expect(output.override.timestamp).toBeDefined();
   });
 });

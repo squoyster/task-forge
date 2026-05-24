@@ -1,15 +1,15 @@
-import { loadTaskById, updateTaskStatus, clearTaskLock, appendAgentNote, parseTaskFile, writeTaskFile } from "../core/task-store.js";
+import { loadTaskById, updateTaskStatus, clearTaskLock, appendAgentNote, parseTaskFile, writeTaskFile, hasAcceptanceCriteriaSection, hasBlankAcceptanceCriteria, hasUncheckedAcceptanceCriteria } from "../core/task-store.js";
 import { validateTransition } from "../core/status-transition.js";
-import { removeWorktree, removeBranch } from "../core/git.js";
+import { removeWorktree, removeBranch, getCurrentBranch } from "../core/git.js";
 import { withTaskStateTransaction } from "../core/task-state-transaction.js";
 import { STATUS } from "../util/status-constants.js";
-import { logSuccess, logInfo, logWarn, logSub } from "../util/logging.js";
-import { TaskNotFoundError, InvalidStatusTransitionError } from "../core/errors.js";
+import { logSuccess, logInfo, logWarn, logSub, logHeader, logDivider, logError } from "../util/logging.js";
+import { TaskNotFoundError, InvalidStatusTransitionError, MissingAcceptanceCriteriaError, BlankAcceptanceCriteriaError, UncheckedAcceptanceCriteriaError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
-import { assertTaskOwnership } from "../core/session.js";
+import { assertTaskOwnership, parseSessionIdFromBranch } from "../core/session.js";
 import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
 import { createTaskEvent, appendTaskTranscript } from "../core/audit.js";
-import { cmdGates } from "./gates.js";
+import { runGates } from "./gates.js";
 import { isDoctorLocked, removeDoctorLock } from "../core/doctor-lock.js";
 import { hashControlFiles } from "../core/control-files.js";
 import type { ParsedTask } from "../core/task-store.js";
@@ -19,6 +19,7 @@ export interface DoneOptions {
   forceGates?: boolean;
   forceTransition?: boolean;
   forceOwnership?: boolean;
+  reason?: string;
   cleanup?: boolean;
   deleteBranch?: boolean;
   json?: boolean;
@@ -28,7 +29,7 @@ export async function cmdDone(
   taskId: string,
   options: DoneOptions = {},
 ): Promise<void> {
-  const { force = false, cleanup = false, deleteBranch = false, json = false } = options;
+  const { force = false, cleanup = false, deleteBranch = false, json = false, reason = "" } = options;
   const repoRoot = getRepoRoot();
   const task = loadTaskById(taskId);
 
@@ -41,9 +42,27 @@ export async function cmdDone(
   }
 
   // --- Check gates ---
-  const gatesPassed = await cmdGates({ json: options.json });
+  const { passed: gatesPassed, results: gateResults } = await runGates();
+  if (!json) {
+    logHeader("# TaskForge Gates");
+    logDivider();
+    for (const r of gateResults) {
+      if (r.passed) {
+        logSuccess(`✓ ${r.name} (${r.duration.toFixed(0)}ms): ${r.command}`);
+      } else {
+        logError(`✗ ${r.name} (${r.duration.toFixed(0)}ms): ${r.command}`);
+      }
+    }
+    logDivider();
+    if (gatesPassed) {
+      logSuccess(`All ${gateResults.length} gate(s) passed.`);
+    } else {
+      const failedCount = gateResults.filter((r) => !r.passed).length;
+      logError(`${failedCount}/${gateResults.length} gate(s) failed.`);
+    }
+  }
   if (!gatesPassed && !force) {
-    if (options.json) {
+    if (json) {
       printJson(jsonError(
         "Not all gates passed. Run 'taskforge done --force' to override.",
         "GATES_FAILED",
@@ -93,6 +112,66 @@ export async function cmdDone(
     }
   }
 
+  // Acceptance Criteria section check
+  if (!hasAcceptanceCriteriaSection(task.body) && !force) {
+    const message =
+      `Task ${taskId} cannot be marked Done: no "## Acceptance Criteria" section found. ` +
+      "Add acceptance criteria to the task file before completing, or request clarification if the ACs are ambiguous.";
+    if (json) {
+      printJson(jsonError(message, "MISSING_ACCEPTANCE_CRITERIA"));
+      return;
+    }
+    throw new MissingAcceptanceCriteriaError(taskId);
+  }
+
+  // Blank acceptance criteria check
+  if (hasBlankAcceptanceCriteria(task.body) && !force) {
+    const message =
+      `Task ${taskId} cannot be marked Done: one or more acceptance criteria are blank. ` +
+      "Replace placeholder checkboxes with verifiable conditions before completing.";
+    if (json) {
+      printJson(jsonError(message, "BLANK_ACCEPTANCE_CRITERIA"));
+      return;
+    }
+    throw new BlankAcceptanceCriteriaError(taskId);
+  }
+
+  // Unchecked acceptance criteria check
+  if (hasUncheckedAcceptanceCriteria(task.body) && !force) {
+    const message =
+      `Task ${taskId} cannot be marked Done: one or more acceptance criteria remain unchecked. ` +
+      "Check off each criterion with evidence before completing.";
+    if (json) {
+      printJson(jsonError(message, "UNCHECKED_ACCEPTANCE_CRITERIA"));
+      return;
+    }
+    throw new UncheckedAcceptanceCriteriaError(taskId);
+  }
+
+  // Force reason requirement
+  if (force && !reason.trim()) {
+    const message =
+      `Task ${taskId} cannot be force-completed without a reason. ` +
+      "Provide --reason 'explanation' to record why this override is necessary.";
+    if (json) {
+      printJson(jsonError(message, "FORCE_REASON_REQUIRED"));
+      return;
+    }
+    throw new Error(message);
+  }
+
+  // Record structured override metadata when forcing
+  if (force) {
+    const branch = await getCurrentBranch(repoRoot);
+    const actor = parseSessionIdFromBranch(branch) ?? "unknown";
+    const failedGates = gateResults.filter((r) => !r.passed).map((r) => r.name);
+    task.override_reason = reason.trim();
+    task.override_actor = actor;
+    task.override_timestamp = new Date().toISOString();
+    task.override_failed_gates = failedGates.length > 0 ? failedGates : undefined;
+    writeTaskFile(task);
+  }
+
   updateTaskStatus(task.filePath, STATUS.DONE);
 
   // Clear the lock
@@ -101,14 +180,29 @@ export async function cmdDone(
 const today = new Date().toISOString().split("T")[0];
   const notes: string[] = [
     `Task marked Done${force ? " (forced)" : ""}`,
-    !gatesPassed && force ? "Completed despite gate failures — forced." : "",
+    force && reason ? `Override reason: ${reason.trim()}` : "",
+    force && task.override_actor ? `Override actor: ${task.override_actor}` : "",
+    force && task.override_failed_gates && task.override_failed_gates.length > 0
+      ? `Failed gates: ${task.override_failed_gates.join(", ")}`
+      : "",
   ].filter(Boolean);
 
   if (json) {
-    // In JSON mode, output the done result (gates may have been forced)
+    const jsonOverrides: Record<string, unknown> = {};
+    if (force) {
+      jsonOverrides.override = {
+        reason: reason.trim(),
+        actor: task.override_actor,
+        timestamp: task.override_timestamp,
+        failedGates: task.override_failed_gates ?? [],
+      };
+      if (!gatesPassed) {
+        jsonOverrides.warning = "Gates failed but overridden with --force";
+      }
+    }
     printJson(jsonOk({
       task: buildJsonTask(task),
-      ...(!gatesPassed && force ? { warning: "Gates failed but overridden with --force" } : {}),
+      ...jsonOverrides,
     }));
     return;
   }
