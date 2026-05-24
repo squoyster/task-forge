@@ -25,7 +25,7 @@ OpenCode is the presumptive target, but transcript capture should be generic.
 
 ## Acceptance Criteria
 
-- [ ] A generic `TranscriptProvider` or equivalent interface exists for importing or appending session transcript events independent of OpenCode.
+- [x] A generic `TranscriptProvider` or equivalent interface exists for importing or appending session transcript events independent of OpenCode. — `src/core/transcript-provider.ts` `TranscriptProvider` interface: defines `appendEvent(taskId, event)`, `readEvents(taskId)`, and `importEvents(taskId, events)` methods. Tests in `tests/transcript-provider.test.ts` verify interface shape and implementation compatibility.
 
 ## Agent Notes
 
