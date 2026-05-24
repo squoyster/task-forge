@@ -135,15 +135,17 @@ program
   .option("--force-gates", "Override verification gate failures")
   .option("--force-transition", "Override status transition validation")
   .option("--force-ownership", "Override session ownership check")
+  .option("--reason <text>", "Required override reason when using --force")
   .option("--cleanup", "Remove worktree after marking done")
   .option("--delete-branch", "Delete the task branch after marking done (implies --cleanup)")
   .option("--json", "Output in JSON format")
-  .action((taskId: string, opts: { force?: boolean; forceGates?: boolean; forceTransition?: boolean; forceOwnership?: boolean; cleanup?: boolean; deleteBranch?: boolean; json?: boolean }) => {
+  .action((taskId: string, opts: { force?: boolean; forceGates?: boolean; forceTransition?: boolean; forceOwnership?: boolean; reason?: string; cleanup?: boolean; deleteBranch?: boolean; json?: boolean }) => {
     const doneOpts: DoneOptions = {
       force: opts.force ?? false,
       forceGates: opts.forceGates ?? false,
       forceTransition: opts.forceTransition ?? false,
       forceOwnership: opts.forceOwnership ?? false,
+      reason: opts.reason ?? "",
       cleanup: opts.cleanup ?? false,
       deleteBranch: opts.deleteBranch ?? false,
       json: opts.json ?? false,
