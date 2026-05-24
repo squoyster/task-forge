@@ -25,7 +25,7 @@ Make invalid completion fail validation, not just doctor diagnostics.
 
 ## Acceptance Criteria
 
-- [ ] `taskforge validate-state` exits nonzero when any `Done` task has missing, blank, or unchecked acceptance criteria.
+- [x] `taskforge validate-state` exits nonzero when any `Done` task has missing, blank, or unchecked acceptance criteria. — `src/core/state-validator.ts` `validateTaskState()`: checks all `Done` tasks using `hasAcceptanceCriteriaSection`, `hasBlankAcceptanceCriteria`, `hasUncheckedAcceptanceCriteria`; emits errors with codes `AC_MISSING`, `AC_BLANK`, `AC_UNCHECKED` causing `ok: false`.
 
 ## Agent Notes
 
