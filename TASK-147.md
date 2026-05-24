@@ -11,6 +11,7 @@ dependsOn:
 assignee: 89dd73bf16
 claimed_at: '2026-05-24 02:23:46'
 context_hash: 3a03a0322eb9729c
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-147
 ---
 # Validate Invariants Before Transaction Commit
 
@@ -23,6 +24,12 @@ Prevent invalid task-state commits.
 - [ ] `withTaskStateTransaction` runs task-state invariant validation after mutation and before commit, aborting the transaction on validation errors.
 
 ## Agent Notes
+
+### 2026-05-24 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-147
+
+### 2026-05-24 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-147
 
 ### 2026-05-24 System
 - Task claimed via taskforge start TASK-147
