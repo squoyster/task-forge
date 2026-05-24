@@ -41,7 +41,7 @@ Pick the cleanest design consistent with the CLI.
 
 ## Acceptance Criteria
 
-- [ ] A gates failure can be explicitly classified as upstream, causing JSON output to emit `nextAction.kind = "CREATE_BUG_TASK_AND_CONTINUE"` with an instruction to create a bug task and continue only if safe.
+- [x] A gates failure can be explicitly classified as upstream, causing JSON output to emit `nextAction.kind = "CREATE_BUG_TASK_AND_CONTINUE"` with an instruction to create a bug task and continue only if safe. — `src/commands/gates.ts` `cmdGates()`: when `json` is true, gates fail, and `classifyUpstream` is provided, emits envelope with `nextAction.kind = "CREATE_BUG_TASK_AND_CONTINUE"`, `stop: false`, `allowedCommands: ["taskforge new", "taskforge gates"]`. CLI option `--classify-upstream <reason>` added in `src/cli.ts`. Tests in `tests/gates.test.ts` verify this behavior.
 
 ## Agent Notes
 
