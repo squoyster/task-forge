@@ -1,11 +1,14 @@
 ---
 id: TASK-141
 type: Feature
-status: Ready
+status: In Progress
 priority: P0
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
+assignee: '7512307550'
+claimed_at: '2026-05-24 01:43:30'
+context_hash: 3a03a0322eb9729c
 ---
 # Add Command Next-Action Envelope Type
 
@@ -40,3 +43,13 @@ interface CommandResultEnvelope<T = unknown> {
 - [ ] A shared command result envelope type exists and includes `ok`, `state`, `nextAction.kind`, `nextAction.instruction`, `nextAction.stop`, and `nextAction.allowedCommands`.
 
 ## Agent Notes
+
+### 2026-05-24 System
+- Task claimed via taskforge start TASK-141
+- Session: 7512307550
+- Branch: agent/TASK-141-task-141--7512307550
+
+### 2026-05-24 System
+- Task claimed via taskforge start TASK-141
+- Session: 7512307550
+- Branch: agent/TASK-141-task-141--7512307550
