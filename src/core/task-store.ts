@@ -196,6 +196,17 @@ export function loadTaskById(id: string, repoRoot?: string): ParsedTask | null {
   return parseTaskFile(filePath);
 }
 
+export function hasAcceptanceCriteriaSection(body: string): boolean {
+  return /## Acceptance Criteria/i.test(body);
+}
+
+export function hasBlankAcceptanceCriteria(body: string): boolean {
+  const match = body.match(/## Acceptance Criteria\n([\s\S]*?)(?=\n## |$)/i);
+  if (!match) return false;
+  const lines = match[1].split("\n");
+  return lines.some((line) => /^\s*- \[[ x]\]\s*$/.test(line));
+}
+
 export function getNextId(repoRoot?: string): string {
   const tasks = loadAllTasks(repoRoot);
   const maxNum = tasks.reduce((max, t) => {
