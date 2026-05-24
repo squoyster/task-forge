@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **TASK-135: Reject Done when AC section is missing** — `taskforge done` now validates that the task file contains a `## Acceptance Criteria` section before allowing completion. Missing ACs emit `MISSING_ACCEPTANCE_CRITERIA` error with actionable guidance to add or request ACs. Force override available via `--force`.
+
 - **TASK-057: Transactional migration** — `start`, `sweep`, and `done` now use `withTaskStateTransaction` for CAS reapply semantics instead of raw `jitteredPush`/`commitAndPushTaskState`. `claim` already migrated in TASK-048.
 
 - **TASK-056: `reject` command** — `taskforge reject TASK-ID "reason"` marks tasks as rejected (obsolete, won't implement, superseded). Terminal state; clears claim fields.
