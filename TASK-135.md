@@ -27,7 +27,7 @@ Several tasks are currently marked `Done` without meaningful ACs. This invalidat
 
 ## Acceptance Criteria
 
-- [ ] `taskforge done TASK-ID` refuses to complete a task whose Markdown file lacks a `## Acceptance Criteria` section and emits a next action telling the agent to add or request ACs before completion.
+- [x] `taskforge done TASK-ID` refuses to complete a task whose Markdown file lacks a `## Acceptance Criteria` section and emits a next action telling the agent to add or request ACs before completion. — `src/commands/done.ts` `cmdDone(~L96-106)`: checks `hasAcceptanceCriteriaSection(task.body)` before status update; throws `MissingAcceptanceCriteriaError` in human mode or emits JSON error with `MISSING_ACCEPTANCE_CRITERIA` code and actionable instruction.
 
 ## Agent Notes
 
