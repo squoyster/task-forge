@@ -1,5 +1,5 @@
-import { loadTaskById, loadAllTasks, updateTaskStatus, updateTaskLock, appendAgentNote, clearTaskLock, parseTaskFile, writeTaskFile } from "../core/task-store.js";
-import { validateTransition } from "../core/status-transition.js";
+import { loadTaskById, loadAllTasks } from "../core/task-store.js";
+
 import { createWorktree } from "../core/git.js";
 import { withTaskStateTransaction } from "../core/task-state-transaction.js";
 import { makeBranchName } from "../util/paths.js";
@@ -114,40 +114,24 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
     task.branch = makeBranchName(taskId, title, sessionId);
   }
 
-  // Set the lock
-  updateTaskLock(task.filePath, sessionId);
-
-  // Store control-file hash
-  const current = parseTaskFile(task.filePath);
-  if (current) {
-    current.context_hash = hashControlFiles(repoRoot);
-    writeTaskFile(current);
-  }
-
-  // Update status to In Progress if it was Ready
-  if (task.status === STATUS.READY) {
-    const transitionError = validateTransition(task.status, STATUS.IN_PROGRESS);
-    if (transitionError) {
-      throw new InvalidStatusTransitionError(task.status, STATUS.IN_PROGRESS, [STATUS.IN_PROGRESS]);
-    }
-    updateTaskStatus(task.filePath, STATUS.IN_PROGRESS);
-  }
-
-  const today = new Date().toISOString().split("T")[0];
-  appendAgentNote(task.filePath, today, "System", [
-    `Task claimed via taskforge start ${taskId}${options?.force ? " (forced)" : ""}`,
-    `Session: ${sessionId}`,
-    `Branch: ${task.branch}`,
-  ]);
-
-  // Push claim durably through transaction layer
+  // Push claim durably through transaction layer (all mutations happen inside)
   const pushed = await withTaskStateTransaction(
     { command: `claim ${taskId}`, maxRetries: 3 },
     async (tx) => {
       const fresh = tx.loadTask(taskId);
       if (!fresh) throw new Error("Task disappeared");
       if (fresh.assignee && fresh.assignee !== sessionId) throw new Error(`Claimed by ${fresh.assignee}`);
+
+      // Claim sets assignee, claimed_at, and transitions Ready -> In Progress
       tx.claimTask(taskId, sessionId);
+
+      // Store control-file hash
+      const claimed = tx.loadTask(taskId);
+      if (claimed) {
+        claimed.context_hash = hashControlFiles(repoRoot);
+        tx.updateTask(claimed);
+      }
+
       tx.appendNote(taskId, "System", [
         `Task claimed via taskforge start ${taskId}${options?.force ? " (forced)" : ""}`,
         `Session: ${sessionId}`,
@@ -193,18 +177,7 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
     );
   }
 
-  // Record worktree metadata
-  const updated = parseTaskFile(task.filePath);
-  if (updated) {
-    updated.worktree = task.worktree;
-    writeTaskFile(updated);
-  }
-
-  appendAgentNote(task.filePath, today, "System", [
-    `Worktree created: ${task.worktree}`,
-  ]);
-
-  // Push metadata update through transaction
+  // Push worktree metadata through transaction (all mutations inside)
   await withTaskStateTransaction(
     { command: `start ${taskId} [workspace]`, maxRetries: 2 },
     (tx) => {
