@@ -46,6 +46,10 @@ export function parseTaskFile(filePath: string): ParsedTask | null {
     context_hash: frontmatter.context_hash as string | undefined,
     branch: frontmatter.branch,
     worktree: frontmatter.worktree,
+    override_reason: frontmatter.override_reason as string | undefined,
+    override_actor: frontmatter.override_actor as string | undefined,
+    override_timestamp: frontmatter.override_timestamp as string | undefined,
+    override_failed_gates: frontmatter.override_failed_gates as string[] | undefined,
     issue: frontmatter.issue ? Number(frontmatter.issue) : undefined,
     pr: frontmatter.pr ? Number(frontmatter.pr) : undefined,
   };
@@ -85,6 +89,10 @@ export function writeTaskFile(
     context_hash: task.context_hash,
     branch: task.branch,
     worktree: task.worktree,
+    override_reason: task.override_reason,
+    override_actor: task.override_actor,
+    override_timestamp: task.override_timestamp,
+    override_failed_gates: task.override_failed_gates,
     issue: task.issue,
     pr: task.pr,
   };
@@ -194,6 +202,24 @@ export function loadAllTasks(repoRoot?: string): ParsedTask[] {
 export function loadTaskById(id: string, repoRoot?: string): ParsedTask | null {
   const filePath = getTaskFilePath(repoRoot ?? getRepoRoot(), id);
   return parseTaskFile(filePath);
+}
+
+export function hasAcceptanceCriteriaSection(body: string): boolean {
+  return /## Acceptance Criteria/i.test(body);
+}
+
+export function hasBlankAcceptanceCriteria(body: string): boolean {
+  const match = body.match(/## Acceptance Criteria\n([\s\S]*?)(?=\n## |$)/i);
+  if (!match) return false;
+  const lines = match[1].split("\n");
+  return lines.some((line) => /^\s*- \[[ x]\]\s*$/.test(line));
+}
+
+export function hasUncheckedAcceptanceCriteria(body: string): boolean {
+  const match = body.match(/## Acceptance Criteria\n([\s\S]*?)(?=\n## |$)/i);
+  if (!match) return false;
+  const lines = match[1].split("\n");
+  return lines.some((line) => /^\s*- \[ \]\s+\S/.test(line));
 }
 
 export function getNextId(repoRoot?: string): string {

@@ -36,3 +36,33 @@ export class ValidationError extends TaskForgeError {
     super(message, "VALIDATION_ERROR");
   }
 }
+
+export class MissingAcceptanceCriteriaError extends TaskForgeError {
+  constructor(taskId: string) {
+    super(
+      `Task ${taskId} cannot be marked Done: no "## Acceptance Criteria" section found. ` +
+        "Add acceptance criteria to the task file before completing, or request clarification if the ACs are ambiguous.",
+      "MISSING_ACCEPTANCE_CRITERIA",
+    );
+  }
+}
+
+export class BlankAcceptanceCriteriaError extends TaskForgeError {
+  constructor(taskId: string) {
+    super(
+      `Task ${taskId} cannot be marked Done: one or more acceptance criteria are blank. ` +
+        "Replace placeholder checkboxes with verifiable conditions before completing.",
+      "BLANK_ACCEPTANCE_CRITERIA",
+    );
+  }
+}
+
+export class UncheckedAcceptanceCriteriaError extends TaskForgeError {
+  constructor(taskId: string) {
+    super(
+      `Task ${taskId} cannot be marked Done: one or more acceptance criteria remain unchecked. ` +
+        "Check off each criterion with evidence before completing.",
+      "UNCHECKED_ACCEPTANCE_CRITERIA",
+    );
+  }
+}
