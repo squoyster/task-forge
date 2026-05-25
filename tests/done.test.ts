@@ -21,6 +21,22 @@ vi.mock("../src/commands/gates.js", () => ({
   runGates: vi.fn().mockResolvedValue({ passed: true, results: [] }),
 }));
 
+vi.mock("../src/core/task-state-transaction.js", () => ({
+  withTaskStateTransaction: vi.fn().mockImplementation((_opts, mutate) => {
+    const tx = {
+      loadTask: vi.fn(),
+      loadAllTasks: vi.fn(),
+      updateTask: vi.fn(),
+      appendNote: vi.fn(),
+      appendEvent: vi.fn(),
+      assertCanTransition: vi.fn(),
+      claimTask: vi.fn(),
+      clearClaim: vi.fn(),
+    };
+    return Promise.resolve(mutate(tx));
+  }),
+}));
+
 import { removeWorktree, removeBranch } from "../src/core/git.js";
 
 let uniqueDir: string;
@@ -54,7 +70,7 @@ function makeTaskFile(
   };
   const body =
     (bodyOverride as string | undefined) ??
-    `# ${id}: Test task ${id}\n\n## Goal\nDo something.\n\n## Acceptance Criteria\n- [ ] Do something\n\n## Agent Notes\n`;
+    `# ${id}: Test task ${id}\n\n## Goal\nDo something.\n\n## Acceptance Criteria\n- [x] Do something\n\n## Agent Notes\n`;
   const lines = [
     "---",
     ...Object.entries(frontmatter).map(([k, v]) => `${k}: ${v}`),

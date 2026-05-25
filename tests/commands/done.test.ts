@@ -7,6 +7,17 @@ import { setRepoRoot } from "../../src/util/paths.js";
 
 vi.mock("../../src/commands/gates.js", () => ({
   cmdGates: vi.fn().mockResolvedValue(true),
+  runGates: vi.fn().mockResolvedValue({ passed: true, results: [] }),
+}));
+
+vi.mock("../../src/core/git.js", () => ({
+  getCurrentBranch: vi.fn().mockResolvedValue("agent/TASK-001-test--abc123def0"),
+  removeWorktree: vi.fn(),
+  removeBranch: vi.fn(),
+}));
+
+vi.mock("../../src/core/task-state-transaction.js", () => ({
+  withTaskStateTransaction: vi.fn().mockResolvedValue(undefined),
 }));
 
 let uniqueDir: string;
@@ -33,7 +44,7 @@ function makeTaskFile(id: string, overrides: Record<string, unknown> = {}): stri
     priority: "P2",
     ...frontmatterOverrides,
   };
-  const body = (bodyOverride as string | undefined) ?? `# ${id}: Test task ${id}\n\n## Goal\nDo something.\n\n## Acceptance Criteria\n- [ ] Do something\n\n## Agent Notes\n`;
+  const body = (bodyOverride as string | undefined) ?? `# ${id}: Test task ${id}\n\n## Goal\nDo something.\n\n## Acceptance Criteria\n- [x] Do something\n\n## Agent Notes\n`;
   const lines = [
     "---",
     ...Object.entries(frontmatter).map(([k, v]) => `${k}: ${v}`),
@@ -61,7 +72,7 @@ describe("cmdDone", () => {
 
   it("accepts force flag for invalid transitions", async () => {
     const fp = makeTaskFile("TASK-001", { status: "In Progress" });
-    await cmdDone("TASK-001", { force: true });
+    await cmdDone("TASK-001", { force: true, reason: "test override" });
 
     const content = fs.readFileSync(fp, "utf-8");
     expect(content).toContain("Done");
