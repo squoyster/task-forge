@@ -187,7 +187,7 @@ describe("cmdDone", () => {
     await expect(cmdDone("TASK-999")).rejects.toThrow(/not found/i);
   });
 
-  it("throws for invalid transition without force", async () => {
+  it("throws for invalid transition", async () => {
     makeTaskFile("TASK-005", { status: "In Progress" });
     await expect(cmdDone("TASK-005")).rejects.toThrow(
       /cannot transition/i,
