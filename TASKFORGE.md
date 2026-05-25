@@ -479,3 +479,7 @@ Worktrees are qualified with the project name to prevent collisions across repos
 | `gates`, `validate-state`, `doctor`, `config-validate` | Quality and health |
 | `deps scan/audit/outdated/plan/pr/summary` | Dependency management |
 | `new`, `sync` | Task creation and external sync |
+
+## Extension Documentation
+
+- [Agent Framework Integration](docs/agent-framework-integration.md) — How to integrate TaskForge with a new coding agent framework. Covers the adapter system, audit events, generated files, hooks, plugins, and extension author workflow.
