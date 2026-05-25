@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **TASK-161: Enforce audit event type schema** — `AuditEventSchema` now validates `event` field against `AUDIT_EVENT_TYPES` enum instead of accepting arbitrary strings. Added missing event types (`tool.execute`, `permission.requested`, `permission.responded`, `session.started`) to registry. `createAuditEvent()` and `createTaskEvent()` now use typed `AuditEventType`.
+
 - **TASK-159: Stop silently swallowing audit write failures** — generated audit plugin now logs `console.error` with `[taskforge-audit] Failed to write audit event: <message>` when write operations fail. Suppression available via `TASKFORGE_SUPPRESS_AUDIT_FAILURES=true` env var.
 
 - **TASK-180: Fix pre-existing sweep and claim test failures** — fixed YAML status assertions in sweep tests (gray-matter quotes values with spaces), updated sweep test to verify transaction layer instead of deprecated `jitteredPush`, added `withTaskStateTransaction` mocks to sweep and claim tests with actual file persistence, and fixed claim JSON output test. All 454 tests now pass.
