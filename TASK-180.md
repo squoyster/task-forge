@@ -1,13 +1,11 @@
 ---
 id: TASK-180
 type: Bug
-status: In Progress
+status: Done
 priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 6f4e0b34bc
-claimed_at: '2026-05-25 01:01:53'
 context_hash: 56975070d7558a37
 ---
 # Fix Pre-existing Sweep and Claim Test Failures (TASK-091)
@@ -32,11 +30,11 @@ These tests have been failing since TASK-091 and were force-done over:
 
 ## Acceptance Criteria
 
-- [ ] `tests/sweep.test.ts` "recovers multiple stale tasks" passes (fix YAML quote assertion)
-- [ ] `tests/sweep.test.ts` "commits and pushes state changes with jittered retry" passes (update for transaction layer)
-- [ ] `tests/claim.test.ts` "supports --json output" passes (fix execa mock)
-- [ ] All sweep and claim tests pass
-- [ ] No other tests regress
+- [x] `tests/sweep.test.ts` "recovers multiple stale tasks" passes — fixed YAML quote assertion (gray-matter quotes values with spaces, so `status: "In Progress"` is correct).
+- [x] `tests/sweep.test.ts` "commits and pushes state changes with jittered retry" passes — updated to verify `withTaskStateTransaction` instead of deprecated `jitteredPush`.
+- [x] `tests/claim.test.ts` "supports --json output" passes — added `withTaskStateTransaction` mock with actual file persistence, fixed console.log capture.
+- [x] All sweep and claim tests pass — 9 sweep tests + 9 claim tests = 18 tests pass.
+- [x] No other tests regress — all 454 tests pass.
 
 ## Test / Verification Command
 
@@ -58,3 +56,13 @@ Low — test-only fix.
 - Task claimed via taskforge start TASK-180
 - Session: 6f4e0b34bc
 - Branch: agent/TASK-180-task-180--6f4e0b34bc
+
+### 2026-05-25 Implementer
+- Fixed YAML status assertions in sweep tests (gray-matter quotes values with spaces)
+- Updated sweep test to verify `withTaskStateTransaction` instead of deprecated `jitteredPush`
+- Added `withTaskStateTransaction` mock to sweep and claim tests with actual file persistence
+- Fixed claim JSON output test to properly capture `console.log` output
+- All 454 tests now pass (was 451/454)
+
+### 2026-05-25 System
+- Task marked Done
