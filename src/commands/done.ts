@@ -1,12 +1,12 @@
 import { loadTaskById, updateTaskStatus, clearTaskLock, appendAgentNote, parseTaskFile, writeTaskFile, hasAcceptanceCriteriaSection, hasBlankAcceptanceCriteria, hasUncheckedAcceptanceCriteria } from "../core/task-store.js";
 import { validateTransition } from "../core/status-transition.js";
-import { removeWorktree, removeBranch, getCurrentBranch } from "../core/git.js";
+import { removeWorktree, removeBranch } from "../core/git.js";
 import { withTaskStateTransaction } from "../core/task-state-transaction.js";
 import { STATUS } from "../util/status-constants.js";
 import { logSuccess, logInfo, logWarn, logSub, logHeader, logDivider, logError } from "../util/logging.js";
 import { TaskNotFoundError, InvalidStatusTransitionError, MissingAcceptanceCriteriaError, BlankAcceptanceCriteriaError, UncheckedAcceptanceCriteriaError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
-import { assertTaskOwnership, parseSessionIdFromBranch } from "../core/session.js";
+import { assertTaskOwnership } from "../core/session.js";
 import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
 import { createTaskEvent, appendTaskTranscript } from "../core/audit.js";
 import { runGates } from "./gates.js";
@@ -15,11 +15,6 @@ import { hashControlFiles } from "../core/control-files.js";
 import type { ParsedTask } from "../core/task-store.js";
 
 export interface DoneOptions {
-  force?: boolean;
-  forceGates?: boolean;
-  forceTransition?: boolean;
-  forceOwnership?: boolean;
-  reason?: string;
   cleanup?: boolean;
   deleteBranch?: boolean;
   json?: boolean;
@@ -29,7 +24,7 @@ export async function cmdDone(
   taskId: string,
   options: DoneOptions = {},
 ): Promise<void> {
-  const { force = false, cleanup = false, deleteBranch = false, json = false, reason = "" } = options;
+  const { cleanup = false, deleteBranch = false, json = false } = options;
   const repoRoot = getRepoRoot();
   const task = loadTaskById(taskId);
 
@@ -61,20 +56,20 @@ export async function cmdDone(
       logError(`${failedCount}/${gateResults.length} gate(s) failed.`);
     }
   }
-  if (!gatesPassed && !force) {
+  if (!gatesPassed) {
     if (json) {
       printJson(jsonError(
-        "Not all gates passed. Run 'taskforge done --force' to override.",
+        "Not all gates passed.",
         "GATES_FAILED",
       ));
       return;
     }
-    throw new Error("Not all gates passed. Run 'taskforge done --force' to override.");
+    throw new Error("Not all gates passed.");
   }
 
   // --- Status transition ---
   const transitionError = validateTransition(task.status, STATUS.DONE);
-  if (transitionError && !force) {
+  if (transitionError) {
     if (json) {
       printJson(jsonError(
         `Cannot transition from "${task.status}" to "${STATUS.DONE}". Allowed: ${STATUS.REVIEW}, ${STATUS.VERIFY}`,
@@ -90,30 +85,30 @@ export async function cmdDone(
   }
 
   // Assert ownership if task is locked (skip if no lock set)
-  if (task.assignee && !force) {
+  if (task.assignee) {
     await assertTaskOwnership(task, repoRoot);
   }
 
   // Control-file change detection
-  if (task.context_hash && !force) {
+  if (task.context_hash) {
     const currentHash = hashControlFiles(repoRoot);
     if (currentHash !== task.context_hash) {
       if (json) {
         printJson(jsonError(
-          "Control files have changed since task was started. Review changes before marking Done. Use --force to override.",
+          "Control files have changed since task was started. Review changes before marking Done.",
           "CONTEXT_CHANGED",
         ));
         return;
       }
       throw new Error(
         "Control files have changed since this task was started. " +
-        "Review the changes before marking Done, or use --force to override.",
+        "Review the changes before marking Done.",
       );
     }
   }
 
   // Acceptance Criteria section check
-  if (!hasAcceptanceCriteriaSection(task.body) && !force) {
+  if (!hasAcceptanceCriteriaSection(task.body)) {
     const message =
       `Task ${taskId} cannot be marked Done: no "## Acceptance Criteria" section found. ` +
       "Add acceptance criteria to the task file before completing, or request clarification if the ACs are ambiguous.";
@@ -125,7 +120,7 @@ export async function cmdDone(
   }
 
   // Blank acceptance criteria check
-  if (hasBlankAcceptanceCriteria(task.body) && !force) {
+  if (hasBlankAcceptanceCriteria(task.body)) {
     const message =
       `Task ${taskId} cannot be marked Done: one or more acceptance criteria are blank. ` +
       "Replace placeholder checkboxes with verifiable conditions before completing.";
@@ -137,7 +132,7 @@ export async function cmdDone(
   }
 
   // Unchecked acceptance criteria check
-  if (hasUncheckedAcceptanceCriteria(task.body) && !force) {
+  if (hasUncheckedAcceptanceCriteria(task.body)) {
     const message =
       `Task ${taskId} cannot be marked Done: one or more acceptance criteria remain unchecked. ` +
       "Check off each criterion with evidence before completing.";
@@ -148,30 +143,6 @@ export async function cmdDone(
     throw new UncheckedAcceptanceCriteriaError(taskId);
   }
 
-  // Force reason requirement
-  if (force && !reason.trim()) {
-    const message =
-      `Task ${taskId} cannot be force-completed without a reason. ` +
-      "Provide --reason 'explanation' to record why this override is necessary.";
-    if (json) {
-      printJson(jsonError(message, "FORCE_REASON_REQUIRED"));
-      return;
-    }
-    throw new Error(message);
-  }
-
-  // Record structured override metadata when forcing
-  if (force) {
-    const branch = await getCurrentBranch(repoRoot);
-    const actor = parseSessionIdFromBranch(branch) ?? "unknown";
-    const failedGates = gateResults.filter((r) => !r.passed).map((r) => r.name);
-    task.override_reason = reason.trim();
-    task.override_actor = actor;
-    task.override_timestamp = new Date().toISOString();
-    task.override_failed_gates = failedGates.length > 0 ? failedGates : undefined;
-    writeTaskFile(task);
-  }
-
   updateTaskStatus(task.filePath, STATUS.DONE);
 
   // Clear the lock
@@ -179,30 +150,12 @@ export async function cmdDone(
 
 const today = new Date().toISOString().split("T")[0];
   const notes: string[] = [
-    `Task marked Done${force ? " (forced)" : ""}`,
-    force && reason ? `Override reason: ${reason.trim()}` : "",
-    force && task.override_actor ? `Override actor: ${task.override_actor}` : "",
-    force && task.override_failed_gates && task.override_failed_gates.length > 0
-      ? `Failed gates: ${task.override_failed_gates.join(", ")}`
-      : "",
+    "Task marked Done",
   ].filter(Boolean);
 
   if (json) {
-    const jsonOverrides: Record<string, unknown> = {};
-    if (force) {
-      jsonOverrides.override = {
-        reason: reason.trim(),
-        actor: task.override_actor,
-        timestamp: task.override_timestamp,
-        failedGates: task.override_failed_gates ?? [],
-      };
-      if (!gatesPassed) {
-        jsonOverrides.warning = "Gates failed but overridden with --force";
-      }
-    }
     printJson(jsonOk({
       task: buildJsonTask(task),
-      ...jsonOverrides,
     }));
     return;
   }

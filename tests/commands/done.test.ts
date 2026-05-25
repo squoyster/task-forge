@@ -11,7 +11,6 @@ vi.mock("../../src/commands/gates.js", () => ({
 }));
 
 vi.mock("../../src/core/git.js", () => ({
-  getCurrentBranch: vi.fn().mockResolvedValue("agent/TASK-001-test--abc123def0"),
   removeWorktree: vi.fn(),
   removeBranch: vi.fn(),
 }));
@@ -70,15 +69,12 @@ describe("cmdDone", () => {
     await expect(cmdDone("TASK-999")).rejects.toThrow(/not found/i);
   });
 
-  it("accepts force flag for invalid transitions", async () => {
-    const fp = makeTaskFile("TASK-001", { status: "In Progress" });
-    await cmdDone("TASK-001", { force: true, reason: "test override" });
-
-    const content = fs.readFileSync(fp, "utf-8");
-    expect(content).toContain("Done");
+  it("rejects done for invalid transitions", async () => {
+    makeTaskFile("TASK-001", { status: "In Progress" });
+    await expect(cmdDone("TASK-001")).rejects.toThrow(/cannot transition/i);
   });
 
-  it("throws for invalid transition without force", async () => {
+  it("throws for invalid transition", async () => {
     makeTaskFile("TASK-001", { status: "In Progress" });
     await expect(cmdDone("TASK-001")).rejects.toThrow(/cannot transition/i);
   });
