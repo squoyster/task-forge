@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { run } from "../util/exec.js";
-import { logInfo, logSuccess, logWarn } from "../util/logging.js";
-import { makeExecutable, isExecutable } from "../core/templates.js";
+import { logInfo, logSuccess } from "../util/logging.js";
+import { isExecutable } from "../core/templates.js";
 
 const HOOKS_DIR = ".taskforge/hooks";
 

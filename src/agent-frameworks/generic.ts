@@ -15,7 +15,7 @@ export const genericAdapter: AgentFrameworkAdapter = {
     return { detected: true, frameworkId: "generic", configPaths: [] };
   },
 
-  async plan(ctx: AgentFrameworkInitContext): Promise<GeneratedFilePlan> {
+  async plan(_ctx: AgentFrameworkInitContext): Promise<GeneratedFilePlan> {
     return { files: [] };
   },
 

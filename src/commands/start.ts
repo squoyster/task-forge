@@ -1,4 +1,4 @@
-import { loadTaskById, loadAllTasks, updateTaskStatus, updateTaskLock, appendAgentNote, clearTaskLock, parseTaskFile, writeTaskFile } from "../core/task-store.js";
+import { loadTaskById, loadAllTasks, updateTaskStatus, updateTaskLock, appendAgentNote, parseTaskFile, writeTaskFile } from "../core/task-store.js";
 import { validateTransition } from "../core/status-transition.js";
 import { createWorktree } from "../core/git.js";
 import { withTaskStateTransaction } from "../core/task-state-transaction.js";

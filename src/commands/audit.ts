@@ -1,7 +1,6 @@
 import { getRepoRoot } from "../util/paths.js";
-import { readTaskAudit, readAudit, summarizeTaskAudit } from "../core/audit.js";
-import type { AuditEvent } from "../core/audit-schema.js";
-import { logInfo, logHeader, logSub, logSuccess } from "../util/logging.js";
+import { readTaskAudit, summarizeTaskAudit } from "../core/audit.js";
+import { logInfo, logHeader, logSub } from "../util/logging.js";
 
 export function cmdAudit(taskId: string, opts: { json?: boolean }): void {
   const repoRoot = getRepoRoot();

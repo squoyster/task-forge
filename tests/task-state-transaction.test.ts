@@ -219,7 +219,6 @@ describe("withTaskStateTransaction", () => {
   });
 
   it("aborts transaction on DONE_WITH_ASSIGNEE violation", async () => {
-    const { execa } = await import("execa");
     const commitSpy = vi.spyOn(taskStore, "writeTaskFile");
 
     makeTaskFile("TASK-001", { status: "In Progress", assignee: "session-abc" });
@@ -242,7 +241,6 @@ describe("withTaskStateTransaction", () => {
   });
 
   it("aborts transaction on READY_WITH_ASSIGNEE violation", async () => {
-    const { execa } = await import("execa");
     const commitSpy = vi.spyOn(taskStore, "writeTaskFile");
 
     makeTaskFile("TASK-001", { status: "In Progress", assignee: "session-abc" });
@@ -264,8 +262,6 @@ describe("withTaskStateTransaction", () => {
   });
 
   it("leaves task-state unchanged after invariant abort", async () => {
-    const { execa } = await import("execa");
-
     const fp = makeTaskFile("TASK-001", { status: "In Progress", assignee: "session-abc" });
     const beforeContent = fs.readFileSync(fp, "utf-8");
 

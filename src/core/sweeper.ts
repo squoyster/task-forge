@@ -1,5 +1,4 @@
 import { loadAllTasks, updateTaskStatus, clearTaskLock, appendAgentNote } from "./task-store.js";
-import { jitteredPush } from "./git.js";
 import { withTaskStateTransaction } from "./task-state-transaction.js";
 import { STATUS } from "../util/status-constants.js";
 import { getRepoRoot } from "../util/paths.js";

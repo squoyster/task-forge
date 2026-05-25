@@ -21,7 +21,6 @@ import { cmdResume } from "./commands/resume.js";
 import { cmdDoctor } from "./commands/doctor.js";
 import { cmdConfigValidate } from "./commands/config-validate.js";
 import { cmdRelease, type ReleaseOptions } from "./commands/release.js";
-import { cmdValidateState } from "./commands/validate-state.js";
 import { cmdReject } from "./commands/reject.js";
 import { cmdList, type ListOptions } from "./commands/list.js";
 import { cmdSync } from "./commands/sync.js";

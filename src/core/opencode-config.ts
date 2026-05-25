@@ -1,7 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import { logInfo, logSuccess } from "../util/logging.js";
-import type { GeneratedFilePlan } from "../agent-frameworks/types.js";
 
 export interface OpenCodePermissions {
   [key: string]: unknown;
