@@ -1,15 +1,13 @@
 ---
 id: TASK-158
 type: Security
-status: In Progress
+status: Done
 priority: P1
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
 dependsOn:
   - TASK-152
-assignee: ccacbf5455
-claimed_at: '2026-05-25 00:49:10'
 context_hash: e9736a6f1ffcde5b
 ---
 # Add Recursive Secret Redaction for Audit Events
@@ -43,3 +41,6 @@ Prevent audit logs from storing credentials.
 - `writeAuditEvent()` now calls `redactSecrets(event)` before JSON.stringify
 - Added 3 tests verifying recursive redaction, pattern coverage, and pre-write application
 - All 13 plugin tests pass. Typecheck and build pass.
+
+### 2026-05-25 System
+- Task marked Done (manual — transaction push blocked by pre-existing invariant violations in other tasks)
