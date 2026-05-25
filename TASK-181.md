@@ -1,7 +1,7 @@
 ---
 id: TASK-181
 type: Task
-status: Ready
+status: Rejected
 priority: P2
 agentRole: Implementer
 riskLevel: Low
@@ -19,3 +19,6 @@ Describe the desired outcome.
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-25 System
+- Task rejected: Didn't mean to create
