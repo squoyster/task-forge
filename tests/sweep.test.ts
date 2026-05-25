@@ -12,6 +12,22 @@ vi.mock("../src/core/git.js", () => ({
   ensureTaskStateBranch: vi.fn(),
 }));
 
+vi.mock("../src/core/task-state-transaction.js", () => ({
+  withTaskStateTransaction: vi.fn().mockImplementation((_opts, mutate) => {
+    const tx = {
+      loadTask: vi.fn(),
+      loadAllTasks: vi.fn(),
+      updateTask: vi.fn(),
+      appendNote: vi.fn(),
+      appendEvent: vi.fn(),
+      assertCanTransition: vi.fn(),
+      claimTask: vi.fn(),
+      clearClaim: vi.fn(),
+    };
+    return Promise.resolve(mutate(tx));
+  }),
+}));
+
 let uniqueDir: string;
 let stateDir: string;
 
@@ -137,9 +153,8 @@ describe("cmdSweep", () => {
     expect(content).not.toContain("claimed_at");
   });
 
-  it("commits and pushes state changes with jittered retry", async () => {
-    // Import the mocked module to verify it was called
-    const { jitteredPush } = await import("../src/core/git.js");
+  it("commits and pushes state changes through transaction layer", async () => {
+    const { withTaskStateTransaction } = await import("../src/core/task-state-transaction.js");
 
     makeTaskFile("TASK-001", {
       assignee: "abc123def0",
@@ -148,9 +163,9 @@ describe("cmdSweep", () => {
 
     await cmdSweep();
 
-    expect(jitteredPush).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.stringMatching(/sweep/i),
+    expect(withTaskStateTransaction).toHaveBeenCalledWith(
+      expect.objectContaining({ command: expect.stringMatching(/sweep/i) }),
+      expect.any(Function),
     );
   });
 

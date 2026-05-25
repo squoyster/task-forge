@@ -10,6 +10,31 @@ vi.mock("../src/core/git.js", () => ({
   pullTaskState: vi.fn().mockResolvedValue(true),
 }));
 
+vi.mock("../src/core/task-state-transaction.js", () => ({
+  withTaskStateTransaction: vi.fn().mockImplementation(async (_opts, mutate) => {
+    const taskStore = await import("../src/core/task-store.js");
+    const tx = {
+      loadTask: (id: string) => taskStore.loadTaskById(id),
+      loadAllTasks: () => taskStore.loadAllTasks(),
+      updateTask: (task: { id: string }) => taskStore.writeTaskFile(task),
+      appendNote: vi.fn(),
+      appendEvent: vi.fn(),
+      assertCanTransition: vi.fn(),
+      claimTask: (id: string, session: string) => {
+        const task = taskStore.loadTaskById(id);
+        if (task) {
+          task.assignee = session;
+          task.claimed_at = new Date().toISOString().replace("T", " ").replace(/\.\d+Z$/, "");
+          if (task.status === "Ready") task.status = "In Progress";
+          taskStore.writeTaskFile(task);
+        }
+      },
+      clearClaim: vi.fn(),
+    };
+    return mutate(tx);
+  }),
+}));
+
 let uniqueDir: string;
 let stateDir: string;
 
@@ -132,17 +157,20 @@ describe("cmdClaim", () => {
   });
 
   it("supports --json output", async () => {
-    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    let capturedOutput = "";
+    const logSpy = vi.spyOn(console, "log").mockImplementation((...args: unknown[]) => {
+      capturedOutput = args.map(a => typeof a === "string" ? a : JSON.stringify(a)).join(" ");
+    });
+
     makeTaskFile("TASK-001", { status: "Ready" });
 
     await cmdClaim("TASK-001", { json: true, session: "json-test" });
 
-    const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
+    logSpy.mockRestore();
+    const output = JSON.parse(capturedOutput);
     expect(output.ok).toBe(true);
     expect(output.task.id).toBe("TASK-001");
     expect(output.task.status).toBe("in_progress");
-
-    logSpy.mockRestore();
   });
 
   it("throws for non-existent task", async () => {
