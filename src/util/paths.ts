@@ -1,5 +1,4 @@
 import path from "node:path";
-import fs from "node:fs";
 import { execSync } from "node:child_process";
 
 let _repoRoot: string | null = null;
