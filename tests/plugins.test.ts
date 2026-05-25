@@ -43,6 +43,29 @@ describe("audit plugin", () => {
     const content = generateAuditPlugin();
     expect(content).toMatch(/worktrees.*TASK-\\d\+/);
   });
+
+  it("generated redaction is recursive", () => {
+    const content = generateAuditPlugin();
+    // redactSecrets should call itself for nested values
+    expect(content).toContain("redactSecrets(val)");
+  });
+
+  it("generated redaction covers all secret patterns", () => {
+    const content = generateAuditPlugin();
+    expect(content).toContain("TOKEN");
+    expect(content).toContain("SECRET");
+    expect(content).toContain("PASSWORD");
+    expect(content).toContain("API_KEY");
+    expect(content).toContain("PRIVATE_KEY");
+    expect(content).toContain("CREDENTIAL");
+    expect(content).toContain("AUTHORIZATION");
+  });
+
+  it("generated writeAuditEvent applies redaction before writing", () => {
+    const content = generateAuditPlugin();
+    // redactSecrets should be called on the event before JSON.stringify
+    expect(content).toContain("redactSecrets(event)");
+  });
 });
 
 describe("guard plugin", () => {

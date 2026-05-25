@@ -31,15 +31,47 @@ function resolveTaskId(): string {
   return "UNKNOWN";
 }
 
-function redactSecrets(obj: Record<string, unknown>): Record<string, unknown> {
-  const result = { ...obj };
-  for (const key of Object.keys(result)) {
-    const k = key.toUpperCase();
-    if (k.includes("TOKEN") || k.includes("SECRET") || k.includes("PASSWORD") || k.includes("KEY")) {
-      result[key] = "[REDACTED]";
+const SECRET_PATTERNS = [
+  "TOKEN",
+  "SECRET",
+  "PASSWORD",
+  "API_KEY",
+  "API-KEY",
+  "API KEY",
+  "PRIVATE_KEY",
+  "PRIVATE-KEY",
+  "PRIVATE KEY",
+  "CREDENTIAL",
+  "AUTHORIZATION",
+  "AUTH_TOKEN",
+  "AUTH-TOKEN",
+  "ACCESS_KEY",
+  "ACCESS-KEY",
+  "ACCESS KEY",
+] as const;
+
+function isSecretKey(key: string): boolean {
+  const upper = key.toUpperCase().replace(/[-_\s]/g, "_");
+  return SECRET_PATTERNS.some((pattern) => upper.includes(pattern));
+}
+
+function redactSecrets(value: unknown): unknown {
+  if (value === null || value === undefined) return value;
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return value;
+  if (Array.isArray(value)) return value.map(redactSecrets);
+  if (typeof value === "object") {
+    const result: Record<string, unknown> = {};
+    for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
+      if (isSecretKey(key)) {
+        result[key] = "[REDACTED]";
+      } else {
+        result[key] = redactSecrets(val);
+      }
     }
+    return result;
   }
-  return result;
+  return value;
 }
 
 function writeAuditEvent(event: Record<string, unknown>): void {
@@ -47,7 +79,8 @@ function writeAuditEvent(event: Record<string, unknown>): void {
     const taskId = resolveTaskId();
     const dir = \`logs/taskforge/tasks/\${taskId}\`;
     require("fs").mkdirSync(dir, { recursive: true });
-    const line = JSON.stringify(event) + "\\n";
+    const redacted = redactSecrets(event) as Record<string, unknown>;
+    const line = JSON.stringify(redacted) + "\\n";
     require("fs").appendFileSync(\`\${dir}/transcript.jsonl\`, line);
   } catch {}
 }
