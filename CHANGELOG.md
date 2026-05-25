@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **TASK-176: Document command next-action semantics** — `docs/next-action-semantics.md` enumerates all 7 `nextAction` values from the summary command priority cascade, with continuation rules, follow-up commands, and JSON output format.
+
 - **TASK-174: Add AC linter command** — `taskforge ac-check [taskId]` scans task files for acceptance criteria issues: missing sections, blank items, unchecked items, and duplicate sections. Supports `--json` output and scanning all tasks or a specific one. Added 7 tests.
 
 - **TASK-172: Add task-forge CLI alias** — `package.json` bin field now exposes both `taskforge` and `task-forge` pointing to the same entrypoint, supporting both compact and hyphenated command names.
