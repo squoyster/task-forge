@@ -66,6 +66,27 @@ describe("audit plugin", () => {
     // redactSecrets should be called on the event before JSON.stringify
     expect(content).toContain("redactSecrets(event)");
   });
+
+  it("generated plugin has onPermissionRequest hook", () => {
+    const content = generateAuditPlugin();
+    expect(content).toContain("onPermissionRequest");
+    expect(content).toContain("permission.requested");
+    expect(content).toContain("permissionId");
+    expect(content).toContain("tool: ctx.tool");
+  });
+
+  it("generated plugin has onPermissionResponse hook", () => {
+    const content = generateAuditPlugin();
+    expect(content).toContain("onPermissionResponse");
+    expect(content).toContain("permission.responded");
+    expect(content).toContain("decision: ctx.decision");
+  });
+
+  it("generated permission request includes timestamp, taskId, and sessionId", () => {
+    const content = generateAuditPlugin();
+    expect(content).toContain("timestamp: new Date().toISOString()");
+    expect(content).toContain("taskId: ctx.taskId ?? resolveTaskId()");
+  });
 });
 
 describe("guard plugin", () => {

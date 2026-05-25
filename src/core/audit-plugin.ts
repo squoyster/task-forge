@@ -114,6 +114,27 @@ const taskforgeAudit: Plugin = {
     }
     writeAuditEvent(event);
   },
+
+  async onPermissionRequest(ctx: { id: string; tool: string; args?: Record<string, unknown>; taskId?: string }) {
+    writeAuditEvent({
+      timestamp: new Date().toISOString(),
+      event: "permission.requested",
+      taskId: ctx.taskId ?? resolveTaskId(),
+      permissionId: ctx.id,
+      tool: ctx.tool,
+      args: ctx.args ? redactSecrets(ctx.args) : undefined,
+    });
+  },
+
+  async onPermissionResponse(ctx: { id: string; decision: string; taskId?: string }) {
+    writeAuditEvent({
+      timestamp: new Date().toISOString(),
+      event: "permission.responded",
+      taskId: ctx.taskId ?? resolveTaskId(),
+      permissionId: ctx.id,
+      decision: ctx.decision,
+    });
+  },
 };
 
 export default taskforgeAudit;
