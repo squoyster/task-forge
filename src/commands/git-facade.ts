@@ -20,6 +20,8 @@ export async function cmdDiff(taskId: string): Promise<void> {
   const repoRoot = getRepoRoot();
   const task = requireTask(taskId);
 
+  assertTaskOwnership(task, repoRoot);
+
   if (!task.worktree) {
     throw new Error(`No worktree found for ${taskId}. Run 'taskforge start ${taskId}' first.`);
   }

@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **TASK-167: Validate ownership in diff command** — `taskforge diff` now calls `assertTaskOwnership()` before accessing the worktree, enforcing the same ownership discipline as `checkpoint` and `submit`.
+
 - **TASK-166: Emit audit events for PR command** — `taskforge pr` now appends task transcript events for all outcomes: `github.pr.created` (success with PR number/URL), `github.pr.failed` (API error with message), and `github.pr.manual` (GitHub not configured). Added `github.pr.failed` event type.
 
 - **TASK-159: Stop silently swallowing audit write failures** — generated audit plugin now logs `console.error` with `[taskforge-audit] Failed to write audit event: <message>` when write operations fail. Suppression available via `TASKFORGE_SUPPRESS_AUDIT_FAILURES=true` env var.
