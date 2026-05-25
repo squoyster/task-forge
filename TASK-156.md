@@ -1,15 +1,13 @@
 ---
 id: TASK-156
 type: Feature
-status: In Progress
+status: Done
 priority: P1
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
 dependsOn:
   - TASK-152
-assignee: ad9f87b2db
-claimed_at: '2026-05-25 01:11:18'
 context_hash: 4979b030536a2fbf
 ---
 # Capture Permission Events in OpenCode Audit Plugin
@@ -20,7 +18,7 @@ Record permission requests and approvals/denials.
 
 ## Acceptance Criteria
 
-- [ ] The generated OpenCode audit plugin records permission request and permission response events with timestamp, task ID, session ID if available, and decision metadata.
+- [x] The generated OpenCode audit plugin records permission request and permission response events with timestamp, task ID, session ID if available, and decision metadata. — `src/core/audit-plugin.ts` `generateAuditPlugin()`: added `onPermissionRequest` hook emitting `permission.requested` events with timestamp, taskId, permissionId, tool, and redacted args. Added `onPermissionResponse` hook emitting `permission.responded` events with timestamp, taskId, permissionId, and decision. Tests in `tests/plugins.test.ts`: "generated plugin has onPermissionRequest hook" verifies hook and event fields, "generated plugin has onPermissionResponse hook" verifies response hook with decision field, "generated permission request includes timestamp, taskId, and sessionId" verifies common metadata fields.
 
 ## Agent Notes
 
@@ -28,3 +26,12 @@ Record permission requests and approvals/denials.
 - Task claimed via taskforge start TASK-156
 - Session: ad9f87b2db
 - Branch: agent/TASK-156-task-156--ad9f87b2db
+
+### 2026-05-25 Implementer
+- Added `onPermissionRequest` hook to generated audit plugin — emits `permission.requested` events with timestamp, taskId, permissionId, tool, and redacted args
+- Added `onPermissionResponse` hook to generated audit plugin — emits `permission.responded` events with timestamp, taskId, permissionId, and decision
+- Added 3 tests verifying permission hooks and metadata fields
+- All 16 plugin tests pass. Typecheck and build pass.
+
+### 2026-05-25 System
+- Task marked Done
