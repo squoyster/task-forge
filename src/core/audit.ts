@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { AuditEventSchema, type AuditEvent } from "./audit-schema.js";
+import { AuditEventSchema, type AuditEvent, type AuditEventType } from "./audit-schema.js";
 import { logWarn } from "../util/logging.js";
 
 const AUDIT_BASE = "logs/taskforge";
@@ -73,7 +73,7 @@ export interface TaskAuditSummary {
 }
 
 export function createAuditEvent(
-  event: string,
+  event: AuditEventType,
   overrides?: Partial<AuditEvent>,
 ): AuditEvent {
   return {
@@ -85,7 +85,7 @@ export function createAuditEvent(
 
 export function createTaskEvent(
   taskId: string,
-  event: string,
+  event: AuditEventType,
   overrides?: Partial<AuditEvent>,
 ): AuditEvent {
   return createAuditEvent(event, { ...overrides, taskId });

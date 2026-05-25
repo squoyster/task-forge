@@ -92,7 +92,7 @@ describe("audit service", () => {
   it("creates directories automatically", () => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "tf-audit-"));
     const deep = path.join(tmp, "sub1", "sub2");
-    appendAuditEvent(deep, createAuditEvent("test.event"));
+    appendAuditEvent(deep, createAuditEvent("task.command.started"));
 
     const events = readAudit(deep);
     expect(events).toHaveLength(1);
