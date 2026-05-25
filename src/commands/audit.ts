@@ -1,6 +1,6 @@
 import { getRepoRoot } from "../util/paths.js";
 import { readTaskAudit, summarizeTaskAudit } from "../core/audit.js";
-import { logInfo, logHeader, logSub } from "../util/logging.js";
+import { logInfo, logHeader, logSub, logDivider } from "../util/logging.js";
 
 export function cmdAudit(taskId: string, opts: { json?: boolean }): void {
   const repoRoot = getRepoRoot();
@@ -45,7 +45,14 @@ export function cmdTranscript(taskId: string, opts: { json?: boolean }): void {
   }
 }
 
-export function cmdTimeline(taskId: string, opts: { json?: boolean }): void {
+function getEventIcon(eventType: string): string {
+  if (eventType.includes("started") || eventType.includes("created")) return "\u25B6";
+  if (eventType.includes("completed") || eventType.includes("released")) return "\u2714";
+  if (eventType.includes("failed") || eventType.includes("error")) return "\u2718";
+  return "\u2503";
+}
+
+export function cmdTimeline(taskId: string, opts: { json?: boolean } = {}): void {
   const repoRoot = getRepoRoot();
   const summary = summarizeTaskAudit(repoRoot, taskId);
 
@@ -55,16 +62,21 @@ export function cmdTimeline(taskId: string, opts: { json?: boolean }): void {
   }
 
   logHeader(`Timeline: ${taskId}`);
-  logInfo(`Total events: ${summary.totalEvents}`);
-  logInfo(`From: ${summary.firstEvent || "N/A"}`);
-  logInfo(`To:   ${summary.lastEvent || "N/A"}`);
-  logInfo(`Errors: ${summary.errorCount}`);
 
-  if (Object.keys(summary.eventCounts).length > 0) {
-    logInfo("");
-    logInfo("Event breakdown:");
-    for (const [type, count] of Object.entries(summary.eventCounts)) {
-      logSub(`${type}: ${count}`);
-    }
+  if (summary.entries.length === 0) {
+    logInfo("No events found.");
+    return;
   }
+
+  logDivider();
+
+  for (const entry of summary.entries) {
+    const time = entry.timestamp.slice(11, 19);
+    const icon = getEventIcon(entry.event);
+    const detail = entry.detail ? `  ${entry.detail}` : "";
+    logInfo(`${time}  ${icon} ${entry.event}${detail}`);
+  }
+
+  logDivider();
+  logInfo(`Duration: ${summary.durationMinutes ?? 0}m  |  Events: ${summary.totalEvents}  |  Errors: ${summary.errorCount}`);
 }

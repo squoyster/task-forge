@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **TASK-183: Enhance timeline command with actionable audit detail** — `taskforge timeline` now shows per-event chronological entries with summary text and extracted metadata (commit messages, file paths, status transitions). Includes duration calculation, event icons (▶ start, ┃ work, ✔ complete, ✘ errors), and enriched `--json` output with `entries[]` array. Added `TimelineEntry` interface and `extractEventDetail()` function. 10 tests added.
+
 - **TASK-176: Document command next-action semantics** — `docs/next-action-semantics.md` enumerates all 7 `nextAction` values from the summary command priority cascade, with continuation rules, follow-up commands, and JSON output format.
 
 - **TASK-174: Add AC linter command** — `taskforge ac-check [taskId]` scans task files for acceptance criteria issues: missing sections, blank items, unchecked items, and duplicate sections. Supports `--json` output and scanning all tasks or a specific one. Added 7 tests.

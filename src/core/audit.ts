@@ -45,12 +45,27 @@ export function summarizeTaskAudit(repoRoot: string, taskId: string): TaskAuditS
   let firstTimestamp = "";
   let lastTimestamp = "";
   let errorCount = 0;
+  const entries: TimelineEntry[] = [];
 
   for (const event of events) {
     byType[event.event] = (byType[event.event] ?? 0) + 1;
     if (!firstTimestamp || event.timestamp < firstTimestamp) firstTimestamp = event.timestamp;
     if (!lastTimestamp || event.timestamp > lastTimestamp) lastTimestamp = event.timestamp;
     if (event.event.includes("failed") || event.event.includes("error")) errorCount++;
+
+    const detail = extractEventDetail(event);
+    entries.push({
+      timestamp: event.timestamp,
+      event: event.event,
+      summary: event.summary ?? event.event,
+      detail,
+    });
+  }
+
+  let durationMinutes: number | undefined;
+  if (firstTimestamp && lastTimestamp) {
+    const ms = new Date(lastTimestamp).getTime() - new Date(firstTimestamp).getTime();
+    durationMinutes = Math.round(ms / 60000);
   }
 
   return {
@@ -60,7 +75,35 @@ export function summarizeTaskAudit(repoRoot: string, taskId: string): TaskAuditS
     lastEvent: lastTimestamp,
     errorCount,
     eventCounts: byType,
+    entries,
+    durationMinutes,
   };
+}
+
+function extractEventDetail(event: AuditEvent): string | undefined {
+  const meta = event.metadata;
+  if (!meta) return undefined;
+
+  if (event.event === "git.commit" && typeof meta.message === "string") {
+    return meta.message;
+  }
+  if (event.event === "git.push" && typeof meta.branch === "string") {
+    return `Pushed ${meta.branch}`;
+  }
+  if (event.event === "task.state.changed" && typeof meta.from === "string" && typeof meta.to === "string") {
+    return `${meta.from} → ${meta.to}`;
+  }
+  if (event.event === "file.edited" && typeof meta.file === "string") {
+    const lines = meta.linesAdded ? ` (+${meta.linesAdded})` : "";
+    return meta.file + lines;
+  }
+  if (event.event === "tool.execute" && typeof meta.tool === "string") {
+    return meta.tool;
+  }
+  if (typeof meta.notes === "string") {
+    return meta.notes;
+  }
+  return undefined;
 }
 
 export interface JsonlValidationIssue {
@@ -122,6 +165,13 @@ function findJsonlFiles(dir: string): string[] {
   return files;
 }
 
+export interface TimelineEntry {
+  timestamp: string;
+  event: string;
+  summary: string;
+  detail?: string;
+}
+
 export interface TaskAuditSummary {
   taskId: string;
   totalEvents: number;
@@ -129,6 +179,8 @@ export interface TaskAuditSummary {
   lastEvent: string;
   errorCount: number;
   eventCounts: Record<string, number>;
+  entries: TimelineEntry[];
+  durationMinutes?: number;
 }
 
 export function createAuditEvent(
