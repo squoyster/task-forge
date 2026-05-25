@@ -33,6 +33,7 @@ import { cmdDepsCreateTasks } from "./commands/deps/create-tasks.js";
 import { cmdDepsPr } from "./commands/deps/pr.js";
 import { cmdDepsSummary } from "./commands/deps/summary.js";
 import { cmdAudit, cmdTranscript, cmdTimeline } from "./commands/audit.js";
+import { cmdAcCheck } from "./commands/ac-check.js";
 import { cmdDiff, cmdCheckpoint, cmdSubmit, cmdPr } from "./commands/git-facade.js";
 import { TaskForgeError } from "./core/errors.js";
 import { logError } from "./util/logging.js";
@@ -402,6 +403,14 @@ program
   .option("--json", "Output in JSON format")
   .action((taskId: string, opts: { json?: boolean }) =>
     wrap(async () => { cmdTimeline(taskId, opts); })(),
+  );
+
+program
+  .command("ac-check [taskId]")
+  .description("Scan task files for acceptance criteria issues")
+  .option("--json", "Output in JSON format")
+  .action((taskId: string | undefined, opts: { json?: boolean }) =>
+    wrap(async () => { cmdAcCheck(taskId, opts); })(),
   );
 
 program

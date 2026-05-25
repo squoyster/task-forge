@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **TASK-174: Add AC linter command** — `taskforge ac-check [taskId]` scans task files for acceptance criteria issues: missing sections, blank items, unchecked items, and duplicate sections. Supports `--json` output and scanning all tasks or a specific one. Added 7 tests.
+
 - **TASK-172: Add task-forge CLI alias** — `package.json` bin field now exposes both `taskforge` and `task-forge` pointing to the same entrypoint, supporting both compact and hyphenated command names.
 
 - **TASK-169: Agent framework integration documentation** — `docs/agent-framework-integration.md` documents the adapter system (`AgentFrameworkAdapter` interface, `GenericAgentFrameworkAdapter`, `OpenCodeAgentFrameworkAdapter`), audit event registry, generated files (AGENTS.md, opencode.json, agent files, plugins), hooks, doctor integration, guard plugin, and extension author workflow.

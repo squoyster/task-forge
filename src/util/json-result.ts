@@ -35,6 +35,9 @@ export interface JsonResult {
   sweep?: { scanned: number; stale: number; changed: number; dryRun?: boolean; actions?: Array<{ taskId: string; previousAssignee: string; ageHours: string; action: string; reason?: string }> };
   gates?: GateResult[];
   allPassed?: boolean;
+  issues?: Array<{ taskId: string; type: string; message: string }>;
+  total?: number;
+  scanned?: number;
 }
 
 export interface GateResult {
