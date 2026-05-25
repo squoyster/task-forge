@@ -7,19 +7,12 @@ import { STATUS } from "../util/status-constants.js";
 import { inspectTask } from "./inspect.js";
 import { validateTaskState } from "../core/state-validator.js";
 import { checkHooks } from "../core/hooks.js";
-import { hasManagedBlock } from "../core/templates.js";
-import path from "node:path";
+import { getAgentFrameworkAdapter, type DoctorIssue } from "../core/agent-framework-adapter.js";
 import fs from "node:fs";
-
-interface DoctorIssue {
-  severity: "error" | "warn" | "info";
-  code: string;
-  message: string;
-  taskId?: string;
-}
 
 export async function cmdDoctor(options?: { json?: boolean; fix?: boolean }): Promise<void> {
   const repoRoot = getRepoRoot();
+  const config = loadConfig(repoRoot);
   const tasks = loadAllTasks(repoRoot);
   const worktrees = await listWorktrees(repoRoot);
 
@@ -60,7 +53,7 @@ export async function cmdDoctor(options?: { json?: boolean; fix?: boolean }): Pr
     }
   }
 
-  // 4. Stale locks + deep inspection
+  // 5. Stale locks + deep inspection
   const inProgressTasks = tasks.filter((t) => t.status === STATUS.IN_PROGRESS);
   for (const t of inProgressTasks) {
     const wtPath = getWorktreePath(repoRoot, t.id);
@@ -81,7 +74,7 @@ export async function cmdDoctor(options?: { json?: boolean; fix?: boolean }): Pr
     }
   }
 
-  // 5. Impossible state combinations
+  // 6. Impossible state combinations
   for (const t of tasks) {
     if (t.status === STATUS.DONE && t.assignee) add("error", `Done but still claimed`, t.id);
     if (t.status === STATUS.READY && t.assignee) add("warn", `Ready but has assignee — sweep may have failed to clear lock`, t.id);
@@ -90,7 +83,7 @@ export async function cmdDoctor(options?: { json?: boolean; fix?: boolean }): Pr
     if (t.status === STATUS.REVIEW && t.assignee) add("warn", `Review but still claimed`, t.id);
   }
 
-  // 6. Broken dependsOn references
+  // 7. Broken dependsOn references
   const allIds = new Set(tasks.map((t) => t.id));
   for (const t of tasks) {
     if (t.dependsOn) {
@@ -102,7 +95,7 @@ export async function cmdDoctor(options?: { json?: boolean; fix?: boolean }): Pr
     }
   }
 
-  // 7. Sweeper preview
+  // 8. Sweeper preview
   const now = Date.now();
   const staleThreshold = 4 * 60 * 60 * 1000;
   let sweepable = 0;
@@ -122,38 +115,14 @@ export async function cmdDoctor(options?: { json?: boolean; fix?: boolean }): Pr
     }
   }
 
-  // 8. Agent policy check — AGENTS.md managed block
-  const agentsMdPath = path.join(repoRoot, "AGENTS.md");
-  if (fs.existsSync(agentsMdPath)) {
-    const content = fs.readFileSync(agentsMdPath, "utf-8");
-    if (hasManagedBlock(content, "managed-agent-policy")) {
-      ok.push("AGENTS.md has managed-agent-policy block");
+  // 9. Agent framework diagnostics
+  const adapter = getAgentFrameworkAdapter(config.agentFramework?.id);
+  const adapterIssues = adapter.doctor(repoRoot);
+  for (const issue of adapterIssues) {
+    if (issue.severity === "info") {
+      ok.push(issue.message);
     } else {
-      add("warn", "AGENTS.md missing managed-agent-policy block");
-    }
-  } else {
-    add("warn", "AGENTS.md not found — run 'taskforge init' to create");
-  }
-
-  // 9. Agent policy check — opencode.json permissions
-  const openCodeJsonPath = path.join(repoRoot, "opencode.json");
-  if (fs.existsSync(openCodeJsonPath)) {
-    try {
-      const ocConfig = JSON.parse(fs.readFileSync(openCodeJsonPath, "utf-8"));
-      const bashPerms = ocConfig?.permission?.bash ?? {};
-      const editPerms = ocConfig?.permission?.edit ?? {};
-      if (bashPerms["git *"] === "deny" && editPerms["../task-state/**"] === "deny") {
-        ok.push("opencode.json has correct agent permissions");
-      } else {
-        add("warn", "opencode.json agent permissions incomplete");
-      }
-      if (ocConfig?.agent?.doctor) {
-        ok.push("opencode.json has doctor agent configured");
-      } else {
-        add("warn", "opencode.json missing doctor agent");
-      }
-    } catch {
-      add("warn", "opencode.json is not valid JSON");
+      issues.push(issue);
     }
   }
 
@@ -167,15 +136,7 @@ export async function cmdDoctor(options?: { json?: boolean; fix?: boolean }): Pr
     }
   }
 
-  // 11. Audit directory check
-  const auditDir = path.join(repoRoot, "logs", "taskforge", "audit");
-  if (fs.existsSync(auditDir)) {
-    add("info", "Audit directory exists");
-  } else {
-    add("info", "Audit directory not yet created (will be created on first event)");
-  }
-
-  // 12. Done tasks with invalid acceptance criteria
+  // 11. Done tasks with invalid acceptance criteria
   const doneTasks = tasks.filter((t) => t.status === STATUS.DONE);
   for (const t of doneTasks) {
     if (!hasAcceptanceCriteriaSection(t.body)) {

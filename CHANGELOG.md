@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **TASK-150: Transaction conflict retry tests** — `tests/task-state-transaction.test.ts` now has 3 new tests proving that non-fast-forward push causes the transaction to reload fresh state (`loadAllTasks` called >= 2 times), rerun mutation with updated state, and throw after exhausting retries. Fixed pre-existing test timeout by disabling jitter in test mocks.
 
+### Changed
+
+- **TASK-162: Route doctor diagnostics through Agent Framework Adapter** — `taskforge doctor` now invokes `AgentFrameworkAdapter.doctor()` for agent-framework-specific diagnostics instead of duplicating OpenCode checks in `cmdDoctor`. Introduced `AgentFrameworkAdapter` interface, `OpenCodeAgentFrameworkAdapter` (AGENTS.md, opencode.json, audit directory checks), `GenericAgentFrameworkAdapter` (no-op), and factory function. `cmdDoctor` loads adapter based on `config.agentFramework.id`.
+
 ### Fixed
 
 - **TASK-161: Enforce audit event type schema** — `AuditEventSchema` now validates `event` field against `AUDIT_EVENT_TYPES` enum instead of accepting arbitrary strings. Added missing event types (`tool.execute`, `permission.requested`, `permission.responded`, `session.started`) to registry. `createAuditEvent()` and `createTaskEvent()` now use typed `AuditEventType`.
