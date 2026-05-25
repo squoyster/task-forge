@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **TASK-178: Fix done command test mocks** — added missing `runGates` mock to `tests/commands/done.test.ts`, added `withTaskStateTransaction` mock to `tests/done.test.ts`, added `simple-git` mocks, and fixed default acceptance criteria from unchecked to checked. All 27 done tests now pass.
+
 - **TASK-158: Recursive secret redaction in audit plugin** — `redactSecrets()` now recursively traverses nested objects and arrays, redacting values for keys matching TOKEN, SECRET, PASSWORD, API_KEY, PRIVATE_KEY, CREDENTIAL, AUTHORIZATION, and related patterns. Redaction is applied before writing JSONL to prevent credentials from being stored in audit logs.
 
 - **TASK-157: Audit plugin task-ID regex** — fixed double-escaped regex (`TASK-\\\\d+` → `TASK-\\d+`) in `generateAuditPlugin()` so task IDs are correctly extracted from agent branches (`agent/TASK-123-example`) and worktree paths (`/worktrees/task-forge/TASK-123`).
