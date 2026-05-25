@@ -7,6 +7,7 @@ import {
   summarizeTaskAudit,
   createAuditEvent,
   createTaskEvent,
+  validateJsonlFiles,
 } from "../src/core/audit.js";
 import { cmdTimeline } from "../src/commands/audit.js";
 import { setRepoRoot } from "../src/util/paths.js";
@@ -96,6 +97,77 @@ describe("audit service", () => {
 
     const events = readAudit(deep);
     expect(events).toHaveLength(1);
+    fs.rmSync(tmp, { recursive: true, force: true });
+  });
+});
+
+describe("validateJsonlFiles", () => {
+  it("returns no issues for valid JSONL files", () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "tf-audit-"));
+    appendAuditEvent(tmp, createAuditEvent("task.command.started"));
+
+    const issues = validateJsonlFiles(tmp);
+    expect(issues).toEqual([]);
+    fs.rmSync(tmp, { recursive: true, force: true });
+  });
+
+  it("reports parse errors for invalid JSON", () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "tf-audit-"));
+    const dir = path.join(tmp, "logs", "taskforge", "audit");
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, "events.jsonl"), "not valid json\n", "utf-8");
+
+    const issues = validateJsonlFiles(tmp);
+    expect(issues).toHaveLength(1);
+    expect(issues[0].reason).toBe("parse_error");
+    expect(issues[0].line).toBe(1);
+    expect(issues[0].filePath).toContain("events.jsonl");
+    fs.rmSync(tmp, { recursive: true, force: true });
+  });
+
+  it("reports schema errors for invalid event structure", () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "tf-audit-"));
+    const dir = path.join(tmp, "logs", "taskforge", "audit");
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, "events.jsonl"), '{"foo": "bar"}\n', "utf-8");
+
+    const issues = validateJsonlFiles(tmp);
+    expect(issues).toHaveLength(1);
+    expect(issues[0].reason).toBe("schema_error");
+    expect(issues[0].line).toBe(1);
+    fs.rmSync(tmp, { recursive: true, force: true });
+  });
+
+  it("reports correct line numbers for multiple errors", () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "tf-audit-"));
+    const dir = path.join(tmp, "logs", "taskforge", "audit");
+    fs.mkdirSync(dir, { recursive: true });
+    const validEvent = JSON.stringify(createAuditEvent("task.command.started"));
+    fs.writeFileSync(path.join(dir, "events.jsonl"), `${validEvent}\nbad line\n${validEvent}\nalso bad\n`, "utf-8");
+
+    const issues = validateJsonlFiles(tmp);
+    expect(issues).toHaveLength(2);
+    expect(issues[0].line).toBe(2);
+    expect(issues[1].line).toBe(4);
+    fs.rmSync(tmp, { recursive: true, force: true });
+  });
+
+  it("returns empty for non-existent audit directory", () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "tf-audit-"));
+    const issues = validateJsonlFiles(tmp);
+    expect(issues).toEqual([]);
+    fs.rmSync(tmp, { recursive: true, force: true });
+  });
+
+  it("finds JSONL files in nested task directories", () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "tf-audit-"));
+    appendTaskTranscript(tmp, "TASK-001", createAuditEvent("task.command.started"));
+    const taskDir = path.join(tmp, "logs", "taskforge", "tasks", "TASK-001");
+    fs.appendFileSync(path.join(taskDir, "transcript.jsonl"), "corrupt\n", "utf-8");
+
+    const issues = validateJsonlFiles(tmp);
+    expect(issues).toHaveLength(1);
+    expect(issues[0].filePath).toContain("transcript.jsonl");
     fs.rmSync(tmp, { recursive: true, force: true });
   });
 });

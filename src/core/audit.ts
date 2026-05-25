@@ -63,6 +63,65 @@ export function summarizeTaskAudit(repoRoot: string, taskId: string): TaskAuditS
   };
 }
 
+export interface JsonlValidationIssue {
+  filePath: string;
+  line: number;
+  content: string;
+  reason: "parse_error" | "schema_error";
+}
+
+export function validateJsonlFiles(repoRoot: string): JsonlValidationIssue[] {
+  const issues: JsonlValidationIssue[] = [];
+  const baseDir = path.join(repoRoot, AUDIT_BASE);
+
+  if (!fs.existsSync(baseDir)) return issues;
+
+  const jsonlFiles = findJsonlFiles(baseDir);
+  for (const filePath of jsonlFiles) {
+    const content = fs.readFileSync(filePath, "utf-8");
+    const lines = content.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (!line.trim()) continue;
+      try {
+        const parsed = JSON.parse(line);
+        const result = AuditEventSchema.safeParse(parsed);
+        if (!result.success) {
+          issues.push({
+            filePath,
+            line: i + 1,
+            content: line.slice(0, 100),
+            reason: "schema_error",
+          });
+        }
+      } catch {
+        issues.push({
+          filePath,
+          line: i + 1,
+          content: line.slice(0, 100),
+          reason: "parse_error",
+        });
+      }
+    }
+  }
+
+  return issues;
+}
+
+function findJsonlFiles(dir: string): string[] {
+  const files: string[] = [];
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...findJsonlFiles(fullPath));
+    } else if (entry.name.endsWith(".jsonl")) {
+      files.push(fullPath);
+    }
+  }
+  return files;
+}
+
 export interface TaskAuditSummary {
   taskId: string;
   totalEvents: number;

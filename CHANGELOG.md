@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **TASK-156: Permission event capture in audit plugin** — generated OpenCode audit plugin now records `permission.requested` and `permission.responded` events with timestamp, task ID, permission ID, tool name, decision, and redacted args.
+- **TASK-164: Validate audit JSONL parseability in doctor** — `taskforge doctor` now scans all `.jsonl` files under `logs/taskforge/` for corrupted lines. Reports invalid JSON and schema validation failures with file path and line number (code: `JSONL_CORRUPT`). Added `validateJsonlFiles()` function to audit module.
 
 - **TASK-151: Transaction invariant abort tests** — `withTaskStateTransaction` now validates task-state invariants after mutation and before commit, aborting with descriptive error on violations (e.g., `DONE_WITH_ASSIGNEE`, `READY_WITH_ASSIGNEE`). Tests prove invalid mutations fail before commit and leave task-state unchanged. (Also implements missing invariant validation from TASK-147.)
 

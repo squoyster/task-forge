@@ -7,7 +7,9 @@ import { STATUS } from "../util/status-constants.js";
 import { inspectTask } from "./inspect.js";
 import { validateTaskState } from "../core/state-validator.js";
 import { checkHooks } from "../core/hooks.js";
+import { validateJsonlFiles } from "../core/audit.js";
 import { getAgentFrameworkAdapter, type DoctorIssue, type DoctorRepair } from "../core/agent-framework-adapter.js";
+import path from "node:path";
 import fs from "node:fs";
 
 export async function cmdDoctor(options?: { json?: boolean; fix?: boolean }): Promise<void> {
@@ -134,6 +136,14 @@ export async function cmdDoctor(options?: { json?: boolean; fix?: boolean }): Pr
     for (const repair of adapterRepairs) {
       ok.push(`Repaired: ${repair.message}`);
     }
+  }
+
+  // 10. Audit JSONL validation
+  const jsonlIssues = validateJsonlFiles(repoRoot);
+  for (const issue of jsonlIssues) {
+    const relativePath = path.relative(repoRoot, issue.filePath);
+    const reason = issue.reason === "parse_error" ? "invalid JSON" : "schema validation failed";
+    add("warn", `Corrupted JSONL line in ${relativePath}:${issue.line} (${reason})`, undefined, "JSONL_CORRUPT");
   }
 
   // 10. Git hooks check
