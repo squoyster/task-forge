@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **TASK-172: Add task-forge CLI alias** — `package.json` bin field now exposes both `taskforge` and `task-forge` pointing to the same entrypoint, supporting both compact and hyphenated command names.
+
 - **TASK-169: Agent framework integration documentation** — `docs/agent-framework-integration.md` documents the adapter system (`AgentFrameworkAdapter` interface, `GenericAgentFrameworkAdapter`, `OpenCodeAgentFrameworkAdapter`), audit event registry, generated files (AGENTS.md, opencode.json, agent files, plugins), hooks, doctor integration, guard plugin, and extension author workflow.
 
 - **TASK-164: Validate audit JSONL parseability in doctor** — `taskforge doctor` now scans all `.jsonl` files under `logs/taskforge/` for corrupted lines. Reports invalid JSON and schema validation failures with file path and line number (code: `JSONL_CORRUPT`). Added `validateJsonlFiles()` function to audit module.

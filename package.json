@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "type": "module",
   "bin": {
-    "taskforge": "./dist/cli.js"
+    "taskforge": "./dist/cli.js",
+    "task-forge": "./dist/cli.js"
   },
   "scripts": {
     "dev": "tsx src/cli.ts",
