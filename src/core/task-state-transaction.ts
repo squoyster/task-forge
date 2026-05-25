@@ -4,6 +4,7 @@ import { loadAllTasks, writeTaskFile, appendAgentNote } from "./task-store.js";
 import { getTaskStateDir, getRepoRoot } from "../util/paths.js";
 import { eventLogEvent } from "./event-log.js";
 import { validateTransition } from "./status-transition.js";
+import { validateTaskState } from "./state-validator.js";
 import { STATUS } from "../util/status-constants.js";
 import { logWarn } from "../util/logging.js";
 import type { ParsedTask } from "./task-store.js";
@@ -133,6 +134,13 @@ export async function withTaskStateTransaction<T>(
 
     // Apply mutation
     const result = await mutate(tx);
+
+    // Validate invariants before commit
+    const validation = validateTaskState(tx.loadAllTasks());
+    if (!validation.ok) {
+      const details = validation.errors.map((e) => `[${e.code}] ${e.message}${e.taskId ? ` (${e.taskId})` : ""}`).join("; ");
+      throw new Error(`Transaction aborted: invalid task-state — ${details}`);
+    }
 
     // Commit
     try {

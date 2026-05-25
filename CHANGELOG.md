@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **TASK-151: Transaction invariant abort tests** — `withTaskStateTransaction` now validates task-state invariants after mutation and before commit, aborting with descriptive error on violations (e.g., `DONE_WITH_ASSIGNEE`, `READY_WITH_ASSIGNEE`). Tests prove invalid mutations fail before commit and leave task-state unchanged. (Also implements missing invariant validation from TASK-147.)
+
 - **TASK-150: Transaction conflict retry tests** — `tests/task-state-transaction.test.ts` now has 3 new tests proving that non-fast-forward push causes the transaction to reload fresh state (`loadAllTasks` called >= 2 times), rerun mutation with updated state, and throw after exhausting retries. Fixed pre-existing test timeout by disabling jitter in test mocks.
 
 - **TASK-140: Validate-state rule for invalid Done tasks** — `taskforge validate-state` now exits nonzero when any `Done` task has missing, blank, or unchecked acceptance criteria, treating AC integrity as a hard state invariant.

@@ -217,4 +217,88 @@ describe("withTaskStateTransaction", () => {
       ),
     ).rejects.toThrow("non-fast-forward");
   });
+
+  it("aborts transaction on DONE_WITH_ASSIGNEE violation", async () => {
+    const { execa } = await import("execa");
+    const commitSpy = vi.spyOn(taskStore, "writeTaskFile");
+
+    makeTaskFile("TASK-001", { status: "In Progress", assignee: "session-abc" });
+
+    await expect(
+      withTaskStateTransaction(
+        { command: "test-invalid", maxRetries: 0 },
+        (tx) => {
+          const task = tx.loadTask("TASK-001");
+          task!.status = "Done";
+          // Intentionally leave assignee set — violates DONE_WITH_ASSIGNEE
+          tx.updateTask(task!);
+        },
+      ),
+    ).rejects.toThrow("DONE_WITH_ASSIGNEE");
+
+    // writeTaskFile should not have been called (aborted before commit)
+    expect(commitSpy).not.toHaveBeenCalled();
+    commitSpy.mockRestore();
+  });
+
+  it("aborts transaction on READY_WITH_ASSIGNEE violation", async () => {
+    const { execa } = await import("execa");
+    const commitSpy = vi.spyOn(taskStore, "writeTaskFile");
+
+    makeTaskFile("TASK-001", { status: "In Progress", assignee: "session-abc" });
+
+    await expect(
+      withTaskStateTransaction(
+        { command: "test-invalid-ready", maxRetries: 0 },
+        (tx) => {
+          const task = tx.loadTask("TASK-001");
+          task!.status = "Ready";
+          // Intentionally leave assignee set — violates READY_WITH_ASSIGNEE
+          tx.updateTask(task!);
+        },
+      ),
+    ).rejects.toThrow("READY_WITH_ASSIGNEE");
+
+    expect(commitSpy).not.toHaveBeenCalled();
+    commitSpy.mockRestore();
+  });
+
+  it("leaves task-state unchanged after invariant abort", async () => {
+    const { execa } = await import("execa");
+
+    const fp = makeTaskFile("TASK-001", { status: "In Progress", assignee: "session-abc" });
+    const beforeContent = fs.readFileSync(fp, "utf-8");
+
+    await expect(
+      withTaskStateTransaction(
+        { command: "test-unchanged", maxRetries: 0 },
+        (tx) => {
+          const task = tx.loadTask("TASK-001");
+          task!.status = "Done";
+          tx.updateTask(task!);
+        },
+      ),
+    ).rejects.toThrow();
+
+    // File should be unchanged after abort
+    const afterContent = fs.readFileSync(fp, "utf-8");
+    expect(afterContent).toBe(beforeContent);
+  });
+
+  it("allows valid mutation to proceed", async () => {
+    const { execa } = await import("execa");
+    vi.mocked(execa).mockResolvedValue({ stdout: "" } as never);
+
+    makeTaskFile("TASK-001", { status: "In Progress", assignee: "session-abc" });
+
+    // Clearing claim on In Progress task is valid
+    await expect(
+      withTaskStateTransaction(
+        { command: "test-valid", maxRetries: 0 },
+        (tx) => {
+          tx.clearClaim("TASK-001");
+        },
+      ),
+    ).resolves.not.toThrow();
+  });
 });
