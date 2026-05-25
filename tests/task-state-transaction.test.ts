@@ -4,6 +4,7 @@ import path from "node:path";
 import os from "node:os";
 import { withTaskStateTransaction } from "../src/core/task-state-transaction.js";
 import { setRepoRoot } from "../src/util/paths.js";
+import * as taskStore from "../src/core/task-store.js";
 
 vi.mock("execa", () => ({
   execa: vi.fn().mockResolvedValue({ stdout: "" }),
@@ -116,7 +117,7 @@ describe("withTaskStateTransaction", () => {
 
     await expect(
       withTaskStateTransaction(
-        { command: "test", maxRetries: 2 },
+        { command: "test", maxRetries: 2, jitterMinMs: 0, jitterMaxMs: 0 },
         (tx) => {
           tx.claimTask("TASK-001", "s");
         },
@@ -124,5 +125,96 @@ describe("withTaskStateTransaction", () => {
     ).resolves.not.toThrow();
 
     expect(callCount).toBe(2);
+  });
+
+  it("reloads fresh state on non-fast-forward retry", async () => {
+    const { execa } = await import("execa");
+    let pushAttempts = 0;
+    const loadAllTasksSpy = vi.spyOn(taskStore, "loadAllTasks");
+
+    vi.mocked(execa).mockImplementation((cmd: string, args?: readonly string[]) => {
+      const joined = `${cmd} ${(args ?? []).join(" ")}`;
+      if (joined === "git push origin task-state") {
+        pushAttempts++;
+        if (pushAttempts === 1) {
+          const err = new Error("non-fast-forward");
+          throw err;
+        }
+      }
+      return Promise.resolve({ stdout: "" } as never);
+    });
+
+    makeTaskFile("TASK-001", { status: "Ready" });
+
+    await withTaskStateTransaction(
+      { command: "test-reload", maxRetries: 2, jitterMinMs: 0, jitterMaxMs: 0 },
+      (tx) => {
+        tx.claimTask("TASK-001", "session-xyz");
+      },
+    );
+
+    // loadAllTasks should be called once per attempt (initial + 1 retry)
+    expect(loadAllTasksSpy.mock.calls.length).toBeGreaterThanOrEqual(2);
+    loadAllTasksSpy.mockRestore();
+  });
+
+  it("reruns mutation with fresh state after conflict", async () => {
+    const { execa } = await import("execa");
+    let pushAttempts = 0;
+    const mutationCalls: string[] = [];
+
+    vi.mocked(execa).mockImplementation((cmd: string, args?: readonly string[]) => {
+      const joined = `${cmd} ${(args ?? []).join(" ")}`;
+      if (joined === "git push origin task-state") {
+        pushAttempts++;
+        if (pushAttempts === 1) {
+          // On first push attempt, simulate another agent having modified the task
+          // by updating the file on disk before the retry reloads it
+          makeTaskFile("TASK-001", { status: "Ready", priority: "P0" });
+          const err = new Error("non-fast-forward");
+          throw err;
+        }
+      }
+      return Promise.resolve({ stdout: "" } as never);
+    });
+
+    makeTaskFile("TASK-001", { status: "Ready", priority: "P2" });
+
+    await withTaskStateTransaction(
+      { command: "test-fresh-state", maxRetries: 2, jitterMinMs: 0, jitterMaxMs: 0 },
+      (tx) => {
+        const task = tx.loadTask("TASK-001");
+        mutationCalls.push(task!.priority as string);
+        tx.claimTask("TASK-001", "s");
+      },
+    );
+
+    // First mutation call should see P2, second should see P0 (updated by "other agent")
+    expect(mutationCalls).toContain("P2");
+    expect(mutationCalls).toContain("P0");
+    expect(mutationCalls.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("throws after exhausting retries on persistent conflict", async () => {
+    const { execa } = await import("execa");
+    vi.mocked(execa).mockImplementation((cmd: string, args?: readonly string[]) => {
+      const joined = `${cmd} ${(args ?? []).join(" ")}`;
+      if (joined === "git push origin task-state") {
+        const err = new Error("non-fast-forward");
+        throw err;
+      }
+      return Promise.resolve({ stdout: "" } as never);
+    });
+
+    makeTaskFile("TASK-001", { status: "Ready" });
+
+    await expect(
+      withTaskStateTransaction(
+        { command: "test-exhausted", maxRetries: 1, jitterMinMs: 0, jitterMaxMs: 0 },
+        (tx) => {
+          tx.claimTask("TASK-001", "s");
+        },
+      ),
+    ).rejects.toThrow("non-fast-forward");
   });
 });

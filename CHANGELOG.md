@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **TASK-150: Transaction conflict retry tests** — `tests/task-state-transaction.test.ts` now has 3 new tests proving that non-fast-forward push causes the transaction to reload fresh state (`loadAllTasks` called >= 2 times), rerun mutation with updated state, and throw after exhausting retries. Fixed pre-existing test timeout by disabling jitter in test mocks.
+
 - **TASK-140: Validate-state rule for invalid Done tasks** — `taskforge validate-state` now exits nonzero when any `Done` task has missing, blank, or unchecked acceptance criteria, treating AC integrity as a hard state invariant.
 
 - **TASK-139: Report invalid Done tasks in Doctor** — `taskforge doctor` now checks all `Done` tasks for missing, blank, or unchecked acceptance criteria and reports them with machine-readable codes (`AC_MISSING`, `AC_BLANK`, `AC_UNCHECKED`). JSON output includes the `code` field for every issue.
