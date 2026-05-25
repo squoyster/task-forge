@@ -1,7 +1,7 @@
 ---
 id: TASK-183
 type: Feature
-status: Ready
+status: Done
 priority: P3
 agentRole: Implementer
 riskLevel: Low
@@ -78,13 +78,13 @@ Duration: 45m  |  Events: 5  |  Errors: 0
 
 ## Acceptance Criteria
 
-- [ ] `taskforge timeline <taskId>` shows per-event detail including summary text, not just counts
-- [ ] Event-specific metadata is extracted and displayed (commit messages, file paths, status transitions)
-- [ ] Output includes a duration calculation (first event to last event)
-- [ ] `--json` output includes the enriched entries array
-- [ ] Existing `summarizeTaskAudit()` return type is extended without breaking callers
-- [ ] Tests added for the enriched timeline output
-- [ ] All existing tests pass
+- [x] `taskforge timeline <taskId>` shows per-event detail including summary text, not just counts — `src/commands/audit.ts` `cmdTimeline`: displays chronological entries with timestamp, event type, summary, and extracted detail
+- [x] Event-specific metadata is extracted and displayed (commit messages, file paths, status transitions) — `src/core/audit.ts` `extractEventDetail()`: handles git.commit (message), git.push (branch), task.state.changed (from→to), file.edited (file+lines), tool.execute (tool name)
+- [x] Output includes a duration calculation (first event to last event) — `TaskAuditSummary.durationMinutes` computed from first/last timestamps
+- [x] `--json` output includes the enriched entries array — `cmdTimeline` with `--json` returns full `TaskAuditSummary` including `entries[]` and `durationMinutes`
+- [x] Existing `summarizeTaskAudit()` return type is extended without breaking callers — Added `entries` and `durationMinutes` fields to `TaskAuditSummary` interface; existing fields unchanged
+- [x] Tests added for the enriched timeline output — `tests/timeline.test.ts`: 10 tests covering empty entries, detail extraction, duration calculation, enriched output, JSON output, empty state
+- [x] All existing tests pass — All 507 tests pass (49 test files)
 
 ## Test / Verification Command
 
@@ -101,3 +101,10 @@ None.
 Low — enhances existing command, does not change audit event generation.
 
 ## Agent Notes
+
+### 2026-05-25 Implementer
+- Added `TimelineEntry` interface and `entries[]`/`durationMinutes` to `TaskAuditSummary`
+- Created `extractEventDetail()` for metadata extraction from 5 event types
+- Rewrote `cmdTimeline` output: chronological list with icons (▶ start, ┃ work, ✔ complete, ✘ errors), detail text, duration footer
+- Added 10 tests in `tests/timeline.test.ts`
+- All 507 tests pass. Typecheck, lint, and build pass.
