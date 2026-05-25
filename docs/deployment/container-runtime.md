@@ -34,11 +34,7 @@ The launcher mounts the project parent directory so TaskForge can manage sibling
 
 ### Install the Launcher
 
-```bash
-curl -fsSL https://example.invalid/taskforge/install.sh | sh
-```
-
-Or manually:
+The install script is not yet published. Install manually:
 
 ```bash
 sudo cp scripts/taskforge-container /usr/local/bin/taskforge

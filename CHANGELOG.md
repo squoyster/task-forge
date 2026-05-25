@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **TASK-177: Disable `taskforge done --force`** — Removed `--force`, `--force-gates`, `--force-transition`, `--force-ownership`, and `--reason` options from `taskforge done`. All guards (gates, status transition, ownership, control-file hash, AC section/blank/unchecked checks) now always run without exception. Override metadata fields (`override_reason`, `override_actor`, `override_timestamp`, `override_failed_gates`) are no longer written. Tests updated to expect rejection instead of force success; override metadata tests removed.
 
+- **TASK-173: Remove placeholder install URL from container runtime docs** — Replaced `https://example.invalid/taskforge/install.sh` in `docs/deployment/container-runtime.md` with a note that the install script is not yet published and manual install instructions.
+
 - **TASK-165: Replace direct gh usage in PR command** — `cmdPr` no longer executes `gh` directly. When GitHub is configured (`github.enabled: true`), creates PRs via Octokit API. When not configured, emits manual PR instructions with `gh` command and compare URL. Added `createPullRequest()` to GitHub service and `github.pr.created`/`github.pr.manual` audit event types.
 
 - **TASK-162: Route doctor diagnostics through Agent Framework Adapter** — `taskforge doctor` now invokes `AgentFrameworkAdapter.doctor()` for agent-framework-specific diagnostics instead of duplicating OpenCode checks in `cmdDoctor`. Introduced `AgentFrameworkAdapter` interface, `OpenCodeAgentFrameworkAdapter` (AGENTS.md, opencode.json, audit directory checks), `GenericAgentFrameworkAdapter` (no-op), and factory function. `cmdDoctor` loads adapter based on `config.agentFramework.id`.
