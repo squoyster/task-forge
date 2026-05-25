@@ -1,11 +1,14 @@
 ---
 id: TASK-180
 type: Bug
-status: Ready
+status: In Progress
 priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 6f4e0b34bc
+claimed_at: '2026-05-25 01:01:53'
+context_hash: 56975070d7558a37
 ---
 # Fix Pre-existing Sweep and Claim Test Failures (TASK-091)
 
@@ -50,3 +53,8 @@ None.
 Low — test-only fix.
 
 ## Agent Notes
+
+### 2026-05-25 System
+- Task claimed via taskforge start TASK-180
+- Session: 6f4e0b34bc
+- Branch: agent/TASK-180-task-180--6f4e0b34bc
