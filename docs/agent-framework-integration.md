@@ -205,6 +205,51 @@ Doctor also validates:
 - Broken dependsOn references
 - Corrupted JSONL audit files
 
+## Extension Methodology Checklist
+
+Use this checklist when adding a new agent framework provider. Each step avoids modifying core domain logic.
+
+### 1. Adapter Implementation
+
+- [ ] Create adapter file in `src/agent-frameworks/<framework>.ts`
+- [ ] Implement `AgentFrameworkAdapter` interface (`doctor()`, `fix()`)
+- [ ] Add `detect()` method to identify the framework in a project
+- [ ] Add `plan()` method to generate file plans for `taskforge init`
+- [ ] Add `apply()` method to write generated files
+
+### 2. Registration
+
+- [ ] Add framework ID case to `getAgentFrameworkAdapter()` factory in `src/agent-frameworks/registry.ts`
+- [ ] Export adapter from `src/agent-frameworks/index.ts`
+
+### 3. Audit Events (if needed)
+
+- [ ] Add new event types to `AUDIT_EVENT_TYPES` in `src/core/audit-schema.ts`
+- [ ] Add Zod schema validation for new event payloads
+
+### 4. Generated Files
+
+- [ ] Define framework-specific file templates in `src/core/templates.ts`
+- [ ] Add file paths to `GeneratedFilePlan` returned by adapter's `plan()` method
+
+### 5. Tests
+
+- [ ] Add adapter unit tests in `tests/agent-frameworks/<framework>.test.ts`
+- [ ] Test `detect()`, `plan()`, `apply()`, `doctor()`, and `fix()` methods
+- [ ] Add integration test with `taskforge init` and `taskforge doctor`
+
+### 6. Documentation
+
+- [ ] Document framework-specific behavior in this file under "Built-in Adapters"
+- [ ] Update README.md if the framework is a first-class integration
+
+### Rules
+
+- **Do not modify** `src/core/task.ts`, `src/core/task-store.ts`, or `src/core/status-transition.ts` — these are framework-agnostic domain logic.
+- **Do not modify** `src/commands/done.ts`, `src/commands/start.ts`, etc. — commands use the adapter interface, not framework-specific code.
+- **Do modify** `src/agent-frameworks/` — this is where all framework-specific logic lives.
+- **Do modify** `src/core/audit-schema.ts` — adding event types is expected for new integrations.
+
 ## Extension Author Workflow
 
 To create a custom agent framework adapter:
