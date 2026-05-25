@@ -107,19 +107,30 @@ export async function cmdPr(taskId: string): Promise<void> {
   if (config.github?.enabled && config.github.owner && config.github.repo) {
     logInfo(`Creating PR for ${taskId} from branch ${task.branch} via GitHub API...`);
 
-    const githubConfig: GitHubConfig = {
-      owner: config.github.owner,
-      repo: config.github.repo,
-      token: process.env.GITHUB_TOKEN,
-    };
-    const pr = await createPullRequest(githubConfig, title, task.branch, "main", body);
+    try {
+      const githubConfig: GitHubConfig = {
+        owner: config.github.owner,
+        repo: config.github.repo,
+        token: process.env.GITHUB_TOKEN,
+      };
+      const pr = await createPullRequest(githubConfig, title, task.branch, "main", body);
 
-    logSuccess(`PR created for ${taskId}: #${pr.number} ${pr.url}`);
+      logSuccess(`PR created for ${taskId}: #${pr.number} ${pr.url}`);
 
-    appendTaskTranscript(repoRoot, taskId, createTaskEvent(taskId, "github.pr.created", {
-      summary: `Created PR #${pr.number}`,
-      metadata: { prNumber: pr.number, prUrl: pr.url },
-    }));
+      appendTaskTranscript(repoRoot, taskId, createTaskEvent(taskId, "github.pr.created", {
+        summary: `Created PR #${pr.number}`,
+        metadata: { prNumber: pr.number, prUrl: pr.url },
+      }));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      logWarn(`PR creation failed for ${taskId}: ${message}`);
+
+      appendTaskTranscript(repoRoot, taskId, createTaskEvent(taskId, "github.pr.failed", {
+        summary: `PR creation failed: ${message}`,
+      }));
+
+      throw error;
+    }
   } else {
     logWarn(`GitHub integration not configured. Manual PR creation required.`);
     logInfo(`To create a PR manually:`);
