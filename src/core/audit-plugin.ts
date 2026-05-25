@@ -82,7 +82,13 @@ function writeAuditEvent(event: Record<string, unknown>): void {
     const redacted = redactSecrets(event) as Record<string, unknown>;
     const line = JSON.stringify(redacted) + "\\n";
     require("fs").appendFileSync(\`\${dir}/transcript.jsonl\`, line);
-  } catch {}
+  } catch (err) {
+    const suppressAuditFailures = process.env.TASKFORGE_SUPPRESS_AUDIT_FAILURES === "true";
+    if (!suppressAuditFailures) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(\`[taskforge-audit] Failed to write audit event: \${msg}\`);
+    }
+  }
 }
 
 const taskforgeAudit: Plugin = {

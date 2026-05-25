@@ -87,6 +87,17 @@ describe("audit plugin", () => {
     expect(content).toContain("timestamp: new Date().toISOString()");
     expect(content).toContain("taskId: ctx.taskId ?? resolveTaskId()");
   });
+
+  it("generated plugin reports write failures visibly", () => {
+    const content = generateAuditPlugin();
+    expect(content).toContain("console.error");
+    expect(content).toContain("[taskforge-audit] Failed to write audit event");
+  });
+
+  it("generated plugin supports audit failure suppression via env var", () => {
+    const content = generateAuditPlugin();
+    expect(content).toContain("TASKFORGE_SUPPRESS_AUDIT_FAILURES");
+  });
 });
 
 describe("guard plugin", () => {
