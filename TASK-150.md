@@ -11,6 +11,7 @@ dependsOn:
 assignee: 44ddd2de1d
 claimed_at: '2026-05-25 00:11:06'
 context_hash: 3a03a0322eb9729c
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-150
 ---
 # Add Transaction Tests for Conflict Retry
 
@@ -23,6 +24,12 @@ Verify optimistic retry behavior.
 - [ ] Automated tests prove that a non-fast-forward task-state push causes the transaction to reload fresh state and rerun the mutation before retrying.
 
 ## Agent Notes
+
+### 2026-05-25 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-150
+
+### 2026-05-25 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-150
 
 ### 2026-05-25 System
 - Task claimed via taskforge start TASK-150
