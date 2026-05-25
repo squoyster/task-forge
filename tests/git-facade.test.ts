@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { cmdCheckpoint, cmdSubmit } from "../src/commands/git-facade.js";
+import { cmdCheckpoint, cmdSubmit, cmdPr } from "../src/commands/git-facade.js";
 
 describe("git facade commands", () => {
   it("cmdCheckpoint throws for non-existent task", async () => {
@@ -8,6 +8,10 @@ describe("git facade commands", () => {
 
   it("cmdSubmit throws for non-existent task", async () => {
     await expect(cmdSubmit("TASK-999")).rejects.toThrow();
+  });
+
+  it("cmdPr throws for non-existent task", async () => {
+    await expect(cmdPr("TASK-999")).rejects.toThrow();
   });
 
   it("rejects commit trailers format", () => {

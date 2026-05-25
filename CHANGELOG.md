@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **TASK-163: Implement doctor fix mode** — `taskforge doctor --fix` now repairs missing or stale agent-framework artifacts (AGENTS.md, opencode.json permissions, audit directory). Repairs reported in both human output ("## Repairs" section) and JSON output (`repairs` array). Added `DoctorRepair` interface and `fix()` method to `AgentFrameworkAdapter`.
+- **TASK-165: Replace direct gh usage in PR command** — `cmdPr` no longer executes `gh` directly. When GitHub is configured (`github.enabled: true`), creates PRs via Octokit API. When not configured, emits manual PR instructions with `gh` command and compare URL. Added `createPullRequest()` to GitHub service and `github.pr.created`/`github.pr.manual` audit event types.
 
 - **TASK-162: Route doctor diagnostics through Agent Framework Adapter** — `taskforge doctor` now invokes `AgentFrameworkAdapter.doctor()` for agent-framework-specific diagnostics instead of duplicating OpenCode checks in `cmdDoctor`. Introduced `AgentFrameworkAdapter` interface, `OpenCodeAgentFrameworkAdapter` (AGENTS.md, opencode.json, audit directory checks), `GenericAgentFrameworkAdapter` (no-op), and factory function. `cmdDoctor` loads adapter based on `config.agentFramework.id`.
 

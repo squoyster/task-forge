@@ -22,6 +22,8 @@ export const AUDIT_EVENT_TYPES = [
   "verification.completed",
   "verification.failed",
   "session.started",
+  "github.pr.created",
+  "github.pr.manual",
 ] as const;
 
 export type AuditEventType = (typeof AUDIT_EVENT_TYPES)[number];

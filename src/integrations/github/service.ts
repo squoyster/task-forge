@@ -156,3 +156,32 @@ export async function getIssue(
     return null;
   }
 }
+
+export interface PullRequestResult {
+  number: number;
+  url: string;
+}
+
+export async function createPullRequest(
+  config: GitHubConfig,
+  title: string,
+  head: string,
+  base: string,
+  body: string,
+): Promise<PullRequestResult> {
+  const octokit = config.token ? new Octokit({ auth: config.token }) : getOctokit();
+
+  const response = await octokit.pulls.create({
+    owner: config.owner,
+    repo: config.repo,
+    title,
+    head,
+    base,
+    body,
+  });
+
+  return {
+    number: response.data.number,
+    url: response.data.html_url,
+  };
+}
