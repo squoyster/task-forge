@@ -1,6 +1,9 @@
 import path from "node:path";
 import fs from "node:fs";
 import { hasManagedBlock } from "./templates.js";
+import { installAgentsMd } from "./agents-md.js";
+import { installOpenCodeConfig } from "./opencode-config.js";
+import { loadConfig } from "./config.js";
 
 export interface DoctorIssue {
   severity: "error" | "warn" | "info";
@@ -9,8 +12,14 @@ export interface DoctorIssue {
   taskId?: string;
 }
 
+export interface DoctorRepair {
+  code: string;
+  message: string;
+}
+
 export interface AgentFrameworkAdapter {
   doctor(repoRoot: string): DoctorIssue[];
+  fix(repoRoot: string): DoctorRepair[];
 }
 
 export class OpenCodeAgentFrameworkAdapter implements AgentFrameworkAdapter {
@@ -62,10 +71,65 @@ export class OpenCodeAgentFrameworkAdapter implements AgentFrameworkAdapter {
 
     return issues;
   }
+
+  fix(repoRoot: string): DoctorRepair[] {
+    const repairs: DoctorRepair[] = [];
+    const config = loadConfig(repoRoot);
+    const policy = config.agentFramework?.policy ?? "managed";
+    const audit = config.agentFramework?.audit ?? true;
+    const guard = config.agentFramework?.guard ?? true;
+
+    // Fix AGENTS.md
+    const agentsMdPath = path.join(repoRoot, "AGENTS.md");
+    if (!fs.existsSync(agentsMdPath)) {
+      installAgentsMd(repoRoot, false);
+      repairs.push({ code: "OPENCODE_AGENTS_MD", message: "Created AGENTS.md with managed-agent-policy block" });
+    } else {
+      const content = fs.readFileSync(agentsMdPath, "utf-8");
+      if (!hasManagedBlock(content, "managed-agent-policy")) {
+        installAgentsMd(repoRoot, false);
+        repairs.push({ code: "OPENCODE_AGENTS_MD", message: "Added managed-agent-policy block to AGENTS.md" });
+      }
+    }
+
+    // Fix opencode.json
+    const openCodeJsonPath = path.join(repoRoot, "opencode.json");
+    if (!fs.existsSync(openCodeJsonPath)) {
+      installOpenCodeConfig(repoRoot, policy, audit, guard, false);
+      repairs.push({ code: "OPENCODE_JSON", message: "Created opencode.json with TaskForge-managed permissions" });
+    } else {
+      try {
+        const ocConfig = JSON.parse(fs.readFileSync(openCodeJsonPath, "utf-8"));
+        const bashPerms = ocConfig?.permission?.bash ?? {};
+        const editPerms = ocConfig?.permission?.edit ?? {};
+        const needsFix = bashPerms["git *"] !== "deny" || editPerms["../task-state/**"] !== "deny" || !ocConfig?.agent?.doctor;
+        if (needsFix) {
+          installOpenCodeConfig(repoRoot, policy, audit, guard, false);
+          repairs.push({ code: "OPENCODE_PERMISSIONS", message: "Repaired opencode.json agent permissions and doctor agent config" });
+        }
+      } catch {
+        installOpenCodeConfig(repoRoot, policy, audit, guard, false);
+        repairs.push({ code: "OPENCODE_JSON", message: "Recreated opencode.json (was invalid JSON)" });
+      }
+    }
+
+    // Create audit directory
+    const auditDir = path.join(repoRoot, "logs", "taskforge", "audit");
+    if (!fs.existsSync(auditDir)) {
+      fs.mkdirSync(auditDir, { recursive: true });
+      repairs.push({ code: "OPENCODE_AUDIT_DIR", message: "Created audit directory" });
+    }
+
+    return repairs;
+  }
 }
 
 export class GenericAgentFrameworkAdapter implements AgentFrameworkAdapter {
   doctor(_repoRoot: string): DoctorIssue[] {
+    return [];
+  }
+
+  fix(_repoRoot: string): DoctorRepair[] {
     return [];
   }
 }

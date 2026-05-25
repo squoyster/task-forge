@@ -7,7 +7,7 @@ import { STATUS } from "../util/status-constants.js";
 import { inspectTask } from "./inspect.js";
 import { validateTaskState } from "../core/state-validator.js";
 import { checkHooks } from "../core/hooks.js";
-import { getAgentFrameworkAdapter, type DoctorIssue } from "../core/agent-framework-adapter.js";
+import { getAgentFrameworkAdapter, type DoctorIssue, type DoctorRepair } from "../core/agent-framework-adapter.js";
 import fs from "node:fs";
 
 export async function cmdDoctor(options?: { json?: boolean; fix?: boolean }): Promise<void> {
@@ -126,6 +126,16 @@ export async function cmdDoctor(options?: { json?: boolean; fix?: boolean }): Pr
     }
   }
 
+  // 9b. Agent framework fix (if --fix)
+  const repairs: DoctorRepair[] = [];
+  if (options?.fix) {
+    const adapterRepairs = adapter.fix(repoRoot);
+    repairs.push(...adapterRepairs);
+    for (const repair of adapterRepairs) {
+      ok.push(`Repaired: ${repair.message}`);
+    }
+  }
+
   // 10. Git hooks check
   const hooksResult = checkHooks(repoRoot);
   if (hooksResult.ok) {
@@ -153,6 +163,7 @@ export async function cmdDoctor(options?: { json?: boolean; fix?: boolean }): Pr
     console.log(JSON.stringify({
       ok: issues.filter((i) => i.severity === "error").length === 0,
       issues: issues.map((i) => ({ severity: i.severity, code: i.code, taskId: i.taskId, message: i.message })),
+      repairs: repairs.map((r) => ({ code: r.code, message: r.message })),
       checks: ok,
       counts: {
         total: tasks.length,
@@ -163,6 +174,7 @@ export async function cmdDoctor(options?: { json?: boolean; fix?: boolean }): Pr
         sweepable,
         errors: issues.filter((i) => i.severity === "error").length,
         warnings: issues.filter((i) => i.severity === "warn").length,
+        repairs: repairs.length,
       },
     }, null, 2));
     return;
@@ -177,8 +189,15 @@ export async function cmdDoctor(options?: { json?: boolean; fix?: boolean }): Pr
     const logFn = i.severity === "error" ? logWarn : i.severity === "warn" ? logWarn : logInfo;
     logFn(`${prefix}${taskLabel} ${i.message}`);
   }
+  if (repairs.length > 0) {
+    logDivider();
+    logHeader("## Repairs");
+    for (const r of repairs) {
+      logSuccess(`✓ ${r.message}`);
+    }
+  }
   logDivider();
   const errCount = issues.filter((i) => i.severity === "error").length;
   const warnCount = issues.filter((i) => i.severity === "warn").length;
-  logInfo(`Tasks: ${tasks.length} total | Errors: ${errCount} | Warnings: ${warnCount} | Sweepable: ${sweepable}`);
+  logInfo(`Tasks: ${tasks.length} total | Errors: ${errCount} | Warnings: ${warnCount} | Sweepable: ${sweepable} | Repairs: ${repairs.length}`);
 }

@@ -10,6 +10,12 @@ describe("AgentFrameworkAdapter", () => {
       const issues = adapter.doctor("/fake/repo");
       expect(issues).toEqual([]);
     });
+
+    it("fix returns no repairs", () => {
+      const adapter = new GenericAgentFrameworkAdapter();
+      const repairs = adapter.fix("/fake/repo");
+      expect(repairs).toEqual([]);
+    });
   });
 
   describe("OpenCodeAgentFrameworkAdapter", () => {
@@ -100,6 +106,72 @@ describe("AgentFrameworkAdapter", () => {
       const issues = adapter.doctor(repoRoot);
       const auditIssue = issues.find((i) => i.code === "OPENCODE_AUDIT_DIR");
       expect(auditIssue?.message).toContain("exists");
+    });
+
+    describe("fix", () => {
+      it("creates missing AGENTS.md", () => {
+        const repairs = adapter.fix(repoRoot);
+        const agentsMdRepair = repairs.find((r) => r.code === "OPENCODE_AGENTS_MD");
+        expect(agentsMdRepair).toBeDefined();
+        expect(fs.existsSync(agentsMdPath)).toBe(true);
+      });
+
+      it("adds missing managed-agent-policy block to AGENTS.md", () => {
+        fs.writeFileSync(agentsMdPath, "# Agents\nNo managed block");
+        const repairs = adapter.fix(repoRoot);
+        const agentsMdRepair = repairs.find((r) => r.code === "OPENCODE_AGENTS_MD");
+        expect(agentsMdRepair).toBeDefined();
+        const content = fs.readFileSync(agentsMdPath, "utf-8");
+        expect(content).toContain("<!-- TASKFORGE:BEGIN managed-agent-policy -->");
+      });
+
+      it("does not repair AGENTS.md when already valid", () => {
+        fs.writeFileSync(agentsMdPath, "# Agents\n<!-- TASKFORGE:BEGIN managed-agent-policy -->\n<!-- TASKFORGE:END managed-agent-policy -->");
+        const repairs = adapter.fix(repoRoot);
+        const agentsMdRepair = repairs.find((r) => r.code === "OPENCODE_AGENTS_MD");
+        expect(agentsMdRepair).toBeUndefined();
+      });
+
+      it("creates missing opencode.json", () => {
+        const repairs = adapter.fix(repoRoot);
+        const jsonRepair = repairs.find((r) => r.code === "OPENCODE_JSON");
+        expect(jsonRepair).toBeDefined();
+        expect(fs.existsSync(openCodeJsonPath)).toBe(true);
+      });
+
+      it("repairs incomplete opencode.json permissions", () => {
+        fs.writeFileSync(openCodeJsonPath, JSON.stringify({ permission: { bash: {}, edit: {} } }));
+        const repairs = adapter.fix(repoRoot);
+        const permsRepair = repairs.find((r) => r.code === "OPENCODE_PERMISSIONS");
+        expect(permsRepair).toBeDefined();
+        const config = JSON.parse(fs.readFileSync(openCodeJsonPath, "utf-8"));
+        expect(config.permission?.bash?.["git *"]).toBe("deny");
+      });
+
+      it("creates missing audit directory", () => {
+        const repairs = adapter.fix(repoRoot);
+        const auditRepair = repairs.find((r) => r.code === "OPENCODE_AUDIT_DIR");
+        expect(auditRepair).toBeDefined();
+        expect(fs.existsSync(auditDir)).toBe(true);
+      });
+
+      it("does not repair when everything is already valid", () => {
+        fs.writeFileSync(agentsMdPath, "# Agents\n<!-- TASKFORGE:BEGIN managed-agent-policy -->\n<!-- TASKFORGE:END managed-agent-policy -->");
+        fs.writeFileSync(openCodeJsonPath, JSON.stringify({
+          permission: { bash: { "git *": "deny" }, edit: { "../task-state/**": "deny" } },
+          agent: { doctor: true },
+        }));
+        fs.mkdirSync(auditDir, { recursive: true });
+        const repairs = adapter.fix(repoRoot);
+        expect(repairs).toEqual([]);
+      });
+
+      it("doctor after fix shows no issues", () => {
+        adapter.fix(repoRoot);
+        const issues = adapter.doctor(repoRoot);
+        const warnIssues = issues.filter((i) => i.severity === "warn");
+        expect(warnIssues).toEqual([]);
+      });
     });
   });
 
