@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **TASK-180: Fix pre-existing sweep and claim test failures** — fixed YAML status assertions in sweep tests (gray-matter quotes values with spaces), updated sweep test to verify transaction layer instead of deprecated `jitteredPush`, added `withTaskStateTransaction` mocks to sweep and claim tests with actual file persistence, and fixed claim JSON output test. All 454 tests now pass.
+
 - **TASK-178: Fix done command test mocks** — added missing `runGates` mock to `tests/commands/done.test.ts`, added `withTaskStateTransaction` mock to `tests/done.test.ts`, added `simple-git` mocks, and fixed default acceptance criteria from unchecked to checked. All 27 done tests now pass.
 
 - **TASK-158: Recursive secret redaction in audit plugin** — `redactSecrets()` now recursively traverses nested objects and arrays, redacting values for keys matching TOKEN, SECRET, PASSWORD, API_KEY, PRIVATE_KEY, CREDENTIAL, AUTHORIZATION, and related patterns. Redaction is applied before writing JSONL to prevent credentials from being stored in audit logs.
