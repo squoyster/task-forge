@@ -1,13 +1,11 @@
 ---
 id: TASK-179
 type: Bug
-status: Ready
+status: Done
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-dependsOn:
-  - TASK-177
 ---
 # Update Done Tests After `--force` Removal
 
@@ -34,10 +32,10 @@ In `tests/done.test.ts`:
 
 ## Acceptance Criteria
 
-- [ ] Tests that previously expected `--force` success now expect rejection with correct error code
-- [ ] Override metadata test is removed (feature no longer exists)
-- [ ] All done tests pass
-- [ ] No other tests regress
+- [x] Tests that previously expected `--force` success now expect rejection with correct error code — Completed as part of TASK-177: `tests/done.test.ts` and `tests/commands/done.test.ts` updated
+- [x] Override metadata test is removed (feature no longer exists) — Removed in TASK-177
+- [x] All done tests pass — 16 tests in `tests/done.test.ts`, 5 in `tests/commands/done.test.ts`; all 490 tests pass
+- [x] No other tests regress — Full test suite passes
 
 ## Test / Verification Command
 
@@ -54,3 +52,8 @@ TASK-177 (must be done first — removes `--force` from implementation).
 Low — test-only update.
 
 ## Agent Notes
+
+### 2026-05-25 Implementer
+- All ACs satisfied as part of TASK-177 implementation
+- Test name cleanup: removed "without force" from test name in `tests/done.test.ts`
+- All 490 tests pass
