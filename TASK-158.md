@@ -8,8 +8,6 @@ riskLevel: Medium
 humanInterventionRequired: false
 dependsOn:
   - TASK-152
-assignee: 4d68c7c5df
-claimed_at: '2026-05-25 00:31:27'
 context_hash: b55f11fb803cc1b2
 ---
 # Add Recursive Secret Redaction for Audit Events
@@ -23,6 +21,9 @@ Prevent audit logs from storing credentials.
 - [ ] Audit plugin redaction recursively replaces values for keys matching token, secret, password, api key, private key, credential, or authorization before writing JSONL.
 
 ## Agent Notes
+
+### 2026-05-25 System
+- Task unlocked (forced) — previous claim was held by session "4d68c7c5df"
 
 ### 2026-05-25 System
 - Task claimed via taskforge start TASK-158
