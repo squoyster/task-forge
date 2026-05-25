@@ -46,9 +46,14 @@ export function cmdTranscript(taskId: string, opts: { json?: boolean }): void {
   }
 }
 
-export function cmdTimeline(taskId: string): void {
+export function cmdTimeline(taskId: string, opts: { json?: boolean }): void {
   const repoRoot = getRepoRoot();
   const summary = summarizeTaskAudit(repoRoot, taskId);
+
+  if (opts.json) {
+    process.stdout.write(JSON.stringify(summary, null, 2) + "\n");
+    return;
+  }
 
   logHeader(`Timeline: ${taskId}`);
   logInfo(`Total events: ${summary.totalEvents}`);

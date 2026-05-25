@@ -410,8 +410,9 @@ program
 program
   .command("timeline <taskId>")
   .description("Show event timeline summary for a task")
-  .action((taskId: string) =>
-    wrap(async () => { cmdTimeline(taskId); })(),
+  .option("--json", "Output in JSON format")
+  .action((taskId: string, opts: { json?: boolean }) =>
+    wrap(async () => { cmdTimeline(taskId, opts); })(),
   );
 
 program

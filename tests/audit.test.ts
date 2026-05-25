@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterEach } from "vitest";
 import {
   appendAuditEvent,
   appendTaskTranscript,
@@ -8,6 +8,8 @@ import {
   createAuditEvent,
   createTaskEvent,
 } from "../src/core/audit.js";
+import { cmdTimeline } from "../src/commands/audit.js";
+import { setRepoRoot } from "../src/util/paths.js";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
@@ -94,6 +96,36 @@ describe("audit service", () => {
 
     const events = readAudit(deep);
     expect(events).toHaveLength(1);
+    fs.rmSync(tmp, { recursive: true, force: true });
+  });
+});
+
+describe("cmdTimeline", () => {
+  afterEach(() => {
+    setRepoRoot(process.cwd());
+  });
+
+  it("outputs JSON when --json flag is set", () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "tf-audit-"));
+    setRepoRoot(tmp);
+    appendTaskTranscript(tmp, "TASK-001", createAuditEvent("task.command.started"));
+    appendTaskTranscript(tmp, "TASK-001", createAuditEvent("tool.execute"));
+
+    const chunks: string[] = [];
+    const originalWrite = process.stdout.write.bind(process.stdout);
+    process.stdout.write = (chunk: string) => { chunks.push(chunk); return true; };
+
+    try {
+      cmdTimeline("TASK-001", { json: true });
+      const output = JSON.parse(chunks.join(""));
+      expect(output.taskId).toBe("TASK-001");
+      expect(output.totalEvents).toBe(2);
+      expect(output.eventCounts).toHaveProperty("task.command.started", 1);
+      expect(output.eventCounts).toHaveProperty("tool.execute", 1);
+    } finally {
+      process.stdout.write = originalWrite;
+    }
+
     fs.rmSync(tmp, { recursive: true, force: true });
   });
 });
