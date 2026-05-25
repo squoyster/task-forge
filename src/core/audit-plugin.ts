@@ -18,13 +18,13 @@ function resolveTaskId(): string {
     const branch = require("child_process")
       .execSync("git rev-parse --abbrev-ref HEAD", { encoding: "utf-8" })
       .trim();
-    const match = branch.match(/^(?:agent\\/)?(TASK-\\\\d+)/);
+    const match = branch.match(/^(?:agent\\/)?(TASK-\\d+)/);
     if (match) return match[1];
   } catch {}
 
   try {
     const cwd = process.cwd();
-    const match = cwd.match(/worktrees\\/(?:[^/]+\\/)?(TASK-\\\\d+)/);
+    const match = cwd.match(/worktrees\\/(?:[^/]+\\/)?(TASK-\\d+)/);
     if (match) return match[1];
   } catch {}
 

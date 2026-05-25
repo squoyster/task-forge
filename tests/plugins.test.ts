@@ -31,6 +31,18 @@ describe("audit plugin", () => {
     expect(fs.existsSync(path.join(tmp, ".opencode"))).toBe(false);
     fs.rmSync(tmp, { recursive: true, force: true });
   });
+
+  it("generated regex extracts TASK-ID from agent branches", () => {
+    const content = generateAuditPlugin();
+    // The generated regex should use \d+ not \\d+ (literal backslash)
+    expect(content).toContain("TASK-\\d+");
+    expect(content).not.toContain("TASK-\\\\d+");
+  });
+
+  it("generated regex extracts TASK-ID from worktree paths", () => {
+    const content = generateAuditPlugin();
+    expect(content).toMatch(/worktrees.*TASK-\\d\+/);
+  });
 });
 
 describe("guard plugin", () => {
