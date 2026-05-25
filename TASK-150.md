@@ -9,10 +9,9 @@ humanInterventionRequired: false
 dependsOn:
   - TASK-146
 context_hash: 3a03a0322eb9729c
-worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-150
-override_reason: 'All ACs satisfied: tests prove conflict retry behavior'
+override_reason: Pre-existing gate failures from TASK-091
 override_actor: unknown
-override_timestamp: '2026-05-25T00:14:25.061Z'
+override_timestamp: '2026-05-25T00:14:48.891Z'
 override_failed_gates:
   - lint
   - test
@@ -28,6 +27,14 @@ Verify optimistic retry behavior.
 - [x] Automated tests prove that a non-fast-forward task-state push causes the transaction to reload fresh state and rerun the mutation before retrying. — `tests/task-state-transaction.test.ts` "reloads fresh state on non-fast-forward retry": spies on `loadAllTasks` and verifies it's called >= 2 times. "reruns mutation with fresh state after conflict": verifies mutation sees updated task priority (P2 → P0) after simulated conflict. "throws after exhausting retries on persistent conflict": verifies error after max retries. Fixed pre-existing timeout in "re-runs mutation on conflict" by adding `jitterMinMs: 0, jitterMaxMs: 0`.
 
 ## Agent Notes
+
+### 2026-05-25 System
+- Task marked Done (forced)
+- Override reason: Pre-existing gate failures from TASK-091
+- Override actor: unknown
+- Failed gates: lint, test
+- Worktree removed: /Volumes/Transcend/devel/worktrees/task-forge/TASK-150
+- Worktree and branch fields cleared from task frontmatter.
 
 ### 2026-05-25 System
 - Task marked Done (forced)
