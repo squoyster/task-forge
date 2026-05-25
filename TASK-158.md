@@ -20,7 +20,7 @@ Prevent audit logs from storing credentials.
 
 ## Acceptance Criteria
 
-- [ ] Audit plugin redaction recursively replaces values for keys matching token, secret, password, api key, private key, credential, or authorization before writing JSONL.
+- [x] Audit plugin redaction recursively replaces values for keys matching token, secret, password, api key, private key, credential, or authorization before writing JSONL. — `src/core/audit-plugin.ts` `redactSecrets()`: recursive function that traverses objects/arrays, checks keys against SECRET_PATTERNS (TOKEN, SECRET, PASSWORD, API_KEY, PRIVATE_KEY, CREDENTIAL, AUTHORIZATION, etc.), replaces matching values with `[REDACTED]`. `writeAuditEvent()`: calls `redactSecrets(event)` before `JSON.stringify`. Tests in `tests/plugins.test.ts`: "generated redaction is recursive" verifies recursive call, "generated redaction covers all secret patterns" verifies all patterns present, "generated writeAuditEvent applies redaction before writing" verifies redaction is applied.
 
 ## Agent Notes
 
@@ -36,3 +36,10 @@ Prevent audit logs from storing credentials.
 - Task claimed via taskforge start TASK-158
 - Session: 4d68c7c5df
 - Branch: agent/TASK-158-task-158--4d68c7c5df
+
+### 2026-05-25 Implementer
+- Replaced shallow `redactSecrets()` with recursive version that traverses nested objects and arrays
+- Added SECRET_PATTERNS constant covering: TOKEN, SECRET, PASSWORD, API_KEY, PRIVATE_KEY, CREDENTIAL, AUTHORIZATION, AUTH_TOKEN, ACCESS_KEY
+- `writeAuditEvent()` now calls `redactSecrets(event)` before JSON.stringify
+- Added 3 tests verifying recursive redaction, pattern coverage, and pre-write application
+- All 13 plugin tests pass. Typecheck and build pass.
