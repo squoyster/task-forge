@@ -1,11 +1,14 @@
 ---
 id: TASK-178
 type: Bug
-status: Ready
+status: In Progress
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: acfca4889e
+claimed_at: '2026-05-25 00:56:45'
+context_hash: 978729792ac0ac73
 ---
 # Fix `runGates` Mock in Done Command Tests
 
@@ -59,3 +62,8 @@ None.
 Low — test-only fix.
 
 ## Agent Notes
+
+### 2026-05-25 System
+- Task claimed via taskforge start TASK-178
+- Session: acfca4889e
+- Branch: agent/TASK-178-task-178--acfca4889e
