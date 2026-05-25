@@ -11,6 +11,7 @@ dependsOn:
 assignee: b05e0c9bf8
 claimed_at: '2026-05-25 00:15:24'
 context_hash: a35e7bbd0e71ac8b
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-151
 ---
 # Add Transaction Tests for Invariant Abort
 
@@ -23,6 +24,12 @@ Verify invalid mutations cannot commit.
 - [ ] Automated tests prove that a transaction producing invalid task-state fails before commit and leaves task-state unchanged.
 
 ## Agent Notes
+
+### 2026-05-25 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-151
+
+### 2026-05-25 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-151
 
 ### 2026-05-25 System
 - Task claimed via taskforge start TASK-151
