@@ -1,13 +1,11 @@
 ---
 id: TASK-178
 type: Bug
-status: In Progress
+status: Done
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: acfca4889e
-claimed_at: '2026-05-25 00:56:45'
 context_hash: 978729792ac0ac73
 ---
 # Fix `runGates` Mock in Done Command Tests
@@ -43,9 +41,9 @@ Fix 11 failing done tests caused by missing `runGates` mock export.
 
 ## Acceptance Criteria
 
-- [ ] `vi.mock("../../src/commands/gates.js")` in both test files exports a `runGates` function that resolves to `{ passed: true, results: [] }`
-- [ ] All 11 previously-failing done tests pass
-- [ ] No other tests regress
+- [x] `vi.mock("../../src/commands/gates.js")` in both test files exports a `runGates` function that resolves to `{ passed: true, results: [] }` — `tests/commands/done.test.ts`: added `runGates` to existing gates mock. `tests/done.test.ts`: already had it.
+- [x] All 11 previously-failing done tests pass — all 27 done tests (22 + 5) now pass.
+- [x] No other tests regress — 451 tests pass, only 3 pre-existing failures remain (TASK-180).
 
 ## Test / Verification Command
 
@@ -67,3 +65,14 @@ Low — test-only fix.
 - Task claimed via taskforge start TASK-178
 - Session: acfca4889e
 - Branch: agent/TASK-178-task-178--acfca4889e
+
+### 2026-05-25 Implementer
+- Added `runGates` mock to `tests/commands/done.test.ts`
+- Added `withTaskStateTransaction` mock to `tests/done.test.ts`
+- Added `simple-git` mocks (`getCurrentBranch`, `removeWorktree`, `removeBranch`) to `tests/commands/done.test.ts`
+- Changed default AC from unchecked (`- [ ]`) to checked (`- [x]`) in both test files' `makeTaskFile` helpers
+- Added `reason` to force test in `tests/commands/done.test.ts` that requires it
+- All 27 done tests pass (22 + 5). Total: 451/454 tests pass (3 pre-existing failures from TASK-180).
+
+### 2026-05-25 System
+- Task marked Done
