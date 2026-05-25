@@ -134,14 +134,24 @@ import { getConfigJsonPath } from "../util/paths.js";
 
 export function loadConfig(repoRoot: string): Config {
   const configPath = getConfigJsonPath(repoRoot);
-  if (fs.existsSync(configPath)) {
-    try {
-      const raw = fs.readFileSync(configPath, "utf-8");
-      const parsed = JSON.parse(raw);
-      return ConfigSchema.parse(parsed);
-    } catch {
-      return DEFAULT_CONFIG;
-    }
+  if (!fs.existsSync(configPath)) {
+    return DEFAULT_CONFIG;
   }
-  return DEFAULT_CONFIG;
+
+  const raw = fs.readFileSync(configPath, "utf-8");
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Invalid JSON in config file ${configPath}: ${message}`);
+  }
+
+  try {
+    return ConfigSchema.parse(parsed);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Invalid config schema in ${configPath}: ${message}`);
+  }
 }

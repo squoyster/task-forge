@@ -177,14 +177,23 @@ describe("loadConfig", () => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  it("returns DEFAULT_CONFIG on invalid JSON", async () => {
+  it("throws on invalid JSON", async () => {
     const { loadConfig } = await import("../src/core/config.js");
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "tf-config-test-"));
     const configDir = path.join(tmpDir, ".taskforge");
     fs.mkdirSync(configDir, { recursive: true });
     fs.writeFileSync(path.join(configDir, "config.json"), "not json", "utf-8");
-    const config = loadConfig(tmpDir);
-    expect(config.project.defaultBranch).toBe("main");
+    expect(() => loadConfig(tmpDir)).toThrow("Invalid JSON in config file");
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it("throws on invalid schema", async () => {
+    const { loadConfig } = await import("../src/core/config.js");
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "tf-config-test-"));
+    const configDir = path.join(tmpDir, ".taskforge");
+    fs.mkdirSync(configDir, { recursive: true });
+    fs.writeFileSync(path.join(configDir, "config.json"), JSON.stringify({ dependencies: { packageManager: "invalid" } }), "utf-8");
+    expect(() => loadConfig(tmpDir)).toThrow("Invalid config schema");
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 });

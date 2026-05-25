@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **TASK-168: Fail clearly on invalid config** — `loadConfig()` now throws descriptive errors for invalid JSON or schema validation failures instead of silently returning defaults. Returns `DEFAULT_CONFIG` only when config file does not exist.
+
 - **TASK-167: Validate ownership in diff command** — `taskforge diff` now calls `assertTaskOwnership()` before accessing the worktree, enforcing the same ownership discipline as `checkpoint` and `submit`.
 
 - **TASK-166: Emit audit events for PR command** — `taskforge pr` now appends task transcript events for all outcomes: `github.pr.created` (success with PR number/URL), `github.pr.failed` (API error with message), and `github.pr.manual` (GitHub not configured). Added `github.pr.failed` event type.
