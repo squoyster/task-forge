@@ -623,6 +623,8 @@ export const DoneStates = {
   AC_MISSING: "ac_missing",
   AC_BLANK: "ac_blank",
   AC_UNCHECKED: "ac_unchecked",
+  WORKTREE_DIRTY: "worktree_dirty",
+  BRANCH_UNPUSHED: "branch_unpushed",
 } as const;
 
 export function doneStateMachine(
@@ -634,6 +636,10 @@ export function doneStateMachine(
     hasAcSection: boolean;
     hasBlankAc: boolean;
     hasUncheckedAc: boolean;
+    worktreeClean: boolean;
+    branchPushed: boolean;
+    dirtyFiles?: string[];
+    commitsAhead?: number;
     taskId?: string;
     currentStatus?: string;
   },
@@ -668,6 +674,40 @@ export function doneStateMachine(
       `Task ${conditions.taskId} is not owned by the current session. ` +
       `Request human input to resolve the ownership conflict.`,
       { taskId: conditions.taskId },
+    );
+  }
+
+  if (!conditions.worktreeClean) {
+    const fileCount = conditions.dirtyFiles?.length ?? 0;
+    const fileList = conditions.dirtyFiles && conditions.dirtyFiles.length <= 5
+      ? `: ${conditions.dirtyFiles.join(", ")}`
+      : conditions.dirtyFiles && conditions.dirtyFiles.length > 5
+        ? ` (showing first 5): ${conditions.dirtyFiles.slice(0, 5).join(", ")}...`
+        : "";
+    return error(
+      DoneStates.WORKTREE_DIRTY,
+      "WORKTREE_DIRTY",
+      "work_on_task",
+      `Task ${conditions.taskId} has ${fileCount} uncommitted file(s) in the worktree${fileList}. ` +
+      `Done requires a clean worktree. ` +
+      `Run 'taskforge checkpoint -m "your message"' to commit changes, ` +
+      `then try 'taskforge done ${conditions.taskId}' again.`,
+      { taskId: conditions.taskId, dirtyFiles: conditions.dirtyFiles },
+    );
+  }
+
+  if (!conditions.branchPushed) {
+    const ahead = conditions.commitsAhead ?? 0;
+    return error(
+      DoneStates.BRANCH_UNPUSHED,
+      "BRANCH_UNPUSHED",
+      "work_on_task",
+      `Task ${conditions.taskId} has ${ahead} unpushed commit(s). ` +
+      `Done requires all commits to be pushed. ` +
+      `Run 'taskforge submit' to push and create a PR, ` +
+      `or 'git push' to push the branch, ` +
+      `then try 'taskforge done ${conditions.taskId}' again.`,
+      { taskId: conditions.taskId, commitsAhead: conditions.commitsAhead },
     );
   }
 

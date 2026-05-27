@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **TASK-232: Require clean worktree and pushed branch in done command** — `taskforge done` now rejects when the worktree has uncommitted files (WORKTREE_DIRTY) or the branch has unpushed commits (BRANCH_UNPUSHED). Error messages include actionable guidance (`taskforge checkpoint`, `taskforge submit`). JSON output includes structured `nextActions`. Added `getWorktreeDirtyFiles()` and `getBranchCommitsAhead()` to `git.ts`, new states to `command-states.ts`, and 5 tests. Invariant documented in TASKFORGE.md and AGENTS.md.
+
 - **TASK-217: Wire command state machines into all lifecycle commands** — All lifecycle commands (`next`, `claim`, `start`, `done`, `new`, `gates`, `checkpoint`, `submit`, `pr`) now use the command state machines from `command-states.ts` to produce structured `CommandResult` objects with `nextAction` and `guidance` fields. Added `GuidanceAdapter` interface with `NoOpGuidanceAdapter` and `OpenCodeGuidanceAdapter` implementations for pushing guidance to agent frameworks. Every command JSON output now includes `nextActions` array and `guidance` string. Human-readable output uses state machine guidance text.
 
 - **TASK-220: Implement validate-state --strict flag** — `taskforge validate-state --strict` now exits non-zero on any warnings or errors, enabling CI branch protection enforcement. JSON output includes structured `nextActions` with recovery guidance. Human output includes "Valid next actions:" section. Added `NextAction` interface and `Safety` type to `json-result.ts`. 8 tests added covering strict/non-strict modes, errors, warnings, and clean state.

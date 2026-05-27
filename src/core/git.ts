@@ -91,6 +91,34 @@ async function checkWorktreeDirty(worktreePath: string): Promise<number> {
 }
 
 /**
+ * Get the list of uncommitted files in a worktree.
+ * Returns empty array if clean.
+ */
+export async function getWorktreeDirtyFiles(worktreePath: string): Promise<string[]> {
+  try {
+    const git = simpleGit(worktreePath);
+    const status = await git.status();
+    return status.files.map((f) => f.path);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Check how many commits the current branch is ahead of its remote tracking branch.
+ * Returns 0 if up to date or if remote tracking branch doesn't exist.
+ */
+export async function getBranchCommitsAhead(repoRoot: string, branch: string): Promise<number> {
+  try {
+    const remoteBranch = `origin/${branch.replace(/^refs\/heads\//, "")}`;
+    const result = await execa("git", ["rev-list", "--count", `${remoteBranch}..HEAD`], { cwd: repoRoot });
+    return parseInt(result.stdout.trim(), 10) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+/**
  * Find a task by its worktree path.
  */
 function findTaskByWorktree(tasks: ParsedTask[], worktreePath: string): ParsedTask | null {

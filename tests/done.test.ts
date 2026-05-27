@@ -13,6 +13,8 @@ vi.mock("../src/core/git.js", () => ({
   pullTaskState: vi.fn(),
   jitteredPush: vi.fn(),
   ensureTaskStateBranch: vi.fn(),
+  getWorktreeDirtyFiles: vi.fn().mockResolvedValue([]),
+  getBranchCommitsAhead: vi.fn().mockResolvedValue(0),
 }));
 
 vi.mock("../src/commands/gates.js", () => ({
@@ -36,7 +38,7 @@ vi.mock("../src/core/task-state-transaction.js", () => ({
   }),
 }));
 
-import { removeWorktree, removeBranch } from "../src/core/git.js";
+import { removeWorktree, removeBranch, getWorktreeDirtyFiles, getBranchCommitsAhead } from "../src/core/git.js";
 
 let uniqueDir: string;
 let stateDir: string;
@@ -305,6 +307,88 @@ describe("cmdDone", () => {
     expect(output.ok).toBe(false);
     expect(output.code).toBe("UNCHECKED_ACCEPTANCE_CRITERIA");
     expect(output.error).toContain("Check off each criterion");
+  });
+
+  it("rejects done when worktree has uncommitted files", async () => {
+    vi.mocked(getWorktreeDirtyFiles).mockResolvedValue(["src/foo.ts", "tests/foo.test.ts"]);
+
+    makeTaskFile("TASK-005", {
+      worktree: "../worktrees/TASK-005",
+      branch: "agent/TASK-005-test",
+    });
+    await expect(cmdDone("TASK-005")).rejects.toThrow(/uncommitted file/);
+  });
+
+  it("rejects done with JSON error when worktree is dirty", async () => {
+    vi.mocked(getWorktreeDirtyFiles).mockResolvedValue(["src/foo.ts"]);
+
+    makeTaskFile("TASK-005", {
+      worktree: "../worktrees/TASK-005",
+      branch: "agent/TASK-005-test",
+    });
+
+    const logs: string[] = [];
+    const consoleSpy = vi.spyOn(console, "log").mockImplementation((...args: unknown[]) => {
+      logs.push(args.map(String).join(" "));
+    });
+    await cmdDone("TASK-005", { json: true });
+    consoleSpy.mockRestore();
+
+    expect(logs.length).toBeGreaterThan(0);
+    const output = JSON.parse(logs[0]);
+    expect(output.ok).toBe(false);
+    expect(output.code).toBe("WORKTREE_DIRTY");
+    expect(output.error).toContain("uncommitted");
+    expect(output.error).toContain("taskforge checkpoint");
+  });
+
+  it("rejects done when branch has unpushed commits", async () => {
+    vi.mocked(getWorktreeDirtyFiles).mockResolvedValue([]);
+    vi.mocked(getBranchCommitsAhead).mockResolvedValue(3);
+
+    makeTaskFile("TASK-005", {
+      worktree: "../worktrees/TASK-005",
+      branch: "agent/TASK-005-test",
+    });
+    await expect(cmdDone("TASK-005")).rejects.toThrow(/unpushed commit/);
+  });
+
+  it("rejects done with JSON error when branch is unpushed", async () => {
+    vi.mocked(getWorktreeDirtyFiles).mockResolvedValue([]);
+    vi.mocked(getBranchCommitsAhead).mockResolvedValue(2);
+
+    makeTaskFile("TASK-005", {
+      worktree: "../worktrees/TASK-005",
+      branch: "agent/TASK-005-test",
+    });
+
+    const logs: string[] = [];
+    const consoleSpy = vi.spyOn(console, "log").mockImplementation((...args: unknown[]) => {
+      logs.push(args.map(String).join(" "));
+    });
+    await cmdDone("TASK-005", { json: true });
+    consoleSpy.mockRestore();
+
+    expect(logs.length).toBeGreaterThan(0);
+    const output = JSON.parse(logs[0]);
+    expect(output.ok).toBe(false);
+    expect(output.code).toBe("BRANCH_UNPUSHED");
+    expect(output.error).toContain("unpushed");
+    expect(output.error).toContain("taskforge submit");
+  });
+
+  it("allows done when worktree is clean and branch is pushed", async () => {
+    vi.mocked(getWorktreeDirtyFiles).mockResolvedValue([]);
+    vi.mocked(getBranchCommitsAhead).mockResolvedValue(0);
+
+    const fp = makeTaskFile("TASK-005", {
+      worktree: "../worktrees/TASK-005",
+      branch: "agent/TASK-005-test",
+    });
+    await expect(cmdDone("TASK-005")).resolves.not.toThrow();
+
+    const task = readTaskFile(fp);
+    expect(task.frontmatter.status).toBe("Done");
   });
 
 });

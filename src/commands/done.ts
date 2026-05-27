@@ -1,6 +1,6 @@
 import { loadTaskById, updateTaskStatus, clearTaskLock, appendAgentNote, parseTaskFile, writeTaskFile, hasAcceptanceCriteriaSection, hasBlankAcceptanceCriteria, hasUncheckedAcceptanceCriteria } from "../core/task-store.js";
 import { validateTransition } from "../core/status-transition.js";
-import { removeWorktree, removeBranch } from "../core/git.js";
+import { removeWorktree, removeBranch, getWorktreeDirtyFiles, getBranchCommitsAhead } from "../core/git.js";
 import { withTaskStateTransaction } from "../core/task-state-transaction.js";
 import { STATUS } from "../util/status-constants.js";
 import { logSuccess, logInfo, logWarn, logSub, logHeader, logDivider, logError } from "../util/logging.js";
@@ -35,6 +35,8 @@ export async function cmdDone(
       validTransition: false,
       gatesPassed: false,
       ownershipMatch: false,
+      worktreeClean: false,
+      branchPushed: false,
       controlFileHashMatch: false,
       hasAcSection: false,
       hasBlankAc: false,
@@ -77,6 +79,8 @@ export async function cmdDone(
       validTransition: true,
       gatesPassed: false,
       ownershipMatch: true,
+      worktreeClean: true,
+      branchPushed: true,
       controlFileHashMatch: true,
       hasAcSection: true,
       hasBlankAc: false,
@@ -103,6 +107,8 @@ export async function cmdDone(
       validTransition: false,
       gatesPassed: true,
       ownershipMatch: true,
+      worktreeClean: true,
+      branchPushed: true,
       controlFileHashMatch: true,
       hasAcSection: true,
       hasBlankAc: false,
@@ -135,6 +141,8 @@ export async function cmdDone(
         validTransition: true,
         gatesPassed: true,
         ownershipMatch: false,
+        worktreeClean: true,
+        branchPushed: true,
         controlFileHashMatch: true,
         hasAcSection: true,
         hasBlankAc: false,
@@ -154,6 +162,66 @@ export async function cmdDone(
     }
   }
 
+  // Worktree dirty check
+  if (task.worktree) {
+    const dirtyFiles = await getWorktreeDirtyFiles(task.worktree);
+    if (dirtyFiles.length > 0) {
+      const result = doneStateMachine({
+        validTransition: true,
+        gatesPassed: true,
+        ownershipMatch: true,
+        worktreeClean: false,
+        branchPushed: true,
+        controlFileHashMatch: true,
+        hasAcSection: true,
+        hasBlankAc: false,
+        hasUncheckedAc: false,
+        dirtyFiles,
+        taskId,
+        currentStatus: task.status,
+      });
+      getDefaultGuidanceAdapter().pushGuidance(result);
+      if (json) {
+        printJson(jsonError(result.guidance, result.errorCode ?? "WORKTREE_DIRTY", {
+          nextActions: [result.nextAction],
+          guidance: result.guidance,
+        }));
+        return;
+      }
+      throw new Error(result.guidance);
+    }
+  }
+
+  // Branch unpushed check
+  if (task.branch) {
+    const commitsAhead = await getBranchCommitsAhead(repoRoot, task.branch);
+    if (commitsAhead > 0) {
+      const result = doneStateMachine({
+        validTransition: true,
+        gatesPassed: true,
+        ownershipMatch: true,
+        worktreeClean: true,
+        branchPushed: false,
+        controlFileHashMatch: true,
+        hasAcSection: true,
+        hasBlankAc: false,
+        hasUncheckedAc: false,
+        commitsAhead,
+        taskId,
+        currentStatus: task.status,
+      });
+      getDefaultGuidanceAdapter().pushGuidance(result);
+      if (json) {
+        printJson(jsonError(result.guidance, result.errorCode ?? "BRANCH_UNPUSHED", {
+          nextActions: [result.nextAction],
+          guidance: result.guidance,
+        }));
+        return;
+      }
+      throw new Error(result.guidance);
+    }
+  }
+
   // Control-file change detection
   if (task.context_hash) {
     const currentHash = hashControlFiles(repoRoot);
@@ -162,6 +230,8 @@ export async function cmdDone(
         validTransition: true,
         gatesPassed: true,
         ownershipMatch: true,
+        worktreeClean: true,
+        branchPushed: true,
         controlFileHashMatch: false,
         hasAcSection: true,
         hasBlankAc: false,
@@ -187,6 +257,8 @@ export async function cmdDone(
       validTransition: true,
       gatesPassed: true,
       ownershipMatch: true,
+      worktreeClean: true,
+      branchPushed: true,
       controlFileHashMatch: true,
       hasAcSection: false,
       hasBlankAc: false,
@@ -211,6 +283,8 @@ export async function cmdDone(
       validTransition: true,
       gatesPassed: true,
       ownershipMatch: true,
+      worktreeClean: true,
+      branchPushed: true,
       controlFileHashMatch: true,
       hasAcSection: true,
       hasBlankAc: true,
@@ -235,6 +309,8 @@ export async function cmdDone(
       validTransition: true,
       gatesPassed: true,
       ownershipMatch: true,
+      worktreeClean: true,
+      branchPushed: true,
       controlFileHashMatch: true,
       hasAcSection: true,
       hasBlankAc: false,
@@ -274,6 +350,8 @@ export async function cmdDone(
     validTransition: true,
     gatesPassed: true,
     ownershipMatch: true,
+    worktreeClean: true,
+    branchPushed: true,
     controlFileHashMatch: true,
     hasAcSection: true,
     hasBlankAc: false,
