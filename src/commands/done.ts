@@ -12,6 +12,8 @@ import { createTaskEvent, appendTaskTranscript } from "../core/audit.js";
 import { runGates } from "./gates.js";
 import { isDoctorLocked, removeDoctorLock } from "../core/doctor-lock.js";
 import { hashControlFiles } from "../core/control-files.js";
+import { doneStateMachine } from "../core/command-states.js";
+import { getDefaultGuidanceAdapter } from "../core/guidance-adapter.js";
 import type { ParsedTask } from "../core/task-store.js";
 
 export interface DoneOptions {
@@ -29,8 +31,22 @@ export async function cmdDone(
   const task = loadTaskById(taskId);
 
   if (!task) {
+    const result = doneStateMachine({
+      validTransition: false,
+      gatesPassed: false,
+      ownershipMatch: false,
+      controlFileHashMatch: false,
+      hasAcSection: false,
+      hasBlankAc: false,
+      hasUncheckedAc: false,
+      taskId,
+    });
+    getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      printJson(jsonError(`Task ${taskId} not found`, "TASK_NOT_FOUND"));
+      printJson(jsonError(result.guidance, result.errorCode ?? "TASK_NOT_FOUND", {
+        nextActions: [result.nextAction],
+        guidance: result.guidance,
+      }));
       return;
     }
     throw new TaskNotFoundError(taskId);
@@ -57,23 +73,49 @@ export async function cmdDone(
     }
   }
   if (!gatesPassed) {
+    const result = doneStateMachine({
+      validTransition: true,
+      gatesPassed: false,
+      ownershipMatch: true,
+      controlFileHashMatch: true,
+      hasAcSection: true,
+      hasBlankAc: false,
+      hasUncheckedAc: false,
+      taskId,
+      currentStatus: task.status,
+    });
+    getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
       printJson(jsonError(
-        "Not all gates passed.",
-        "GATES_FAILED",
+        result.guidance,
+        result.errorCode ?? "GATES_FAILED",
+        { nextActions: ["fix", "done --force"], guidance: result.guidance },
       ));
       return;
     }
-    throw new Error("Not all gates passed.");
+    throw new Error(result.guidance);
   }
 
   // --- Status transition ---
   const transitionError = validateTransition(task.status, STATUS.DONE);
   if (transitionError) {
+    const result = doneStateMachine({
+      validTransition: false,
+      gatesPassed: true,
+      ownershipMatch: true,
+      controlFileHashMatch: true,
+      hasAcSection: true,
+      hasBlankAc: false,
+      hasUncheckedAc: false,
+      taskId,
+      currentStatus: task.status,
+    });
+    getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
       printJson(jsonError(
-        `Cannot transition from "${task.status}" to "${STATUS.DONE}". Allowed: ${STATUS.REVIEW}, ${STATUS.VERIFY}`,
-        "INVALID_TRANSITION",
+        result.guidance,
+        result.errorCode ?? "INVALID_TRANSITION",
+        { nextActions: [result.nextAction], guidance: result.guidance },
       ));
       return;
     }
@@ -86,34 +128,78 @@ export async function cmdDone(
 
   // Assert ownership if task is locked (skip if no lock set)
   if (task.assignee) {
-    await assertTaskOwnership(task, repoRoot);
+    try {
+      await assertTaskOwnership(task, repoRoot);
+    } catch {
+      const result = doneStateMachine({
+        validTransition: true,
+        gatesPassed: true,
+        ownershipMatch: false,
+        controlFileHashMatch: true,
+        hasAcSection: true,
+        hasBlankAc: false,
+        hasUncheckedAc: false,
+        taskId,
+        currentStatus: task.status,
+      });
+      getDefaultGuidanceAdapter().pushGuidance(result);
+      if (json) {
+        printJson(jsonError(result.guidance, result.errorCode ?? "OWNERSHIP_MISMATCH", {
+          nextActions: [result.nextAction],
+          guidance: result.guidance,
+        }));
+        return;
+      }
+      throw new Error(result.guidance);
+    }
   }
 
   // Control-file change detection
   if (task.context_hash) {
     const currentHash = hashControlFiles(repoRoot);
     if (currentHash !== task.context_hash) {
+      const result = doneStateMachine({
+        validTransition: true,
+        gatesPassed: true,
+        ownershipMatch: true,
+        controlFileHashMatch: false,
+        hasAcSection: true,
+        hasBlankAc: false,
+        hasUncheckedAc: false,
+        taskId,
+        currentStatus: task.status,
+      });
+      getDefaultGuidanceAdapter().pushGuidance(result);
       if (json) {
-        printJson(jsonError(
-          "Control files have changed since task was started. Review changes before marking Done.",
-          "CONTEXT_CHANGED",
-        ));
+        printJson(jsonError(result.guidance, result.errorCode ?? "CONTEXT_CHANGED", {
+          nextActions: [result.nextAction],
+          guidance: result.guidance,
+        }));
         return;
       }
-      throw new Error(
-        "Control files have changed since this task was started. " +
-        "Review the changes before marking Done.",
-      );
+      throw new Error(result.guidance);
     }
   }
 
   // Acceptance Criteria section check
   if (!hasAcceptanceCriteriaSection(task.body)) {
-    const message =
-      `Task ${taskId} cannot be marked Done: no "## Acceptance Criteria" section found. ` +
-      "Add acceptance criteria to the task file before completing, or request clarification if the ACs are ambiguous.";
+    const result = doneStateMachine({
+      validTransition: true,
+      gatesPassed: true,
+      ownershipMatch: true,
+      controlFileHashMatch: true,
+      hasAcSection: false,
+      hasBlankAc: false,
+      hasUncheckedAc: false,
+      taskId,
+      currentStatus: task.status,
+    });
+    getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      printJson(jsonError(message, "MISSING_ACCEPTANCE_CRITERIA"));
+      printJson(jsonError(result.guidance, result.errorCode ?? "MISSING_ACCEPTANCE_CRITERIA", {
+        nextActions: [result.nextAction],
+        guidance: result.guidance,
+      }));
       return;
     }
     throw new MissingAcceptanceCriteriaError(taskId);
@@ -121,11 +207,23 @@ export async function cmdDone(
 
   // Blank acceptance criteria check
   if (hasBlankAcceptanceCriteria(task.body)) {
-    const message =
-      `Task ${taskId} cannot be marked Done: one or more acceptance criteria are blank. ` +
-      "Replace placeholder checkboxes with verifiable conditions before completing.";
+    const result = doneStateMachine({
+      validTransition: true,
+      gatesPassed: true,
+      ownershipMatch: true,
+      controlFileHashMatch: true,
+      hasAcSection: true,
+      hasBlankAc: true,
+      hasUncheckedAc: false,
+      taskId,
+      currentStatus: task.status,
+    });
+    getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      printJson(jsonError(message, "BLANK_ACCEPTANCE_CRITERIA"));
+      printJson(jsonError(result.guidance, result.errorCode ?? "BLANK_ACCEPTANCE_CRITERIA", {
+        nextActions: [result.nextAction],
+        guidance: result.guidance,
+      }));
       return;
     }
     throw new BlankAcceptanceCriteriaError(taskId);
@@ -133,11 +231,23 @@ export async function cmdDone(
 
   // Unchecked acceptance criteria check
   if (hasUncheckedAcceptanceCriteria(task.body)) {
-    const message =
-      `Task ${taskId} cannot be marked Done: one or more acceptance criteria remain unchecked. ` +
-      "Check off each criterion with evidence before completing.";
+    const result = doneStateMachine({
+      validTransition: true,
+      gatesPassed: true,
+      ownershipMatch: true,
+      controlFileHashMatch: true,
+      hasAcSection: true,
+      hasBlankAc: false,
+      hasUncheckedAc: true,
+      taskId,
+      currentStatus: task.status,
+    });
+    getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      printJson(jsonError(message, "UNCHECKED_ACCEPTANCE_CRITERIA"));
+      printJson(jsonError(result.guidance, result.errorCode ?? "UNCHECKED_ACCEPTANCE_CRITERIA", {
+        nextActions: [result.nextAction],
+        guidance: result.guidance,
+      }));
       return;
     }
     throw new UncheckedAcceptanceCriteriaError(taskId);
@@ -148,17 +258,10 @@ export async function cmdDone(
   // Clear the lock
   clearTaskLock(task.filePath);
 
-const today = new Date().toISOString().split("T")[0];
+  const today = new Date().toISOString().split("T")[0];
   const notes: string[] = [
     "Task marked Done",
   ].filter(Boolean);
-
-  if (json) {
-    printJson(jsonOk({
-      task: buildJsonTask(task),
-    }));
-    return;
-  }
 
   // Auto-remove doctor lock if completing a recovery task
   if (isDoctorLocked(repoRoot).locked) {
@@ -166,7 +269,36 @@ const today = new Date().toISOString().split("T")[0];
     if (!json) logInfo("Doctor lock removed — recovery task completed.");
   }
 
-  logSuccess(`Task ${taskId} marked as Done.`);
+  // Build success result through state machine
+  const successResult = doneStateMachine({
+    validTransition: true,
+    gatesPassed: true,
+    ownershipMatch: true,
+    controlFileHashMatch: true,
+    hasAcSection: true,
+    hasBlankAc: false,
+    hasUncheckedAc: false,
+    taskId,
+    currentStatus: task.status,
+  });
+  getDefaultGuidanceAdapter().pushGuidance(successResult);
+
+  if (json) {
+    const final = loadTaskById(taskId);
+    printJson(jsonOk({
+      task: final ? buildJsonTask(final) : buildJsonTask(task),
+      nextActions: [successResult.nextAction],
+      guidance: successResult.guidance,
+    }));
+    return;
+  }
+
+  logSuccess(successResult.guidance);
+  logDivider();
+  logInfo("Next actions:");
+  logSub("  taskforge next              — Find the next available task");
+  logSub(`  taskforge done ${taskId} --cleanup  — Remove worktree and branch`);
+  logSub(`  taskforge done ${taskId} --delete-branch — Delete branch only`);
 
   appendTaskTranscript(repoRoot, taskId, createTaskEvent(taskId, "task.command.completed", {
     summary: `Task ${taskId} marked as Done`,
@@ -185,12 +317,6 @@ const today = new Date().toISOString().split("T")[0];
     { command: `done ${taskId}` },
     (tx) => { tx.clearClaim(taskId); },
   );
-
-  if (json) {
-    printJson(jsonOk({
-      task: buildJsonTask(task),
-    }));
-  }
 }
 
 async function performCleanup(

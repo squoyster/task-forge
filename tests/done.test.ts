@@ -278,7 +278,7 @@ describe("cmdDone", () => {
     const output = JSON.parse(logs[0]);
     expect(output.ok).toBe(false);
     expect(output.code).toBe("BLANK_ACCEPTANCE_CRITERIA");
-    expect(output.error).toContain("Replace placeholder checkboxes");
+    expect(output.error).toContain("Replace blank checkboxes");
   });
 
   it("rejects done when Acceptance Criteria items are unchecked", async () => {

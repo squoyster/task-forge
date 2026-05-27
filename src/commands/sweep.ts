@@ -1,8 +1,9 @@
 import { sweepStaleTasks } from "../core/sweeper.js";
 import { pullTaskState } from "../core/git.js";
 import { inspectTask } from "./inspect.js";
-import { logInfo, logSuccess, logSub, logWarn } from "../util/logging.js";
-import { printJson, jsonOk } from "../util/json-result.js";
+import { logInfo, logSuccess, logSub, logWarn, logError, logDivider } from "../util/logging.js";
+import { printJson, jsonOk, jsonError } from "../util/json-result.js";
+import { resolveAuthority, assertCanForce, getForceRejectionNextActions, ForceRequiresHumanOrDoctorError } from "../core/authority.js";
 
 export interface SweepOptions {
   json?: boolean;
@@ -11,6 +12,36 @@ export interface SweepOptions {
 }
 
 export async function cmdSweep(options?: SweepOptions): Promise<void> {
+  // Force authority check
+  if (options?.force) {
+    const authority = resolveAuthority();
+    try {
+      assertCanForce(authority);
+    } catch (err) {
+      if (err instanceof ForceRequiresHumanOrDoctorError) {
+        if (options?.json) {
+          printJson(jsonError(
+            "Normal agents may not use --force.",
+            "FORCE_REQUIRES_HUMAN_OR_DOCTOR",
+            { nextActions: getForceRejectionNextActions() },
+          ));
+          return;
+        }
+        logError("Normal agents may not use --force.");
+        logDivider();
+        logInfo("Valid next actions:");
+        logSub("1. taskforge doctor --json");
+        logSub("   Reason: Diagnose whether a recovery path exists.");
+        logSub("   Safety: safe");
+        logSub("2. taskforge sweep --dry-run");
+        logSub("   Reason: Preview stale tasks without mutating state.");
+        logSub("   Safety: safe");
+        return;
+      }
+      throw err;
+    }
+  }
+
   await pullTaskState();
   const result = await sweepStaleTasks(undefined, {
     commit: true,
@@ -35,12 +66,20 @@ export async function cmdSweep(options?: SweepOptions): Promise<void> {
         dryRun: result.dryRun,
         actions,
       },
+      nextActions: [
+        { command: "taskforge next", reason: "Find the next available task after sweep recovery.", safety: "safe" as const, preferred: true },
+      ],
     }));
     return;
   }
 
   if (result.changed === 0) {
     logInfo("Sweeper: No stale tasks found.");
+    logDivider();
+    logInfo("Valid next actions:");
+    logSub("1. taskforge next");
+    logSub("   Reason: Find the next available task.");
+    logSub("   Safety: safe");
     return;
   }
 

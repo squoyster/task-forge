@@ -1,9 +1,10 @@
 import { loadTaskById, clearTaskLock, appendAgentNote } from "../core/task-store.js";
 import { commitAndPushTaskState } from "../core/git.js";
 import { getRepoRoot } from "../util/paths.js";
-import { logSuccess, logWarn, logError } from "../util/logging.js";
+import { logSuccess, logWarn, logError, logInfo, logDivider, logSub } from "../util/logging.js";
 import { TaskNotFoundError } from "../core/errors.js";
 import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
+import { resolveAuthority, assertCanForce, getForceRejectionNextActions, ForceRequiresHumanOrDoctorError } from "../core/authority.js";
 
 export interface UnlockOptions {
   force?: boolean;
@@ -39,16 +40,53 @@ export async function cmdUnlock(
   if (!options.force) {
     if (options.json) {
       printJson(jsonError(
-        `Task ${taskId} is assigned to session "${task.assignee}" since ${task.claimed_at ?? "unknown"}. Use --force to unlock.`,
+        `Task ${taskId} is assigned to session "${task.assignee}" since ${task.claimed_at ?? "unknown"}.`,
         "NEEDS_FORCE",
+        { nextActions: getForceRejectionNextActions(taskId) },
       ));
       return;
     }
     logError(
       `Task ${taskId} is assigned to session "${task.assignee}" since ${task.claimed_at ?? "unknown"}. ` +
-      `Use --force to unlock.`,
+      `Unlock requires human or doctor-mode authorization.`,
     );
+    logDivider();
+    logInfo("Valid next actions:");
+    logSub("1. taskforge doctor --json");
+    logSub("   Reason: Diagnose whether a recovery path exists.");
+    logSub("   Safety: safe");
+    logSub(`2. taskforge block ${taskId} "Force operation requires human or doctor-mode authorization" --category unsafe_operation --blocked-by human`);
+    logSub("   Reason: Escalate unsafe operation without bypassing TaskForge.");
+    logSub("   Safety: requires_human");
     return;
+  }
+
+  // Force authority check
+  const authority = resolveAuthority();
+  try {
+    assertCanForce(authority);
+  } catch (err) {
+    if (err instanceof ForceRequiresHumanOrDoctorError) {
+      if (options.json) {
+        printJson(jsonError(
+          "Normal agents may not use --force.",
+          "FORCE_REQUIRES_HUMAN_OR_DOCTOR",
+          { nextActions: getForceRejectionNextActions(taskId) },
+        ));
+        return;
+      }
+      logError("Normal agents may not use --force.");
+      logDivider();
+      logInfo("Valid next actions:");
+      logSub("1. taskforge doctor --json");
+      logSub("   Reason: Diagnose whether a recovery path exists.");
+      logSub("   Safety: safe");
+      logSub(`2. taskforge block ${taskId} "Force operation requires human or doctor-mode authorization" --category unsafe_operation --blocked-by human`);
+      logSub("   Reason: Escalate unsafe operation without bypassing TaskForge.");
+      logSub("   Safety: requires_human");
+      return;
+    }
+    throw err;
   }
 
   const previousAssignee = task.assignee;
@@ -56,7 +94,7 @@ export async function cmdUnlock(
 
   const today = new Date().toISOString().split("T")[0];
   appendAgentNote(task.filePath, today, "System", [
-    `Task unlocked (forced) — previous claim was held by session "${previousAssignee}"`,
+    `Task unlocked (authorized: ${authority}) — previous claim was held by session "${previousAssignee}"`,
   ]);
 
   // Push state changes

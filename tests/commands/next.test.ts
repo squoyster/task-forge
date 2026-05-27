@@ -15,6 +15,12 @@ vi.mock("../../src/core/sweeper.js", () => ({
   }),
 }));
 
+// Mock git module to avoid worktree checks in tests
+vi.mock("../../src/core/git.js", () => ({
+  pullTaskState: vi.fn().mockResolvedValue(undefined),
+  checkUncommittedWorktrees: vi.fn().mockResolvedValue([]),
+}));
+
 // Import after mocking
 import { sweepStaleTasks } from "../../src/core/sweeper.js";
 

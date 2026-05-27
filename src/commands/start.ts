@@ -1,5 +1,4 @@
-import { loadTaskById, loadAllTasks, updateTaskStatus, updateTaskLock, appendAgentNote, parseTaskFile, writeTaskFile } from "../core/task-store.js";
-import { validateTransition } from "../core/status-transition.js";
+import { loadTaskById, loadAllTasks, appendAgentNote } from "../core/task-store.js";
 import { createWorktree } from "../core/git.js";
 import { withTaskStateTransaction } from "../core/task-state-transaction.js";
 import { makeBranchName } from "../util/paths.js";
@@ -14,6 +13,9 @@ import { logInfo, logSuccess, logWarn, logError, logHeader, logSub, logDivider }
 import { TaskNotFoundError, InvalidStatusTransitionError, WorktreeError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
 import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
+import { resolveAuthority, assertCanForce, getForceRejectionNextActions, ForceRequiresHumanOrDoctorError } from "../core/authority.js";
+import { startStateMachine } from "../core/command-states.js";
+import { getDefaultGuidanceAdapter } from "../core/guidance-adapter.js";
 
 export interface StartOptions {
   force?: boolean;
@@ -30,9 +32,45 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
   // Reload task after sweeping (it may have been reset to Ready)
   const task = loadTaskById(taskId);
 
-  if (!task) {
+  // Doctor-lock check
+  const lock = isDoctorLocked(repoRoot);
+  if (lock.locked) {
+    const result = startStateMachine({
+      taskFound: !!task,
+      taskStatus: task?.status,
+      doctorLocked: true,
+      doctorReason: lock.reason,
+      hasOutstandingTask: false,
+      pushSucceeded: false,
+      worktreeCreated: false,
+    });
+    getDefaultGuidanceAdapter().pushGuidance(result);
     if (options?.json) {
-      printJson(jsonError(`Task ${taskId} not found`, "TASK_NOT_FOUND"));
+      printJson(jsonError(result.guidance, result.errorCode ?? "DOCTOR_LOCKED", {
+        nextActions: [result.nextAction],
+        guidance: result.guidance,
+      }));
+      return;
+    }
+    logWarn(result.guidance);
+    return;
+  }
+
+  if (!task) {
+    const result = startStateMachine({
+      taskFound: false,
+      doctorLocked: false,
+      hasOutstandingTask: false,
+      pushSucceeded: false,
+      worktreeCreated: false,
+      taskId,
+    });
+    getDefaultGuidanceAdapter().pushGuidance(result);
+    if (options?.json) {
+      printJson(jsonError(result.guidance, result.errorCode ?? "TASK_NOT_FOUND", {
+        nextActions: [result.nextAction],
+        guidance: result.guidance,
+      }));
       return;
     }
     throw new TaskNotFoundError(taskId);
@@ -40,11 +78,21 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
 
   // Validate status
   if (task.status !== STATUS.READY && task.status !== STATUS.IN_PROGRESS) {
+    const result = startStateMachine({
+      taskFound: true,
+      taskStatus: task.status,
+      doctorLocked: false,
+      hasOutstandingTask: false,
+      pushSucceeded: false,
+      worktreeCreated: false,
+      taskId,
+    });
+    getDefaultGuidanceAdapter().pushGuidance(result);
     if (options?.json) {
-      printJson(jsonError(
-        `Cannot start task with status "${task.status}". Must be "${STATUS.READY}" or "${STATUS.IN_PROGRESS}".`,
-        "INVALID_STATUS",
-      ));
+      printJson(jsonError(result.guidance, result.errorCode ?? "INVALID_STATUS", {
+        nextActions: [result.nextAction],
+        guidance: result.guidance,
+      }));
       return;
     }
     throw new InvalidStatusTransitionError(
@@ -54,100 +102,142 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
     );
   }
 
-  // Doctor-lock check
-  const lock = isDoctorLocked(repoRoot);
-  if (lock.locked) {
-    if (options?.json) {
-      printJson(jsonError(`System is in doctor recovery mode: ${lock.reason}`, "DOCTOR_LOCKED"));
-      return;
-    }
-    logWarn(`System is in doctor recovery mode: ${lock.reason}`);
-    logInfo(`All agents are paused until recovery is complete.`);
-    return;
-  }
-
   // Hard guardrail: check outstanding session tasks (exclude current for resume)
   const outstanding = await checkOutstandingSessionTasks(loadAllTasks(repoRoot), repoRoot, taskId);
   if (outstanding) {
+    const result = startStateMachine({
+      taskFound: true,
+      taskStatus: task.status,
+      doctorLocked: false,
+      hasOutstandingTask: true,
+      outstandingTaskId: outstanding,
+      pushSucceeded: false,
+      worktreeCreated: false,
+      taskId,
+    });
+    getDefaultGuidanceAdapter().pushGuidance(result);
     if (options?.json) {
-      printJson(jsonError(
-        `You still own task ${outstanding}. Close it first with 'taskforge done ${outstanding}'.`,
-        "OUTSTANDING_TASK",
-      ));
+      printJson(jsonError(result.guidance, result.errorCode ?? "OUTSTANDING_TASK", {
+        nextActions: [result.nextAction],
+        guidance: result.guidance,
+      }));
       return;
     }
-    logWarn(`You still own task ${outstanding}.`);
-    logInfo(`Run 'taskforge done ${outstanding}' to mark it complete first.`);
+    logWarn(result.guidance);
     return;
   }
 
   // Lock check: if task is locked by another session, reject unless --force
   if (task.assignee && !options?.force) {
+    const result = startStateMachine({
+      taskFound: true,
+      taskStatus: task.status,
+      taskAssignee: task.assignee,
+      taskClaimedAt: task.claimed_at ? String(task.claimed_at) : undefined,
+      doctorLocked: false,
+      hasOutstandingTask: false,
+      pushSucceeded: false,
+      worktreeCreated: false,
+      taskId,
+    });
+    getDefaultGuidanceAdapter().pushGuidance(result);
     if (options?.json) {
       printJson(jsonError(
-        `Task ${taskId} is assigned to session "${task.assignee}" since ${task.claimed_at ?? "unknown"}. Use --force to override.`,
-        "NEEDS_FORCE",
+        result.guidance,
+        result.errorCode ?? "ALREADY_ASSIGNED",
+        { nextActions: getForceRejectionNextActions(taskId) },
       ));
       return;
     }
-    logError(
-      `Task ${taskId} is assigned to session "${task.assignee}" since ${task.claimed_at ?? "unknown"}. ` +
-      `Use --force to override (only if you are sure the claim is stale).`,
-    );
+    logError(result.guidance);
+    logDivider();
+    logInfo("Valid next actions:");
+    logSub("1. taskforge doctor --json");
+    logSub("   Reason: Diagnose whether a recovery path exists.");
+    logSub("   Safety: safe");
+    logSub(`2. taskforge block ${taskId} "Force operation requires human or doctor-mode authorization" --category unsafe_operation --blocked-by human`);
+    logSub("   Reason: Escalate unsafe operation without bypassing TaskForge.");
+    logSub("   Safety: requires_human");
     return;
   }
 
-  // If --force, warn about overriding
-  if (task.assignee && options?.force && !options?.json) {
-    logWarn(`Overriding stale claim from session "${task.assignee}".`);
+  // Force authority check
+  if (task.assignee && options?.force) {
+    const authority = resolveAuthority();
+    try {
+      assertCanForce(authority);
+    } catch (err) {
+      if (err instanceof ForceRequiresHumanOrDoctorError) {
+        const result = startStateMachine({
+          taskFound: true,
+          taskStatus: task.status,
+          taskAssignee: task.assignee,
+          taskClaimedAt: task.claimed_at ? String(task.claimed_at) : undefined,
+          force: true,
+          doctorLocked: false,
+          hasOutstandingTask: false,
+          pushSucceeded: false,
+          worktreeCreated: false,
+          taskId,
+        });
+        getDefaultGuidanceAdapter().pushGuidance(result);
+        if (options?.json) {
+          printJson(jsonError(
+            "Normal agents may not use --force.",
+            "FORCE_REQUIRES_HUMAN_OR_DOCTOR",
+            { nextActions: getForceRejectionNextActions(taskId) },
+          ));
+          return;
+        }
+        logError("Normal agents may not use --force.");
+        logDivider();
+        logInfo("Valid next actions:");
+        logSub("1. taskforge doctor --json");
+        logSub("   Reason: Diagnose whether a recovery path exists.");
+        logSub("   Safety: safe");
+        logSub(`2. taskforge block ${taskId} "Force operation requires human or doctor-mode authorization" --category unsafe_operation --blocked-by human`);
+        logSub("   Reason: Escalate unsafe operation without bypassing TaskForge.");
+        logSub("   Safety: requires_human");
+        return;
+      }
+      throw err;
+    }
+    if (!options?.json) {
+      logWarn(`Overriding stale claim from session "${task.assignee}" (authorized: ${authority}).`);
+    }
   }
 
-  // Generate session ID
+  // Generate session ID and branch name
   const sessionId = generateSessionId();
 
-  // --- Phase 1: Claim (durable — push before creating worktree) ---
-
-  // Set branch name
+  // Set branch name in memory (will be persisted by transaction)
   if (!task.branch) {
     const titleMatch = task.body.match(/^#\s+\S+:\s+(.+)$/m);
     const title = titleMatch ? titleMatch[1] : taskId;
     task.branch = makeBranchName(taskId, title, sessionId);
   }
 
-  // Set the lock
-  updateTaskLock(task.filePath, sessionId);
+  const contextHash = hashControlFiles(repoRoot);
 
-  // Store control-file hash
-  const current = parseTaskFile(task.filePath);
-  if (current) {
-    current.context_hash = hashControlFiles(repoRoot);
-    writeTaskFile(current);
-  }
+  // --- Phase 1: Claim (durable — all writes inside transaction) ---
+  // All file writes happen inside the transaction to avoid inconsistent
+  // state if the push fails. Pre-transaction writes caused git pull --rebase
+  // to fail silently (uncommitted local changes), leaving the task claimed
+  // locally but not on remote.
 
-  // Update status to In Progress if it was Ready
-  if (task.status === STATUS.READY) {
-    const transitionError = validateTransition(task.status, STATUS.IN_PROGRESS);
-    if (transitionError) {
-      throw new InvalidStatusTransitionError(task.status, STATUS.IN_PROGRESS, [STATUS.IN_PROGRESS]);
-    }
-    updateTaskStatus(task.filePath, STATUS.IN_PROGRESS);
-  }
-
-  const today = new Date().toISOString().split("T")[0];
-  appendAgentNote(task.filePath, today, "System", [
-    `Task claimed via taskforge start ${taskId}${options?.force ? " (forced)" : ""}`,
-    `Session: ${sessionId}`,
-    `Branch: ${task.branch}`,
-  ]);
-
-  // Push claim durably through transaction layer
   const pushed = await withTaskStateTransaction(
     { command: `claim ${taskId}`, maxRetries: 3 },
     async (tx) => {
       const fresh = tx.loadTask(taskId);
       if (!fresh) throw new Error("Task disappeared");
-      if (fresh.assignee && fresh.assignee !== sessionId) throw new Error(`Claimed by ${fresh.assignee}`);
+      if (fresh.assignee && fresh.assignee !== sessionId && !options?.force) {
+        throw new Error(`Claimed by ${fresh.assignee}`);
+      }
       tx.claimTask(taskId, sessionId);
+      // Set branch and context_hash as part of the claim
+      fresh.branch = task.branch;
+      fresh.context_hash = contextHash;
+      tx.updateTask(fresh);
       tx.appendNote(taskId, "System", [
         `Task claimed via taskforge start ${taskId}${options?.force ? " (forced)" : ""}`,
         `Session: ${sessionId}`,
@@ -158,13 +248,39 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
   ).catch(() => false);
 
   if (!pushed) {
+    const result = startStateMachine({
+      taskFound: true,
+      taskStatus: task.status,
+      taskAssignee: task.assignee,
+      taskClaimedAt: task.claimed_at ? String(task.claimed_at) : undefined,
+      force: options?.force,
+      doctorLocked: false,
+      hasOutstandingTask: false,
+      pushSucceeded: false,
+      worktreeCreated: false,
+      taskId,
+    });
+    getDefaultGuidanceAdapter().pushGuidance(result);
     if (options?.json) {
-      printJson(jsonError(`Failed to push claim for ${taskId}.`, "PUSH_FAILED"));
+      printJson(jsonError(result.guidance, result.errorCode ?? "PUSH_FAILED", {
+        nextActions: [result.nextAction],
+        guidance: result.guidance,
+      }));
       return;
     }
-    logError(`Failed to push claim for ${taskId}. The task may have been claimed by another agent.`);
+    logError(result.guidance);
     return;
   }
+
+  // Reload task after successful transaction to get persisted state
+  const claimedTask = loadTaskById(taskId);
+  if (!claimedTask) {
+    logError(`Task ${taskId} disappeared after claim.`);
+    return;
+  }
+  claimedTask.branch = task.branch; // Ensure branch is set for worktree creation
+
+  const today = new Date().toISOString().split("T")[0];
 
   // --- Phase 2: Workspace (only after claim is durably pushed) ---
 
@@ -181,23 +297,27 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
       }
     }
   } catch (err) {
+    const result = startStateMachine({
+      taskFound: true,
+      taskStatus: task.status,
+      doctorLocked: false,
+      hasOutstandingTask: false,
+      pushSucceeded: true,
+      worktreeCreated: false,
+      taskId,
+    });
+    getDefaultGuidanceAdapter().pushGuidance(result);
     if (options?.json) {
       printJson(jsonError(
-        `Could not create worktree: ${err instanceof Error ? err.message : String(err)}`,
-        "WORKTREE_ERROR",
+        result.guidance,
+        result.errorCode ?? "WORKTREE_FAILED",
+        { nextActions: [result.nextAction], guidance: result.guidance },
       ));
       return;
     }
     throw new WorktreeError(
       `Could not create worktree: ${err instanceof Error ? err.message : String(err)}`,
     );
-  }
-
-  // Record worktree metadata
-  const updated = parseTaskFile(task.filePath);
-  if (updated) {
-    updated.worktree = task.worktree;
-    writeTaskFile(updated);
   }
 
   appendAgentNote(task.filePath, today, "System", [
@@ -217,6 +337,21 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
     },
   );
 
+  // Build success result through state machine
+  const successResult = startStateMachine({
+    taskFound: true,
+    taskStatus: task.status,
+    doctorLocked: false,
+    hasOutstandingTask: false,
+    pushSucceeded: true,
+    worktreeCreated: true,
+    taskId,
+    sessionId,
+    worktreePath: task.worktree,
+    branch: task.branch,
+  });
+  getDefaultGuidanceAdapter().pushGuidance(successResult);
+
   // Success output
   if (options?.json) {
     printJson(jsonOk({
@@ -225,9 +360,8 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
         branch: task.branch,
         worktree: task.worktree ?? undefined,
       },
-      next: {
-        command: task.worktree ? `cd ${task.worktree}` : undefined,
-      },
+      nextActions: [successResult.nextAction],
+      guidance: successResult.guidance,
     }));
     return;
   }
@@ -255,4 +389,6 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
   logDivider();
   logSub(`cd ${task.worktree ?? repoRoot}`);
   logSub(`opencode`);
+  logDivider();
+  logInfo(successResult.guidance);
 }

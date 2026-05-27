@@ -2,7 +2,7 @@ import { loadTaskById, updateTaskStatus, clearTaskLock, appendAgentNote } from "
 import { commitAndPushTaskState } from "../core/git.js";
 import { assertTaskOwnership } from "../core/session.js";
 import { STATUS } from "../util/status-constants.js";
-import { logSuccess, logInfo } from "../util/logging.js";
+import { logSuccess, logInfo, logDivider, logSub } from "../util/logging.js";
 import { TaskNotFoundError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
 import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
@@ -22,8 +22,19 @@ export async function cmdRelease(taskId: string, options?: ReleaseOptions): Prom
   }
 
   if (!task.assignee) {
-    if (options?.json) printJson(jsonOk({ task: buildJsonTask(task) }));
-    else logInfo(`Task ${taskId} is not claimed — nothing to release.`);
+    if (options?.json) {
+      printJson(jsonOk({
+        task: buildJsonTask(task),
+        nextActions: ["claim", "start"],
+        guidance: `Task ${taskId} is not claimed. Run 'taskforge claim ${taskId}' to claim it, or 'taskforge start ${taskId}' to claim and create a worktree.`,
+      }));
+    } else {
+      logInfo(`Task ${taskId} is not claimed — nothing to release.`);
+      logDivider();
+      logInfo("Next actions:");
+      logSub(`  taskforge claim ${taskId}   — Claim this task`);
+      logSub(`  taskforge start ${taskId}   — Claim and create worktree`);
+    }
     return;
   }
 
@@ -48,9 +59,17 @@ export async function cmdRelease(taskId: string, options?: ReleaseOptions): Prom
 
   if (options?.json) {
     const updated = loadTaskById(taskId);
-    printJson(jsonOk({ task: updated ? buildJsonTask(updated) : buildJsonTask(task) }));
+    printJson(jsonOk({
+      task: updated ? buildJsonTask(updated) : buildJsonTask(task),
+      nextActions: ["next", "claim"],
+      guidance: `Task ${taskId} released by "${previousAssignee}"${wasInProgress ? " and reset to Ready" : ""}. Run 'taskforge next' to find the next task, or 'taskforge claim <id>' to claim a different task.`,
+    }));
     return;
   }
 
   logSuccess(`Task ${taskId} released.${wasInProgress ? " Status reset to Ready." : ""}`);
+  logDivider();
+  logInfo("Next actions:");
+  logSub("  taskforge next            — Find the next available task");
+  logSub("  taskforge claim <id>      — Claim a different task");
 }

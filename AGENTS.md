@@ -165,6 +165,25 @@ When an inconsistency is detected:
 
 Do not use `--force` to skip guardrails unless you understand exactly what you're overriding. The CLI is the system of record for task state — bypassing it creates technical debt that another agent (or a human) must clean up.
 
+### 7. Use TaskForge CLI for Task Creation and Workflow Management
+
+Agents must use `taskforge` CLI commands for all task creation and workflow management operations. Git is a tool of last resort — only use it when no `taskforge` command exists for the operation.
+
+| Operation | Correct Command |
+|-----------|----------------|
+| Create a new task | `taskforge new` |
+| Select next task | `taskforge next` |
+| Start working on a task | `taskforge start` |
+| Commit changes | `taskforge checkpoint` |
+| Push changes / create PR | `taskforge submit` |
+| View diff | `taskforge diff` |
+| Mark task done | `taskforge done` |
+| Block a task | `taskforge block` |
+| Release a claim | `taskforge release` |
+| Sync with GitHub | `taskforge sync` |
+
+Do not use `git commit`, `git push`, `git branch`, `git checkout`, or similar commands for task workflow unless the `taskforge` CLI has no equivalent and the operation is unavoidable.
+
 ### 6. Prioritize Correctness Over Throughput
 
 Do not skip acceptance criteria or prematurely mark tasks Done because there are many pending tasks in the queue. This reasoning is actively harmful:

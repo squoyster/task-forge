@@ -19,6 +19,7 @@ interface FileSpec {
 }
 
 export interface InitOptions {
+  force?: boolean;
   agentFramework?: string;
   policy?: "permissive" | "managed" | "locked-down";
   installHooks?: boolean;

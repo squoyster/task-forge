@@ -1,7 +1,7 @@
 import { loadTaskById, updateTaskStatus, appendAgentNote } from "../core/task-store.js";
 import { commitAndPushTaskState } from "../core/git.js";
 import { STATUS } from "../util/status-constants.js";
-import { logSuccess } from "../util/logging.js";
+import { logSuccess, logInfo, logDivider, logSub } from "../util/logging.js";
 import { TaskNotFoundError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
 import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
@@ -25,9 +25,17 @@ export async function cmdReject(taskId: string, reason: string, options?: { json
 
   if (options?.json) {
     const updated = loadTaskById(taskId);
-    printJson(jsonOk({ task: updated ? buildJsonTask(updated) : buildJsonTask(task) }));
+    printJson(jsonOk({
+      task: updated ? buildJsonTask(updated) : buildJsonTask(task),
+      nextActions: ["new", "next"],
+      guidance: `Task ${taskId} rejected. Run 'taskforge new "<title>"' to create a replacement task, or 'taskforge next' to find the next available task.`,
+    }));
     return;
   }
 
   logSuccess(`Task ${taskId} rejected: ${reason}`);
+  logDivider();
+  logInfo("Next actions:");
+  logSub('  taskforge new "<title>"  — Create a replacement task');
+  logSub("  taskforge next           — Find the next available task");
 }

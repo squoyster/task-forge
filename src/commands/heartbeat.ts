@@ -2,10 +2,11 @@ import { loadTaskById, parseTaskFile, writeTaskFile, appendAgentNote } from "../
 import { commitAndPushTaskState } from "../core/git.js";
 import { assertTaskOwnership } from "../core/session.js";
 import { getRepoRoot } from "../util/paths.js";
-import { logSuccess, logInfo, logError } from "../util/logging.js";
+import { logSuccess, logInfo, logError, logDivider, logSub } from "../util/logging.js";
 import { TaskNotFoundError } from "../core/errors.js";
 import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
 import { STATUS } from "../util/status-constants.js";
+import { resolveAuthority, assertCanForce, getForceRejectionNextActions, ForceRequiresHumanOrDoctorError } from "../core/authority.js";
 
 export interface HeartbeatOptions {
   force?: boolean;
@@ -43,14 +44,45 @@ export async function cmdHeartbeat(
     return;
   }
 
+  // Force authority check
+  if (force) {
+    const authority = resolveAuthority();
+    try {
+      assertCanForce(authority);
+    } catch (err) {
+      if (err instanceof ForceRequiresHumanOrDoctorError) {
+        if (json) {
+          printJson(jsonError(
+            "Normal agents may not use --force.",
+            "FORCE_REQUIRES_HUMAN_OR_DOCTOR",
+            { nextActions: getForceRejectionNextActions(taskId) },
+          ));
+          return;
+        }
+        logError("Normal agents may not use --force.");
+        logDivider();
+        logInfo("Valid next actions:");
+        logSub("1. taskforge doctor --json");
+        logSub("   Reason: Diagnose whether a recovery path exists.");
+        logSub("   Safety: safe");
+        logSub(`2. taskforge block ${taskId} "Force operation requires human or doctor-mode authorization" --category unsafe_operation --blocked-by human`);
+        logSub("   Reason: Escalate unsafe operation without bypassing TaskForge.");
+        logSub("   Safety: requires_human");
+        return;
+      }
+      throw err;
+    }
+  }
+
   if (!force && task.assignee) {
     try {
       await assertTaskOwnership(task, repoRoot);
     } catch (err) {
       if (json) {
         printJson(jsonError(
-          `Task ${taskId} is assigned to session "${task.assignee}". Use --force to heartbeat anyway.`,
+          `Task ${taskId} is assigned to session "${task.assignee}".`,
           "OWNERSHIP_MISMATCH",
+          { nextActions: getForceRejectionNextActions(taskId) },
         ));
         return;
       }
@@ -77,8 +109,9 @@ export async function cmdHeartbeat(
     ? ` (reset from ${prevTime})`
     : "";
 
+  const authority = resolveAuthority();
   appendAgentNote(current.filePath, today, "System", [
-    `Heartbeat: lease renewed${force ? " (forced)" : ""}${agoText}`,
+    `Heartbeat: lease renewed${force ? ` (authorized: ${authority})` : ""}${agoText}`,
   ]);
 
   await commitAndPushTaskState(repoRoot, `chore: heartbeat ${taskId}`);
@@ -92,6 +125,6 @@ export async function cmdHeartbeat(
 
   logSuccess(`Heartbeat: task ${taskId} lease renewed.`);
   if (force) {
-    logInfo(`  (forced — ownership not required)`);
+    logInfo(`  (authorized: ${authority} — ownership not required)`);
   }
 }
