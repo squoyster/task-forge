@@ -42,6 +42,17 @@ Acceptance criteria (ACs) define the contract between the task author and the im
 3. If using `--force` to bypass gates: document in agent notes which ACs are unmet and why, and create follow-up tasks.
 4. The verification gates (`typecheck`, `lint`, `build`, `test`) prove you did not *break* anything. The AC checklist proves you *built* everything.
 
+#### Mandatory Pre-conditions for `taskforge done`
+
+Before running `taskforge done`, agents MUST ensure:
+
+- **No uncommitted files**: All changes in the worktree are committed. `git status` must show a clean working tree.
+- **Branch is pushed**: The task branch is pushed to remote. `git status` must not show "ahead of origin".
+- **Gates pass**: `npm run typecheck && npm run lint && npm run build && npm test -- --run` all succeed.
+- **ACs are checked**: Every acceptance criterion in the task file is marked `[x]` with evidence.
+
+`taskforge done` enforces these invariants programmatically and will reject the operation if any are violated. Do not attempt to bypass these checks.
+
 ### Anti-Pattern: Throughput Over Correctness
 
 Do NOT reason: *"There are N pending tasks, so I'll move fast and skip some ACs."* This is actively harmful:

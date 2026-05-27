@@ -342,6 +342,19 @@ A task is Done only when:
 - Result summary exists
 - Follow-up tasks are created if needed
 
+### Done Command Invariants
+
+The `taskforge done` command enforces these hard pre-conditions. Violation means the task is NOT ready for Done:
+
+1. **Clean worktree**: The task's worktree must have zero uncommitted/dirty files. Uncommitted work means the implementation is incomplete.
+2. **Pushed branch**: The task's branch must not be ahead of the remote. Unpushed commits mean the work is not durably stored.
+3. **Gates pass**: All verification gates (typecheck, lint, build, test) must pass.
+4. **Ownership match**: The current session must own the task claim.
+5. **Control files unchanged**: AGENTS.md, TASKFORGE.md, etc. must not have changed since task start.
+6. **Acceptance criteria verified**: The AC section exists, is not blank, and all items are checked with evidence.
+
+These invariants are enforced in `cmdDone` and documented here so agents cannot bypass them without `--force` (human/doctor authority only).
+
 ## Safe Autonomy Rules
 
 ### Agents Have Authority To:
