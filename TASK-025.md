@@ -6,8 +6,6 @@ priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 716af96673
-claimed_at: '2026-05-22 06:47:59'
 ---
 
 # TASK-025: Add Structured Blocker Fields

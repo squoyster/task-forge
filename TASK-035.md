@@ -6,8 +6,6 @@ priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 43e61b982c
-claimed_at: '2026-05-22 08:06:26'
 ---
 
 # TASK-035: Add `new` Command — Create Arbitrary Task Files

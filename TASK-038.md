@@ -6,8 +6,6 @@ priority: P2
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
-assignee: 3cc0521e75
-claimed_at: '2026-05-22 08:21:43'
 ---
 
 # TASK-038: Harden `doctor` — Integrate Inspect and Add Consistency Validation

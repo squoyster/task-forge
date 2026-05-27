@@ -6,8 +6,6 @@ priority: P3
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 0951fe637d
-claimed_at: '2026-05-22 07:21:05'
 ---
 
 # TASK-030: Add `prompt` Command — Agent Execution Packet

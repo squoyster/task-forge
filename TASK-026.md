@@ -6,8 +6,6 @@ priority: P2
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
-assignee: 825b0d9041
-claimed_at: '2026-05-22 06:58:31'
 ---
 
 # TASK-026: Safe Sweep with Dry-Run and Worktree Classification

@@ -6,8 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: f2b07d4831
-claimed_at: '2026-05-22 03:06:44'
 ---
 
 # TASK-015: Jittered Retries for Optimistic Concurrency

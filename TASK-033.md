@@ -6,8 +6,6 @@ priority: P3
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 04fef95005
-claimed_at: '2026-05-22 07:30:24'
 ---
 
 # TASK-033: Add `config validate` Command

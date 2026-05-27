@@ -6,8 +6,6 @@ priority: P2
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
-assignee: 95971d8dcc
-claimed_at: '2026-05-22 07:05:46'
 ---
 
 # TASK-027: Add `report` / `finish` Command — Structured Completion Report

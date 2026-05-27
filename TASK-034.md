@@ -6,8 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
-assignee: 2710298d6d
-claimed_at: '2026-05-22 07:57:15'
 ---
 
 # TASK-034: Proactive Git Pull Before Reading Task-State

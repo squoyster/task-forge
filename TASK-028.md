@@ -6,8 +6,6 @@ priority: P3
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 0152c675b7
-claimed_at: '2026-05-22 07:12:37'
 ---
 
 # TASK-028: Add Per-Task Event Log (NDJSON)

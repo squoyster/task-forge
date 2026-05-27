@@ -6,8 +6,6 @@ priority: P2
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
-assignee: 6d6918b78f
-claimed_at: '2026-05-22 06:39:08'
 ---
 
 # TASK-024: Add `claim` Command — Separate Claim Primitive

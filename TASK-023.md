@@ -6,7 +6,6 @@ priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-claimed_at: '2026-05-22 06:34:12'
 ---
 
 # TASK-023: Update README/tasks Docs to Mark task-state as Authoritative

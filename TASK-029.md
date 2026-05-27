@@ -6,8 +6,6 @@ priority: P3
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
-assignee: 5ac25d0a44
-claimed_at: '2026-05-22 07:16:00'
 ---
 
 # TASK-029: Safe Cleanup with Dry-Run

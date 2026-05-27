@@ -6,8 +6,6 @@ priority: P3
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 9214c40c70
-claimed_at: '2026-05-22 07:25:21'
 ---
 
 # TASK-031: Add `resume` Command — Re-enter Existing Task Workspace

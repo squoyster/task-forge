@@ -6,8 +6,6 @@ priority: P3
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: '33846561e9'
-claimed_at: '2026-05-22 07:27:31'
 ---
 
 # TASK-032: Add `doctor` Command — Repo and Task-State Health Check
