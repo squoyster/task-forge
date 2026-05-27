@@ -6,8 +6,6 @@ priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 4689e8a843
-claimed_at: '2026-05-27 20:26:17'
 context_hash: 4b1b24ca887b26ba
 ---
 
@@ -47,6 +45,9 @@ The GuidanceAdapter interface:
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-27 System
+- Task unlocked (forced) — previous claim was held by session "4689e8a843"
 
 ### 2026-05-27 System
 - Task claimed via taskforge start TASK-217
