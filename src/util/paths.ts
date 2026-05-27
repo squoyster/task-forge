@@ -1,12 +1,25 @@
 import path from "node:path";
+import { execSync } from "node:child_process";
 
 let _repoRoot: string | null = null;
 
 export function getRepoRoot(): string {
   if (!_repoRoot) {
-    _repoRoot = process.cwd();
+    _repoRoot = discoverRepoRoot();
   }
   return _repoRoot;
+}
+
+function discoverRepoRoot(): string {
+  try {
+    const root = execSync("git rev-parse --show-toplevel", {
+      encoding: "utf-8",
+      cwd: process.cwd(),
+    }).trim();
+    return root;
+  } catch {
+    return process.cwd();
+  }
 }
 
 export function setRepoRoot(root: string): void {
