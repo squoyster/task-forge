@@ -1,11 +1,14 @@
 ---
 id: TASK-217
 type: Task
-status: Ready
+status: In Progress
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 4689e8a843
+claimed_at: '2026-05-27 20:26:17'
+context_hash: 4b1b24ca887b26ba
 ---
 
 # TASK-217: Wire command state machines into all lifecycle commands with guidance adapter interface
@@ -44,3 +47,8 @@ The GuidanceAdapter interface:
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-27 System
+- Task claimed via taskforge start TASK-217
+- Session: 4689e8a843
+- Branch: agent/TASK-217-wire-command-state-machines-into-all-lif--4689e8a843
