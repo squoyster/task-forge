@@ -1,7 +1,7 @@
 ---
 id: TASK-220
 type: Bug
-status: Ready
+status: In Progress
 priority: P0
 agentRole: Implementer
 riskLevel: Low
