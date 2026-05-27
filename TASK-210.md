@@ -1,7 +1,7 @@
 ---
 id: TASK-210
 type: Task
-status: Ready
+status: Rejected
 priority: P0
 agentRole: Implementer
 riskLevel: Low
@@ -19,3 +19,6 @@ humanInterventionRequired: false
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-27 System
+- Task rejected: Duplicate of consolidated task
