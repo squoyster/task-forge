@@ -1,12 +1,12 @@
 ---
 id: TASK-217
 type: Task
-status: Review
+status: Done
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-context_hash: 4b1b24ca887b26ba
+context_hash: f97a6e176df669e8
 ---
 
 # TASK-217: Wire command state machines into all lifecycle commands with guidance adapter interface
@@ -55,6 +55,9 @@ The GuidanceAdapter interface:
 - [x] All verification gates pass: typecheck, lint, build, test — 530 tests pass, zero typecheck/lint/build errors
 
 ## Agent Notes
+
+### 2026-05-27 System
+- Task marked Done
 
 ### 2026-05-27 System
 - Report generated — task moved to Review
