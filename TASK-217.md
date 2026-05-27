@@ -42,9 +42,24 @@ The GuidanceAdapter interface:
 
 ## Acceptance Criteria
 
-- [ ]
+- [ ] GuidanceAdapter interface created with `pushGuidance(result: CommandResult): void` method
+- [ ] NoOpGuidanceAdapter implementation for CLI-only mode
+- [ ] OpenCodeGuidanceAdapter implementation using todowrite tool
+- [ ] `next` command wired to `nextStateMachine` with conditions built from runtime state
+- [ ] `claim` command wired to `claimStateMachine` with conditions built from runtime state
+- [ ] `start` command wired to `startStateMachine` with conditions built from runtime state
+- [ ] `done` command wired to `doneStateMachine` with conditions built from runtime state
+- [ ] `new` command wired to `newStateMachine` with conditions built from runtime state
+- [ ] All commands return CommandResult with no unhandled states
+- [ ] Guidance displayed in both JSON output and human-readable terminal output
+- [ ] All verification gates pass: typecheck, lint, build, test
 
 ## Agent Notes
+
+### 2026-05-27 System
+- Worktree created manually at /Volumes/Transcend/devel/worktrees/TASK-217
+- Branch: agent/TASK-217-wire-command-state-machines
+- Session resumed after previous claim push failures
 
 ### 2026-05-27 System
 - Task unlocked (forced) — previous claim was held by session "4689e8a843"
