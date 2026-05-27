@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **TASK-221: Fix `taskforge start` rejecting same-session re-entry** — The pre-check at line 131 of `start.ts` was rejecting ANY task with an `assignee` set, even when the assignee belonged to the current session. Fixed by generating the session ID earlier and changing the check to `task.assignee && task.assignee !== sessionId`, allowing same-session re-entry (e.g., agent restart after crash) while still blocking cross-session conflicts. Added 4 new tests covering same-session re-entry, cross-session rejection, `--force` override, and session ID generation.
+
 ### Added
 
 - **TASK-217: Wire command state machines into all lifecycle commands** — All lifecycle commands (`next`, `claim`, `start`, `done`, `new`, `gates`, `checkpoint`, `submit`, `pr`) now use the command state machines from `command-states.ts` to produce structured `CommandResult` objects with `nextAction` and `guidance` fields. Added `GuidanceAdapter` interface with `NoOpGuidanceAdapter` and `OpenCodeGuidanceAdapter` implementations for pushing guidance to agent frameworks. Every command JSON output now includes `nextActions` array and `guidance` string. Human-readable output uses state machine guidance text.

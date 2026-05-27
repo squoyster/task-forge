@@ -32,6 +32,10 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
   // Reload task after sweeping (it may have been reset to Ready)
   const task = loadTaskById(taskId);
 
+  // Generate session ID early so pre-checks can distinguish same-session
+  // re-entry from cross-session conflicts.
+  const sessionId = generateSessionId();
+
   // Doctor-lock check
   const lock = isDoctorLocked(repoRoot);
   if (lock.locked) {
@@ -127,8 +131,9 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
     return;
   }
 
-  // Lock check: if task is locked by another session, reject unless --force
-  if (task.assignee && !options?.force) {
+  // Lock check: if task is locked by a DIFFERENT session, reject unless --force.
+  // Same-session re-entry is allowed (e.g., agent restart after crash).
+  if (task.assignee && task.assignee !== sessionId && !options?.force) {
     const result = startStateMachine({
       taskFound: true,
       taskStatus: task.status,
@@ -161,8 +166,8 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
     return;
   }
 
-  // Force authority check
-  if (task.assignee && options?.force) {
+  // Force authority check (only needed when stealing from a different session)
+  if (task.assignee && task.assignee !== sessionId && options?.force) {
     const authority = resolveAuthority();
     try {
       assertCanForce(authority);
@@ -206,9 +211,6 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
       logWarn(`Overriding stale claim from session "${task.assignee}" (authorized: ${authority}).`);
     }
   }
-
-  // Generate session ID and branch name
-  const sessionId = generateSessionId();
 
   // Set branch name in memory (will be persisted by transaction)
   if (!task.branch) {
