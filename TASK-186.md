@@ -1,11 +1,13 @@
 ---
 id: TASK-186
 type: Task
-status: Ready
+status: In Progress
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 4da62ada72
+claimed_at: '2026-05-27 20:06:08'
 ---
 
 # TASK-186: Fix start command: move file writes into transaction to prevent inconsistent claim state
@@ -19,3 +21,7 @@ In start.ts, lines 118-141 write to local task-state files (updateTaskLock, writ
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-27 System
+- Task claimed via taskforge claim TASK-186
+- Session: 4da62ada72
