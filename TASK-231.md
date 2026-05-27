@@ -83,19 +83,15 @@ An agent is considered crashed/stale when:
 
 ## Acceptance Criteria
 
-- Agent registry file created and maintained in task-state
-- Agents register on claim/start
-- Heartbeat updates registry timestamp
-- Agents deregister on done/release
-- 'taskforge agents' shows active agents
-- Crash detection works with configurable threshold
-- Stale agent tasks can be safely recovered
-- High watermark tracking works correctly
-- Registry validated by doctor command
-- All verification gates pass
-
-## Acceptance Criteria
-
-- [ ]
+- [ ] Agent registry file created and maintained in task-state
+- [ ] Agents register on claim/start
+- [ ] Heartbeat updates registry timestamp
+- [ ] Agents deregister on done/release
+- [ ] 'taskforge agents' shows active agents
+- [ ] Crash detection works with configurable threshold
+- [ ] Stale agent tasks can be safely recovered
+- [ ] High watermark tracking works correctly
+- [ ] Registry validated by doctor command
+- [ ] All verification gates pass: typecheck, lint, build, test
 
 ## Agent Notes

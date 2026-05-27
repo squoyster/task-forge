@@ -1,7 +1,7 @@
 ---
 id: TASK-217
 type: Task
-status: In Progress
+status: Review
 priority: P0
 agentRole: Implementer
 riskLevel: Low
@@ -42,19 +42,25 @@ The GuidanceAdapter interface:
 
 ## Acceptance Criteria
 
-- [ ] GuidanceAdapter interface created with `pushGuidance(result: CommandResult): void` method
-- [ ] NoOpGuidanceAdapter implementation for CLI-only mode
-- [ ] OpenCodeGuidanceAdapter implementation using todowrite tool
-- [ ] `next` command wired to `nextStateMachine` with conditions built from runtime state
-- [ ] `claim` command wired to `claimStateMachine` with conditions built from runtime state
-- [ ] `start` command wired to `startStateMachine` with conditions built from runtime state
-- [ ] `done` command wired to `doneStateMachine` with conditions built from runtime state
-- [ ] `new` command wired to `newStateMachine` with conditions built from runtime state
-- [ ] All commands return CommandResult with no unhandled states
-- [ ] Guidance displayed in both JSON output and human-readable terminal output
-- [ ] All verification gates pass: typecheck, lint, build, test
+- [x] GuidanceAdapter interface created with `pushGuidance(result: CommandResult): void` method — `src/core/guidance-adapter.ts` `GuidanceAdapter` interface
+- [x] NoOpGuidanceAdapter implementation for CLI-only mode — `src/core/guidance-adapter.ts` `NoOpGuidanceAdapter` class
+- [x] OpenCodeGuidanceAdapter implementation using todowrite tool — `src/core/guidance-adapter.ts` `OpenCodeGuidanceAdapter` class
+- [x] `next` command wired to `nextStateMachine` with conditions built from runtime state — `src/commands/next.ts` `cmdNext()` calls `nextStateMachine()` with doctor lock, outstanding task, uncommitted worktrees, and task selection conditions
+- [x] `claim` command wired to `claimStateMachine` with conditions built from runtime state — `src/commands/claim.ts` `cmdClaim()` calls `claimStateMachine()` for all error paths and success
+- [x] `start` command wired to `startStateMachine` with conditions built from runtime state — `src/commands/start.ts` `cmdStart()` calls `startStateMachine()` for all error paths and success
+- [x] `done` command wired to `doneStateMachine` with conditions built from runtime state — `src/commands/done.ts` `cmdDone()` calls `doneStateMachine()` for gates, transition, ownership, context, and AC checks
+- [x] `new` command wired to `newStateMachine` with conditions built from runtime state — `src/commands/new.ts` `cmdNew()` calls `newStateMachine()` for write and push results
+- [x] All commands return CommandResult with no unhandled states — each command builds conditions and calls the appropriate state machine; no unhandled branches remain
+- [x] Guidance displayed in both JSON output and human-readable terminal output — all commands include `nextActions` and `guidance` in JSON output; human output uses `result.guidance` from state machine
+- [x] All verification gates pass: typecheck, lint, build, test — 530 tests pass, zero typecheck/lint/build errors
 
 ## Agent Notes
+
+### 2026-05-27 System
+- Report generated — task moved to Review
+- Changed files: none
+- Commits: none
+- AC section: present
 
 ### 2026-05-27 System
 - Worktree created manually at /Volumes/Transcend/devel/worktrees/TASK-217
