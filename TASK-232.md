@@ -11,6 +11,7 @@ assignee: 7886fe827e
 claimed_at: '2026-05-27 23:45:08'
 context_hash: 46d0f0d5576af484
 branch: agent/TASK-232-require-clean-worktree-and-pushed-branch--7886fe827e
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-232
 ---
 
 # TASK-232: Require clean worktree and pushed branch in done command before marking task Done
@@ -35,6 +36,12 @@ Multiple tasks (TASK-077, TASK-083, TASK-086, TASK-099, and dozens more) were ma
 - [ ] Tests added covering: dirty worktree rejection, unpushed branch rejection, clean worktree acceptance, `--force` bypass (human/doctor only)
 
 ## Agent Notes
+
+### 2026-05-27 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-232
+
+### 2026-05-27 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-232
 
 ### 2026-05-27 System
 - Task claimed via taskforge start TASK-232
