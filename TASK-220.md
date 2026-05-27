@@ -1,7 +1,7 @@
 ---
 id: TASK-220
 type: Bug
-status: Review
+status: Done
 priority: P0
 agentRole: Implementer
 riskLevel: Low
@@ -51,6 +51,9 @@ Per `taskforge-control-plane-closure-spec.md` and `control-plane-hardening.md` �
 - [x] Tests cover strict mode with errors, warnings, and clean state — `tests/validate-state.test.ts`: 8 tests covering valid state, errors, warnings without strict, warnings with strict, nextActions in error/success output, exit codes for strict/non-strict
 
 ## Agent Notes
+
+### 2026-05-27 System
+- Task marked Done
 
 ### 2026-05-27 System
 - Report generated — task moved to Review
