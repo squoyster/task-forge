@@ -42,12 +42,36 @@ Implementation:
 
 The session file should be in .gitignore so it doesn't get committed.
 
+### Enhanced Resume Command
+
+`taskforge resume` (without args) must identify the most likely task being worked on and provide full recovery context:
+
+1. **Session file recovery**: If `.taskforge-session.json` exists in any worktree, use it to identify the task
+2. **Branch session matching**: If no session file, scan for In Progress tasks where `assignee` matches the current branch's session ID
+3. **Dirty worktree fallback**: If no session match, find In Progress tasks with worktrees that have uncommitted changes
+4. **Ownership check**: If the task is claimed by a different session, report the conflict and offer to unlock
+5. **Context display**: Show task goal, acceptance criteria status, last agent notes, and worktree location
+6. **Todo list update**: Output structured next actions and AC checks needed to complete the task
+7. **JSON output**: Return full recovery context in machine-readable format for agent frameworks
+
+Reconciliation with current architecture:
+- Uses existing `checkOutstandingSessionTasks()` for branch-based session matching
+- Uses existing `checkUncommittedWorktrees()` for dirty worktree detection
+- Uses existing `listWorktrees()` to enumerate active worktrees
+- Adds session file as a new recovery source (higher priority than branch matching)
+- Maintains invariant: only one In Progress task per session at a time
+- Maintains invariant: worktree path stored in task frontmatter stays authoritative
+
 Acceptance criteria should verify:
 - Session file written on claim/start
 - Session file readable on restart
 - Session recovery works in resume command
 - Session file cleaned up on done/release
 - Multiple worktrees can have independent session files
+- `taskforge resume` without args finds the correct task
+- Resume displays AC status and next steps
+- Resume handles ownership conflicts gracefully
+- JSON output includes full recovery context
 
 ## Acceptance Criteria
 
