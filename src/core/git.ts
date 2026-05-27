@@ -10,6 +10,101 @@ export interface WorktreeResult {
   created: boolean;
 }
 
+export interface UncommittedWorktree {
+  taskId: string;
+  status: string;
+  dirtyFiles: number;
+  branch: string;
+  worktreePath: string;
+}
+
+/**
+ * Check all worktrees for uncommitted changes.
+ * Returns a list of worktrees with dirty state, or empty array if clean.
+ */
+export async function checkUncommittedWorktrees(
+  repoRoot: string,
+  tasks: ParsedTask[],
+): Promise<UncommittedWorktree[]> {
+  const git = simpleGit(repoRoot);
+  const worktrees = await git.raw("worktree", "list", "--porcelain");
+  const results: UncommittedWorktree[] = [];
+
+  const lines = worktrees.split("\n");
+  let currentWorktree: { path: string; branch: string } | null = null;
+
+  for (const line of lines) {
+    if (line.startsWith("worktree ")) {
+      if (currentWorktree) {
+        const dirty = await checkWorktreeDirty(currentWorktree.path);
+        if (dirty > 0) {
+          const task = findTaskByWorktree(tasks, currentWorktree.path);
+          if (task) {
+            results.push({
+              taskId: task.id,
+              status: task.status,
+              dirtyFiles: dirty,
+              branch: currentWorktree.branch,
+              worktreePath: currentWorktree.path,
+            });
+          }
+        }
+      }
+      currentWorktree = { path: line.slice(9), branch: "" };
+    } else if (line.startsWith("branch ") && currentWorktree) {
+      currentWorktree.branch = line.slice(7);
+    }
+  }
+
+  // Check last worktree
+  if (currentWorktree) {
+    const dirty = await checkWorktreeDirty(currentWorktree.path);
+    if (dirty > 0) {
+      const task = findTaskByWorktree(tasks, currentWorktree.path);
+      if (task) {
+        results.push({
+          taskId: task.id,
+          status: task.status,
+          dirtyFiles: dirty,
+          branch: currentWorktree.branch,
+          worktreePath: currentWorktree.path,
+        });
+      }
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Check if a worktree has uncommitted changes.
+ * Returns the number of dirty files, or 0 if clean.
+ */
+async function checkWorktreeDirty(worktreePath: string): Promise<number> {
+  try {
+    const git = simpleGit(worktreePath);
+    const status = await git.status();
+    return status.files.length;
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * Find a task by its worktree path.
+ */
+function findTaskByWorktree(tasks: ParsedTask[], worktreePath: string): ParsedTask | null {
+  for (const t of tasks) {
+    if (t.worktree === worktreePath) return t;
+  }
+  // Fallback: match by worktrees dir pattern
+  const match = worktreePath.match(/worktrees[/\\][^/\\]+[/\\](TASK-\d+)/);
+  if (match) {
+    return tasks.find((t) => t.id === match[1]) ?? null;
+  }
+  return null;
+}
+
 export async function createWorktree(
   repoRoot: string,
   task: ParsedTask,

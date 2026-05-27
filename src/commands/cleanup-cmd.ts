@@ -2,9 +2,10 @@ import { loadTaskById, parseTaskFile, writeTaskFile, appendAgentNote } from "../
 import { removeWorktree, removeBranch, commitAndPushTaskState } from "../core/git.js";
 import { inspectTask } from "./inspect.js";
 import { getRepoRoot } from "../util/paths.js";
-import { logSuccess, logWarn, logInfo, logSub } from "../util/logging.js";
+import { logSuccess, logWarn, logInfo, logSub, logError, logDivider } from "../util/logging.js";
 import { TaskNotFoundError } from "../core/errors.js";
 import { printJson, jsonOk, jsonError } from "../util/json-result.js";
+import { resolveAuthority, assertCanForce, getForceRejectionNextActions, ForceRequiresHumanOrDoctorError } from "../core/authority.js";
 
 export interface CleanupOptions {
   dryRun?: boolean;
@@ -33,6 +34,36 @@ export async function cmdCleanup(taskId: string, options?: CleanupOptions): Prom
   const force = options?.force ?? false;
   const dryRun = !apply && !force;
   const json = options?.json ?? false;
+
+  // Force authority check
+  if (force) {
+    const authority = resolveAuthority();
+    try {
+      assertCanForce(authority);
+    } catch (err) {
+      if (err instanceof ForceRequiresHumanOrDoctorError) {
+        if (json) {
+          printJson(jsonError(
+            "Normal agents may not use --force.",
+            "FORCE_REQUIRES_HUMAN_OR_DOCTOR",
+            { nextActions: getForceRejectionNextActions(taskId) },
+          ));
+          return;
+        }
+        logError("Normal agents may not use --force.");
+        logDivider();
+        logInfo("Valid next actions:");
+        logSub("1. taskforge doctor --json");
+        logSub("   Reason: Diagnose whether a recovery path exists.");
+        logSub("   Safety: safe");
+        logSub(`2. taskforge block ${taskId} "Force operation requires human or doctor-mode authorization" --category unsafe_operation --blocked-by human`);
+        logSub("   Reason: Escalate unsafe operation without bypassing TaskForge.");
+        logSub("   Safety: requires_human");
+        return;
+      }
+      throw err;
+    }
+  }
 
   const items: CleanupItem[] = [];
 
@@ -83,8 +114,9 @@ export async function cmdCleanup(taskId: string, options?: CleanupOptions): Prom
       writeTaskFile(current);
 
       const today = new Date().toISOString().split("T")[0];
+      const authority = resolveAuthority();
       appendAgentNote(current.filePath, today, "System", [
-        `Cleanup: worktree and branch removed${force ? " (forced)" : ""}`,
+        `Cleanup: worktree and branch removed${force ? ` (authorized: ${authority})` : ""}`,
       ]);
 
       await commitAndPushTaskState(repoRoot, `chore: cleanup ${taskId}`);
@@ -92,7 +124,12 @@ export async function cmdCleanup(taskId: string, options?: CleanupOptions): Prom
   }
 
   if (json) {
-    printJson(jsonOk({ cleanup: { items } } as never));
+    printJson(jsonOk({
+      cleanup: { items },
+      nextActions: [
+        { command: "taskforge next", reason: "Find the next available task after cleanup.", safety: "safe" as const, preferred: true },
+      ],
+    } as never));
     return;
   }
 

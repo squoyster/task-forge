@@ -7,6 +7,7 @@ import { setRepoRoot } from "../src/util/paths.js";
 
 let uniqueDir: string;
 let stateDir: string;
+let savedEnv: NodeJS.ProcessEnv;
 
 beforeEach(() => {
   uniqueDir = fs.mkdtempSync(path.join(os.tmpdir(), "taskforge-unlock-test-"));
@@ -14,9 +15,12 @@ beforeEach(() => {
   stateDir = path.resolve(repoDir, "..", "task-state");
   fs.mkdirSync(stateDir, { recursive: true });
   setRepoRoot(repoDir);
+  savedEnv = { ...process.env };
+  process.env.TASKFORGE_ACTOR = "human";
 });
 
 afterEach(() => {
+  process.env = savedEnv;
   fs.rmSync(uniqueDir, { recursive: true, force: true });
 });
 

@@ -15,6 +15,7 @@ vi.mock("../src/core/git.js", () => ({
 
 let uniqueDir: string;
 let stateDir: string;
+let savedEnv: NodeJS.ProcessEnv;
 
 function makeTaskFile(id: string, overrides: Record<string, unknown> = {}): string {
   const { body: bodyOverride, ...fm } = overrides;
@@ -32,10 +33,13 @@ beforeEach(() => {
   stateDir = path.resolve(repoDir, "..", "task-state");
   fs.mkdirSync(stateDir, { recursive: true });
   setRepoRoot(repoDir);
+  savedEnv = { ...process.env };
+  process.env.TASKFORGE_ACTOR = "human";
   vi.clearAllMocks();
 });
 
 afterEach(() => {
+  process.env = savedEnv;
   fs.rmSync(uniqueDir, { recursive: true, force: true });
 });
 

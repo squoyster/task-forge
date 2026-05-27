@@ -30,6 +30,7 @@ vi.mock("../src/core/task-state-transaction.js", () => ({
 
 let uniqueDir: string;
 let stateDir: string;
+let savedEnv: NodeJS.ProcessEnv;
 
 beforeEach(() => {
   uniqueDir = fs.mkdtempSync(path.join(os.tmpdir(), "taskforge-sweep-test-"));
@@ -37,11 +38,14 @@ beforeEach(() => {
   stateDir = path.resolve(repoDir, "..", "task-state");
   fs.mkdirSync(stateDir, { recursive: true });
   setRepoRoot(repoDir);
+  savedEnv = { ...process.env };
+  process.env.TASKFORGE_ACTOR = "human";
 
   vi.clearAllMocks();
 });
 
 afterEach(() => {
+  process.env = savedEnv;
   fs.rmSync(uniqueDir, { recursive: true, force: true });
 });
 

@@ -1,8 +1,10 @@
 import { execa } from "execa";
 import { loadConfig } from "../core/config.js";
-import { logHeader, logDivider, logError, logSuccess } from "../util/logging.js";
+import { logHeader, logDivider, logError, logSuccess, logInfo } from "../util/logging.js";
 import { getRepoRoot } from "../util/paths.js";
 import { printJson, jsonOk } from "../util/json-result.js";
+import { gatesStateMachine } from "../core/command-states.js";
+import { getDefaultGuidanceAdapter } from "../core/guidance-adapter.js";
 
 export interface GatesOptions {
   only?: string;
@@ -66,6 +68,17 @@ export async function runGates(options?: GatesOptions): Promise<{ passed: boolea
 export async function cmdGates(options?: GatesOptions): Promise<boolean> {
   const { passed, results } = await runGates(options);
 
+  const failedGates = results
+    .filter((r) => !r.passed)
+    .map((r) => ({ name: r.name, command: r.command }));
+
+  const result = gatesStateMachine({
+    totalGates: results.length,
+    passedGates: results.filter((r) => r.passed).length,
+    failedGates,
+  });
+  getDefaultGuidanceAdapter().pushGuidance(result);
+
   if (!options?.json) {
     logHeader("# TaskForge Gates");
     logDivider();
@@ -77,12 +90,7 @@ export async function cmdGates(options?: GatesOptions): Promise<boolean> {
       }
     }
     logDivider();
-    if (passed) {
-      logSuccess(`All ${results.length} gate(s) passed.`);
-    } else {
-      const failedCount = results.filter((r) => !r.passed).length;
-      logError(`${failedCount}/${results.length} gate(s) failed.`);
-    }
+    logInfo(result.guidance);
   } else {
     printJson(jsonOk({
       gates: results.map((r) => ({
@@ -92,6 +100,8 @@ export async function cmdGates(options?: GatesOptions): Promise<boolean> {
         duration: r.duration,
       })),
       allPassed: passed,
+      nextActions: [result.nextAction],
+      guidance: result.guidance,
     }));
   }
 

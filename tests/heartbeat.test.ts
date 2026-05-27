@@ -13,6 +13,7 @@ vi.mock("../src/core/git.js", () => ({
 
 let uniqueDir: string;
 let stateDir: string;
+let savedEnv: NodeJS.ProcessEnv;
 
 function makeTaskFile(
   id: string,
@@ -50,10 +51,13 @@ beforeEach(() => {
   stateDir = path.resolve(repoDir, "..", "task-state");
   fs.mkdirSync(stateDir, { recursive: true });
   setRepoRoot(repoDir);
+  savedEnv = { ...process.env };
+  process.env.TASKFORGE_ACTOR = "human";
   vi.clearAllMocks();
 });
 
 afterEach(() => {
+  process.env = savedEnv;
   fs.rmSync(uniqueDir, { recursive: true, force: true });
 });
 
@@ -90,7 +94,7 @@ describe("cmdHeartbeat", () => {
     await cmdHeartbeat("TASK-001", { force: true });
 
     const content = fs.readFileSync(fp, "utf-8");
-    expect(content).toContain("Heartbeat: lease renewed (forced)");
+    expect(content).toContain("Heartbeat: lease renewed (authorized: human)");
   });
 
   it("supports --json output", async () => {

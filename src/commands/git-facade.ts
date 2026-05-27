@@ -8,7 +8,9 @@ import { loadConfig } from "../core/config.js";
 import { createPullRequest } from "../integrations/github/service.js";
 import type { GitHubConfig } from "../integrations/github/types.js";
 import type { Task } from "../core/task.js";
-import { logInfo, logHeader, logSuccess, logWarn } from "../util/logging.js";
+import { logInfo, logHeader, logSuccess, logWarn, logError } from "../util/logging.js";
+import { checkpointStateMachine, submitStateMachine } from "../core/command-states.js";
+import { getDefaultGuidanceAdapter } from "../core/guidance-adapter.js";
 
 function requireTask(taskId: string): Task {
   const task = loadTaskById(taskId);
@@ -33,19 +35,75 @@ export async function cmdDiff(taskId: string): Promise<void> {
 
 export async function cmdCheckpoint(taskId: string, message: string): Promise<void> {
   const repoRoot = getRepoRoot();
-  const task = requireTask(taskId);
+  const task = loadTaskById(taskId);
 
-  assertTaskOwnership(task, repoRoot);
+  if (!task) {
+    const result = checkpointStateMachine({
+      hasChanges: false,
+      commitSucceeded: false,
+      inWorktree: false,
+      taskId,
+    });
+    getDefaultGuidanceAdapter().pushGuidance(result);
+    logError(result.guidance);
+    throw new TaskNotFoundError(taskId);
+  }
 
   if (!task.worktree) {
-    throw new Error(`No worktree found for ${taskId}.`);
+    const result = checkpointStateMachine({
+      hasChanges: false,
+      commitSucceeded: false,
+      inWorktree: false,
+      taskId,
+    });
+    getDefaultGuidanceAdapter().pushGuidance(result);
+    logError(result.guidance);
+    throw new Error(result.guidance);
+  }
+
+  try {
+    assertTaskOwnership(task, repoRoot);
+  } catch {
+    const result = checkpointStateMachine({
+      hasChanges: false,
+      commitSucceeded: false,
+      inWorktree: true,
+      taskId,
+      errorMessage: "Ownership verification failed",
+    });
+    getDefaultGuidanceAdapter().pushGuidance(result);
+    throw new Error(result.guidance);
   }
 
   const branchResult = await run("git", ["-C", task.worktree, "rev-parse", "--abbrev-ref", "HEAD"], repoRoot);
   const branch = branchResult.stdout.trim();
 
   if (branch === "main" || branch === "task-state") {
-    throw new Error(`Refusing to checkpoint on ${branch} branch.`);
+    const result = checkpointStateMachine({
+      hasChanges: false,
+      commitSucceeded: false,
+      inWorktree: true,
+      taskId,
+      errorMessage: `Refusing to checkpoint on ${branch} branch`,
+    });
+    getDefaultGuidanceAdapter().pushGuidance(result);
+    throw new Error(result.guidance);
+  }
+
+  // Check for changes
+  const statusResult = await run("git", ["-C", task.worktree, "status", "--porcelain"], repoRoot);
+  const hasChanges = statusResult.stdout.trim().length > 0;
+
+  if (!hasChanges) {
+    const result = checkpointStateMachine({
+      hasChanges: false,
+      commitSucceeded: false,
+      inWorktree: true,
+      taskId,
+    });
+    getDefaultGuidanceAdapter().pushGuidance(result);
+    logInfo(result.guidance);
+    return;
   }
 
   const fullMessage = [
@@ -55,10 +113,33 @@ export async function cmdCheckpoint(taskId: string, message: string): Promise<vo
     `TaskForge-Managed: true`,
   ].join("\n");
 
-  await run("git", ["-C", task.worktree, "add", "."], repoRoot);
-  await run("git", ["-C", task.worktree, "commit", "-m", fullMessage], repoRoot);
+  let commitSucceeded = false;
+  try {
+    await run("git", ["-C", task.worktree, "add", "."], repoRoot);
+    await run("git", ["-C", task.worktree, "commit", "-m", fullMessage], repoRoot);
+    commitSucceeded = true;
+  } catch (err) {
+    const result = checkpointStateMachine({
+      hasChanges: true,
+      commitSucceeded: false,
+      inWorktree: true,
+      taskId,
+      errorMessage: err instanceof Error ? err.message : String(err),
+    });
+    getDefaultGuidanceAdapter().pushGuidance(result);
+    logError(result.guidance);
+    throw new Error(result.guidance);
+  }
 
-  logSuccess(`Checkpoint created for ${taskId}: ${message}`);
+  const result = checkpointStateMachine({
+    hasChanges: true,
+    commitSucceeded,
+    inWorktree: true,
+    taskId,
+  });
+  getDefaultGuidanceAdapter().pushGuidance(result);
+
+  logSuccess(result.guidance);
 
   appendTaskTranscript(repoRoot, taskId, createTaskEvent(taskId, "git.commit", {
     summary: message,
@@ -67,27 +148,80 @@ export async function cmdCheckpoint(taskId: string, message: string): Promise<vo
 
 export async function cmdSubmit(taskId: string): Promise<void> {
   const repoRoot = getRepoRoot();
-  const task = requireTask(taskId);
+  const task = loadTaskById(taskId);
 
-  assertTaskOwnership(task, repoRoot);
+  if (!task) {
+    const result = submitStateMachine({
+      prCreated: false,
+      githubConfigured: false,
+      taskId,
+    });
+    getDefaultGuidanceAdapter().pushGuidance(result);
+    logError(result.guidance);
+    throw new TaskNotFoundError(taskId);
+  }
 
   if (!task.branch) {
-    throw new Error(`No branch recorded for ${taskId}.`);
+    const result = submitStateMachine({
+      prCreated: false,
+      githubConfigured: false,
+      taskId,
+      errorMessage: "No branch recorded",
+    });
+    getDefaultGuidanceAdapter().pushGuidance(result);
+    logError(result.guidance);
+    throw new Error(result.guidance);
   }
 
   if (task.branch === "main" || task.branch === "task-state") {
-    throw new Error(`Refusing to push ${task.branch}.`);
+    const result = submitStateMachine({
+      prCreated: false,
+      githubConfigured: false,
+      taskId,
+      errorMessage: `Refusing to push ${task.branch}`,
+    });
+    getDefaultGuidanceAdapter().pushGuidance(result);
+    logError(result.guidance);
+    throw new Error(result.guidance);
   }
 
   if (!task.worktree) {
-    throw new Error(`No worktree found for ${taskId}.`);
+    const result = submitStateMachine({
+      prCreated: false,
+      githubConfigured: false,
+      taskId,
+      errorMessage: "No worktree found",
+    });
+    getDefaultGuidanceAdapter().pushGuidance(result);
+    logError(result.guidance);
+    throw new Error(result.guidance);
   }
 
-  logInfo(`Pushing branch: ${task.branch}`);
+  const config = loadConfig(repoRoot);
+  const githubConfigured = !!(config.github?.enabled && config.github.owner && config.github.repo);
 
-  await run("git", ["-C", task.worktree, "push", "origin", task.branch], repoRoot);
+  try {
+    await run("git", ["-C", task.worktree, "push", "origin", task.branch], repoRoot);
+  } catch (err) {
+    const result = submitStateMachine({
+      prCreated: false,
+      githubConfigured,
+      taskId,
+      errorMessage: err instanceof Error ? err.message : String(err),
+    });
+    getDefaultGuidanceAdapter().pushGuidance(result);
+    logError(result.guidance);
+    throw new Error(result.guidance);
+  }
 
-  logSuccess(`Branch ${task.branch} pushed for ${taskId}.`);
+  const result = submitStateMachine({
+    prCreated: true,
+    githubConfigured,
+    taskId,
+  });
+  getDefaultGuidanceAdapter().pushGuidance(result);
+
+  logSuccess(result.guidance);
 
   appendTaskTranscript(repoRoot, taskId, createTaskEvent(taskId, "git.push", {
     summary: `Pushed branch ${task.branch}`,
@@ -96,11 +230,30 @@ export async function cmdSubmit(taskId: string): Promise<void> {
 
 export async function cmdPr(taskId: string): Promise<void> {
   const repoRoot = getRepoRoot();
-  const task = requireTask(taskId);
+  const task = loadTaskById(taskId);
   const config = loadConfig(repoRoot);
 
+  if (!task) {
+    const result = submitStateMachine({
+      prCreated: false,
+      githubConfigured: false,
+      taskId,
+    });
+    getDefaultGuidanceAdapter().pushGuidance(result);
+    logError(result.guidance);
+    throw new TaskNotFoundError(taskId);
+  }
+
   if (!task.branch) {
-    throw new Error(`No branch recorded for ${taskId}.`);
+    const result = submitStateMachine({
+      prCreated: false,
+      githubConfigured: false,
+      taskId,
+      errorMessage: "No branch recorded",
+    });
+    getDefaultGuidanceAdapter().pushGuidance(result);
+    logError(result.guidance);
+    throw new Error(result.guidance);
   }
 
   const title = `[${taskId}] ${taskId}`;
@@ -117,7 +270,16 @@ export async function cmdPr(taskId: string): Promise<void> {
       };
       const pr = await createPullRequest(githubConfig, title, task.branch, "main", body);
 
-      logSuccess(`PR created for ${taskId}: #${pr.number} ${pr.url}`);
+      const result = submitStateMachine({
+        prCreated: true,
+        prNumber: pr.number,
+        prUrl: pr.url,
+        githubConfigured: true,
+        taskId,
+      });
+      getDefaultGuidanceAdapter().pushGuidance(result);
+
+      logSuccess(result.guidance);
 
       appendTaskTranscript(repoRoot, taskId, createTaskEvent(taskId, "github.pr.created", {
         summary: `Created PR #${pr.number}`,
@@ -125,7 +287,16 @@ export async function cmdPr(taskId: string): Promise<void> {
       }));
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      logWarn(`PR creation failed for ${taskId}: ${message}`);
+
+      const result = submitStateMachine({
+        prCreated: false,
+        githubConfigured: true,
+        taskId,
+        errorMessage: message,
+      });
+      getDefaultGuidanceAdapter().pushGuidance(result);
+
+      logWarn(result.guidance);
 
       appendTaskTranscript(repoRoot, taskId, createTaskEvent(taskId, "github.pr.failed", {
         summary: `PR creation failed: ${message}`,
@@ -134,7 +305,14 @@ export async function cmdPr(taskId: string): Promise<void> {
       throw error;
     }
   } else {
-    logWarn(`GitHub integration not configured. Manual PR creation required.`);
+    const result = submitStateMachine({
+      prCreated: false,
+      githubConfigured: false,
+      taskId,
+    });
+    getDefaultGuidanceAdapter().pushGuidance(result);
+
+    logWarn(result.guidance);
     logInfo(`To create a PR manually:`);
     logInfo(`  gh pr create --title "${title}" --head ${task.branch} --base main --body "${body}"`);
     logInfo(`  Or visit: https://github.com/<owner>/<repo>/compare/main...${task.branch}`);

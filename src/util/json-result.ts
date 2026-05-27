@@ -1,3 +1,5 @@
+import type { StateValidationIssue } from "../core/state-validator.js";
+
 /**
  * Convert a canonical STATUS value to snake_case for JSON output.
  * e.g. "In Progress" → "in_progress", "Needs Spec" → "needs_spec"
@@ -19,6 +21,17 @@ export interface JsonTask {
 export interface JsonWorkspace {
   branch?: string;
   worktree?: string;
+  exists?: boolean;
+}
+
+export type Safety = "safe" | "requires_human" | "doctor_only" | "blocked";
+
+export interface NextAction {
+  command: string;
+  reason: string;
+  safety: Safety;
+  preferred: boolean;
+  stateTransition?: { from: string; to: string };
 }
 
 export interface JsonNext {
@@ -30,8 +43,12 @@ export interface JsonResult {
   task?: JsonTask;
   workspace?: JsonWorkspace;
   next?: JsonNext;
+  nextActions?: Array<string | NextAction>;
+  guidance?: string;
   error?: string;
   code?: string;
+  errors?: StateValidationIssue[];
+  warnings?: StateValidationIssue[];
   sweep?: { scanned: number; stale: number; changed: number; dryRun?: boolean; actions?: Array<{ taskId: string; previousAssignee: string; ageHours: string; action: string; reason?: string }> };
   gates?: GateResult[];
   allPassed?: boolean;
@@ -61,11 +78,12 @@ export function jsonOk(overrides?: Partial<JsonResult>): JsonResult {
 /**
  * Create an error JSON result.
  */
-export function jsonError(error: string, code?: string): JsonResult {
+export function jsonError(error: string, code?: string, extras?: Partial<JsonResult>): JsonResult {
   return {
     ok: false,
     error,
     code,
+    ...extras,
   };
 }
 

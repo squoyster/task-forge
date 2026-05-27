@@ -2,7 +2,7 @@ import { loadTaskById, clearTaskLock, appendAgentNote, parseTaskFile, writeTaskF
 import { validateTransition, getAllowedTransitions } from "../core/status-transition.js";
 import { commitAndPushTaskState } from "../core/git.js";
 import { STATUS } from "../util/status-constants.js";
-import { logSuccess, logSub } from "../util/logging.js";
+import { logSuccess, logSub, logInfo, logDivider } from "../util/logging.js";
 import { TaskNotFoundError, InvalidStatusTransitionError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
 import { assertTaskOwnership } from "../core/session.js";
@@ -37,6 +37,7 @@ export async function cmdBlock(
       printJson(jsonError(
         `Cannot transition from "${task.status}" to "${STATUS.BLOCKED}". Allowed: ${allowed.join(", ")}`,
         "INVALID_TRANSITION",
+        { nextActions: allowed.includes("Done") ? ["done"] : ["start"] },
       ));
       return;
     }
@@ -78,6 +79,8 @@ export async function cmdBlock(
     const final = loadTaskById(taskId);
     printJson(jsonOk({
       task: final ? buildJsonTask(final) : buildJsonTask(current),
+      nextActions: ["next", "resume"],
+      guidance: `Task ${taskId} is now blocked. Run 'taskforge next' to find the next available task, or 'taskforge resume <taskId>' to continue working on another in-progress task.`,
     }));
     return;
   }
@@ -86,4 +89,8 @@ export async function cmdBlock(
   if (options.category && options.category !== "unspecified") {
     logSub(`  Category: ${options.category}`);
   }
+  logDivider();
+  logInfo("Next actions:");
+  logSub("  taskforge next          — Find the next available task");
+  logSub("  taskforge resume <id>   — Continue working on another in-progress task");
 }

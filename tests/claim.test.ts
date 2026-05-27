@@ -13,15 +13,29 @@ vi.mock("../src/core/git.js", () => ({
 vi.mock("../src/core/task-state-transaction.js", () => ({
   withTaskStateTransaction: vi.fn().mockImplementation(async (_opts, mutate) => {
     const taskStore = await import("../src/core/task-store.js");
+    // Maintain in-memory transaction state like the real implementation
+    const tasks = new Map<string, ReturnType<typeof taskStore.loadTaskById>>();
+    const notesAppended: Array<{ taskId: string; notes: string[] }> = [];
+
     const tx = {
-      loadTask: (id: string) => taskStore.loadTaskById(id),
-      loadAllTasks: () => taskStore.loadAllTasks(),
-      updateTask: (task: { id: string }) => taskStore.writeTaskFile(task),
-      appendNote: vi.fn(),
+      loadTask: (id: string) => {
+        if (!tasks.has(id)) {
+          tasks.set(id, taskStore.loadTaskById(id));
+        }
+        return tasks.get(id) ?? null;
+      },
+      loadAllTasks: () => [...tasks.values()].filter((t): t is NonNullable<typeof t> => t != null),
+      updateTask: (task: { id: string }) => {
+        tasks.set(task.id, task as ReturnType<typeof taskStore.loadTaskById>);
+        if (task) taskStore.writeTaskFile(task as Parameters<typeof taskStore.writeTaskFile>[0]);
+      },
+      appendNote: (taskId: string, _role: string, notes: string[]) => {
+        notesAppended.push({ taskId, notes });
+      },
       appendEvent: vi.fn(),
       assertCanTransition: vi.fn(),
       claimTask: (id: string, session: string) => {
-        const task = taskStore.loadTaskById(id);
+        const task = tx.loadTask(id);
         if (task) {
           task.assignee = session;
           task.claimed_at = new Date().toISOString().replace("T", " ").replace(/\.\d+Z$/, "");
@@ -31,12 +45,22 @@ vi.mock("../src/core/task-state-transaction.js", () => ({
       },
       clearClaim: vi.fn(),
     };
-    return mutate(tx);
+    const result = mutate(tx);
+    // Append notes after mutation
+    const today = new Date().toISOString().split("T")[0];
+    for (const { taskId, notes } of notesAppended) {
+      const task = tasks.get(taskId);
+      if (task) {
+        taskStore.appendAgentNote(task.filePath, today, "System", notes);
+      }
+    }
+    return result;
   }),
 }));
 
 let uniqueDir: string;
 let stateDir: string;
+let savedEnv: NodeJS.ProcessEnv;
 
 function makeTaskFile(
   id: string,
@@ -78,10 +102,13 @@ beforeEach(() => {
   stateDir = path.resolve(repoDir, "..", "task-state");
   fs.mkdirSync(stateDir, { recursive: true });
   setRepoRoot(repoDir);
+  savedEnv = { ...process.env };
+  process.env.TASKFORGE_ACTOR = "human";
   vi.clearAllMocks();
 });
 
 afterEach(() => {
+  process.env = savedEnv;
   fs.rmSync(uniqueDir, { recursive: true, force: true });
 });
 

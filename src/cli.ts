@@ -62,6 +62,7 @@ program
   .action((opts: Record<string, unknown>) => {
     wrap(() =>
       cmdInit({
+        force: opts.force as boolean | undefined,
         agentFramework: opts.agentFramework as string | undefined,
         policy: opts.policy as "permissive" | "managed" | "locked-down" | undefined,
         installHooks: opts.installHooks as boolean | undefined,
@@ -374,7 +375,8 @@ program
   .command("validate-state")
   .description("Validate task-state for invariant violations")
   .option("--json", "Output in JSON format")
-  .action((opts: { json?: boolean }) =>
+  .option("--strict", "Exit with non-zero status on any warnings or errors (for CI)")
+  .action((opts: { json?: boolean; strict?: boolean }) =>
     wrap(async () => {
       const { cmdValidateState } = await import("./commands/validate-state.js");
       await cmdValidateState(opts);
