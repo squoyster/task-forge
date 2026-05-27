@@ -1,7 +1,7 @@
 ---
 id: TASK-187
 type: Task
-status: Ready
+status: Rejected
 priority: P0
 agentRole: Implementer
 riskLevel: Low
@@ -19,3 +19,6 @@ Two issues: 1) taskforge new uses commitAndPushTaskState which silently swallows
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-27 System
+- Task rejected: Duplicate of consolidated task
