@@ -1,17 +1,13 @@
 ---
 id: TASK-232
 type: Task
-status: Review
+status: Done
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 dependsOn: []
-assignee: 7886fe827e
-claimed_at: '2026-05-27 23:45:08'
 context_hash: 46d0f0d5576af484
-branch: agent/TASK-232-require-clean-worktree-and-pushed-branch--7886fe827e
-worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-232
 ---
 
 # TASK-232: Require clean worktree and pushed branch in done command before marking task Done
@@ -36,6 +32,12 @@ Multiple tasks (TASK-077, TASK-083, TASK-086, TASK-099, and dozens more) were ma
 - [x] Tests added covering: dirty worktree rejection, unpushed branch rejection, clean worktree acceptance, `--force` bypass (human/doctor only) — `tests/done.test.ts` 5 new tests: "rejects done when worktree has uncommitted files", "rejects done with JSON error when worktree is dirty", "rejects done when branch has unpushed commits", "rejects done with JSON error when branch is unpushed", "allows done when worktree is clean and branch is pushed"
 
 ## Agent Notes
+
+### 2026-05-28 System
+- Task marked Done
+- Worktree not found (already cleaned up): /Volumes/Transcend/devel/worktrees/task-forge/TASK-232
+- Branch deleted: agent/TASK-232-require-clean-worktree-and-pushed-branch--7886fe827e
+- Worktree and branch fields cleared from task frontmatter.
 
 ### 2026-05-28 System
 - Report generated — task moved to Review
