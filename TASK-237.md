@@ -1,7 +1,7 @@
 ---
 id: TASK-237
 type: Task
-status: Ready
+status: Rejected
 priority: P1
 agentRole: Implementer
 riskLevel: Low
