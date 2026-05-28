@@ -1,12 +1,16 @@
 ---
 id: TASK-233
 type: Task
-status: Ready
+status: In Progress
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 dependsOn: []
+assignee: d5aa02494e
+claimed_at: '2026-05-28 14:35:55'
+context_hash: 2e5b856e34b7e389
+branch: agent/TASK-233-record-all-taskforge-cli-invocations-wit--d5aa02494e
 ---
 
 # TASK-233: Record all taskforge CLI invocations with parameters and return values in per-task audit log
@@ -40,3 +44,8 @@ Currently agents have no visibility into which taskforge commands were run durin
 - [ ] Tests added covering: invocation capture, agent ID prefixing, per-task vs global routing, JSON output capture
 
 ## Agent Notes
+
+### 2026-05-28 System
+- Task claimed via taskforge start TASK-233
+- Session: d5aa02494e
+- Branch: agent/TASK-233-record-all-taskforge-cli-invocations-wit--d5aa02494e
