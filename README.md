@@ -109,6 +109,7 @@ See [TASKFORGE.md](TASKFORGE.md) for the full specification, including the Sweep
 | `taskforge audit TASK-N` | Show audit events for a task |
 | `taskforge transcript TASK-N` | Show readable transcript for a task |
 | `taskforge timeline TASK-N` | Show event timeline summary for a task |
+| `taskforge ac-check [TASK-N]` | Scan task files for acceptance criteria issues |
 | `taskforge sync` | Sync with external issue tracker |
 | `taskforge deps scan` | Run broad dependency health checks |
 | `taskforge deps audit` | Run package-manager-native audit |
