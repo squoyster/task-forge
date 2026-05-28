@@ -1,5 +1,6 @@
 import { getRepoRoot } from "../util/paths.js";
-import { readTaskAudit, summarizeTaskAudit } from "../core/audit.js";
+import { readTaskAudit, summarizeTaskAudit, type TimelineEntry } from "../core/audit.js";
+import { readTaskInvocations } from "../core/cli-audit.js";
 import { logInfo, logHeader, logSub, logDivider } from "../util/logging.js";
 
 export function cmdAudit(taskId: string, opts: { json?: boolean }): void {
@@ -56,27 +57,47 @@ export function cmdTimeline(taskId: string, opts: { json?: boolean } = {}): void
   const repoRoot = getRepoRoot();
   const summary = summarizeTaskAudit(repoRoot, taskId);
 
+  // Get CLI invocations for this task
+  const invocations = readTaskInvocations(repoRoot, taskId);
+
+  // Merge invocations into timeline entries
+  const invocationEntries: TimelineEntry[] = invocations.map((inv) => ({
+    timestamp: inv.timestamp,
+    event: `cli.${inv.exitCode === 0 ? "completed" : "failed"}`,
+    summary: `taskforge ${inv.command} ${inv.args.join(" ")}`,
+    detail: inv.error ? `exit ${inv.exitCode}: ${inv.error}` : `exit ${inv.exitCode} (${inv.duration}ms)`,
+  }));
+
+  // Combine and sort all entries by timestamp
+  const allEntries = [...summary.entries, ...invocationEntries].sort(
+    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+  );
+
   if (opts.json) {
-    process.stdout.write(JSON.stringify(summary, null, 2) + "\n");
+    process.stdout.write(JSON.stringify({
+      ...summary,
+      entries: allEntries,
+      cliInvocations: invocations,
+    }, null, 2) + "\n");
     return;
   }
 
   logHeader(`Timeline: ${taskId}`);
 
-  if (summary.entries.length === 0) {
+  if (allEntries.length === 0) {
     logInfo("No events found.");
     return;
   }
 
   logDivider();
 
-  for (const entry of summary.entries) {
+  for (const entry of allEntries) {
     const time = entry.timestamp.slice(11, 19);
-    const icon = getEventIcon(entry.event);
+    const icon = entry.event.startsWith("cli.") ? "⚡" : getEventIcon(entry.event);
     const detail = entry.detail ? `  ${entry.detail}` : "";
     logInfo(`${time}  ${icon} ${entry.event}${detail}`);
   }
 
   logDivider();
-  logInfo(`Duration: ${summary.durationMinutes ?? 0}m  |  Events: ${summary.totalEvents}  |  Errors: ${summary.errorCount}`);
+  logInfo(`Duration: ${summary.durationMinutes ?? 0}m  |  Events: ${summary.totalEvents}  |  CLI Invocations: ${invocations.length}  |  Errors: ${summary.errorCount}`);
 }
