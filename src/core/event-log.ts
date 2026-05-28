@@ -44,7 +44,7 @@ export function eventLogEvent(
 ): void {
   appendEvent(taskId, {
     ts: new Date().toISOString(),
-    actor: "agent:implementer",
+    actor: extra.sessionId ? `agent:${extra.sessionId}` : "agent:implementer",
     event: eventName,
     ...extra,
   }, repoRoot);

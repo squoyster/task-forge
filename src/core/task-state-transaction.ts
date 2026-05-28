@@ -33,11 +33,15 @@ class TransactionImpl implements TaskStateTransaction {
   private tasks: Map<string, ParsedTask> = new Map();
   private notesAppended: Map<string, string[]> = new Map();
   private modified = false;
+  private actor: string;
+  private command: string;
 
-  constructor(tasks: ParsedTask[]) {
+  constructor(tasks: ParsedTask[], actor: string, command: string) {
     for (const t of tasks) {
       this.tasks.set(t.id, t);
     }
+    this.actor = actor;
+    this.command = command;
   }
 
   loadTask(id: string): ParsedTask | null {
@@ -59,7 +63,11 @@ class TransactionImpl implements TaskStateTransaction {
   }
 
   appendEvent(taskId: string, event: string, data?: Record<string, unknown>): void {
-    eventLogEvent(taskId, event, data);
+    eventLogEvent(taskId, event, {
+      ...data,
+      sessionId: this.actor,
+      command: this.command,
+    });
   }
 
   assertCanTransition(task: ParsedTask, targetStatus: string): void {
@@ -130,7 +138,8 @@ export async function withTaskStateTransaction<T>(
 
     // Load fresh state
     const tasks = loadAllTasks(root);
-    const tx = new TransactionImpl(tasks);
+    const actor = options.actor ?? "system";
+    const tx = new TransactionImpl(tasks, actor, command);
 
     // Apply mutation
     const result = await mutate(tx);
