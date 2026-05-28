@@ -10,6 +10,7 @@ assignee: 95dffc88cf
 claimed_at: '2026-05-28 01:16:54'
 context_hash: 9ee05952d2d2a685
 branch: agent/TASK-227-update-agentsmd-with-control-plane-direc--95dffc88cf
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-227
 ---
 
 # TASK-227: Update AGENTS.md with control-plane directive and mandatory startup sequence
@@ -101,6 +102,12 @@ taskforge done TASK-ID
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-28 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-227
+
+### 2026-05-28 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-227
 
 ### 2026-05-28 System
 - Task claimed via taskforge start TASK-227
