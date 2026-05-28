@@ -10,6 +10,7 @@ assignee: f021eeb375
 claimed_at: '2026-05-28 01:01:25'
 context_hash: 9ee05952d2d2a685
 branch: agent/TASK-240-allow-task-state-updates-via-taskforge-c--f021eeb375
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-240
 ---
 
 # TASK-240: Allow task-state updates via TaskForge CLI without requiring PR approval
@@ -61,6 +62,12 @@ Currently task-state lives on a dedicated git branch and changes require PRs to 
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-28 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-240
+
+### 2026-05-28 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-240
 
 ### 2026-05-28 System
 - Task claimed via taskforge start TASK-240
