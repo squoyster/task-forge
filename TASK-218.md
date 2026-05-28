@@ -1,11 +1,15 @@
 ---
 id: TASK-218
 type: Task
-status: Ready
+status: In Progress
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 45283ca690
+claimed_at: '2026-05-28 02:25:35'
+context_hash: 9ee05952d2d2a685
+branch: agent/TASK-218-make-claim-create-worktree-and-return-wo--45283ca690
 ---
 
 # TASK-218: Make claim create worktree and return workspace path in all task commands
@@ -28,3 +32,8 @@ Commands to update: claim, start, next, resume, status (for active tasks), summa
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-28 System
+- Task claimed via taskforge start TASK-218
+- Session: 45283ca690
+- Branch: agent/TASK-218-make-claim-create-worktree-and-return-wo--45283ca690
