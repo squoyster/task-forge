@@ -1,13 +1,11 @@
 ---
 id: TASK-219
 type: Documentation
-status: Review
+status: Done
 priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: a2a33eac3d
-claimed_at: '2026-05-28 00:25:55'
 context_hash: 9ee05952d2d2a685
 branch: agent/TASK-219-document-command-invariants-and-state-ma--a2a33eac3d
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-219
@@ -59,6 +57,9 @@ Per `taskforge-control-plane-closure-spec.md` §1.2 Gap A and §7 Agent Prompt 1
 
 
 ## Agent Notes
+
+### 2026-05-28 System
+- Task marked Done
 
 ### 2026-05-28 System
 - Report generated — task moved to Review
