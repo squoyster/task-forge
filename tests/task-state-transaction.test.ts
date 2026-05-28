@@ -297,4 +297,52 @@ describe("withTaskStateTransaction", () => {
       ),
     ).resolves.not.toThrow();
   });
+
+  it("pushes task-state directly without PR", async () => {
+    const { execa } = await import("execa");
+    let pushCalled = false;
+
+    vi.mocked(execa).mockImplementation((cmd: string, args?: readonly string[]) => {
+      const joined = `${cmd} ${(args ?? []).join(" ")}`;
+      if (joined === "git push origin task-state") {
+        pushCalled = true;
+      }
+      return Promise.resolve({ stdout: "" } as never);
+    });
+
+    makeTaskFile("TASK-001", { status: "In Progress", assignee: "session-abc" });
+
+    await withTaskStateTransaction(
+      { command: "test-push", maxRetries: 0 },
+      (tx) => {
+        tx.clearClaim("TASK-001");
+      },
+    );
+
+    // Should have pushed directly to task-state branch
+    expect(pushCalled).toBe(true);
+  });
+
+  it("includes session ID and command in event log", async () => {
+    const { execa } = await import("execa");
+    vi.mocked(execa).mockResolvedValue({ stdout: "" } as never);
+
+    makeTaskFile("TASK-001", { status: "Ready" });
+
+    await withTaskStateTransaction(
+      { command: "test-claim", actor: "session-xyz", maxRetries: 0 },
+      (tx) => {
+        tx.claimTask("TASK-001", "session-xyz");
+        tx.appendEvent("TASK-001", "task.claimed", { taskId: "TASK-001" });
+      },
+    );
+
+    // Verify event log includes session ID and command
+    const eventsDir = path.join(stateDir, "events");
+    expect(fs.existsSync(eventsDir)).toBe(true);
+    const eventLog = fs.readFileSync(path.join(eventsDir, "TASK-001.ndjson"), "utf-8");
+    const event = JSON.parse(eventLog.trim());
+    expect(event.sessionId).toBe("session-xyz");
+    expect(event.command).toBe("test-claim");
+  });
 });
