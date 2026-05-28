@@ -55,6 +55,7 @@ export interface JsonResult {
   issues?: Array<{ taskId: string; type: string; message: string }>;
   total?: number;
   scanned?: number;
+  recovery?: { method: string; sessionId: string; claimedAt: string };
 }
 
 export interface GateResult {

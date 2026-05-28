@@ -14,6 +14,7 @@ import { isDoctorLocked } from "../core/doctor-lock.js";
 import { resolveAuthority, assertCanForce, getForceRejectionNextActions, ForceRequiresHumanOrDoctorError } from "../core/authority.js";
 import { claimStateMachine } from "../core/command-states.js";
 import { getDefaultGuidanceAdapter } from "../core/guidance-adapter.js";
+import { writeSessionState } from "../core/session-state.js";
 import fs from "node:fs";
 
 export interface ClaimOptions {
@@ -295,6 +296,17 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
       // Worktree creation is non-fatal — claim succeeded even if workspace failed
       worktreePath = undefined;
     }
+  }
+
+  // Write session state file for agent recovery across restarts
+  if (worktreePath) {
+    writeSessionState(worktreePath, {
+      session_id: sessionId,
+      task_id: taskId,
+      claimed_at: new Date().toISOString(),
+      worktree_path: worktreePath,
+      last_heartbeat: new Date().toISOString(),
+    });
   }
 
   // Build success result through state machine
