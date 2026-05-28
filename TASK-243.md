@@ -1,13 +1,11 @@
 ---
 id: TASK-243
 type: Bug
-status: Review
+status: Done
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: b27ca834ad
-claimed_at: '2026-05-28 03:15:35'
 context_hash: 1e6ebeb577972c85
 branch: agent/TASK-243-fix-claimstart-self-deadlock-and-remove--b27ca834ad
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-243
