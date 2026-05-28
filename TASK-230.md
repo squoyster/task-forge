@@ -1,12 +1,12 @@
 ---
 id: TASK-230
 type: Task
-status: Review
+status: Done
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-context_hash: 50d25db1ab2dcfd7
+context_hash: 2d29281e59408ea2
 ---
 
 # TASK-230: Implement quasi-persistent session ID storage for agent recovery
@@ -88,6 +88,9 @@ Acceptance criteria should verify:
 - [x] Heartbeat updates session file — `src/commands/heartbeat.ts` `cmdHeartbeat(~L120)`: calls `updateSessionHeartbeat()` to refresh `last_heartbeat`
 
 ## Agent Notes
+
+### 2026-05-28 System
+- Task marked Done
 
 ### 2026-05-28 System
 - Cleanup: worktree and branch removed
