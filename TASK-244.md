@@ -1,13 +1,11 @@
 ---
 id: TASK-244
 type: Task
-status: In Progress
+status: Ready
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: a34e9e4c25
-claimed_at: '2026-05-28 16:16:50'
 context_hash: b0cdabccffea1074
 branch: agent/TASK-244-wire-all-35-cli-commands-to-taskforgecom--a34e9e4c25
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-244
@@ -66,6 +64,9 @@ All commands in src/commands/:
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-28 System
+- Task released by session "a34e9e4c25" — reset to Ready
 
 ### 2026-05-28 System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-244
