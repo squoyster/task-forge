@@ -1,14 +1,12 @@
 ---
 id: TASK-186
 type: Task
-status: Review
+status: Done
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 6c9a2ceab3
-claimed_at: '2026-05-28 02:03:29'
-context_hash: 9ee05952d2d2a685
+context_hash: 1e6ebeb577972c85
 branch: agent/TASK-186-fix-start-command-move-file-writes-into--6c9a2ceab3
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-186
 ---
@@ -21,9 +19,15 @@ In start.ts, lines 118-141 write to local task-state files (updateTaskLock, writ
 
 ## Acceptance Criteria
 
-- [ ]
+- [x] Pre-transaction appendAgentNote call removed from start.ts - src/commands/start.ts line 1: removed appendAgentNote import, line 324: removed appendAgentNote call that wrote before transaction
+- [x] All task-state writes happen inside transaction - only tx.appendNote inside withTaskStateTransaction at line 336
+- [x] No inconsistent state possible if push fails - local file no longer written before transaction push
+- [x] Tests pass - all 539 tests pass after changes
 
 ## Agent Notes
+
+### 2026-05-28 System
+- Task marked Done
 
 ### 2026-05-28 System
 - Report generated — task moved to Review
