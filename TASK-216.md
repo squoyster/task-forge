@@ -1,7 +1,7 @@
 ---
 id: TASK-216
 type: Task
-status: Ready
+status: Done
 priority: P0
 agentRole: Implementer
 riskLevel: Low
@@ -46,6 +46,19 @@ Implementation:
 
 ## Acceptance Criteria
 
-- [ ]
+- [x] Command state machines defined in src/core/command-states.ts (814 lines) - nextStateMachine, claimStateMachine, startStateMachine, checkpointStateMachine, gatesStateMachine, submitStateMachine, doneStateMachine, newStateMachine
+- [x] Each command returns CommandResult with state, nextAction, guidance, errorCode
+- [x] Happy path states return structured guidance for next step
+- [x] Known error states return specific recovery guidance with machine-readable error codes
+- [x] Unknown/unhandled states direct agent to create new task via unhandledError()
+- [x] All 8 commands modeled: next, claim, start, checkpoint, submit, gates, done, new
+- [x] Key states handled: uncommitted changes, session ownership, doctor lock, push failures, gate failures
+- [x] Tests for state machines exist
 
 ## Agent Notes
+
+### 2026-05-28 System
+- Task marked Done - command state machines already implemented in src/core/command-states.ts (814 lines)
+- All 8 command state machines wired into lifecycle commands
+- Tests pass for all state transitions
+
