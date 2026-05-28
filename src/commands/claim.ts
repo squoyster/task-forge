@@ -304,6 +304,8 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
     doctorLocked: false,
     hasOutstandingTask: false,
     pushSucceeded: true,
+    worktreeExists: !!worktreePath,
+    worktreePath,
     taskId,
     sessionId,
   });
@@ -335,8 +337,6 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
     logSuccess(`Worktree: ${worktreePath}`);
     logSuccess(`Branch: ${branchName}`);
     logInfo(`cd ${worktreePath} to begin work.`);
-  } else {
-    logInfo(`Run 'taskforge start ${taskId}' to create the worktree.`);
   }
   eventLogEvent(taskId, "claimed", { session: sessionId, forced: force });
 }

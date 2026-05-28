@@ -7,6 +7,14 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- **TASK-243: Fix claim/start self-deadlock and remove agent-facing force guidance** — `claim` no longer recommends `taskforge start` after success (which would deadlock since the task is already assigned). On claim success with worktree: guides to `cd <worktree>`. On claim success without worktree: guides to `taskforge doctor`/`block` with explicit "Do NOT run start" warning. `start` on already-assigned task no longer recommends `--force` — recommends `resume`, `inspect`, `doctor`, or `block`. `assertTaskOwnership()` no longer recommends `unlock --force`. `claimStateMachine()` already-claimed error no longer recommends `claim --force`. `gatesStateMachine` no longer mentions `done --force`. Removed `done --force` from `done` command nextActions. Updated TASKFORGE.md OpenCode Session Prompt to document normal workflow (`next → start`) and force restrictions. Added 17 new tests across `command-states.test.ts`, `session.test.ts`, and `start.test.ts`.
+
+- **TASK-215: Migrate `new` to transaction layer, wire uncommitted worktree detection into `start`/`claim`** — `taskforge new` now uses `withTaskStateTransaction` instead of `commitAndPushTaskState`, so push failures properly reject instead of being silently swallowed. `taskforge start` and `taskforge claim` now check for uncommitted worktrees before proceeding — blocked tasks get "commit then next" guidance, non-blocked tasks get "complete current task first" guidance. Added `UNCOMMITTED_CHANGES` state to `StartStates` and `ClaimStates`.
+
+- **TASK-221: Fix `taskforge start` rejecting same-session re-entry** — The pre-check at line 131 of `start.ts` was rejecting ANY task with an `assignee` set, even when the assignee belonged to the current session. Fixed by generating the session ID earlier and changing the check to `task.assignee && task.assignee !== sessionId`, allowing same-session re-entry (e.g., agent restart after crash) while still blocking cross-session conflicts. Added 4 new tests covering same-session re-entry, cross-session rejection, `--force` override, and session ID generation.
+
 ## [0.3.0] — 2026-05-28
 
 ### Added

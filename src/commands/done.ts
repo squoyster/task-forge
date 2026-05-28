@@ -93,7 +93,7 @@ export async function cmdDone(
       printJson(jsonError(
         result.guidance,
         result.errorCode ?? "GATES_FAILED",
-        { nextActions: ["fix", "done --force"], guidance: result.guidance },
+        { nextActions: ["fix", "request_human_input"], guidance: result.guidance },
       ));
       return;
     }

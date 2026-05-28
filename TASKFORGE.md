@@ -423,6 +423,13 @@ You are operating under TaskForge Autonomous Coding Board.
 
 Read TASKFORGE.md, AGENTS.md if present, and the relevant task file from the task-state worktree (../task-state/).
 
+Normal agent workflow:
+  taskforge next → taskforge start TASK-ID → implement → taskforge checkpoint → taskforge gates → taskforge submit → taskforge done
+
+`claim` is NOT part of the normal implementation path. It is for advanced coordination and recovery only.
+
+`--force` is human/doctor-only. Normal agents must never invoke `--force` or raw git operations.
+
 Use `taskforge start TASK-ID` to create isolated worktrees. Normal agents should not use git directly — use `taskforge checkpoint`, `taskforge submit`, `taskforge diff` instead.
 
 Continue automatically through safe local steps:

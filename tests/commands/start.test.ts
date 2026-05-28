@@ -247,4 +247,41 @@ describe("cmdStart", () => {
 
     expect(generateSessionId).toHaveBeenCalled();
   });
+
+  it("already-assigned error does not recommend --force as valid action", async () => {
+    const mockTask = {
+      id: "TASK-001",
+      status: "In Progress",
+      priority: "P2",
+      type: "Task",
+      agentRole: "Implementer",
+      riskLevel: "Low",
+      humanInterventionRequired: false,
+      filePath: path.join(stateDir, "TASK-001.md"),
+      body: "# TASK-001: Test\n\n## Goal\nTest",
+      assignee: "other-session-456",
+      claimed_at: "2026-05-27 10:00:00",
+      branch: undefined,
+      worktree: undefined,
+    };
+
+    (loadTaskById as unknown as ReturnType<typeof vi.fn>).mockReturnValue(mockTask);
+
+    let capturedOutput = "";
+    const logSpy = vi.spyOn(console, "log").mockImplementation((...args: unknown[]) => {
+      capturedOutput = args.map(a => typeof a === "string" ? a : JSON.stringify(a)).join(" ");
+    });
+
+    await cmdStart("TASK-001", { json: true });
+
+    logSpy.mockRestore();
+    const output = JSON.parse(capturedOutput);
+    expect(output.ok).toBe(false);
+    expect(output.code).toBe("ALREADY_ASSIGNED");
+    // Guidance must not recommend using --force as a valid action
+    expect(output.error).not.toMatch(/use 'taskforge.*--force'/i);
+    expect(output.error).not.toMatch(/use.*--force.*to override/i);
+    expect(output.error).toContain("taskforge resume");
+    expect(output.error).toContain("taskforge doctor");
+  });
 });

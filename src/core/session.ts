@@ -47,7 +47,9 @@ export async function assertTaskOwnership(
     throw new TaskForgeError(
       `Task ${task.id} is assigned to session "${task.assignee}", ` +
       `but this worktree's branch "${branch}" identifies as "${agentSession}". ` +
-      `Use 'taskforge unlock ${task.id} --force' to release the lock.`,
+      `Normal agents must not use force unlock. ` +
+      `Valid next commands: taskforge inspect ${task.id} --json, taskforge doctor --json, ` +
+      `or taskforge block ${task.id} "Ownership mismatch requires human or doctor recovery" --category unsafe_operation --blocked-by human.`,
       "OWNERSHIP_MISMATCH",
     );
   }

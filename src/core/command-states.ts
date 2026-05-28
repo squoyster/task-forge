@@ -246,6 +246,8 @@ export function claimStateMachine(
     outstandingTaskId?: string;
     uncommittedWorktrees?: { taskId: string; status: string; dirtyFiles: number }[];
     pushSucceeded: boolean;
+    worktreeExists?: boolean;
+    worktreePath?: string;
     sessionId?: string;
     taskId?: string;
   },
@@ -327,8 +329,9 @@ export function claimStateMachine(
       "request_human_input",
       `Task ${conditions.taskId} is already claimed by session "${conditions.taskAssignee}" ` +
       `since ${conditions.taskClaimedAt ?? "unknown"}. ` +
-      `If this claim is stale, use 'taskforge claim ${conditions.taskId} --force' to override. ` +
-      `Otherwise, request human input to resolve the conflict.`,
+      `Normal agents may not use --force. ` +
+      `Valid next commands: taskforge doctor --json, taskforge inspect ${conditions.taskId} --json, ` +
+      `or taskforge block ${conditions.taskId} "Already claimed; override requires human or doctor authority" --category unsafe_operation --blocked-by human.`,
       { taskId: conditions.taskId, assignee: conditions.taskAssignee },
     );
   }
@@ -346,11 +349,28 @@ export function claimStateMachine(
     );
   }
 
+  // Claim succeeded — guidance depends on worktree state
+  if (conditions.worktreeExists && conditions.worktreePath) {
+    return success(
+      ClaimStates.TASK_CLAIMED,
+      "work_on_task",
+      `Task ${conditions.taskId} claimed. Session: ${conditions.sessionId}. ` +
+      `Worktree: ${conditions.worktreePath}. ` +
+      `cd ${conditions.worktreePath} to begin work. ` +
+      `Run 'taskforge prompt ${conditions.taskId}' for task context.`,
+      { taskId: conditions.taskId, sessionId: conditions.sessionId, worktree: conditions.worktreePath },
+    );
+  }
+
+  // Claim succeeded but no worktree — do NOT recommend start (would deadlock)
   return success(
     ClaimStates.TASK_CLAIMED,
-    "create_worktree",
+    "request_human_input",
     `Task ${conditions.taskId} claimed. Session: ${conditions.sessionId}. ` +
-    `Run 'taskforge start ${conditions.taskId}' to create the worktree and begin work.`,
+    `Worktree creation did not complete. ` +
+    `Valid next commands: taskforge doctor --json, taskforge inspect ${conditions.taskId} --json, ` +
+    `or taskforge block ${conditions.taskId} "Claim succeeded but worktree creation failed" --category unsafe_operation --blocked-by human. ` +
+    `Do NOT run 'taskforge start ${conditions.taskId}' — the task is already assigned.`,
     { taskId: conditions.taskId, sessionId: conditions.sessionId },
   );
 }
@@ -465,7 +485,9 @@ export function startStateMachine(
       "request_human_input",
       `Task ${conditions.taskId} is assigned to session "${conditions.taskAssignee}" ` +
       `since ${conditions.taskClaimedAt ?? "unknown"}. ` +
-      `Use 'taskforge start ${conditions.taskId} --force' to override if the claim is stale.`,
+      `Normal agents may not use --force. ` +
+      `Valid next commands: taskforge resume ${conditions.taskId}, taskforge inspect ${conditions.taskId} --json, ` +
+      `taskforge doctor --json, or taskforge block ${conditions.taskId} "Task already assigned; human or doctor recovery required" --category unsafe_operation --blocked-by human.`,
       { taskId: conditions.taskId, assignee: conditions.taskAssignee },
     );
   }
@@ -598,7 +620,8 @@ export function gatesStateMachine(
       "GATE_FAILURE",
       "work_on_task",
       `${conditions.failedGates.length}/${conditions.totalGates} gate(s) failed: ${failedNames}. ` +
-      `Fix the issues and re-run 'taskforge gates', or use 'taskforge done --force' to bypass (not recommended).`,
+      `Fix the issues and re-run 'taskforge gates'. ` +
+      `If gates cannot be satisfied, request human input.`,
       { failedGates: conditions.failedGates },
     );
   }

@@ -31,7 +31,7 @@ export function validateTaskState(tasks: ParsedTask[]): StateValidationResult {
 
     // Done must not have assignee
     if (t.status === STATUS.DONE && t.assignee) {
-      errors.push({ severity: "error", code: "DONE_WITH_ASSIGNEE", taskId: t.id, message: "Done but still has assignee", suggestedFix: `taskforge done ${t.id} --force to clear` });
+      errors.push({ severity: "error", code: "DONE_WITH_ASSIGNEE", taskId: t.id, message: "Done but still has assignee", suggestedFix: `Clear the assignee/claimed_at fields from ${t.id}` });
     }
     if (t.status === STATUS.DONE && t.claimed_at) {
       errors.push({ severity: "error", code: "DONE_WITH_CLAIM", taskId: t.id, message: "Done but still has claimed_at", suggestedFix: "Clear the claim field" });
