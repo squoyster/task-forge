@@ -7,6 +7,14 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- **TASK-233: Record all taskforge CLI invocations with parameters and return values** — All CLI commands now wrapped with `wrapWithAudit()` to capture invocations at entry point. Records command name, args, flags, exit code, duration, session ID, and errors. Per-task commands write to task's NDJSON transcript; global commands write to global audit log. `taskforge timeline` now displays CLI invocations alongside existing events. 10 new tests in `cli-audit.test.ts`.
+
+- **TASK-231: Implement distributed agent registry with heartbeat tracking and crash recovery** — Added `.taskforge/agent-registry.json` to track active agents across machines. Agents register on `claim`/`start`, update heartbeat on `heartbeat`, and mark idle on `done`/`release`. New `taskforge agents` command lists active/idle/crashed agents with `--stale` and `--recover` options. High watermark tracking for max concurrent agents. Crash detection with configurable threshold (default 15 min). 19 new tests in `agent-registry.test.ts`.
+
+- **TASK-230: Implement quasi-persistent session ID storage for agent recovery** — Added `.taskforge-session.json` file in worktree directories to persist session state (`session_id`, `task_id`, `claimed_at`, `worktree_path`, `last_heartbeat`) across process restarts. Session file is written on `claim`/`start`, updated on `heartbeat`, and removed on `done`/`release`. `taskforge resume` now auto-detects recoverable sessions via fallback chain: session file → branch session matching → dirty worktree. Added `recovery` field to JSON output with method, sessionId, and claimedAt. Added `.taskforge-session.json` to `.gitignore`. 10 new tests in `session-state.test.ts`.
+
 ### Fixed
 
 - **TASK-243: Fix claim/start self-deadlock and remove agent-facing force guidance** — `claim` no longer recommends `taskforge start` after success (which would deadlock since the task is already assigned). On claim success with worktree: guides to `cd <worktree>`. On claim success without worktree: guides to `taskforge doctor`/`block` with explicit "Do NOT run start" warning. `start` on already-assigned task no longer recommends `--force` — recommends `resume`, `inspect`, `doctor`, or `block`. `assertTaskOwnership()` no longer recommends `unlock --force`. `claimStateMachine()` already-claimed error no longer recommends `claim --force`. `gatesStateMachine` no longer mentions `done --force`. Removed `done --force` from `done` command nextActions. Updated TASKFORGE.md OpenCode Session Prompt to document normal workflow (`next → start`) and force restrictions. Added 17 new tests across `command-states.test.ts`, `session.test.ts`, and `start.test.ts`.
