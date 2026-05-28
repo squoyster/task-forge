@@ -10,8 +10,6 @@ humanInterventionRequired: false
 
 # TASK-243: Fix claim/start self-deadlock and remove agent-facing force guidance
 
-## Goal
-
 ## Diagnostic Summary
 
 TaskForge has a workflow contract bug where `claim` locks a task (sets assignee, claimed_at, moves Ready → In Progress, creates worktree) and then emits guidance telling the agent to run `taskforge start TASK-ID`. But `start` rejects already-assigned tasks unless `--force` is used. Since `--force` must be human/doctor-only, this creates an invalid agent path.
@@ -60,6 +58,14 @@ Do not: make raw git acceptable for agents, add broad new workflow concepts, let
 
 ## Acceptance Criteria
 
-- [ ]
+- [ ] `taskforge next --json` recommends `taskforge start TASK-ID` and does not mutate selected task state except via sweeper recovery of stale unrelated tasks
+- [ ] `taskforge claim TASK-ID --json` never recommends `taskforge start TASK-ID` or any `--force` command as valid
+- [ ] `taskforge start TASK-ID --json` on an already-assigned task never recommends `--force` and recommends only TaskForge-safe recovery commands (`resume`, `inspect`, `doctor`, `block`)
+- [ ] `assertTaskOwnership()` errors do not recommend `unlock --force` to normal agents
+- [ ] Agent-facing guidance never instructs raw git operations except through TaskForge git façade commands
+- [ ] New tests cover: `next` does not claim, `claim` does not recommend `start`, `claim → start` failure, assigned-task start failure, and ownership mismatch
+- [ ] Documentation (README.md, TASKFORGE.md) clearly defines `next → start` as the normal path and `--force` as human/doctor-only
+- [ ] Command return payloads include success/failure status, valid next commands, todo merge instruction, and context cleanup instruction where applicable
+- [ ] All existing tests pass
 
 ## Agent Notes
