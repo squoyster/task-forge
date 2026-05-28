@@ -1,11 +1,15 @@
 ---
 id: TASK-230
 type: Task
-status: Ready
+status: In Progress
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 318727b9f6
+claimed_at: '2026-05-28 03:46:34'
+context_hash: 50d25db1ab2dcfd7
+branch: agent/TASK-230-implement-quasi-persistent-session-id-st--318727b9f6
 ---
 
 # TASK-230: Implement quasi-persistent session ID storage for agent recovery
@@ -78,3 +82,8 @@ Acceptance criteria should verify:
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-28 System
+- Task claimed via taskforge start TASK-230
+- Session: 318727b9f6
+- Branch: agent/TASK-230-implement-quasi-persistent-session-id-st--318727b9f6
