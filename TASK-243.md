@@ -61,15 +61,15 @@ Do not: make raw git acceptable for agents, add broad new workflow concepts, let
 
 ## Acceptance Criteria
 
-- [x] `taskforge next --json` recommends `taskforge start TASK-ID` and does not mutate selected task state except via sweeper recovery of stale unrelated tasks — `src/core/command-states.ts` `nextStateMachine()` line 214: returns `start_task` nextAction with guidance "Run 'taskforge start TASK-ID'"
-- [x] `taskforge claim TASK-ID --json` never recommends `taskforge start TASK-ID` or any `--force` command as valid — `src/core/command-states.ts` `claimStateMachine()` lines 321-340: success guidance uses `cd <worktree>` or doctor/block; already-claimed error says "Normal agents may not use --force"
-- [x] `taskforge start TASK-ID --json` on an already-assigned task never recommends `--force` and recommends only TaskForge-safe recovery commands (`resume`, `inspect`, `doctor`, `block`) — `src/core/command-states.ts` `startStateMachine()` lines 427-436: ALREADY_ASSIGNED guidance lists resume/inspect/doctor/block
-- [x] `assertTaskOwnership()` errors do not recommend `unlock --force` to normal agents — `src/core/session.ts` line 47-52: throws with "Normal agents must not use force unlock" and lists inspect/doctor/block
-- [x] Agent-facing guidance never instructs raw git operations except through TaskForge git façade commands — all state machine guidance uses only taskforge commands
+- [x] `taskforge next --json` recommends `taskforge start TASK-ID` and does not mutate selected task state except via sweeper recovery of stale unrelated tasks — `src/commands/next.ts`: reads-only path (pullTaskState → sweepStaleTasks → loadAllTasks → selectNextTask → output). No write to selected task. `src/core/command-states.ts` `nextStateMachine()` line 214: returns `start_task` nextAction with guidance "Run 'taskforge start TASK-ID'"
+- [x] `taskforge claim TASK-ID --json` never recommends `taskforge start TASK-ID` or any `--force` command as valid — `src/core/command-states.ts` `claimStateMachine()` lines 321-340: success with worktree → `cd <worktree>`; success without worktree → doctor/block with "Do NOT run start" warning; ALREADY_CLAIMED → "Normal agents may not use --force". Tests: `tests/command-states.test.ts` lines 14-72
+- [x] `taskforge start TASK-ID --json` on an already-assigned task never recommends `--force` and recommends only TaskForge-safe recovery commands (`resume`, `inspect`, `doctor`, `block`) — `src/core/command-states.ts` `startStateMachine()` lines 427-436: ALREADY_ASSIGNED guidance lists resume/inspect/doctor/block. Tests: `tests/command-states.test.ts` lines 80-101, `tests/commands/start.test.ts` lines 256-285
+- [x] `assertTaskOwnership()` errors do not recommend `unlock --force` to normal agents — `src/core/session.ts` lines 47-52: throws with "Normal agents must not use force unlock" and lists inspect/doctor/block. Tests: `tests/session.test.ts` lines 82-103
+- [x] Agent-facing guidance never instructs raw git operations except through TaskForge git façade commands — verified: no `git checkout`, `git branch`, `git push`, `git merge`, or `git worktree` in any state machine guidance. Fixed: removed `'git push'` suggestion from `doneStateMachine` BRANCH_UNPUSHED (was line 731, now only suggests `taskforge submit`)
 - [x] New tests cover: `next` does not claim, `claim` does not recommend `start`, `claim → start` failure, assigned-task start failure, and ownership mismatch — `tests/command-states.test.ts` (7 tests), `tests/session.test.ts` (3 new assertTaskOwnership tests), `tests/commands/start.test.ts` (1 new test)
 - [x] Documentation (README.md, TASKFORGE.md) clearly defines `next → start` as the normal path and `--force` as human/doctor-only — `TASKFORGE.md` OpenCode Session Prompt updated with explicit workflow and force restrictions
-- [x] Command return payloads include success/failure status, valid next commands, todo merge instruction, and context cleanup instruction where applicable — existing `CommandResult` interface with `ok`, `state`, `nextAction`, `guidance`, `errorCode` fields
-- [x] All existing tests pass — 550 tests pass (was 550, added 17 new tests)
+- [x] Command return payloads include success/failure status, valid next commands, todo merge instruction, and context cleanup instruction where applicable — `CommandResult` interface: `ok` (success/failure), `state`, `nextAction` (valid next command), `guidance`, `errorCode`. JSON output includes `nextActions` array. `todoMerge`/`contextCleanup` are out of scope (TASK-241)
+- [x] All existing tests pass — 550 tests pass (was 550, added 17 new tests). Gates: typecheck ✓, lint ✓ (0 errors), build ✓, test ✓
 
 ## Agent Notes
 
@@ -99,3 +99,4 @@ Do not: make raw git acceptable for agents, add broad new workflow concepts, let
 - Updated `TASKFORGE.md` OpenCode Session Prompt with explicit normal workflow and force restrictions.
 - Updated `CHANGELOG.md` with TASK-243 entry.
 - All 550 tests pass. typecheck, lint, build all pass.
+- Fixed `doneStateMachine()` BRANCH_UNPUSHED: removed raw `git push` suggestion, now only suggests `taskforge submit`.
