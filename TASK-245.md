@@ -10,6 +10,7 @@ assignee: 14bee24522
 claimed_at: '2026-05-28 16:21:46'
 context_hash: b0cdabccffea1074
 branch: agent/TASK-245-display-all-timestamps-with-utc-designat--14bee24522
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-245
 ---
 
 # TASK-245: Display all timestamps with UTC designator or map to current timezone
@@ -23,6 +24,9 @@ branch: agent/TASK-245-display-all-timestamps-with-utc-designat--14bee24522
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-28 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-245
 
 ### 2026-05-28 System
 - Task claimed via taskforge start TASK-245
