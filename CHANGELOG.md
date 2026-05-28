@@ -3,15 +3,11 @@
 All notable changes to TaskForge are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-### Fixed
-
-- **TASK-215: Migrate `new` to transaction layer, wire uncommitted worktree detection into `start`/`claim`** — `taskforge new` now uses `withTaskStateTransaction` instead of `commitAndPushTaskState`, so push failures properly reject instead of being silently swallowed. `taskforge start` and `taskforge claim` now check for uncommitted worktrees before proceeding — blocked tasks get "commit then next" guidance, non-blocked tasks get "complete current task first" guidance. Added `UNCOMMITTED_CHANGES` state to `StartStates` and `ClaimStates`.
-
-- **TASK-221: Fix `taskforge start` rejecting same-session re-entry** — The pre-check at line 131 of `start.ts` was rejecting ANY task with an `assignee` set, even when the assignee belonged to the current session. Fixed by generating the session ID earlier and changing the check to `task.assignee && task.assignee !== sessionId`, allowing same-session re-entry (e.g., agent restart after crash) while still blocking cross-session conflicts. Added 4 new tests covering same-session re-entry, cross-session rejection, `--force` override, and session ID generation.
+## [0.3.0] — 2026-05-28
 
 ### Added
 
@@ -25,49 +21,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **TASK-220: Update report command with AC review guidance** — `taskforge report --complete` now includes explicit reviewer instructions for verifying acceptance criteria satisfaction, with structured `nextActions` and AC state awareness (section present, blank items, unchecked items).
 
-## [0.2.0] — 2026-05-27
+### Fixed
 
-### Changed
+- **TASK-215: Migrate `new` to transaction layer, wire uncommitted worktree detection into `start`/`claim`** — `taskforge new` now uses `withTaskStateTransaction` instead of `commitAndPushTaskState`, so push failures properly reject instead of being silently swallowed. `taskforge start` and `taskforge claim` now check for uncommitted worktrees before proceeding — blocked tasks get "commit then next" guidance, non-blocked tasks get "complete current task first" guidance. Added `UNCOMMITTED_CHANGES` state to `StartStates` and `ClaimStates`.
 
-- **TASK-185: Bump version to 0.2.0** — package.json version incremented from 0.1.0 to 0.2.0. CHANGELOG.md Unreleased section finalized as 0.2.0 release. AGENTS.md updated with explicit Rule 7 requiring taskforge CLI for all task creation and workflow management.
-
-### Added
-
-### Added
-
-- **TASK-217: Wire command state machines into all lifecycle commands** — All lifecycle commands (`next`, `claim`, `start`, `done`, `new`, `gates`, `checkpoint`, `submit`, `pr`) now use the command state machines from `command-states.ts` to produce structured `CommandResult` objects with `nextAction` and `guidance` fields. Added `GuidanceAdapter` interface with `NoOpGuidanceAdapter` and `OpenCodeGuidanceAdapter` implementations for pushing guidance to agent frameworks. Every command JSON output now includes `nextActions` array and `guidance` string. Human-readable output uses state machine guidance text.
-
-- **TASK-220: Implement validate-state --strict flag** — `taskforge validate-state --strict` now exits non-zero on any warnings or errors, enabling CI branch protection enforcement. JSON output includes structured `nextActions` with recovery guidance. Human output includes "Valid next actions:" section. Added `NextAction` interface and `Safety` type to `json-result.ts`. 8 tests added covering strict/non-strict modes, errors, warnings, and clean state.
-
-### Changed
-
-- **TASK-220: Update report command with AC review guidance** — `taskforge report --complete` now includes explicit reviewer instructions for verifying acceptance criteria satisfaction, with structured `nextActions` and AC state awareness (section present, blank items, unchecked items).
+- **TASK-221: Fix `taskforge start` rejecting same-session re-entry** — The pre-check at line 131 of `start.ts` was rejecting ANY task with an `assignee` set, even when the assignee belonged to the current session. Fixed by generating the session ID earlier and changing the check to `task.assignee && task.assignee !== sessionId`, allowing same-session re-entry (e.g., agent restart after crash) while still blocking cross-session conflicts. Added 4 new tests covering same-session re-entry, cross-session rejection, `--force` override, and session ID generation.
 
 ## [0.2.0] — 2026-05-27
-
-### Changed
-
-- **TASK-185: Bump version to 0.2.0** — package.json version incremented from 0.1.0 to 0.2.0. CHANGELOG.md Unreleased section finalized as 0.2.0 release. AGENTS.md updated with explicit Rule 7 requiring taskforge CLI for all task creation and workflow management.
-
-### Added
-
-### Added
-
-- **TASK-217: Wire command state machines into all lifecycle commands** — All lifecycle commands (`next`, `claim`, `start`, `done`, `new`, `gates`, `checkpoint`, `submit`, `pr`) now use the command state machines from `command-states.ts` to produce structured `CommandResult` objects with `nextAction` and `guidance` fields. Added `GuidanceAdapter` interface with `NoOpGuidanceAdapter` and `OpenCodeGuidanceAdapter` implementations for pushing guidance to agent frameworks. Every command JSON output now includes `nextActions` array and `guidance` string. Human-readable output uses state machine guidance text.
-
-- **TASK-220: Implement validate-state --strict flag** — `taskforge validate-state --strict` now exits non-zero on any warnings or errors, enabling CI branch protection enforcement. JSON output includes structured `nextActions` with recovery guidance. Human output includes "Valid next actions:" section. Added `NextAction` interface and `Safety` type to `json-result.ts`. 8 tests added covering strict/non-strict modes, errors, warnings, and clean state.
-
-### Changed
-
-- **TASK-220: Update report command with AC review guidance** — `taskforge report --complete` now includes explicit reviewer instructions for verifying acceptance criteria satisfaction, with structured `nextActions` and AC state awareness (section present, blank items, unchecked items).
-
-## [0.2.0] — 2026-05-27
-
-### Changed
-
-- **TASK-185: Bump version to 0.2.0** — package.json version incremented from 0.1.0 to 0.2.0. CHANGELOG.md Unreleased section finalized as 0.2.0 release. AGENTS.md updated with explicit Rule 7 requiring taskforge CLI for all task creation and workflow management.
-
-### Added
 
 ### Added
 
@@ -86,36 +46,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **TASK-151: Transaction invariant abort tests** — `withTaskStateTransaction` now validates task-state invariants after mutation and before commit, aborting with descriptive error on violations (e.g., `DONE_WITH_ASSIGNEE`, `READY_WITH_ASSIGNEE`). Tests prove invalid mutations fail before commit and leave task-state unchanged. (Also implements missing invariant validation from TASK-147.)
 
 - **TASK-150: Transaction conflict retry tests** — `tests/task-state-transaction.test.ts` now has 3 new tests proving that non-fast-forward push causes the transaction to reload fresh state (`loadAllTasks` called >= 2 times), rerun mutation with updated state, and throw after exhausting retries. Fixed pre-existing test timeout by disabling jitter in test mocks.
-
-### Changed
-
-- **TASK-177: Disable `taskforge done --force`** — Removed `--force`, `--force-gates`, `--force-transition`, `--force-ownership`, and `--reason` options from `taskforge done`. All guards (gates, status transition, ownership, control-file hash, AC section/blank/unchecked checks) now always run without exception. Override metadata fields (`override_reason`, `override_actor`, `override_timestamp`, `override_failed_gates`) are no longer written. Tests updated to expect rejection instead of force success; override metadata tests removed.
-
-- **TASK-173: Remove placeholder install URL from container runtime docs** — Replaced `https://example.invalid/taskforge/install.sh` in `docs/deployment/container-runtime.md` with a note that the install script is not yet published and manual install instructions.
-
-- **TASK-165: Replace direct gh usage in PR command** — `cmdPr` no longer executes `gh` directly. When GitHub is configured (`github.enabled: true`), creates PRs via Octokit API. When not configured, emits manual PR instructions with `gh` command and compare URL. Added `createPullRequest()` to GitHub service and `github.pr.created`/`github.pr.manual` audit event types.
-
-- **TASK-162: Route doctor diagnostics through Agent Framework Adapter** — `taskforge doctor` now invokes `AgentFrameworkAdapter.doctor()` for agent-framework-specific diagnostics instead of duplicating OpenCode checks in `cmdDoctor`. Introduced `AgentFrameworkAdapter` interface, `OpenCodeAgentFrameworkAdapter` (AGENTS.md, opencode.json, audit directory checks), `GenericAgentFrameworkAdapter` (no-op), and factory function. `cmdDoctor` loads adapter based on `config.agentFramework.id`.
-
-### Fixed
-
-- **TASK-168: Fail clearly on invalid config** — `loadConfig()` now throws descriptive errors for invalid JSON or schema validation failures instead of silently returning defaults. Returns `DEFAULT_CONFIG` only when config file does not exist.
-
-- **TASK-167: Validate ownership in diff command** — `taskforge diff` now calls `assertTaskOwnership()` before accessing the worktree, enforcing the same ownership discipline as `checkpoint` and `submit`.
-
-- **TASK-166: Emit audit events for PR command** — `taskforge pr` now appends task transcript events for all outcomes: `github.pr.created` (success with PR number/URL), `github.pr.failed` (API error with message), and `github.pr.manual` (GitHub not configured). Added `github.pr.failed` event type.
-
-- **TASK-159: Stop silently swallowing audit write failures** — generated audit plugin now logs `console.error` with `[taskforge-audit] Failed to write audit event: <message>` when write operations fail. Suppression available via `TASKFORGE_SUPPRESS_AUDIT_FAILURES=true` env var.
-
-- **TASK-180: Fix pre-existing sweep and claim test failures** — fixed YAML status assertions in sweep tests (gray-matter quotes values with spaces), updated sweep test to verify transaction layer instead of deprecated `jitteredPush`, added `withTaskStateTransaction` mocks to sweep and claim tests with actual file persistence, and fixed claim JSON output test. All 454 tests now pass.
-
-- **TASK-178: Fix done command test mocks** — added missing `runGates` mock to `tests/commands/done.test.ts`, added `withTaskStateTransaction` mock to `tests/done.test.ts`, added `simple-git` mocks, and fixed default acceptance criteria from unchecked to checked. All 27 done tests now pass.
-
-- **TASK-158: Recursive secret redaction in audit plugin** — `redactSecrets()` now recursively traverses nested objects and arrays, redacting values for keys matching TOKEN, SECRET, PASSWORD, API_KEY, PRIVATE_KEY, CREDENTIAL, AUTHORIZATION, and related patterns. Redaction is applied before writing JSONL to prevent credentials from being stored in audit logs.
-
-- **TASK-157: Audit plugin task-ID regex** — fixed double-escaped regex (`TASK-\\\\d+` → `TASK-\\d+`) in `generateAuditPlugin()` so task IDs are correctly extracted from agent branches (`agent/TASK-123-example`) and worktree paths (`/worktrees/task-forge/TASK-123`).
-
-### Added
 
 - **TASK-160: JSON output for timeline command** — `taskforge timeline TASK-ID --json` now emits a structured JSON summary containing `taskId`, `totalEvents`, `firstEvent`, `lastEvent`, `errorCount`, and `eventCounts`.
 
@@ -189,9 +119,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **TASK-185: Bump version to 0.2.0** — package.json version incremented from 0.1.0 to 0.2.0. CHANGELOG.md Unreleased section finalized as 0.2.0 release. AGENTS.md updated with explicit Rule 7 requiring taskforge CLI for all task creation and workflow management.
+
+- **TASK-177: Disable `taskforge done --force`** — Removed `--force`, `--force-gates`, `--force-transition`, `--force-ownership`, and `--reason` options from `taskforge done`. All guards (gates, status transition, ownership, control-file hash, AC section/blank/unchecked checks) now always run without exception. Override metadata fields (`override_reason`, `override_actor`, `override_timestamp`, `override_failed_gates`) are no longer written. Tests updated to expect rejection instead of force success; override metadata tests removed.
+
+- **TASK-173: Remove placeholder install URL from container runtime docs** — Replaced `https://example.invalid/taskforge/install.sh` in `docs/deployment/container-runtime.md` with a note that the install script is not yet published and manual install instructions.
+
+- **TASK-165: Replace direct gh usage in PR command** — `cmdPr` no longer executes `gh` directly. When GitHub is configured (`github.enabled: true`), creates PRs via Octokit API. When not configured, emits manual PR instructions with `gh` command and compare URL. Added `createPullRequest()` to GitHub service and `github.pr.created`/`github.pr.manual` audit event types.
+
+- **TASK-162: Route doctor diagnostics through Agent Framework Adapter** — `taskforge doctor` now invokes `AgentFrameworkAdapter.doctor()` for agent-framework-specific diagnostics instead of duplicating OpenCode checks in `cmdDoctor`. Introduced `AgentFrameworkAdapter` interface, `OpenCodeAgentFrameworkAdapter` (AGENTS.md, opencode.json, audit directory checks), `GenericAgentFrameworkAdapter` (no-op), and factory function. `cmdDoctor` loads adapter based on `config.agentFramework.id`.
+
 - **TASKFORGE.md, AGENTS.md** — documented the Sweeper Protocol, optimistic concurrency with jittered retries, and the renamed field schema. Added `task-state` architecture as authoritative.
 
 - **TASKS-023:** `tasks/README.md` updated with deprecation notice pointing to `task-state` as authoritative task store.
+
+### Fixed
+
+- **TASK-168: Fail clearly on invalid config** — `loadConfig()` now throws descriptive errors for invalid JSON or schema validation failures instead of silently returning defaults. Returns `DEFAULT_CONFIG` only when config file does not exist.
+
+- **TASK-167: Validate ownership in diff command** — `taskforge diff` now calls `assertTaskOwnership()` before accessing the worktree, enforcing the same ownership discipline as `checkpoint` and `submit`.
+
+- **TASK-166: Emit audit events for PR command** — `taskforge pr` now appends task transcript events for all outcomes: `github.pr.created` (success with PR number/URL), `github.pr.failed` (API error with message), and `github.pr.manual` (GitHub not configured). Added `github.pr.failed` event type.
+
+- **TASK-159: Stop silently swallowing audit write failures** — generated audit plugin now logs `console.error` with `[taskforge-audit] Failed to write audit event: <message>` when write operations fail. Suppression available via `TASKFORGE_SUPPRESS_AUDIT_FAILURES=true` env var.
+
+- **TASK-180: Fix pre-existing sweep and claim test failures** — fixed YAML status assertions in sweep tests (gray-matter quotes values with spaces), updated sweep test to verify transaction layer instead of deprecated `jitteredPush`, added `withTaskStateTransaction` mocks to sweep and claim tests with actual file persistence, and fixed claim JSON output test. All 454 tests now pass.
+
+- **TASK-178: Fix done command test mocks** — added missing `runGates` mock to `tests/commands/done.test.ts`, added `withTaskStateTransaction` mock to `tests/done.test.ts`, added `simple-git` mocks, and fixed default acceptance criteria from unchecked to checked. All 27 done tests now pass.
+
+- **TASK-158: Recursive secret redaction in audit plugin** — `redactSecrets()` now recursively traverses nested objects and arrays, redacting values for keys matching TOKEN, SECRET, PASSWORD, API_KEY, PRIVATE_KEY, CREDENTIAL, AUTHORIZATION, and related patterns. Redaction is applied before writing JSONL to prevent credentials from being stored in audit logs.
+
+- **TASK-157: Audit plugin task-ID regex** — fixed double-escaped regex (`TASK-\\\\d+` → `TASK-\\d+`) in `generateAuditPlugin()` so task IDs are correctly extracted from agent branches (`agent/TASK-123-example`) and worktree paths (`/worktrees/task-forge/TASK-123`).
 
 ## [0.1.0] — 2026-05-21
 
@@ -260,6 +218,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `lockedBy`/`lockedAt` frontmatter fields — replaced by `assignee`/`claimed_at`. The old names still parse but will be removed in a future release.
 - `tasks/` directory on `main` branch — task files now live on the `task-state` branch.
 
-[Unreleased]: https://github.com/squoyster/task-forge/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/squoyster/task-forge/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/squoyster/task-forge/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/squoyster/task-forge/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/squoyster/task-forge/releases/tag/v0.1.0
