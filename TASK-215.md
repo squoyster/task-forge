@@ -1,7 +1,7 @@
 ---
 id: TASK-215
 type: Task
-status: Review
+status: Done
 priority: P0
 agentRole: Implementer
 riskLevel: Low
@@ -49,6 +49,9 @@ Every command must return appropriate, specific guidance for both success and fa
 - [x] Tests updated for new mocks — `tests/claim.test.ts` line 11, `tests/commands/start.test.ts` line 44: added `checkUncommittedWorktrees` mock
 
 ## Agent Notes
+
+### 2026-05-28 System
+- Task marked Done
 
 ### 2026-05-28 System
 - Report generated — task moved to Review
