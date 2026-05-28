@@ -1,12 +1,14 @@
 ---
 id: TASK-241
 type: Task
-status: Ready
+status: In Progress
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-context_hash: 38eaf0df3c5d54e2
+assignee: 6141b31587
+claimed_at: '2026-05-28 15:21:30'
+context_hash: 6427c04555b70d56
 branch: agent/TASK-241-enforce-taskforgecommandresult-return-sc--94d1b8bb55
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-241
 ---
@@ -83,6 +85,11 @@ Commands currently return ad-hoc output. Agents infer workflow from unstructured
 - [ ] Documentation of return contract in docs/architecture/ — Follow-up task needed
 
 ## Agent Notes
+
+### 2026-05-28 System
+- Task claimed via taskforge start TASK-241
+- Session: 6141b31587
+- Branch: agent/TASK-241-enforce-taskforgecommandresult-return-sc--94d1b8bb55
 
 ### 2026-05-28 System
 - Task released by session "94d1b8bb55" — reset to Ready
