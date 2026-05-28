@@ -10,6 +10,7 @@ assignee: 6c9a2ceab3
 claimed_at: '2026-05-28 02:03:29'
 context_hash: 9ee05952d2d2a685
 branch: agent/TASK-186-fix-start-command-move-file-writes-into--6c9a2ceab3
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-186
 ---
 
 # TASK-186: Fix start command: move file writes into transaction to prevent inconsistent claim state
@@ -23,6 +24,12 @@ In start.ts, lines 118-141 write to local task-state files (updateTaskLock, writ
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-28 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-186
+
+### 2026-05-28 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-186
 
 ### 2026-05-28 System
 - Task claimed via taskforge start TASK-186
