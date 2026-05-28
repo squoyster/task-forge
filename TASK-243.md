@@ -1,7 +1,7 @@
 ---
 id: TASK-243
 type: Bug
-status: In Progress
+status: Review
 priority: P0
 agentRole: Implementer
 riskLevel: Low
