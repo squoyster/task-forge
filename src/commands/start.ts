@@ -313,7 +313,6 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
   }
   claimedTask.branch = task.branch; // Ensure branch is set for worktree creation
 
-  const today = new Date().toISOString().split("T")[0];
 
   // --- Phase 2: Workspace (only after claim is durably pushed) ---
 
@@ -353,9 +352,6 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
     );
   }
 
-  appendAgentNote(task.filePath, today, "System", [
-    `Worktree created: ${task.worktree}`,
-  ]);
 
   // Push metadata update through transaction
   await withTaskStateTransaction(

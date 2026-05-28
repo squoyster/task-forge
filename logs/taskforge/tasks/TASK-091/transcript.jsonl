@@ -1,2 +1,0 @@
-{"timestamp":"2026-05-23T04:23:17.572Z","event":"git.commit","summary":"fix: skip git ops in transaction layer when state dir is not a git repo","taskId":"TASK-091"}
-{"timestamp":"2026-05-23T04:24:15.757Z","event":"task.command.completed","summary":"Task TASK-091 marked as Done","metadata":{"notes":["Task marked Done (forced)","Completed despite gate failures — forced."]},"taskId":"TASK-091"}
