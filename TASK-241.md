@@ -75,14 +75,14 @@ Commands currently return ad-hoc output. Agents infer workflow from unstructured
 - [x] Command-specific validNextCommands maps exist for all 35+ CLI commands — `src/core/next-command-maps.ts`: NEXT_COMMAND_MAPS with maps for init, next, start, claim, done, release, heartbeat, checkpoint, submit, pr, block, unlock, sweep, gates, status, summary, inspect, report, cleanup, new, resume, doctor, config-validate, reject, validate-state, audit, transcript, timeline, ac-check, diff, sync, list, prompt, agents, and all deps subcommands
 - [x] Markdown renderer produces exact section order per spec §4 — `src/core/result-renderer.ts` `renderResultMarkdown()`: 9 sections in order (Status, Context, Agent Prompt, Next Commands, Todo Merge, Context Cleanup, Prohibited Actions, Recovery, Audit)
 - [x] JSON renderer outputs authoritative TaskForgeCommandResult — `src/core/result-renderer.ts` `renderResultJson()`: JSON.stringify with null, 2
-- [ ] validate-state includes command-return-schema audit check — Follow-up task needed
+- [x] validate-state includes command-return-schema audit check — `src/core/state-validator.ts` `validateCommandReturnSchema()`: validates prohibited actions count, no --force in prohibited/next commands, next command maps exist for major commands, sample result validates against schema
 - [ ] Test: every CLI command returns ok/status/validNextCommands/todoMerge/contextCleanup/prohibitedActions — Partially covered by builder tests; full command wiring needed
-- [ ] Test: no normal-agent validNextCommands include --force — Follow-up task needed (requires wiring all commands)
+- [x] Test: no normal-agent validNextCommands include --force — `tests/validate-state-command-result.test.ts`: validates no --force in prohibited actions or next commands for normal agents
 - [x] Test: task-switching commands require contextCleanup.required=true — `tests/command-result.test.ts`: contextCleanupResult test verifies required=true
 - [ ] All existing commands wired to new result schema — Follow-up task needed (35+ commands)
 - [x] Standard prohibited actions included in every result (5 standard prohibitions) — `src/core/command-result.ts` STANDARD_PROHIBITED_ACTIONS: git commit, git push, git worktree add, git branch -D, direct task-state file edits
 - [x] Unknown error states generate recovery guidance with task-creation path — `src/core/result-builder.ts` failedResult() and humanRequiredResult() include recovery steps
-- [ ] Documentation of return contract in docs/architecture/ — Follow-up task needed
+- [x] Documentation of return contract in docs/architecture/ — `docs/architecture/command-return-contract.md`: Full documentation of schema, builders, renderers, invariants, and migration guide
 
 ## Agent Notes
 
@@ -96,6 +96,18 @@ Commands currently return ad-hoc output. Agents infer workflow from unstructured
 
 ### 2026-05-28 System
 - Task released by session "94d1b8bb55" — reset to Ready
+
+### 2026-05-28 System
+- Task claimed via taskforge start TASK-241
+- Session: 6141b31587
+- Branch: agent/TASK-241-enforce-taskforgecommandresult-return-sc--94d1b8bb55
+
+### 2026-05-28 System
+- Added validate-state command-return-schema audit check in state-validator.ts
+- Added tests/validate-state-command-result.test.ts with 6 tests
+- Added docs/architecture/command-return-contract.md documentation
+- All 621 tests pass (6 new), typecheck/lint/build clean
+- Remaining work: wire 35+ existing commands to new schema (follow-up task)
 
 ### 2026-05-28 System
 - Core infrastructure complete: schema, builders, next-command maps, renderers
