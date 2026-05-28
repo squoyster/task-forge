@@ -6,8 +6,6 @@ priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 5c980e7f58
-claimed_at: '2026-05-28 00:04:03'
 context_hash: 59fb9e1c3f61b3b7
 branch: agent/TASK-215-comprehensive-error-handling-and-actiona--5c980e7f58
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-215
