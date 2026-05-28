@@ -56,6 +56,12 @@ export interface JsonResult {
   total?: number;
   scanned?: number;
   recovery?: { method: string; sessionId: string; claimedAt: string };
+  registry?: { active: Array<Record<string, unknown>>; idle: Array<Record<string, unknown>>; crashed: Array<Record<string, unknown>>; maxConcurrentAgents: number; agentHistoryCount: number; lastUpdated: string };
+  summary?: { total: number; active: number; idle: number; crashed: number };
+  stale?: Array<Record<string, unknown>>;
+  recovered?: Array<Record<string, unknown>>;
+  count?: number;
+  thresholdMinutes?: number;
 }
 
 export interface GateResult {

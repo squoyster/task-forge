@@ -8,6 +8,7 @@ import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result
 import { STATUS } from "../util/status-constants.js";
 import { resolveAuthority, assertCanForce, getForceRejectionNextActions, ForceRequiresHumanOrDoctorError } from "../core/authority.js";
 import { updateSessionHeartbeat } from "../core/session-state.js";
+import { updateAgentHeartbeat } from "../core/agent-registry.js";
 
 export interface HeartbeatOptions {
   force?: boolean;
@@ -118,6 +119,11 @@ export async function cmdHeartbeat(
   // Update session state file heartbeat if it exists
   if (current.worktree) {
     updateSessionHeartbeat(current.worktree);
+  }
+
+  // Update agent registry heartbeat
+  if (current.assignee) {
+    updateAgentHeartbeat(current.assignee, repoRoot);
   }
 
   await commitAndPushTaskState(repoRoot, `chore: heartbeat ${taskId}`);

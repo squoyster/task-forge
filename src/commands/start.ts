@@ -17,6 +17,7 @@ import { resolveAuthority, assertCanForce, getForceRejectionNextActions, ForceRe
 import { startStateMachine } from "../core/command-states.js";
 import { getDefaultGuidanceAdapter } from "../core/guidance-adapter.js";
 import { writeSessionState } from "../core/session-state.js";
+import { registerAgent } from "../core/agent-registry.js";
 
 export interface StartOptions {
   force?: boolean;
@@ -377,6 +378,9 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
       last_heartbeat: new Date().toISOString(),
     });
   }
+
+  // Register agent in distributed registry
+  registerAgent(sessionId, taskId, task.worktree ?? null, repoRoot);
 
   // Build success result through state machine
   const successResult = startStateMachine({

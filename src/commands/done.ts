@@ -15,6 +15,7 @@ import { hashControlFiles } from "../core/control-files.js";
 import { doneStateMachine } from "../core/command-states.js";
 import { getDefaultGuidanceAdapter } from "../core/guidance-adapter.js";
 import { removeSessionState } from "../core/session-state.js";
+import { markAgentIdle } from "../core/agent-registry.js";
 import type { ParsedTask } from "../core/task-store.js";
 
 export interface DoneOptions {
@@ -387,6 +388,11 @@ export async function cmdDone(
   // Remove session state file (task is done, no recovery needed)
   if (task.worktree) {
     removeSessionState(task.worktree);
+  }
+
+  // Mark agent as idle in registry
+  if (task.assignee) {
+    markAgentIdle(task.assignee, repoRoot);
   }
 
   // --- Cleanup: remove worktree ---

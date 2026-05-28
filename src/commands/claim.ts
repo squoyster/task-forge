@@ -15,6 +15,7 @@ import { resolveAuthority, assertCanForce, getForceRejectionNextActions, ForceRe
 import { claimStateMachine } from "../core/command-states.js";
 import { getDefaultGuidanceAdapter } from "../core/guidance-adapter.js";
 import { writeSessionState } from "../core/session-state.js";
+import { registerAgent } from "../core/agent-registry.js";
 import fs from "node:fs";
 
 export interface ClaimOptions {
@@ -308,6 +309,9 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
       last_heartbeat: new Date().toISOString(),
     });
   }
+
+  // Register agent in distributed registry
+  registerAgent(sessionId, taskId, worktreePath ?? null, repoRoot);
 
   // Build success result through state machine
   const successResult = claimStateMachine({
