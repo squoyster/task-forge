@@ -9,6 +9,8 @@ interface SummaryJsonTask {
   priority: string;
   role: string;
   status: string;
+  worktree?: string;
+  branch?: string;
 }
 
 interface SummaryJson {
@@ -19,11 +21,13 @@ interface SummaryJson {
   tasks: SummaryJsonTask[];
 }
 
-function makeLine(t: { id: string; priority: string; agentRole?: string; body: string }): {
+function makeLine(t: { id: string; priority: string; agentRole?: string; body: string; worktree?: string; branch?: string }): {
   id: string;
   title: string;
   priority: string;
   role: string;
+  worktree?: string;
+  branch?: string;
 } {
   const titleMatch = t.body.match(/^#\s+\S+:\s+(.+)$/m);
   return {
@@ -31,6 +35,8 @@ function makeLine(t: { id: string; priority: string; agentRole?: string; body: s
     title: titleMatch ? titleMatch[1] : t.id,
     priority: t.priority,
     role: t.agentRole ?? "Implementer",
+    worktree: t.worktree,
+    branch: t.branch,
   };
 }
 
@@ -108,9 +114,11 @@ export async function cmdSummary(json?: boolean): Promise<void> {
   const done = tasks.filter((t) => t.status === STATUS.DONE);
   const humanNeeded = tasks.filter((t) => t.humanInterventionRequired);
 
-  const displayLine = (t: { id: string; priority: string; agentRole?: string; body: string }) => {
-    const { id, title, priority, role } = makeLine(t);
-    return `- **${id}**: ${title} (Priority: ${priority}, Role: ${role})`;
+  const displayLine = (t: { id: string; priority: string; agentRole?: string; body: string; worktree?: string; branch?: string }) => {
+    const { id, title, priority, role, worktree, branch } = makeLine(t);
+    const workspace = worktree ? ` [Worktree: ${worktree}]` : "";
+    const br = branch ? ` [Branch: ${branch}]` : "";
+    return `- **${id}**: ${title} (Priority: ${priority}, Role: ${role})${workspace}${br}`;
   };
 
   logHeader("## Active Work");

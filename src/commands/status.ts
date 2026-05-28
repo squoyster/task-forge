@@ -8,6 +8,8 @@ interface StatusRow {
   title: string;
   priority: string;
   extra?: string;
+  worktree?: string;
+  branch?: string;
 }
 
 interface StatusJson {
@@ -21,6 +23,8 @@ interface StatusJson {
     dependsOn?: string[];
     blockedBy?: string[];
     blockedDependents?: string[];
+    worktree?: string;
+    branch?: string;
   }[];
 }
 
@@ -35,18 +39,22 @@ function printTable(
   } else {
     for (const row of rows) {
       const extra = row.extra ? ` [${row.extra}]` : "";
-      logSub(`- **${row.id}**: ${row.title} (Priority: ${row.priority})${extra}`);
+      const workspace = row.worktree ? ` [Worktree: ${row.worktree}]` : "";
+      const branch = row.branch ? ` [Branch: ${row.branch}]` : "";
+      logSub(`- **${row.id}**: ${row.title} (Priority: ${row.priority})${extra}${workspace}${branch}`);
     }
   }
   logDivider();
 }
 
-function makeRow(t: { id: string; priority: string; body: string }): StatusRow {
+function makeRow(t: { id: string; priority: string; body: string; worktree?: string; branch?: string }): StatusRow {
   const titleMatch = t.body.match(/^#\s+\S+:\s+(.+)$/m);
   return {
     id: t.id,
     title: titleMatch ? titleMatch[1] : t.id,
     priority: t.priority,
+    worktree: t.worktree,
+    branch: t.branch,
   };
 }
 
@@ -89,6 +97,8 @@ function buildJson(tasks: ReturnType<typeof loadAllTasks>): StatusJson {
       dependsOn: t.dependsOn,
       blockedBy: depInfo.blockedBy,
       blockedDependents: depInfo.blockedDependents,
+      worktree: t.worktree ?? undefined,
+      branch: t.branch ?? undefined,
     });
   }
 
@@ -131,7 +141,7 @@ export async function cmdStatus(json?: boolean): Promise<void> {
 
   printTable("Active Work", active.map((t) => {
     const depInfo = makeDependencyInfo(t, tasks);
-    return { ...makeRow(t), extra: depInfo.extra };
+    return { ...makeRow(t), extra: depInfo.extra, worktree: t.worktree, branch: t.branch };
   }));
   printTable(STATUS.BLOCKED, blocked.map(makeRow));
   printTable("Dependency-Blocked", depBlocked.map((t) => {
