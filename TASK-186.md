@@ -1,7 +1,7 @@
 ---
 id: TASK-186
 type: Task
-status: Review
+status: Ready
 priority: P0
 agentRole: Implementer
 riskLevel: Low
