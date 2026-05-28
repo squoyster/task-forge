@@ -90,6 +90,9 @@ Acceptance criteria should verify:
 ## Agent Notes
 
 ### 2026-05-28 System
+- Cleanup: worktree and branch removed
+
+### 2026-05-28 System
 - Task marked Done
 
 ### 2026-05-28 System
