@@ -7,6 +7,7 @@ import { TaskNotFoundError } from "../core/errors.js";
 import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
 import { STATUS } from "../util/status-constants.js";
 import { resolveAuthority, assertCanForce, getForceRejectionNextActions, ForceRequiresHumanOrDoctorError } from "../core/authority.js";
+import { updateSessionHeartbeat } from "../core/session-state.js";
 
 export interface HeartbeatOptions {
   force?: boolean;
@@ -113,6 +114,11 @@ export async function cmdHeartbeat(
   appendAgentNote(current.filePath, today, "System", [
     `Heartbeat: lease renewed${force ? ` (authorized: ${authority})` : ""}${agoText}`,
   ]);
+
+  // Update session state file heartbeat if it exists
+  if (current.worktree) {
+    updateSessionHeartbeat(current.worktree);
+  }
 
   await commitAndPushTaskState(repoRoot, `chore: heartbeat ${taskId}`);
 
