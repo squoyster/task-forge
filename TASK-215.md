@@ -1,7 +1,7 @@
 ---
 id: TASK-215
 type: Task
-status: In Progress
+status: Review
 priority: P0
 agentRole: Implementer
 riskLevel: Low
@@ -42,9 +42,21 @@ Every command must return appropriate, specific guidance for both success and fa
 
 ## Acceptance Criteria
 
-- [ ]
+- [x] `taskforge new` uses `withTaskStateTransaction` instead of `commitAndPushTaskState` — `src/commands/new.ts` `cmdNew(~L80)`: wraps push in `withTaskStateTransaction`, throws on push failure instead of silently swallowing
+- [x] `checkUncommittedWorktrees` wired into `taskforge start` — `src/commands/start.ts` `cmdStart(~L135)`: calls `checkUncommittedWorktrees()` before claim, rejects with UNCOMMITTED_CHANGES error
+- [x] `checkUncommittedWorktrees` wired into `taskforge claim` — `src/commands/claim.ts` `cmdClaim(~L82)`: calls `checkUncommittedWorktrees()` before claim, rejects with UNCOMMITTED_CHANGES error
+- [x] Blocked task with dirty worktree gives "commit then next" guidance — `src/core/command-states.ts` `startStateMachine(~L408)`, `claimStateMachine(~L285)`: checks `dirty.status === "Blocked"` and returns `commit_then_next` action
+- [x] Non-blocked task with dirty worktree tells agent to complete current task — `src/core/command-states.ts` `startStateMachine(~L418)`, `claimStateMachine(~L295)`: returns `complete_current_then_next` action
+- [x] State machines have UNCOMMITTED_CHANGES state — `src/core/command-states.ts` `StartStates(~L341)`, `ClaimStates(~L233)`: added UNCOMMITTED_CHANGES constant
+- [x] Tests updated for new mocks — `tests/claim.test.ts` line 11, `tests/commands/start.test.ts` line 44: added `checkUncommittedWorktrees` mock
 
 ## Agent Notes
+
+### 2026-05-28 System
+- Report generated — task moved to Review
+- Changed files: none
+- Commits: none
+- AC section: present
 
 ### 2026-05-28 System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-215
@@ -56,3 +68,10 @@ Every command must return appropriate, specific guidance for both success and fa
 - Task claimed via taskforge start TASK-215
 - Session: 5c980e7f58
 - Branch: agent/TASK-215-comprehensive-error-handling-and-actiona--5c980e7f58
+
+### 2026-05-28 Implementer
+- Migrated `new.ts` to use `withTaskStateTransaction` — push failures now properly reject instead of being silently swallowed
+- Wired `checkUncommittedWorktrees` into `start.ts` and `claim.ts` with blocked/non-blocked branching
+- Added `UNCOMMITTED_CHANGES` state to `StartStates` and `ClaimStates` in `command-states.ts`
+- Updated test mocks in `claim.test.ts` and `start.test.ts`
+- All gates pass: typecheck, lint, build, 539/539 tests
