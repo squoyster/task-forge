@@ -1,11 +1,15 @@
 ---
 id: TASK-241
 type: Task
-status: Ready
+status: In Progress
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 94d1b8bb55
+claimed_at: '2026-05-28 15:05:54'
+context_hash: 38eaf0df3c5d54e2
+branch: agent/TASK-241-enforce-taskforgecommandresult-return-sc--94d1b8bb55
 ---
 
 # TASK-241: Enforce TaskForgeCommandResult return schema as invariant across all CLI commands
@@ -81,3 +85,8 @@ Commands currently return ad-hoc output. Agents infer workflow from unstructured
 
 
 ## Agent Notes
+
+### 2026-05-28 System
+- Task claimed via taskforge start TASK-241
+- Session: 94d1b8bb55
+- Branch: agent/TASK-241-enforce-taskforgecommandresult-return-sc--94d1b8bb55
