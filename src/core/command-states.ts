@@ -784,7 +784,6 @@ export function doneStateMachine(
       `Task ${conditions.taskId} has ${ahead} unpushed commit(s). ` +
       `Done requires all commits to be pushed. ` +
       `Run 'taskforge submit' to push and create a PR, ` +
-      `or 'git push' to push the branch, ` +
       `then try 'taskforge done ${conditions.taskId}' again.`,
       { taskId: conditions.taskId, commitsAhead: conditions.commitsAhead },
     );
