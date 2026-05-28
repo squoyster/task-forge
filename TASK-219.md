@@ -1,11 +1,15 @@
 ---
 id: TASK-219
 type: Documentation
-status: Ready
+status: In Progress
 priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: a2a33eac3d
+claimed_at: '2026-05-28 00:25:55'
+context_hash: 1e6ebeb577972c85
+branch: agent/TASK-219-document-command-invariants-and-state-ma--a2a33eac3d
 ---
 
 # TASK-219: Document command invariants and state machine in docs/architecture/
@@ -58,3 +62,8 @@ Per `taskforge-control-plane-closure-spec.md` §1.2 Gap A and §7 Agent Prompt 1
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-28 System
+- Task claimed via taskforge start TASK-219
+- Session: a2a33eac3d
+- Branch: agent/TASK-219-document-command-invariants-and-state-ma--a2a33eac3d
