@@ -1,5 +1,5 @@
 import { loadTaskById, loadAllTasks, appendAgentNote } from "../core/task-store.js";
-import { createWorktree } from "../core/git.js";
+import { createWorktree, checkUncommittedWorktrees } from "../core/git.js";
 import { withTaskStateTransaction } from "../core/task-state-transaction.js";
 import { makeBranchName } from "../util/paths.js";
 import { generateSessionId } from "../core/session.js";
@@ -121,6 +121,38 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (options?.json) {
       printJson(jsonError(result.guidance, result.errorCode ?? "OUTSTANDING_TASK", {
+        nextActions: [result.nextAction],
+        guidance: result.guidance,
+      }));
+      return;
+    }
+    logWarn(result.guidance);
+    return;
+  }
+
+  // Uncommitted worktree check: if the agent has dirty worktrees, they must
+  // complete the current task before starting a new one.
+  const allTasks = loadAllTasks(repoRoot);
+  const uncommittedWorktrees = await checkUncommittedWorktrees(repoRoot, allTasks);
+  if (uncommittedWorktrees.length > 0) {
+    const dirty = uncommittedWorktrees[0];
+    const result = startStateMachine({
+      taskFound: true,
+      taskStatus: task.status,
+      doctorLocked: false,
+      hasOutstandingTask: false,
+      pushSucceeded: false,
+      worktreeCreated: false,
+      taskId,
+      uncommittedWorktrees: [{
+        taskId: dirty.taskId,
+        status: dirty.status,
+        dirtyFiles: dirty.dirtyFiles,
+      }],
+    });
+    getDefaultGuidanceAdapter().pushGuidance(result);
+    if (options?.json) {
+      printJson(jsonError(result.guidance, result.errorCode ?? "UNCOMMITTED_CHANGES", {
         nextActions: [result.nextAction],
         guidance: result.guidance,
       }));
@@ -281,7 +313,6 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
   }
   claimedTask.branch = task.branch; // Ensure branch is set for worktree creation
 
-  const today = new Date().toISOString().split("T")[0];
 
   // --- Phase 2: Workspace (only after claim is durably pushed) ---
 
@@ -321,9 +352,6 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
     );
   }
 
-  appendAgentNote(task.filePath, today, "System", [
-    `Worktree created: ${task.worktree}`,
-  ]);
 
   // Push metadata update through transaction
   await withTaskStateTransaction(

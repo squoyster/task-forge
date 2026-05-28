@@ -230,6 +230,7 @@ export const ClaimStates = {
   PUSH_FAILED: "push_failed",
   DOCTOR_LOCKED: "doctor_locked",
   OUTSTANDING_TASK: "outstanding_task",
+  UNCOMMITTED_CHANGES: "uncommitted_changes",
 } as const;
 
 export function claimStateMachine(
@@ -243,6 +244,7 @@ export function claimStateMachine(
     doctorReason?: string;
     hasOutstandingTask: boolean;
     outstandingTaskId?: string;
+    uncommittedWorktrees?: { taskId: string; status: string; dirtyFiles: number }[];
     pushSucceeded: boolean;
     sessionId?: string;
     taskId?: string;
@@ -265,6 +267,32 @@ export function claimStateMachine(
       "complete_current_then_next",
       `You still own task ${conditions.outstandingTaskId}. ` +
       `Close it first with 'taskforge done ${conditions.outstandingTaskId}'.`,
+    );
+  }
+
+  if (conditions.uncommittedWorktrees && conditions.uncommittedWorktrees.length > 0) {
+    const dirty = conditions.uncommittedWorktrees[0];
+    const isBlocked = dirty.status === "Blocked";
+    if (isBlocked) {
+      return error(
+        ClaimStates.UNCOMMITTED_CHANGES,
+        "UNCOMMITTED_BLOCKED_TASK",
+        "commit_then_next",
+        `Task ${dirty.taskId} has ${dirty.dirtyFiles} uncommitted file(s) and is in Blocked status. ` +
+        `1. Commit your current changes: taskforge checkpoint -m "WIP: save progress on ${dirty.taskId}"\n` +
+        `2. Look for the next task that resolves the block: taskforge next\n` +
+        `3. If no resolving task is available, continue with the next available task.`,
+        { taskId: dirty.taskId, dirtyFiles: dirty.dirtyFiles },
+      );
+    }
+    return error(
+      ClaimStates.UNCOMMITTED_CHANGES,
+      "UNCOMMITTED_CHANGES",
+      "complete_current_then_next",
+      `Task ${dirty.taskId} has ${dirty.dirtyFiles} uncommitted file(s). ` +
+      `Complete the current task before claiming a new one. ` +
+      `Run 'taskforge done ${dirty.taskId}' when ready, or 'taskforge checkpoint' to save progress.`,
+      { taskId: dirty.taskId, dirtyFiles: dirty.dirtyFiles },
     );
   }
 
@@ -338,6 +366,7 @@ export const StartStates = {
   WORKTREE_FAILED: "worktree_failed",
   DOCTOR_LOCKED: "doctor_locked",
   OUTSTANDING_TASK: "outstanding_task",
+  UNCOMMITTED_CHANGES: "uncommitted_changes",
 } as const;
 
 export function startStateMachine(
@@ -351,6 +380,7 @@ export function startStateMachine(
     doctorReason?: string;
     hasOutstandingTask: boolean;
     outstandingTaskId?: string;
+    uncommittedWorktrees?: { taskId: string; status: string; dirtyFiles: number }[];
     pushSucceeded: boolean;
     worktreeCreated: boolean;
     worktreePath?: string;
@@ -376,6 +406,32 @@ export function startStateMachine(
       "complete_current_then_next",
       `You still own task ${conditions.outstandingTaskId}. ` +
       `Close it first with 'taskforge done ${conditions.outstandingTaskId}'.`,
+    );
+  }
+
+  if (conditions.uncommittedWorktrees && conditions.uncommittedWorktrees.length > 0) {
+    const dirty = conditions.uncommittedWorktrees[0];
+    const isBlocked = dirty.status === "Blocked";
+    if (isBlocked) {
+      return error(
+        StartStates.UNCOMMITTED_CHANGES,
+        "UNCOMMITTED_BLOCKED_TASK",
+        "commit_then_next",
+        `Task ${dirty.taskId} has ${dirty.dirtyFiles} uncommitted file(s) and is in Blocked status. ` +
+        `1. Commit your current changes: taskforge checkpoint -m "WIP: save progress on ${dirty.taskId}"\n` +
+        `2. Look for the next task that resolves the block: taskforge next\n` +
+        `3. If no resolving task is available, continue with the next available task.`,
+        { taskId: dirty.taskId, dirtyFiles: dirty.dirtyFiles },
+      );
+    }
+    return error(
+      StartStates.UNCOMMITTED_CHANGES,
+      "UNCOMMITTED_CHANGES",
+      "complete_current_then_next",
+      `Task ${dirty.taskId} has ${dirty.dirtyFiles} uncommitted file(s). ` +
+      `Complete the current task before starting a new one. ` +
+      `Run 'taskforge done ${dirty.taskId}' when ready, or 'taskforge checkpoint' to save progress.`,
+      { taskId: dirty.taskId, dirtyFiles: dirty.dirtyFiles },
     );
   }
 

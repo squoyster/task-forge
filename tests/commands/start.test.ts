@@ -41,6 +41,7 @@ vi.mock("../../src/core/git.js", () => ({
   }),
   jitteredPush: vi.fn(),
   pullTaskState: vi.fn().mockResolvedValue(true),
+  checkUncommittedWorktrees: vi.fn().mockResolvedValue([]),
 }));
 
 vi.mock("../../src/core/status-transition.js", () => ({

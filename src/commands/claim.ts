@@ -1,5 +1,5 @@
 import { loadTaskById, loadAllTasks } from "../core/task-store.js";
-import { pullTaskState, createWorktree } from "../core/git.js";
+import { pullTaskState, createWorktree, checkUncommittedWorktrees } from "../core/git.js";
 import { withTaskStateTransaction } from "../core/task-state-transaction.js";
 import { generateSessionId } from "../core/session.js";
 import { sweepStaleTasks } from "../core/sweeper.js";
@@ -75,6 +75,36 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
       return;
     }
     logError(result.guidance);
+    return;
+  }
+
+  // Uncommitted worktree check
+  const allTasks = loadAllTasks(repoRoot);
+  const uncommittedWorktrees = await checkUncommittedWorktrees(repoRoot, allTasks);
+  if (uncommittedWorktrees.length > 0) {
+    const dirty = uncommittedWorktrees[0];
+    const result = claimStateMachine({
+      taskFound: !!task,
+      taskStatus: task?.status,
+      doctorLocked: false,
+      hasOutstandingTask: false,
+      pushSucceeded: false,
+      taskId,
+      uncommittedWorktrees: [{
+        taskId: dirty.taskId,
+        status: dirty.status,
+        dirtyFiles: dirty.dirtyFiles,
+      }],
+    });
+    getDefaultGuidanceAdapter().pushGuidance(result);
+    if (json) {
+      printJson(jsonError(result.guidance, result.errorCode ?? "UNCOMMITTED_CHANGES", {
+        nextActions: [result.nextAction],
+        guidance: result.guidance,
+      }));
+      return;
+    }
+    logWarn(result.guidance);
     return;
   }
 

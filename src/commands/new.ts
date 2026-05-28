@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { getNextId } from "../core/task-store.js";
-import { commitAndPushTaskState } from "../core/git.js";
+import { withTaskStateTransaction } from "../core/task-state-transaction.js";
 import { getRepoRoot, getTaskStateDir } from "../util/paths.js";
 import { logSuccess, logInfo, logDivider, logSub } from "../util/logging.js";
 import { printJson, jsonOk, jsonError } from "../util/json-result.js";
@@ -60,6 +60,7 @@ export async function cmdNew(title: string, options?: NewOptions): Promise<void>
   const stateDir = getTaskStateDir(repoRoot);
   const filePath = path.join(stateDir, `${nextId}.md`);
 
+  // Write file locally first so the transaction can pick it up
   try {
     fs.writeFileSync(filePath, content, "utf-8");
   } catch (err) {
@@ -81,13 +82,38 @@ export async function cmdNew(title: string, options?: NewOptions): Promise<void>
     throw new Error(result.guidance);
   }
 
+  // Push through transaction — if this fails, the local file exists but
+  // the remote won't have it, preventing silent data loss.
   let pushSucceeded = false;
   try {
-    await commitAndPushTaskState(repoRoot, `chore: create ${nextId}`);
+    await withTaskStateTransaction(
+      { command: `create ${nextId}`, maxRetries: 3 },
+      (tx) => {
+        const task = tx.loadTask(nextId);
+        if (!task) throw new Error(`Task ${nextId} not found during transaction`);
+        // Task already written to disk; transaction just commits and pushes
+      },
+    );
     pushSucceeded = true;
-  } catch {
-    // Push may fail if remote not configured — local write is still valid
+  } catch (err) {
     pushSucceeded = false;
+    const result = newStateMachine({
+      writeSucceeded: true,
+      pushSucceeded: false,
+      taskId: nextId,
+      filePath,
+      errorMessage: err instanceof Error ? err.message : String(err),
+    });
+    getDefaultGuidanceAdapter().pushGuidance(result);
+    if (json) {
+      printJson(jsonError(result.guidance, result.errorCode ?? "PUSH_FAILED", {
+        nextActions: [result.nextAction],
+        guidance: result.guidance,
+      }));
+      return;
+    }
+    logInfo(result.guidance);
+    return;
   }
 
   const result = newStateMachine({
