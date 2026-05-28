@@ -1,11 +1,15 @@
 ---
 id: TASK-186
 type: Task
-status: Ready
+status: In Progress
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 6c9a2ceab3
+claimed_at: '2026-05-28 02:03:29'
+context_hash: 9ee05952d2d2a685
+branch: agent/TASK-186-fix-start-command-move-file-writes-into--6c9a2ceab3
 ---
 
 # TASK-186: Fix start command: move file writes into transaction to prevent inconsistent claim state
@@ -19,6 +23,11 @@ In start.ts, lines 118-141 write to local task-state files (updateTaskLock, writ
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-28 System
+- Task claimed via taskforge start TASK-186
+- Session: 6c9a2ceab3
+- Branch: agent/TASK-186-fix-start-command-move-file-writes-into--6c9a2ceab3
 
 ### 2026-05-27 System
 - Task unlocked (forced) — previous claim was held by session "4da62ada72"
