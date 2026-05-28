@@ -10,6 +10,7 @@ assignee: b27ca834ad
 claimed_at: '2026-05-28 03:15:35'
 context_hash: 1e6ebeb577972c85
 branch: agent/TASK-243-fix-claimstart-self-deadlock-and-remove--b27ca834ad
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-243
 ---
 
 # TASK-243: Fix claim/start self-deadlock and remove agent-facing force guidance
@@ -73,6 +74,12 @@ Do not: make raw git acceptable for agents, add broad new workflow concepts, let
 - [ ] All existing tests pass
 
 ## Agent Notes
+
+### 2026-05-28 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-243
+
+### 2026-05-28 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-243
 
 ### 2026-05-28 System
 - Task claimed via taskforge start TASK-243
