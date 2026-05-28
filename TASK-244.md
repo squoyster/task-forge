@@ -10,6 +10,7 @@ assignee: a34e9e4c25
 claimed_at: '2026-05-28 16:16:50'
 context_hash: b0cdabccffea1074
 branch: agent/TASK-244-wire-all-35-cli-commands-to-taskforgecom--a34e9e4c25
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-244
 ---
 
 # TASK-244: Wire all 35+ CLI commands to TaskForgeCommandResult schema (TASK-241 follow-up)
@@ -65,6 +66,9 @@ All commands in src/commands/:
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-28 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-244
 
 ### 2026-05-28 System
 - Task claimed via taskforge start TASK-244
