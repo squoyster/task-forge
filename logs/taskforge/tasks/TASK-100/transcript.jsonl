@@ -1,2 +1,0 @@
-{"timestamp":"2026-05-23T04:16:29.112Z","event":"git.commit","summary":"fix: persist branch field to frontmatter in start command","taskId":"TASK-100"}
-{"timestamp":"2026-05-23T04:16:45.875Z","event":"task.command.completed","summary":"Task TASK-100 marked as Done","metadata":{"notes":["Task marked Done (forced)","Completed despite gate failures — forced."]},"taskId":"TASK-100"}

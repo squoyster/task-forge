@@ -1,1 +1,0 @@
-{"timestamp":"2026-05-24T03:36:37.892Z","event":"task.command.completed","summary":"Task TASK-149 marked as Done","metadata":{"notes":["Task marked Done (forced)","Override reason: AC satisfied: typecheck, build, and all 7 tests pass; pre-existing failures from TASK-091","Override actor: unknown","Failed gates: lint, test"]},"taskId":"TASK-149"}

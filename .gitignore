@@ -7,3 +7,4 @@ worktrees/
 *.log
 session-*.md
 .taskforge-session.json
+logs/
