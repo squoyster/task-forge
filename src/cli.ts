@@ -24,6 +24,7 @@ import { cmdRelease, type ReleaseOptions } from "./commands/release.js";
 import { cmdReject } from "./commands/reject.js";
 import { cmdList, type ListOptions } from "./commands/list.js";
 import { cmdSync } from "./commands/sync.js";
+import { cmdAgents, type AgentsOptions } from "./commands/agents.js";
 import { cmdDepsScan } from "./commands/deps/scan.js";
 import { cmdDepsAudit } from "./commands/deps/audit-cmd.js";
 import { cmdDepsOutdated } from "./commands/deps/outdated-cmd.js";
@@ -196,6 +197,23 @@ program
   .action((taskId: string, opts: { force?: boolean; json?: boolean }) => {
     const hbOpts: HeartbeatOptions = { force: opts.force ?? false, json: opts.json ?? false };
     return wrap(() => cmdHeartbeat(taskId, hbOpts))();
+  });
+
+program
+  .command("agents")
+  .description("List active agents in the distributed registry")
+  .option("--json", "Output in JSON format")
+  .option("--stale", "Show only stale agents (no heartbeat within threshold)")
+  .option("--recover", "Mark stale agents as crashed")
+  .option("--threshold <minutes>", "Stale threshold in minutes", "15")
+  .action((opts: { json?: boolean; stale?: boolean; recover?: boolean; threshold?: string }) => {
+    const agentsOpts: AgentsOptions = {
+      json: opts.json ?? false,
+      stale: opts.stale ?? false,
+      recover: opts.recover ?? false,
+      threshold: parseInt(opts.threshold ?? "15", 10),
+    };
+    return wrap(() => cmdAgents(agentsOpts))();
   });
 
 program

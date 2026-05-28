@@ -6,6 +6,8 @@ import { logSuccess, logInfo, logDivider, logSub } from "../util/logging.js";
 import { TaskNotFoundError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
 import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
+import { removeSessionState } from "../core/session-state.js";
+import { markAgentIdle } from "../core/agent-registry.js";
 
 export interface ReleaseOptions {
   json?: boolean;
@@ -54,6 +56,16 @@ export async function cmdRelease(taskId: string, options?: ReleaseOptions): Prom
   appendAgentNote(task.filePath, today, "System", [
     `Task released by session "${previousAssignee}"${wasInProgress ? " — reset to Ready" : ""}`,
   ]);
+
+  // Remove session state file (task is released, no recovery needed)
+  if (task.worktree) {
+    removeSessionState(task.worktree);
+  }
+
+  // Mark agent as idle in registry
+  if (previousAssignee) {
+    markAgentIdle(previousAssignee, repoRoot);
+  }
 
   await commitAndPushTaskState(repoRoot, `chore: release ${taskId}`);
 

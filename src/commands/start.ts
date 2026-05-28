@@ -1,4 +1,4 @@
-import { loadTaskById, loadAllTasks, appendAgentNote } from "../core/task-store.js";
+import { loadTaskById, loadAllTasks } from "../core/task-store.js";
 import { createWorktree, checkUncommittedWorktrees } from "../core/git.js";
 import { withTaskStateTransaction } from "../core/task-state-transaction.js";
 import { makeBranchName } from "../util/paths.js";
@@ -16,6 +16,8 @@ import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result
 import { resolveAuthority, assertCanForce, getForceRejectionNextActions, ForceRequiresHumanOrDoctorError } from "../core/authority.js";
 import { startStateMachine } from "../core/command-states.js";
 import { getDefaultGuidanceAdapter } from "../core/guidance-adapter.js";
+import { writeSessionState } from "../core/session-state.js";
+import { registerAgent } from "../core/agent-registry.js";
 
 export interface StartOptions {
   force?: boolean;
@@ -365,6 +367,20 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
       }
     },
   );
+
+  // Write session state file for agent recovery across restarts
+  if (task.worktree) {
+    writeSessionState(task.worktree, {
+      session_id: sessionId,
+      task_id: taskId,
+      claimed_at: new Date().toISOString(),
+      worktree_path: task.worktree,
+      last_heartbeat: new Date().toISOString(),
+    });
+  }
+
+  // Register agent in distributed registry
+  registerAgent(sessionId, taskId, task.worktree ?? null, repoRoot);
 
   // Build success result through state machine
   const successResult = startStateMachine({
