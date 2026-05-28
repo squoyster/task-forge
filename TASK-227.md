@@ -1,11 +1,15 @@
 ---
 id: TASK-227
 type: Documentation
-status: Ready
+status: In Progress
 priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 95dffc88cf
+claimed_at: '2026-05-28 01:16:54'
+context_hash: 9ee05952d2d2a685
+branch: agent/TASK-227-update-agentsmd-with-control-plane-direc--95dffc88cf
 ---
 
 # TASK-227: Update AGENTS.md with control-plane directive and mandatory startup sequence
@@ -97,3 +101,8 @@ taskforge done TASK-ID
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-28 System
+- Task claimed via taskforge start TASK-227
+- Session: 95dffc88cf
+- Branch: agent/TASK-227-update-agentsmd-with-control-plane-direc--95dffc88cf

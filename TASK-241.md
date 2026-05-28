@@ -14,6 +14,14 @@ humanInterventionRequired: false
 
 Every taskforge CLI command must return a structured TaskForgeCommandResult that prevents agentic drift. This is a mandatory control-plane invariant, not an optional feature.
 
+## Invariant Enforcement
+
+This is not a one-time migration. The Zod schema and validate-state audit check serve as ongoing enforcement:
+- Every new command MUST conform to TaskForgeCommandResult or fail typecheck
+- validate-state audits all commands at runtime and reports deviations
+- Tests prove invariants hold after every change
+- PR review rejects any command that omits required fields
+
 ## Problem
 
 Commands currently return ad-hoc output. Agents infer workflow from unstructured text, leading to drift, bypass of TaskForge facades, and uncontrolled parallel work. The command return template (taskforge-command-return-template.md) defines the mandatory schema.
@@ -71,8 +79,5 @@ Commands currently return ad-hoc output. Agents infer workflow from unstructured
 - [ ] Unknown error states generate recovery guidance with task-creation path
 - [ ] Documentation of return contract in docs/architecture/
 
-## Acceptance Criteria
-
-- [ ]
 
 ## Agent Notes
