@@ -7,6 +7,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- **TASK-230: Implement quasi-persistent session ID storage for agent recovery** — Added `.taskforge-session.json` file in worktree directories to persist session state (`session_id`, `task_id`, `claimed_at`, `worktree_path`, `last_heartbeat`) across process restarts. Session file is written on `claim`/`start`, updated on `heartbeat`, and removed on `done`/`release`. `taskforge resume` now auto-detects recoverable sessions via fallback chain: session file → branch session matching → dirty worktree. Added `recovery` field to JSON output with method, sessionId, and claimedAt. Added `.taskforge-session.json` to `.gitignore`. 10 new tests in `session-state.test.ts`.
+
 ### Fixed
 
 - **TASK-243: Fix claim/start self-deadlock and remove agent-facing force guidance** — `claim` no longer recommends `taskforge start` after success (which would deadlock since the task is already assigned). On claim success with worktree: guides to `cd <worktree>`. On claim success without worktree: guides to `taskforge doctor`/`block` with explicit "Do NOT run start" warning. `start` on already-assigned task no longer recommends `--force` — recommends `resume`, `inspect`, `doctor`, or `block`. `assertTaskOwnership()` no longer recommends `unlock --force`. `claimStateMachine()` already-claimed error no longer recommends `claim --force`. `gatesStateMachine` no longer mentions `done --force`. Removed `done --force` from `done` command nextActions. Updated TASKFORGE.md OpenCode Session Prompt to document normal workflow (`next → start`) and force restrictions. Added 17 new tests across `command-states.test.ts`, `session.test.ts`, and `start.test.ts`.
