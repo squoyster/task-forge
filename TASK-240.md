@@ -1,7 +1,7 @@
 ---
 id: TASK-240
 type: Task
-status: In Progress
+status: Review
 priority: P0
 agentRole: Implementer
 riskLevel: Low
@@ -49,19 +49,22 @@ Currently task-state lives on a dedicated git branch and changes require PRs to 
 
 ## Acceptance Criteria
 
-- [ ] `withTaskStateTransaction()` auto-commits and auto-pushes to task-state branch
-- [ ] No PR is created for task-state-only changes
-- [ ] AGENTS.md explicitly forbids direct git operations on task-state
-- [ ] All task-state mutations go through CLI facade commands
-- [ ] Audit log records every task-state mutation with session ID and command
-- [ ] Test coverage for transaction layer push behavior
-- [ ] Branch protection or CI allows direct pushes to task-state branch
+- [x] `withTaskStateTransaction()` auto-commits and auto-pushes to task-state branch — `src/core/task-state-transaction.ts` lines 146-157: commits then pushes directly via git push origin task-state
+- [x] No PR is created for task-state-only changes — transaction layer pushes directly to task-state branch, no PR workflow involved
+- [x] AGENTS.md explicitly forbids direct git operations on task-state — AGENTS.md lines 127-155: Git Operations Matrix shows task-state direct git as ❌
+- [x] All task-state mutations go through CLI facade commands — documented in AGENTS.md Agent Discipline section 1 and Git Operations Matrix
+- [x] Audit log records every task-state mutation with session ID and command — `src/core/event-log.ts` eventLogEvent includes sessionId and command from transaction options; `src/core/task-state-transaction.ts` TransactionImpl passes actor/command to appendEvent
+- [x] Test coverage for transaction layer push behavior — `tests/task-state-transaction.test.ts`: 14 tests including push-directly-without-PR and session-ID-in-event-log tests
+- [x] Branch protection or CI allows direct pushes to task-state branch — task-state branch currently allows direct pushes (verified by recent commits pushed by transaction layer). GitHub branch protection rules should be configured to allow this permanently.
 
-## Acceptance Criteria
-
-- [ ]
 
 ## Agent Notes
+
+### 2026-05-28 System
+- Report generated — task moved to Review
+- Changed files: package-lock.json, src/core/event-log.ts, src/core/task-state-transaction.ts, tests/task-state-transaction.test.ts
+- Commits: 3e54314 TASK-240: Enable task-state direct updates via CLI facade
+- AC section: present
 
 ### 2026-05-28 System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-240
