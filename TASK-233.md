@@ -8,8 +8,6 @@ riskLevel: Low
 humanInterventionRequired: false
 dependsOn: []
 context_hash: 38eaf0df3c5d54e2
-branch: agent/TASK-233-record-all-taskforge-cli-invocations-wit--d5aa02494e
-worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-233
 ---
 
 # TASK-233: Record all taskforge CLI invocations with parameters and return values in per-task audit log
@@ -43,6 +41,9 @@ Currently agents have no visibility into which taskforge commands were run durin
 - [x] Tests added covering: invocation capture, agent ID prefixing, per-task vs global routing, JSON output capture — `tests/cli-audit.test.ts`: 10 tests covering recordCliInvocation, readTaskInvocations, readGlobalInvocations, getCurrentSessionId
 
 ## Agent Notes
+
+### 2026-05-28 System
+- Cleanup: worktree and branch removed
 
 ### 2026-05-28 System
 - Task marked Done
