@@ -8,7 +8,7 @@ riskLevel: Low
 humanInterventionRequired: false
 assignee: a2a33eac3d
 claimed_at: '2026-05-28 00:25:55'
-context_hash: 1e6ebeb577972c85
+context_hash: 9ee05952d2d2a685
 branch: agent/TASK-219-document-command-invariants-and-state-ma--a2a33eac3d
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-219
 ---
