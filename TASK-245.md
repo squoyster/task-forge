@@ -1,11 +1,15 @@
 ---
 id: TASK-245
 type: Task
-status: Ready
+status: In Progress
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 14bee24522
+claimed_at: '2026-05-28 16:21:46'
+context_hash: b0cdabccffea1074
+branch: agent/TASK-245-display-all-timestamps-with-utc-designat--14bee24522
 ---
 
 # TASK-245: Display all timestamps with UTC designator or map to current timezone
@@ -19,3 +23,8 @@ humanInterventionRequired: false
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-28 System
+- Task claimed via taskforge start TASK-245
+- Session: 14bee24522
+- Branch: agent/TASK-245-display-all-timestamps-with-utc-designat--14bee24522
