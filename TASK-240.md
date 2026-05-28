@@ -1,14 +1,12 @@
 ---
 id: TASK-240
 type: Task
-status: Review
+status: Done
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: f021eeb375
-claimed_at: '2026-05-28 01:01:25'
-context_hash: 9ee05952d2d2a685
+context_hash: 1e6ebeb577972c85
 branch: agent/TASK-240-allow-task-state-updates-via-taskforge-c--f021eeb375
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-240
 ---
@@ -59,6 +57,9 @@ Currently task-state lives on a dedicated git branch and changes require PRs to 
 
 
 ## Agent Notes
+
+### 2026-05-28 System
+- Task marked Done
 
 ### 2026-05-28 System
 - Report generated — task moved to Review
