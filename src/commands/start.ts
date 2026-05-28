@@ -1,4 +1,4 @@
-import { loadTaskById, loadAllTasks, appendAgentNote } from "../core/task-store.js";
+import { loadTaskById, loadAllTasks } from "../core/task-store.js";
 import { createWorktree } from "../core/git.js";
 import { withTaskStateTransaction } from "../core/task-state-transaction.js";
 import { makeBranchName } from "../util/paths.js";
@@ -321,9 +321,6 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
     );
   }
 
-  appendAgentNote(task.filePath, today, "System", [
-    `Worktree created: ${task.worktree}`,
-  ]);
 
   // Push metadata update through transaction
   await withTaskStateTransaction(
