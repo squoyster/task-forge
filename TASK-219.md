@@ -1,7 +1,7 @@
 ---
 id: TASK-219
 type: Documentation
-status: In Progress
+status: Review
 priority: P1
 agentRole: Implementer
 riskLevel: Low
@@ -63,6 +63,13 @@ Per `taskforge-control-plane-closure-spec.md` §1.2 Gap A and §7 Agent Prompt 1
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-28 System
+- Report generated — task moved to Review
+- Changed files: README.md, docs/architecture/command-state-machine-and-invariants.md
+- Commits: acef9bd TASK-219: Document command invariants and state machine
+- AC section: present
+- AC has unchecked items
 
 ### 2026-05-28 System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-219
