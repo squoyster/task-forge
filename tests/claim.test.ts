@@ -8,6 +8,7 @@ import { setRepoRoot } from "../src/util/paths.js";
 vi.mock("../src/core/git.js", () => ({
   jitteredPush: vi.fn().mockResolvedValue(true),
   pullTaskState: vi.fn().mockResolvedValue(true),
+  checkUncommittedWorktrees: vi.fn().mockResolvedValue([]),
 }));
 
 vi.mock("../src/core/task-state-transaction.js", () => ({
