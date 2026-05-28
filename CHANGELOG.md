@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **TASK-218: Make `taskforge claim` create worktree and return workspace path in all task commands** — `taskforge claim` now creates a worktree immediately after claiming (matching `start` behavior) and returns `workspace: { worktree, branch }` in JSON output. `taskforge status` and `taskforge summary` now include `worktree` and `branch` fields in JSON task entries and display worktree/branch info in terminal output for active tasks.
+
 - **TASK-232: Require clean worktree and pushed branch in done command** — `taskforge done` now rejects when the worktree has uncommitted files (WORKTREE_DIRTY) or the branch has unpushed commits (BRANCH_UNPUSHED). Error messages include actionable guidance (`taskforge checkpoint`, `taskforge submit`). JSON output includes structured `nextActions`. Added `getWorktreeDirtyFiles()` and `getBranchCommitsAhead()` to `git.ts`, new states to `command-states.ts`, and 5 tests. Invariant documented in TASKFORGE.md and AGENTS.md.
 
 - **TASK-217: Wire command state machines into all lifecycle commands** — All lifecycle commands (`next`, `claim`, `start`, `done`, `new`, `gates`, `checkpoint`, `submit`, `pr`) now use the command state machines from `command-states.ts` to produce structured `CommandResult` objects with `nextAction` and `guidance` fields. Added `GuidanceAdapter` interface with `NoOpGuidanceAdapter` and `OpenCodeGuidanceAdapter` implementations for pushing guidance to agent frameworks. Every command JSON output now includes `nextActions` array and `guidance` string. Human-readable output uses state machine guidance text.
