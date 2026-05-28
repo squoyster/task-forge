@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **TASK-215: Migrate `new` to transaction layer, wire uncommitted worktree detection into `start`/`claim`** — `taskforge new` now uses `withTaskStateTransaction` instead of `commitAndPushTaskState`, so push failures properly reject instead of being silently swallowed. `taskforge start` and `taskforge claim` now check for uncommitted worktrees before proceeding — blocked tasks get "commit then next" guidance, non-blocked tasks get "complete current task first" guidance. Added `UNCOMMITTED_CHANGES` state to `StartStates` and `ClaimStates`.
+
 - **TASK-221: Fix `taskforge start` rejecting same-session re-entry** — The pre-check at line 131 of `start.ts` was rejecting ANY task with an `assignee` set, even when the assignee belonged to the current session. Fixed by generating the session ID earlier and changing the check to `task.assignee && task.assignee !== sessionId`, allowing same-session re-entry (e.g., agent restart after crash) while still blocking cross-session conflicts. Added 4 new tests covering same-session re-entry, cross-session rejection, `--force` override, and session ID generation.
 
 ### Added
