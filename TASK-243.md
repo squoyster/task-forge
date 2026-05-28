@@ -1,13 +1,11 @@
 ---
 id: TASK-243
 type: Bug
-status: In Progress
+status: Ready
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: test123456
-claimed_at: 2026-05-28 03:15:00
 ---
 
 # TASK-243: Fix claim/start self-deadlock and remove agent-facing force guidance
