@@ -1,11 +1,15 @@
 ---
 id: TASK-215
 type: Task
-status: Ready
+status: In Progress
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 5c980e7f58
+claimed_at: '2026-05-28 00:04:03'
+context_hash: 59fb9e1c3f61b3b7
+branch: agent/TASK-215-comprehensive-error-handling-and-actiona--5c980e7f58
 ---
 
 # TASK-215: Comprehensive error handling and actionable guidance for all commands
@@ -40,3 +44,8 @@ Every command must return appropriate, specific guidance for both success and fa
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-28 System
+- Task claimed via taskforge start TASK-215
+- Session: 5c980e7f58
+- Branch: agent/TASK-215-comprehensive-error-handling-and-actiona--5c980e7f58
