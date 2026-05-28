@@ -219,23 +219,6 @@ program
   });
 
 program
-  .command("agents")
-  .description("List active agents in the distributed registry")
-  .option("--json", "Output in JSON format")
-  .option("--stale", "Show only stale agents (no heartbeat within threshold)")
-  .option("--recover", "Mark stale agents as crashed")
-  .option("--threshold <minutes>", "Stale threshold in minutes", "15")
-  .action((opts: { json?: boolean; stale?: boolean; recover?: boolean; threshold?: string }) => {
-    const agentsOpts: AgentsOptions = {
-      json: opts.json ?? false,
-      stale: opts.stale ?? false,
-      recover: opts.recover ?? false,
-      threshold: parseInt(opts.threshold ?? "15", 10),
-    };
-    return wrap(() => cmdAgents(agentsOpts))();
-  });
-
-program
   .command("inspect <taskId>")
   .description("Inspect task worktree and branch state")
   .option("--all", "Inspect all In Progress tasks")
