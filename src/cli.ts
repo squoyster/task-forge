@@ -24,6 +24,7 @@ import { cmdRelease, type ReleaseOptions } from "./commands/release.js";
 import { cmdReject } from "./commands/reject.js";
 import { cmdList, type ListOptions } from "./commands/list.js";
 import { cmdSync } from "./commands/sync.js";
+import { cmdAgents, type AgentsOptions } from "./commands/agents.js";
 import { cmdDepsScan } from "./commands/deps/scan.js";
 import { cmdDepsAudit } from "./commands/deps/audit-cmd.js";
 import { cmdDepsOutdated } from "./commands/deps/outdated-cmd.js";
@@ -37,6 +38,8 @@ import { cmdAcCheck } from "./commands/ac-check.js";
 import { cmdDiff, cmdCheckpoint, cmdSubmit, cmdPr } from "./commands/git-facade.js";
 import { TaskForgeError } from "./core/errors.js";
 import { logError } from "./util/logging.js";
+import { recordCliInvocation } from "./core/cli-audit.js";
+import { getRepoRoot } from "./util/paths.js";
 
 const program = new Command();
 
@@ -60,7 +63,7 @@ program
   .option("--dry-run", "Show planned changes without writing")
   .option("--repair", "Repair missing or stale generated files")
   .action((opts: Record<string, unknown>) => {
-    wrap(() =>
+    wrapWithAudit("init", [], opts, () =>
       cmdInit({
         force: opts.force as boolean | undefined,
         agentFramework: opts.agentFramework as string | undefined,
@@ -78,7 +81,7 @@ program
   .command("next")
   .description("Return the highest-priority safe task to continue")
   .option("--json", "Output in JSON format")
-  .action((opts: { json?: boolean }) => wrap(() => cmdNext(opts))());
+  .action((opts: { json?: boolean }) => wrapWithAudit("next", [], opts, () => cmdNext(opts))());
 
 program
   .command("start <taskId>")
@@ -87,20 +90,20 @@ program
   .option("--json", "Output in JSON format")
   .action((taskId: string, opts: { force?: boolean; json?: boolean }) => {
     const startOpts: StartOptions = { force: opts.force ?? false, json: opts.json ?? false };
-    return wrap(() => cmdStart(taskId, startOpts))();
+    return wrapWithAudit("start", [taskId], opts, () => cmdStart(taskId, startOpts))();
   });
 
 program
   .command("status")
   .description("Show project status summary")
   .option("--json", "Output in JSON format for programmatic consumption")
-  .action((opts) => wrap(() => cmdStatus(opts.json ?? false))());
+  .action((opts) => wrapWithAudit("status", [], opts, () => cmdStatus(opts.json ?? false))());
 
 program
   .command("summary")
   .description("Show full project summary with recommended next action")
   .option("--json", "Output in JSON format for programmatic consumption")
-  .action((opts) => wrap(() => cmdSummary(opts.json ?? false))());
+  .action((opts) => wrapWithAudit("summary", [], opts, () => cmdSummary(opts.json ?? false))());
 
 program
   .command("gates")
@@ -112,7 +115,7 @@ program
       json: opts.json ?? false,
       only: opts.only,
     };
-    return wrap(() => cmdGates(gateOpts))();
+    return wrapWithAudit("gates", [], opts, () => cmdGates(gateOpts))();
   });
 
 program
@@ -122,7 +125,7 @@ program
   .option("--blocked-by <who>", "Who/what is blocking: human, agent, bot")
   .option("--json", "Output in JSON format")
   .action((taskId: string, reason: string, opts: { json?: boolean; category?: string; blockedBy?: string }) => {
-    return wrap(() => cmdBlock(taskId, reason, {
+    return wrapWithAudit("block", [taskId, reason], opts, () => cmdBlock(taskId, reason, {
       json: opts.json ?? false,
       category: opts.category,
       blockedBy: opts.blockedBy,
@@ -142,13 +145,13 @@ program
       json: opts.json ?? false,
     };
     if (doneOpts.deleteBranch && !doneOpts.cleanup) doneOpts.cleanup = true;
-    return wrap(() => cmdDone(taskId, doneOpts))();
+    return wrapWithAudit("done", [taskId], opts, () => cmdDone(taskId, doneOpts))();
   });
 
 program
   .command("sync")
   .description("Sync with external issue tracker")
-  .action(wrap(cmdSync));
+  .action(wrapWithAudit("sync", [], {}, cmdSync));
 
 program
   .command("list")
@@ -166,7 +169,7 @@ program
       search: opts.search,
       json: opts.json ?? false,
     };
-    return wrap(() => cmdList(listOpts))();
+    return wrapWithAudit("list", [], opts, () => cmdList(listOpts))();
   });
 
 program
@@ -176,7 +179,7 @@ program
   .option("--json", "Output in JSON format")
   .action((taskId: string, opts: { force?: boolean; json?: boolean }) => {
     const unlockOpts: UnlockOptions = { force: opts.force ?? false, json: opts.json ?? false };
-    return wrap(() => cmdUnlock(taskId, unlockOpts))();
+    return wrapWithAudit("unlock", [taskId], opts, () => cmdUnlock(taskId, unlockOpts))();
   });
 
 program
@@ -186,7 +189,7 @@ program
   .option("--dry-run", "Preview what would happen without mutating state")
   .option("--force", "Skip worktree classification, reset all stale tasks")
   .action((opts: { json?: boolean; dryRun?: boolean; force?: boolean }) =>
-    wrap(() => cmdSweep({ json: opts.json, dryRun: opts.dryRun, force: opts.force }))());
+    wrapWithAudit("sweep", [], opts, () => cmdSweep({ json: opts.json, dryRun: opts.dryRun, force: opts.force }))());
 
 program
   .command("heartbeat <taskId>")
@@ -195,7 +198,24 @@ program
   .option("--json", "Output in JSON format")
   .action((taskId: string, opts: { force?: boolean; json?: boolean }) => {
     const hbOpts: HeartbeatOptions = { force: opts.force ?? false, json: opts.json ?? false };
-    return wrap(() => cmdHeartbeat(taskId, hbOpts))();
+    return wrapWithAudit("heartbeat", [taskId], opts, () => cmdHeartbeat(taskId, hbOpts))();
+  });
+
+program
+  .command("agents")
+  .description("List active agents in the distributed registry")
+  .option("--json", "Output in JSON format")
+  .option("--stale", "Show only stale agents (no heartbeat within threshold)")
+  .option("--recover", "Mark stale agents as crashed")
+  .option("--threshold <minutes>", "Stale threshold in minutes", "15")
+  .action((opts: { json?: boolean; stale?: boolean; recover?: boolean; threshold?: string }) => {
+    const agentsOpts: AgentsOptions = {
+      json: opts.json ?? false,
+      stale: opts.stale ?? false,
+      recover: opts.recover ?? false,
+      threshold: parseInt(opts.threshold ?? "15", 10),
+    };
+    return wrapWithAudit("agents", [], opts, () => cmdAgents(agentsOpts))();
   });
 
 program
@@ -205,7 +225,7 @@ program
   .option("--json", "Output in JSON format")
   .action((taskId: string, opts: { all?: boolean; json?: boolean }) => {
     const inspectOpts: InspectOptions = { all: opts.all ?? false, json: opts.json ?? false };
-    return wrap(() => cmdInspect(taskId, inspectOpts))();
+    return wrapWithAudit("inspect", [taskId], opts, () => cmdInspect(taskId, inspectOpts))();
   });
 
 program
@@ -220,7 +240,7 @@ program
       session: opts.session,
       json: opts.json ?? false,
     };
-    return wrap(() => cmdClaim(taskId, claimOpts))();
+    return wrapWithAudit("claim", [taskId], opts, () => cmdClaim(taskId, claimOpts))();
   });
 
 program
@@ -230,7 +250,7 @@ program
   .option("--json", "Output in JSON format")
   .action((taskId: string, opts: { complete?: boolean; json?: boolean }) => {
     const reportOpts: ReportOptions = { complete: opts.complete ?? false, json: opts.json ?? false };
-    return wrap(() => cmdReport(taskId, reportOpts))();
+    return wrapWithAudit("report", [taskId], opts, () => cmdReport(taskId, reportOpts))();
   });
 
 program
@@ -247,7 +267,7 @@ program
       force: opts.force ?? false,
       json: opts.json ?? false,
     };
-    return wrap(() => cmdCleanup(taskId, cleanupOpts))();
+    return wrapWithAudit("cleanup", [taskId], opts, () => cmdCleanup(taskId, cleanupOpts))();
   });
 
 program
@@ -268,7 +288,7 @@ program
       body: opts.body,
       json: opts.json ?? false,
     };
-    return wrap(() => cmdNew(title, newOpts))();
+    return wrapWithAudit("new", [title], opts, () => cmdNew(title, newOpts))();
   });
 
 // Dependency Steward commands
@@ -277,56 +297,90 @@ const deps = program.command("deps").description("Dependency health management")
 deps
   .command("scan")
   .description("Run broad dependency health checks")
-  .action(wrap(cmdDepsScan));
+  .action(wrapWithAudit("deps scan", [], {}, cmdDepsScan));
 
 deps
   .command("audit")
   .description("Run package-manager-native audit")
   .option("--severity <level>", "Filter by severity level (critical, high, medium, low, info)")
   .option("--create-tasks", "Automatically create tasks for found vulnerabilities")
-  .action((opts) => wrap(() => cmdDepsAudit(opts.severity, opts.createTasks ?? false))());
+  .action((opts) => wrapWithAudit("deps audit", [], opts, () => cmdDepsAudit(opts.severity, opts.createTasks ?? false))());
 
 deps
   .command("outdated")
   .description("Report outdated direct dependencies")
-  .action(wrap(cmdDepsOutdated));
+  .action(wrapWithAudit("deps outdated", [], {}, cmdDepsOutdated));
 
 deps
   .command("deprecated")
   .description("Check for deprecated packages")
-  .action(wrap(cmdDepsDeprecated));
+  .action(wrapWithAudit("deps deprecated", [], {}, cmdDepsDeprecated));
 
 deps
   .command("plan")
   .description("Produce a dependency remediation plan")
-  .action(wrap(cmdDepsPlan));
+  .action(wrapWithAudit("deps plan", [], {}, cmdDepsPlan));
 
 deps
   .command("create-tasks")
   .description("Create TaskForge dependency tasks from findings")
-  .action(wrap(cmdDepsCreateTasks));
+  .action(wrapWithAudit("deps create-tasks", [], {}, cmdDepsCreateTasks));
 
 deps
   .command("pr")
   .description("Create focused dependency update PRs for low-risk cases")
-  .action(wrap(cmdDepsPr));
+  .action(wrapWithAudit("deps pr", [], {}, cmdDepsPr));
 
 deps
   .command("summary")
   .description("Produce a dependency health summary")
-  .action(wrap(cmdDepsSummary));
+  .action(wrapWithAudit("deps summary", [], {}, cmdDepsSummary));
 
-function wrap(fn: () => Promise<unknown>): () => Promise<void> {
+/**
+ * Wrap a command action with CLI invocation audit capture.
+ * Records command name, args, flags, exit code, duration, and session ID.
+ */
+function wrapWithAudit(
+  commandName: string,
+  args: string[],
+  flags: Record<string, unknown>,
+  fn: () => Promise<unknown>,
+): () => Promise<void> {
   return async () => {
+    const startTime = Date.now();
+    let exitCode = 0;
+    let error: string | null = null;
+
     try {
       await fn();
     } catch (err) {
       if (err instanceof TaskForgeError) {
+        exitCode = err.exitCode;
+        error = err.message;
         logError(err.message);
-        process.exit(err.exitCode);
+      } else {
+        exitCode = 1;
+        error = err instanceof Error ? err.message : String(err);
+        logError(`Unexpected error: ${error}`);
       }
-      logError(`Unexpected error: ${err instanceof Error ? err.message : String(err)}`);
-      process.exit(1);
+
+      // Record the invocation before exiting
+      try {
+        const repoRoot = getRepoRoot();
+        recordCliInvocation(repoRoot, commandName, args, flags, exitCode, Date.now() - startTime, error);
+      } catch {
+        // Don't let audit failure prevent exit
+      }
+
+      process.exit(exitCode);
+    }
+
+    // Record successful invocation
+    try {
+      const repoRoot = getRepoRoot();
+      recordCliInvocation(repoRoot, commandName, args, flags, 0, Date.now() - startTime, null);
+    } catch {
+      // Don't let audit failure prevent normal operation
     }
   };
 }
@@ -335,25 +389,25 @@ program
   .command("prompt <taskId>")
   .description("Emit a complete agent execution packet")
   .option("--json", "Output in JSON format")
-  .action((taskId: string, opts: { json?: boolean }) => wrap(() => cmdPrompt(taskId, opts))());
+  .action((taskId: string, opts: { json?: boolean }) => wrapWithAudit("prompt", [taskId], opts, () => cmdPrompt(taskId, opts))());
 
 program
   .command("resume <taskId>")
   .description("Re-enter an existing task workspace")
   .option("--json", "Output in JSON format")
-  .action((taskId: string, opts: { json?: boolean }) => wrap(() => cmdResume(taskId, opts))());
+  .action((taskId: string, opts: { json?: boolean }) => wrapWithAudit("resume", [taskId], opts, () => cmdResume(taskId, opts))());
 
 program
   .command("doctor")
   .description("Run diagnostic checks on repo and task-state health")
   .option("--json", "Output in JSON format")
-  .action((opts: { json?: boolean }) => wrap(() => cmdDoctor(opts))());
+  .action((opts: { json?: boolean }) => wrapWithAudit("doctor", [], opts, () => cmdDoctor(opts))());
 
 program
   .command("config-validate")
   .description("Validate .taskforge/config.json")
   .option("--json", "Output in JSON format")
-  .action((opts: { json?: boolean }) => wrap(() => cmdConfigValidate(opts))());
+  .action((opts: { json?: boolean }) => wrapWithAudit("config-validate", [], opts, () => cmdConfigValidate(opts))());
 
 program
   .command("release <taskId>")
@@ -361,7 +415,7 @@ program
   .option("--json", "Output in JSON format")
   .action((taskId: string, opts: { json?: boolean }) => {
     const releaseOpts: ReleaseOptions = { json: opts.json ?? false };
-    return wrap(() => cmdRelease(taskId, releaseOpts))();
+    return wrapWithAudit("release", [taskId], opts, () => cmdRelease(taskId, releaseOpts))();
   });
 
 program
@@ -369,7 +423,7 @@ program
   .description("Mark a task as rejected (obsolete, won't implement)")
   .option("--json", "Output in JSON format")
   .action((taskId: string, reason: string, opts: { json?: boolean }) =>
-    wrap(() => cmdReject(taskId, reason, opts))());
+    wrapWithAudit("reject", [taskId, reason], opts, () => cmdReject(taskId, reason, opts))());
 
 program
   .command("validate-state")
@@ -377,7 +431,7 @@ program
   .option("--json", "Output in JSON format")
   .option("--strict", "Exit with non-zero status on any warnings or errors (for CI)")
   .action((opts: { json?: boolean; strict?: boolean }) =>
-    wrap(async () => {
+    wrapWithAudit("validate-state", [], opts, async () => {
       const { cmdValidateState } = await import("./commands/validate-state.js");
       await cmdValidateState(opts);
     })(),
@@ -388,7 +442,7 @@ program
   .description("Show audit events for a task")
   .option("--json", "Output in JSON format")
   .action((taskId: string, opts: { json?: boolean }) =>
-    wrap(async () => { cmdAudit(taskId, opts); })(),
+    wrapWithAudit("audit", [taskId], opts, async () => { cmdAudit(taskId, opts); })(),
   );
 
 program
@@ -396,7 +450,7 @@ program
   .description("Show readable transcript for a task")
   .option("--json", "Output in JSON format")
   .action((taskId: string, opts: { json?: boolean }) =>
-    wrap(async () => { cmdTranscript(taskId, opts); })(),
+    wrapWithAudit("transcript", [taskId], opts, async () => { cmdTranscript(taskId, opts); })(),
   );
 
 program
@@ -404,7 +458,7 @@ program
   .description("Show event timeline summary for a task")
   .option("--json", "Output in JSON format")
   .action((taskId: string, opts: { json?: boolean }) =>
-    wrap(async () => { cmdTimeline(taskId, opts); })(),
+    wrapWithAudit("timeline", [taskId], opts, async () => { cmdTimeline(taskId, opts); })(),
   );
 
 program
@@ -412,14 +466,14 @@ program
   .description("Scan task files for acceptance criteria issues")
   .option("--json", "Output in JSON format")
   .action((taskId: string | undefined, opts: { json?: boolean }) =>
-    wrap(async () => { cmdAcCheck(taskId, opts); })(),
+    wrapWithAudit("ac-check", taskId ? [taskId] : [], opts, async () => { cmdAcCheck(taskId, opts); })(),
   );
 
 program
   .command("diff <taskId>")
   .description("Show current worktree diff for a task")
   .action((taskId: string) =>
-    wrap(async () => { await cmdDiff(taskId); })(),
+    wrapWithAudit("diff", [taskId], {}, async () => { await cmdDiff(taskId); })(),
   );
 
 program
@@ -427,21 +481,21 @@ program
   .description("Create a commit on the task branch")
   .requiredOption("-m, --message <text>", "Commit message")
   .action((taskId: string, opts: { message: string }) =>
-    wrap(async () => { await cmdCheckpoint(taskId, opts.message); })(),
+    wrapWithAudit("checkpoint", [taskId], opts, async () => { await cmdCheckpoint(taskId, opts.message); })(),
   );
 
 program
   .command("submit <taskId>")
   .description("Push the task branch")
   .action((taskId: string) =>
-    wrap(async () => { await cmdSubmit(taskId); })(),
+    wrapWithAudit("submit", [taskId], {}, async () => { await cmdSubmit(taskId); })(),
   );
 
 program
   .command("pr <taskId>")
   .description("Create a PR for the task")
   .action((taskId: string) =>
-    wrap(async () => { await cmdPr(taskId); })(),
+    wrapWithAudit("pr", [taskId], {}, async () => { await cmdPr(taskId); })(),
   );
 
 program.parse();
