@@ -10,6 +10,7 @@ assignee: f66160bc82
 claimed_at: '2026-05-28 05:59:53'
 context_hash: 2d29281e59408ea2
 branch: agent/TASK-231-implement-distributed-agent-registry-wit--f66160bc82
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-231
 ---
 
 # TASK-231: Implement distributed agent registry with heartbeat tracking and crash recovery
@@ -99,6 +100,9 @@ An agent is considered crashed/stale when:
 - [ ] All verification gates pass: typecheck, lint, build, test
 
 ## Agent Notes
+
+### 2026-05-28 System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-231
 
 ### 2026-05-28 System
 - Task claimed via taskforge start TASK-231
