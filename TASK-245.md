@@ -1,13 +1,11 @@
 ---
 id: TASK-245
 type: Task
-status: In Progress
+status: Ready
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 14bee24522
-claimed_at: '2026-05-28 16:21:46'
 context_hash: b0cdabccffea1074
 branch: agent/TASK-245-display-all-timestamps-with-utc-designat--14bee24522
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-245
@@ -24,6 +22,9 @@ worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-245
 - [ ]
 
 ## Agent Notes
+
+### 2026-05-29T00:00:00Z System
+- Task swept by Sweeper Protocol — reset to Ready. Claim by "14bee24522" was 10.7h old (threshold: 4h).
 
 ### 2026-05-28 System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-245
