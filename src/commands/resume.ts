@@ -236,14 +236,10 @@ export async function cmdResume(taskId?: string, options?: { json?: boolean }): 
   logSub(`**Worktree:** ${recovery.worktreePath}`);
   logSub(`**Branch:** ${recovery.branch || task.branch || "none"}`);
   logSub(`**Session ID:** ${recovery.sessionId || "unknown"}`);
-<<<<<<< Updated upstream
-  logSub(`**Claimed At:** ${recovery.claimedAt || "unknown"}`);
-=======
   const claimedAtDisplay = recovery.claimedAt
     ? (formatTimestampMarkdown(parseTimestamp(recovery.claimedAt)) || recovery.claimedAt)
     : "unknown";
   logSub(`**Claimed At:** ${claimedAtDisplay}`);
->>>>>>> Stashed changes
   logDivider();
   logHeader("### Agent Instructions");
   logDivider();
