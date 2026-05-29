@@ -1,12 +1,14 @@
 ---
 id: TASK-241
 type: Task
-status: Ready
+status: In Progress
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-context_hash: 6427c04555b70d56
+assignee: 83283a1f28
+claimed_at: '2026-05-29 03:13:09'
+context_hash: 021bc40dc10bc3c5
 branch: agent/TASK-241-enforce-taskforgecommandresult-return-sc--94d1b8bb55
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-241
 ---
@@ -83,6 +85,11 @@ Commands currently return ad-hoc output. Agents infer workflow from unstructured
 - [x] Documentation of return contract in docs/architecture/ — `docs/architecture/command-return-contract.md`: Full documentation of schema, builders, renderers, invariants, and migration guide
 
 ## Agent Notes
+
+### 2026-05-29T00:00:00Z System
+- Task claimed via taskforge start TASK-241
+- Session: 83283a1f28
+- Branch: agent/TASK-241-enforce-taskforgecommandresult-return-sc--94d1b8bb55
 
 ### 2026-05-29T00:00:00Z System
 - Task swept by Sweeper Protocol — reset to Ready. Claim by "6141b31587" was 11.7h old (threshold: 4h).
