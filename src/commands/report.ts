@@ -6,7 +6,10 @@ import { getRepoRoot, getWorktreePath } from "../util/paths.js";
 import { STATUS } from "../util/status-constants.js";
 import { logHeader, logSuccess, logSub, logDivider, logInfo, logWarn } from "../util/logging.js";
 import { TaskNotFoundError, InvalidStatusTransitionError } from "../core/errors.js";
-import { printJson, jsonOk, jsonError } from "../util/json-result.js";
+import { successResult, failedResult } from "../core/result-builder.js";
+import { getValidNextCommands } from "../core/next-command-maps.js";
+import { renderResultMarkdown } from "../core/result-renderer.js";
+import { statusToJson } from "../util/json-result.js";
 
 export interface ReportOptions {
   complete?: boolean;
@@ -31,12 +34,18 @@ interface ReportData {
 }
 
 export async function cmdReport(taskId: string, options?: ReportOptions): Promise<void> {
+  const startTime = Date.now();
+  const json = options?.json ?? false;
   const repoRoot = getRepoRoot();
   const task = loadTaskById(taskId);
 
   if (!task) {
-    if (options?.json) {
-      printJson(jsonError(`Task ${taskId} not found`, "TASK_NOT_FOUND"));
+    if (json) {
+      console.log(JSON.stringify({
+        ok: false,
+        error: `Task ${taskId} not found`,
+        code: "TASK_NOT_FOUND",
+      }, null, 2));
       return;
     }
     throw new TaskNotFoundError(taskId);
@@ -71,8 +80,12 @@ export async function cmdReport(taskId: string, options?: ReportOptions): Promis
   if (options?.complete) {
     const transitionError = validateTransition(task.status, STATUS.REVIEW);
     if (transitionError) {
-      if (options?.json) {
-        printJson(jsonError(transitionError, "INVALID_TRANSITION"));
+      if (json) {
+        console.log(JSON.stringify({
+          ok: false,
+          error: transitionError,
+          code: "INVALID_TRANSITION",
+        }, null, 2));
         return;
       }
       throw new InvalidStatusTransitionError(task.status, STATUS.REVIEW, [STATUS.IN_PROGRESS]);
@@ -97,10 +110,11 @@ export async function cmdReport(taskId: string, options?: ReportOptions): Promis
 
     await commitAndPushTaskState(repoRoot, `chore: report ${taskId} → Review`);
 
-    if (options?.json) {
-      printJson(jsonOk({
+    if (json) {
+      console.log(JSON.stringify({
+        ok: true,
         ...report,
-        status: STATUS.REVIEW,
+        status: statusToJson(STATUS.REVIEW),
         acceptanceCriteria: {
           sectionPresent: hasAC,
           hasBlankItems: hasBlankAC,
@@ -114,11 +128,11 @@ export async function cmdReport(taskId: string, options?: ReportOptions): Promis
           "If any AC is not satisfied, move task back to In Progress with feedback.",
         ],
         nextActions: [
-          { command: `taskforge done ${taskId}`, reason: "Mark task as Done after AC verification passes", safety: "safe", preferred: true },
-          { command: `taskforge start ${taskId}`, reason: "Return to In Progress if AC verification fails", safety: "safe", preferred: false },
-          { command: `taskforge block ${taskId} "AC verification failed: <details>" --category ambiguous_spec --blocked-by reviewer`, reason: "Block if AC are unclear or cannot be verified", safety: "safe", preferred: false },
+          { command: `taskforge done ${taskId}`, reason: "Mark task as Done after AC verification passes", safety: "safe" as const, preferred: true },
+          { command: `taskforge start ${taskId}`, reason: "Return to In Progress if AC verification fails", safety: "safe" as const, preferred: false },
+          { command: `taskforge block ${taskId} "AC verification failed: <details>" --category ambiguous_spec --blocked-by reviewer`, reason: "Block if AC are unclear or cannot be verified", safety: "safe" as const, preferred: false },
         ],
-      } as never));
+      }, null, 2));
       return;
     }
 
@@ -148,19 +162,29 @@ export async function cmdReport(taskId: string, options?: ReportOptions): Promis
     } else if (hasUncheckedAC) {
       logWarn("Warning: Some acceptance criteria are still unchecked.");
     }
+
+    const result = successResult({
+      command: "report",
+      guidance: `Task ${taskId} moved to Review for review.`,
+      nextCommands: getValidNextCommands("report", "success"),
+      duration: Date.now() - startTime,
+    });
+    process.stdout.write(renderResultMarkdown(result) + "\n");
     return;
   }
 
-  if (options?.json) {
-    printJson(jsonOk({
+  if (json) {
+    console.log(JSON.stringify({
+      ok: true,
       ...report,
+      status: statusToJson(report.status),
       nextActions: options?.complete
         ? []
         : [
-            { command: `taskforge report ${taskId} --complete`, reason: "Generate completion report and move to Review", safety: "safe", preferred: true },
-            { command: `taskforge gates`, reason: "Run gates before generating report", safety: "safe", preferred: false },
+            { command: `taskforge report ${taskId} --complete`, reason: "Generate completion report and move to Review", safety: "safe" as const, preferred: true },
+            { command: `taskforge gates`, reason: "Run gates before generating report", safety: "safe" as const, preferred: false },
           ],
-    } as never));
+    }, null, 2));
     return;
   }
 
@@ -175,4 +199,12 @@ export async function cmdReport(taskId: string, options?: ReportOptions): Promis
     logSub(`  taskforge report ${taskId} --complete  — Generate completion report and move to Review`);
     logSub(`  taskforge gates                       — Run gates before generating report`);
   }
+
+  const result = successResult({
+    command: "report",
+    guidance: `Report generated for ${taskId}`,
+    nextCommands: getValidNextCommands("report", "incomplete"),
+    duration: Date.now() - startTime,
+  });
+  process.stdout.write(renderResultMarkdown(result) + "\n");
 }
