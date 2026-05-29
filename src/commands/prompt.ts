@@ -2,17 +2,22 @@ import { loadTaskById } from "../core/task-store.js";
 import { getRepoRoot, getWorktreePath } from "../util/paths.js";
 import { logHeader, logSub, logDivider, logInfo } from "../util/logging.js";
 import { TaskNotFoundError } from "../core/errors.js";
+import { successResult } from "../core/result-builder.js";
+import { getValidNextCommands } from "../core/next-command-maps.js";
+import { renderResultMarkdown } from "../core/result-renderer.js";
 import fs from "node:fs";
 import path from "node:path";
 
 export async function cmdPrompt(taskId: string, options?: { json?: boolean }): Promise<void> {
+  const startTime = Date.now();
+  const json = options?.json ?? false;
   const repoRoot = getRepoRoot();
   const task = loadTaskById(taskId);
   if (!task) throw new TaskNotFoundError(taskId);
 
   const wtPath = getWorktreePath(repoRoot, taskId);
 
-  if (options?.json) {
+  if (json) {
     console.log(JSON.stringify({
       ok: true,
       task: { id: task.id, status: task.status, priority: task.priority, title: task.body.match(/^#\s+\S+:\s+(.+)$/m)?.[1]?.trim() ?? task.id },
@@ -43,6 +48,14 @@ export async function cmdPrompt(taskId: string, options?: { json?: boolean }): P
     logHeader("## Project Conventions (from AGENTS.md)");
     logInfo(fs.readFileSync(agentsPath, "utf-8").slice(0, 2000));
   }
+
+  const result = successResult({
+    command: "prompt",
+    guidance: "Task prompt displayed successfully.",
+    nextCommands: getValidNextCommands("prompt", "success"),
+    duration: Date.now() - startTime,
+  });
+  process.stdout.write(renderResultMarkdown(result) + "\n");
 }
 
 function extractAcceptanceCriteria(body: string): string[] {
