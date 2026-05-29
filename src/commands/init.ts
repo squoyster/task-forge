@@ -11,6 +11,9 @@ import { logSuccess, logInfo, logWarn } from "../util/logging.js";
 import { getAdapter } from "../agent-frameworks/registry.js";
 import { loadConfig } from "../core/config.js";
 import { InitAuditLog } from "../core/init-audit.js";
+import { successResult, failedResult } from "../core/result-builder.js";
+import { getValidNextCommands } from "../core/next-command-maps.js";
+import { renderResultMarkdown, renderResultJson } from "../core/result-renderer.js";
 
 interface FileSpec {
   path: string;
@@ -27,9 +30,11 @@ export interface InitOptions {
   guard?: boolean;
   dryRun?: boolean;
   repair?: boolean;
+  json?: boolean;
 }
 
 export async function cmdInit(options: InitOptions = {}): Promise<void> {
+  const startTime = Date.now();
   const repoRoot = getRepoRoot();
   const auditLog = new InitAuditLog(repoRoot);
   const config = loadConfig(repoRoot);
@@ -41,135 +46,166 @@ export async function cmdInit(options: InitOptions = {}): Promise<void> {
   const dryRun = options.dryRun ?? false;
   const taskforgeDir = getTaskforgeDir(repoRoot);
 
-  auditLog.record("init.start", "info", `framework=${agentFramework} policy=${policy} dryRun=${dryRun}`);
+  try {
+    auditLog.record("init.start", "info", `framework=${agentFramework} policy=${policy} dryRun=${dryRun}`);
 
-  // Create directories (skipped silently if present)
-  const dirs = [
-    taskforgeDir,
-    path.join(repoRoot, "specs"),
-    path.join(repoRoot, "docs", "decisions"),
-    path.join(repoRoot, "logs", "taskforge"),
-  ];
-  for (const dir of dirs) {
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
+    // Create directories (skipped silently if present)
+    const dirs = [
+      taskforgeDir,
+      path.join(repoRoot, "specs"),
+      path.join(repoRoot, "docs", "decisions"),
+      path.join(repoRoot, "logs", "taskforge"),
+    ];
+    for (const dir of dirs) {
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
     }
-  }
-  auditLog.record("init.dirs", "success");
+    auditLog.record("init.dirs", "success");
 
-  // Create / recreate missing files in main repo
-  const mainFiles: FileSpec[] = [
-    {
-      path: path.join(repoRoot, "TASKFORGE.md"),
-      label: "TASKFORGE.md",
-      content: TASKFORGE_TEMPLATE,
-    },
-  ];
+    // Create / recreate missing files in main repo
+    const mainFiles: FileSpec[] = [
+      {
+        path: path.join(repoRoot, "TASKFORGE.md"),
+        label: "TASKFORGE.md",
+        content: TASKFORGE_TEMPLATE,
+      },
+    ];
 
-  for (const file of mainFiles) {
-    if (!fs.existsSync(file.path)) {
-      fs.writeFileSync(file.path, file.content, "utf-8");
-      logSuccess(`Created ${file.label}`);
-      auditLog.record("init.file", "success", file.label);
-    } else {
-      logInfo(`${file.label} already exists`);
-      auditLog.record("init.file", "info", `${file.label} already exists`);
+    for (const file of mainFiles) {
+      if (!fs.existsSync(file.path)) {
+        fs.writeFileSync(file.path, file.content, "utf-8");
+        logSuccess(`Created ${file.label}`);
+        auditLog.record("init.file", "success", file.label);
+      } else {
+        logInfo(`${file.label} already exists`);
+        auditLog.record("init.file", "info", `${file.label} already exists`);
+      }
     }
-  }
 
-  // Create the task-state branch and worktree
-  logInfo("Setting up task-state branch...");
-  const stateDir = await ensureTaskStateBranch(repoRoot);
-  logSuccess(`Task-state worktree at: ${stateDir}`);
-  auditLog.record("init.task-state", "success", stateDir);
+    // Create the task-state branch and worktree
+    logInfo("Setting up task-state branch...");
+    const stateDir = await ensureTaskStateBranch(repoRoot);
+    logSuccess(`Task-state worktree at: ${stateDir}`);
+    auditLog.record("init.task-state", "success", stateDir);
 
-  // Seed task-state worktree with template files
-  const stateFiles: FileSpec[] = [
-    {
-      path: path.join(stateDir, "README.md"),
-      label: "task-state/README.md",
-      content: TASKS_README_TEMPLATE,
-    },
-    {
-      path: path.join(stateDir, "TEMPLATE.md"),
-      label: "task-state/TEMPLATE.md",
-      content: TASK_TEMPLATE,
-    },
-  ];
+    // Seed task-state worktree with template files
+    const stateFiles: FileSpec[] = [
+      {
+        path: path.join(stateDir, "README.md"),
+        label: "task-state/README.md",
+        content: TASKS_README_TEMPLATE,
+      },
+      {
+        path: path.join(stateDir, "TEMPLATE.md"),
+        label: "task-state/TEMPLATE.md",
+        content: TASK_TEMPLATE,
+      },
+    ];
 
-  let hasNewStateFiles = false;
-  for (const file of stateFiles) {
-    if (!fs.existsSync(file.path)) {
-      fs.writeFileSync(file.path, file.content, "utf-8");
-      logSuccess(`Created ${file.label}`);
-      hasNewStateFiles = true;
-      auditLog.record("init.state-file", "success", file.label);
-    } else {
-      logInfo(`${file.label} already exists`);
+    let hasNewStateFiles = false;
+    for (const file of stateFiles) {
+      if (!fs.existsSync(file.path)) {
+        fs.writeFileSync(file.path, file.content, "utf-8");
+        logSuccess(`Created ${file.label}`);
+        hasNewStateFiles = true;
+        auditLog.record("init.state-file", "success", file.label);
+      } else {
+        logInfo(`${file.label} already exists`);
+      }
     }
-  }
 
-  // Commit and push initial state
-  if (hasNewStateFiles) {
-    const { commitAndPushTaskState } = await import("../core/git.js");
-    await commitAndPushTaskState(repoRoot, "chore: initialize task state");
-  }
-
-  // Migrate any existing task files from tasks/ to task-state/
-  const tasksDir = path.join(repoRoot, "tasks");
-  if (fs.existsSync(tasksDir)) {
-    const migrated = migrateExistingTasks(tasksDir, stateDir);
-    if (migrated > 0) {
-      logSuccess(`Migrated ${migrated} task file(s) from tasks/ to task-state/`);
+    // Commit and push initial state
+    if (hasNewStateFiles) {
       const { commitAndPushTaskState } = await import("../core/git.js");
-      await commitAndPushTaskState(repoRoot, "chore: migrate task files from tasks/ to task-state branch");
+      await commitAndPushTaskState(repoRoot, "chore: initialize task state");
     }
-  }
 
-  // Create config (preserves existing)
-  const configPath = path.join(taskforgeDir, "config.json");
-  if (!fs.existsSync(configPath)) {
-    let defaultBranch = "main";
-    try {
-      const git = await import("simple-git");
-      const branchResult = await git.default(repoRoot).branch();
-      defaultBranch = branchResult.current;
-    } catch {
-      // Not a git repo or other error — use sensible default
+    // Migrate any existing task files from tasks/ to task-state/
+    const tasksDir = path.join(repoRoot, "tasks");
+    if (fs.existsSync(tasksDir)) {
+      const migrated = migrateExistingTasks(tasksDir, stateDir);
+      if (migrated > 0) {
+        logSuccess(`Migrated ${migrated} task file(s) from tasks/ to task-state/`);
+        const { commitAndPushTaskState } = await import("../core/git.js");
+        await commitAndPushTaskState(repoRoot, "chore: migrate task files from tasks/ to task-state branch");
+      }
     }
-    const config = {
-      project: { name: path.basename(repoRoot), defaultBranch },
-      tasks: { stateBranch: "task-state", stateDir: "../task-state", directory: "tasks", idPrefix: "TASK", template: "TEMPLATE.md" },
-      worktrees: { root: "../worktrees", branchPrefix: "agent" },
-      github: { enabled: false },
-      opencode: { enabled: true, command: "opencode" },
-      continuation: { autoContinue: true, maxTaskFixIterations: 3, allowDraftPr: true, allowCommit: true, allowPush: false },
-    };
-    fs.writeFileSync(configPath, JSON.stringify(config, null, 2), "utf-8");
-    logSuccess("Created .taskforge/config.json");
-    auditLog.record("init.config", "success", `branch=${defaultBranch}`);
-  } else {
-    logInfo(".taskforge/config.json already exists");
-  }
 
-  // Agent framework initialization
-  if (agentFramework !== "none") {
-    logInfo(`\nInitializing agent framework: ${agentFramework} (policy: ${policy})`);
-    await initAgentFramework(repoRoot, {
-      agentFramework,
-      policy,
-      installHooks,
-      audit,
-      guard,
-      dryRun,
+    // Create config (preserves existing)
+    const configPath = path.join(taskforgeDir, "config.json");
+    if (!fs.existsSync(configPath)) {
+      let defaultBranch = "main";
+      try {
+        const git = await import("simple-git");
+        const branchResult = await git.default(repoRoot).branch();
+        defaultBranch = branchResult.current;
+      } catch {
+        // Not a git repo or other error — use sensible default
+      }
+      const config = {
+        project: { name: path.basename(repoRoot), defaultBranch },
+        tasks: { stateBranch: "task-state", stateDir: "../task-state", directory: "tasks", idPrefix: "TASK", template: "TEMPLATE.md" },
+        worktrees: { root: "../worktrees", branchPrefix: "agent" },
+        github: { enabled: false },
+        opencode: { enabled: true, command: "opencode" },
+        continuation: { autoContinue: true, maxTaskFixIterations: 3, allowDraftPr: true, allowCommit: true, allowPush: false },
+      };
+      fs.writeFileSync(configPath, JSON.stringify(config, null, 2), "utf-8");
+      logSuccess("Created .taskforge/config.json");
+      auditLog.record("init.config", "success", `branch=${defaultBranch}`);
+    } else {
+      logInfo(".taskforge/config.json already exists");
+    }
+
+    // Agent framework initialization
+    if (agentFramework !== "none") {
+      logInfo(`\nInitializing agent framework: ${agentFramework} (policy: ${policy})`);
+      await initAgentFramework(repoRoot, {
+        agentFramework,
+        policy,
+        installHooks,
+        audit,
+        guard,
+        dryRun,
+      });
+      auditLog.record("init.agent-framework", "success", `${agentFramework}/${policy}`);
+    }
+
+    auditLog.complete();
+    logInfo(`Audit log: ${auditLog.getSummary()}`);
+    logSuccess("\nTaskForge initialized successfully.");
+    logInfo("Run 'taskforge next' to find the next task to work on.");
+
+    const result = successResult({
+      command: "init",
+      guidance: "TaskForge initialized successfully. Run 'taskforge next' to find the next task to work on.",
+      nextCommands: getValidNextCommands("init", "success"),
+      duration: Date.now() - startTime,
     });
-    auditLog.record("init.agent-framework", "success", `${agentFramework}/${policy}`);
-  }
 
-  auditLog.complete();
-  logInfo(`Audit log: ${auditLog.getSummary()}`);
-  logSuccess("\nTaskForge initialized successfully.");
-  logInfo("Run 'taskforge next' to find the next task to work on.");
+    if (options.json) {
+      process.stdout.write(renderResultJson(result) + "\n");
+    } else {
+      process.stdout.write(renderResultMarkdown(result) + "\n");
+    }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown initialization error";
+    const result = failedResult({
+      command: "init",
+      error: errorMessage,
+      code: "INIT_FAILED",
+      nextCommands: getValidNextCommands("init", "failed"),
+      duration: Date.now() - startTime,
+    });
+
+    if (options.json) {
+      process.stdout.write(renderResultJson(result) + "\n");
+    } else {
+      process.stdout.write(renderResultMarkdown(result) + "\n");
+    }
+    throw error;
+  }
 }
 
 async function initAgentFramework(

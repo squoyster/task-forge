@@ -2,6 +2,9 @@ import { loadAllTasks } from "../core/task-store.js";
 import { hasUnmetDependencies, getDependents } from "../core/scheduler.js";
 import { STATUS } from "../util/status-constants.js";
 import { logHeader, logSub, logDivider, logInfo } from "../util/logging.js";
+import { successResult, noopResult } from "../core/result-builder.js";
+import { getValidNextCommands } from "../core/next-command-maps.js";
+import { renderResultMarkdown, renderResultJson } from "../core/result-renderer.js";
 
 interface StatusRow {
   id: string;
@@ -106,21 +109,27 @@ function buildJson(tasks: ReturnType<typeof loadAllTasks>): StatusJson {
 }
 
 export async function cmdStatus(json?: boolean): Promise<void> {
+  const startTime = Date.now();
   const tasks = loadAllTasks();
 
-  if (json) {
-    const output = buildJson(tasks);
-    console.log(JSON.stringify(output, null, 2));
-    return;
-  }
-
   if (tasks.length === 0) {
-    logInfo("No task files found.");
+    const result = noopResult({
+      command: "status",
+      reason: "No task files found.",
+      nextCommands: getValidNextCommands("status", "success"),
+      duration: Date.now() - startTime,
+    });
+    if (json) {
+      const jsonOutput = JSON.parse(renderResultJson(result)) as Record<string, unknown>;
+      const statusData = buildJson(tasks);
+      Object.assign(jsonOutput, statusData);
+      console.log(JSON.stringify(jsonOutput, null, 2));
+    } else {
+      logInfo("No task files found.");
+      process.stdout.write(renderResultMarkdown(result) + "\n");
+    }
     return;
   }
-
-  logHeader("# TaskForge Status");
-  logDivider();
 
   const active = tasks.filter((t) => t.status === STATUS.IN_PROGRESS);
   const blocked = tasks.filter((t) => t.status === STATUS.BLOCKED);
@@ -139,59 +148,80 @@ export async function cmdStatus(json?: boolean): Promise<void> {
       hasUnmetDependencies(t, tasks).length > 0,
   );
 
-  printTable("Active Work", active.map((t) => {
-    const depInfo = makeDependencyInfo(t, tasks);
-    return { ...makeRow(t), extra: depInfo.extra, worktree: t.worktree, branch: t.branch };
-  }));
-  printTable(STATUS.BLOCKED, blocked.map(makeRow));
-  printTable("Dependency-Blocked", depBlocked.map((t) => {
-    const depInfo = makeDependencyInfo(t, tasks);
-    return { ...makeRow(t), extra: depInfo.extra ?? "Waiting on dependencies" };
-  }));
-  printTable("Ready Next", ready.filter((t) => !depBlocked.includes(t)).map(makeRow));
+  if (!json) {
+    logHeader("# TaskForge Status");
+    logDivider();
 
-  logHeader("## In Review");
-  logDivider();
-  if (review.length === 0 && verify.length === 0) {
-    logSub("None");
-  } else {
-    for (const t of review) {
-      const r = makeRow(t);
+    printTable("Active Work", active.map((t) => {
       const depInfo = makeDependencyInfo(t, tasks);
-      const extra = depInfo.extra ? ` [${depInfo.extra}]` : "";
-      logSub(`- **${r.id}**: ${r.title} (Priority: ${r.priority}) [Review]${extra}`);
-    }
-    for (const t of verify) {
-      const r = makeRow(t);
+      return { ...makeRow(t), extra: depInfo.extra, worktree: t.worktree, branch: t.branch };
+    }));
+    printTable(STATUS.BLOCKED, blocked.map(makeRow));
+    printTable("Dependency-Blocked", depBlocked.map((t) => {
       const depInfo = makeDependencyInfo(t, tasks);
-      const extra = depInfo.extra ? ` [${depInfo.extra}]` : "";
-      logSub(`- **${r.id}**: ${r.title} (Priority: ${r.priority}) [Verify]${extra}`);
+      return { ...makeRow(t), extra: depInfo.extra ?? "Waiting on dependencies" };
+    }));
+    printTable("Ready Next", ready.filter((t) => !depBlocked.includes(t)).map(makeRow));
+
+    logHeader("## In Review");
+    logDivider();
+    if (review.length === 0 && verify.length === 0) {
+      logSub("None");
+    } else {
+      for (const t of review) {
+        const r = makeRow(t);
+        const depInfo = makeDependencyInfo(t, tasks);
+        const extra = depInfo.extra ? ` [${depInfo.extra}]` : "";
+        logSub(`- **${r.id}**: ${r.title} (Priority: ${r.priority}) [Review]${extra}`);
+      }
+      for (const t of verify) {
+        const r = makeRow(t);
+        const depInfo = makeDependencyInfo(t, tasks);
+        const extra = depInfo.extra ? ` [${depInfo.extra}]` : "";
+        logSub(`- **${r.id}**: ${r.title} (Priority: ${r.priority}) [Verify]${extra}`);
+      }
     }
+    logDivider();
+
+    printTable(STATUS.INBOX, inbox.map(makeRow));
+    printTable(STATUS.NEEDS_SPEC, needsSpec.map(makeRow));
+    printTable("Completed", done.map(makeRow));
+
+    logHeader("## Human Action Needed");
+    logDivider();
+    if (humanNeeded.length === 0) {
+      logSub("None");
+    } else {
+      for (const t of humanNeeded) {
+        const r = makeRow(t);
+        logSub(`- **${r.id}**: ${r.title} (Priority: ${r.priority})`);
+      }
+    }
+    logDivider();
+
+    logHeader("## Summary");
+    logDivider();
+    logSub(`- **Total tasks:** ${tasks.length}`);
+    logSub(`- **Active:** ${active.length}`);
+    logSub(`- **Blocked:** ${blocked.length}`);
+    logSub(`- **Dependency-Blocked:** ${depBlocked.length}`);
+    logSub(`- **Ready:** ${ready.length - depBlocked.filter((t) => t.status === STATUS.READY).length}`);
+    logSub(`- **Done:** ${done.length}`);
   }
-  logDivider();
 
-  printTable(STATUS.INBOX, inbox.map(makeRow));
-  printTable(STATUS.NEEDS_SPEC, needsSpec.map(makeRow));
-  printTable("Completed", done.map(makeRow));
+  const result = successResult({
+    command: "status",
+    guidance: json ? undefined : "Status displayed above.",
+    nextCommands: getValidNextCommands("status", "success"),
+    duration: Date.now() - startTime,
+  });
 
-  logHeader("## Human Action Needed");
-  logDivider();
-  if (humanNeeded.length === 0) {
-    logSub("None");
+  if (json) {
+    const jsonOutput = JSON.parse(renderResultJson(result)) as Record<string, unknown>;
+    const statusData = buildJson(tasks);
+    Object.assign(jsonOutput, statusData);
+    console.log(JSON.stringify(jsonOutput, null, 2));
   } else {
-    for (const t of humanNeeded) {
-      const r = makeRow(t);
-      logSub(`- **${r.id}**: ${r.title} (Priority: ${r.priority})`);
-    }
+    process.stdout.write(renderResultMarkdown(result) + "\n");
   }
-  logDivider();
-
-  logHeader("## Summary");
-  logDivider();
-  logSub(`- **Total tasks:** ${tasks.length}`);
-  logSub(`- **Active:** ${active.length}`);
-  logSub(`- **Blocked:** ${blocked.length}`);
-  logSub(`- **Dependency-Blocked:** ${depBlocked.length}`);
-  logSub(`- **Ready:** ${ready.length - depBlocked.filter((t) => t.status === STATUS.READY).length}`);
-  logSub(`- **Done:** ${done.length}`);
 }

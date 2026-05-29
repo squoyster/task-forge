@@ -6,6 +6,9 @@ import { logHeader, logInfo, logSub, logDivider } from "../util/logging.js";
 import { TaskNotFoundError } from "../core/errors.js";
 import { STATUS } from "../util/status-constants.js";
 import type { ParsedTask } from "../core/task-store.js";
+import { successResult, noopResult } from "../core/result-builder.js";
+import { getValidNextCommands } from "../core/next-command-maps.js";
+import { renderResultMarkdown } from "../core/result-renderer.js";
 
 export interface InspectResult {
   taskId: string;
@@ -28,6 +31,7 @@ export async function cmdInspect(
   taskId: string,
   options: InspectOptions = {},
 ): Promise<InspectResult | null> {
+  const startTime = Date.now();
   const { json = false } = options;
   const repoRoot = getRepoRoot();
 
@@ -40,7 +44,14 @@ export async function cmdInspect(
         console.log(JSON.stringify({ ok: true, tasks: [] }, null, 2));
         return null;
       }
+      const result = noopResult({
+        command: "inspect",
+        reason: "No In Progress tasks to inspect.",
+        nextCommands: getValidNextCommands("inspect", "success"),
+        duration: Date.now() - startTime,
+      });
       logInfo("No In Progress tasks to inspect.");
+      process.stdout.write(renderResultMarkdown(result) + "\n");
       return null;
     }
 
@@ -54,11 +65,19 @@ export async function cmdInspect(
       return null;
     }
 
+    const result = successResult({
+      command: "inspect",
+      guidance: `Inspected ${results.length} in-progress task(s).`,
+      nextCommands: getValidNextCommands("inspect", "success"),
+      duration: Date.now() - startTime,
+    });
+
     logHeader("# Worktree Inspection");
     logDivider();
     for (const r of results) {
       printInspectResult(r);
     }
+    process.stdout.write(renderResultMarkdown(result) + "\n");
     return null;
   }
 
@@ -74,9 +93,17 @@ export async function cmdInspect(
     return result;
   }
 
+  const commandResult = successResult({
+    command: "inspect",
+    guidance: `Inspection complete for ${taskId}.`,
+    nextCommands: getValidNextCommands("inspect", "success"),
+    duration: Date.now() - startTime,
+  });
+
   logHeader("# Worktree Inspection");
   logDivider();
   printInspectResult(result);
+  process.stdout.write(renderResultMarkdown(commandResult) + "\n");
 
   return result;
 }

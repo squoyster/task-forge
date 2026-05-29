@@ -2,6 +2,9 @@ import { loadAllTasks } from "../core/task-store.js";
 import { normalizeStatus } from "../util/status-constants.js";
 import { logHeader, logSub, logDivider, logInfo } from "../util/logging.js";
 import type { ParsedTask } from "../core/task-store.js";
+import { successResult, noopResult } from "../core/result-builder.js";
+import { getValidNextCommands } from "../core/next-command-maps.js";
+import { renderResultMarkdown, renderResultJson } from "../core/result-renderer.js";
 
 export interface ListOptions {
   status?: string;
@@ -53,10 +56,12 @@ export function filterTasks(
 }
 
 export async function cmdList(options: ListOptions = {}): Promise<void> {
+  const startTime = Date.now();
+  const json = options.json ?? false;
   const tasks = loadAllTasks();
   const filtered = filterTasks(tasks, options);
 
-  if (options.json) {
+  if (json) {
     const entries: ListJsonEntry[] = filtered.map((t) => ({
       id: t.id,
       status: t.status,
@@ -72,8 +77,23 @@ export async function cmdList(options: ListOptions = {}): Promise<void> {
     return;
   }
 
+  const result = filtered.length === 0
+    ? noopResult({
+        command: "list",
+        reason: "No tasks matching criteria.",
+        nextCommands: getValidNextCommands("list", "success"),
+        duration: Date.now() - startTime,
+      })
+    : successResult({
+        command: "list",
+        guidance: `Found ${filtered.length} task(s).`,
+        nextCommands: getValidNextCommands("list", "success"),
+        duration: Date.now() - startTime,
+      });
+
   if (filtered.length === 0) {
     logInfo("No tasks matching criteria.");
+    process.stdout.write(renderResultMarkdown(result) + "\n");
     return;
   }
 
@@ -89,4 +109,5 @@ export async function cmdList(options: ListOptions = {}): Promise<void> {
   }
 
   logDivider();
+  process.stdout.write(renderResultMarkdown(result) + "\n");
 }

@@ -2,7 +2,9 @@ import { execa } from "execa";
 import { loadConfig } from "../core/config.js";
 import { logHeader, logDivider, logError, logSuccess, logInfo } from "../util/logging.js";
 import { getRepoRoot } from "../util/paths.js";
-import { printJson, jsonOk } from "../util/json-result.js";
+import { successResult, failedResult } from "../core/result-builder.js";
+import { getValidNextCommands } from "../core/next-command-maps.js";
+import { renderResultMarkdown, renderResultJson } from "../core/result-renderer.js";
 import { gatesStateMachine } from "../core/command-states.js";
 import { getDefaultGuidanceAdapter } from "../core/guidance-adapter.js";
 
@@ -66,18 +68,26 @@ export async function runGates(options?: GatesOptions): Promise<{ passed: boolea
 }
 
 export async function cmdGates(options?: GatesOptions): Promise<boolean> {
+  const startTime = Date.now();
   const { passed, results } = await runGates(options);
 
   const failedGates = results
     .filter((r) => !r.passed)
     .map((r) => ({ name: r.name, command: r.command }));
 
-  const result = gatesStateMachine({
+  const stateMachineResult = gatesStateMachine({
     totalGates: results.length,
     passedGates: results.filter((r) => r.passed).length,
     failedGates,
   });
-  getDefaultGuidanceAdapter().pushGuidance(result);
+  getDefaultGuidanceAdapter().pushGuidance(stateMachineResult);
+
+  const result = successResult({
+    command: "gates",
+    guidance: stateMachineResult.guidance,
+    nextCommands: passed ? getValidNextCommands("gates", "success") : getValidNextCommands("gates", "failed"),
+    duration: Date.now() - startTime,
+  });
 
   if (!options?.json) {
     logHeader("# TaskForge Gates");
@@ -90,19 +100,20 @@ export async function cmdGates(options?: GatesOptions): Promise<boolean> {
       }
     }
     logDivider();
-    logInfo(result.guidance);
+    logInfo(stateMachineResult.guidance);
+    process.stdout.write(renderResultMarkdown(result) + "\n");
   } else {
-    printJson(jsonOk({
-      gates: results.map((r) => ({
-        name: r.name,
-        command: r.command,
-        passed: r.passed,
-        duration: r.duration,
-      })),
-      allPassed: passed,
-      nextActions: [result.nextAction],
-      guidance: result.guidance,
+    const jsonOutput = JSON.parse(renderResultJson(result)) as Record<string, unknown>;
+    jsonOutput.gates = results.map((r) => ({
+      name: r.name,
+      command: r.command,
+      passed: r.passed,
+      duration: r.duration,
     }));
+    jsonOutput.allPassed = passed;
+    jsonOutput.nextActions = [stateMachineResult.nextAction];
+    jsonOutput.guidance = stateMachineResult.guidance;
+    console.log(JSON.stringify(jsonOutput, null, 2));
   }
 
   return passed;
