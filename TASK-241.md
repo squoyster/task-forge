@@ -87,6 +87,9 @@ Commands currently return ad-hoc output. Agents infer workflow from unstructured
 ## Agent Notes
 
 ### 2026-05-29T00:00:00Z System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-241
+
+### 2026-05-29T00:00:00Z System
 - Task claimed via taskforge start TASK-241
 - Session: 83283a1f28
 - Branch: agent/TASK-241-enforce-taskforgecommandresult-return-sc--94d1b8bb55
