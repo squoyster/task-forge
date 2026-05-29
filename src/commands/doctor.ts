@@ -11,6 +11,9 @@ import { validateJsonlFiles } from "../core/audit.js";
 import { getAgentFrameworkAdapter, type DoctorIssue, type DoctorRepair } from "../core/agent-framework-adapter.js";
 import path from "node:path";
 import fs from "node:fs";
+import { successResult, failedResult } from "../core/result-builder.js";
+import { getValidNextCommands } from "../core/next-command-maps.js";
+import { renderResultMarkdown } from "../core/result-renderer.js";
 
 export async function cmdDoctor(options?: { json?: boolean; fix?: boolean }): Promise<void> {
   const repoRoot = getRepoRoot();
@@ -169,6 +172,10 @@ export async function cmdDoctor(options?: { json?: boolean; fix?: boolean }): Pr
   }
 
   // Output
+  const errCount = issues.filter((i) => i.severity === "error").length;
+  const warnCount = issues.filter((i) => i.severity === "warn").length;
+  const hasErrors = errCount > 0;
+
   if (options?.json) {
     console.log(JSON.stringify({
       ok: issues.filter((i) => i.severity === "error").length === 0,
@@ -190,6 +197,21 @@ export async function cmdDoctor(options?: { json?: boolean; fix?: boolean }): Pr
     return;
   }
 
+  const result = hasErrors
+    ? failedResult({
+        command: "doctor",
+        error: `Doctor found ${errCount} error(s) and ${warnCount} warning(s).`,
+        code: "DOCTOR_ISSUES_FOUND",
+        nextCommands: getValidNextCommands("doctor", "failed"),
+        duration: 0,
+      })
+    : successResult({
+        command: "doctor",
+        guidance: `Doctor passed: ${ok.length} checks ok, ${warnCount} warning(s).`,
+        nextCommands: getValidNextCommands("doctor", "success"),
+        duration: 0,
+      });
+
   logHeader("# TaskForge Doctor");
   logDivider();
   for (const o of ok) logSuccess(`✓ ${o}`);
@@ -207,7 +229,6 @@ export async function cmdDoctor(options?: { json?: boolean; fix?: boolean }): Pr
     }
   }
   logDivider();
-  const errCount = issues.filter((i) => i.severity === "error").length;
-  const warnCount = issues.filter((i) => i.severity === "warn").length;
   logInfo(`Tasks: ${tasks.length} total | Errors: ${errCount} | Warnings: ${warnCount} | Sweepable: ${sweepable} | Repairs: ${repairs.length}`);
+  process.stdout.write(renderResultMarkdown(result) + "\n");
 }
