@@ -1,12 +1,13 @@
 import { generateDepsPlan } from "./plan.js";
 import { logHeader, logSub, logDivider } from "../../util/logging.js";
+import { formatTimestampMarkdown } from "../../util/timestamp.js";
 
 export async function cmdDepsSummary(): Promise<void> {
   const plan = await generateDepsPlan();
 
   logHeader(`# Dependency Steward Summary`);
   logDivider();
-  logSub(`Generated: ${new Date().toISOString().replace("T", " ").slice(0, 19)}`);
+  logSub(`Generated: ${formatTimestampMarkdown(new Date())}`);
   logDivider();
 
   // Critical / High

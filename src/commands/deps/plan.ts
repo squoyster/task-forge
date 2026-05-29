@@ -4,6 +4,7 @@ import { checkDeprecated, type DeprecatedPackage } from "./deprecated.js";
 import { loadConfig } from "../../core/config.js";
 import { getRepoRoot } from "../../util/paths.js";
 import { logInfo } from "../../util/logging.js";
+import { formatTimestampMarkdown } from "../../util/timestamp.js";
 
 export interface DepsPlan {
   critical: AuditFinding[];
@@ -55,7 +56,7 @@ export function formatPlan(plan: DepsPlan): string {
 
   lines.push("# Dependency Health Plan");
   lines.push("");
-  lines.push(`Generated: ${new Date().toISOString().replace("T", " ").slice(0, 19)}`);
+  lines.push(`Generated: ${formatTimestampMarkdown(new Date())}`);
   lines.push("");
 
   // Critical

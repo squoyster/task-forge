@@ -2,6 +2,7 @@ import { loadAllTasks } from "../core/task-store.js";
 import { selectNextTask } from "../core/scheduler.js";
 import { STATUS } from "../util/status-constants.js";
 import { logHeader, logSub, logDivider, logInfo } from "../util/logging.js";
+import { formatTimestampJson, formatTimestampMarkdown } from "../util/timestamp.js";
 
 interface SummaryJsonTask {
   id: string;
@@ -76,7 +77,7 @@ function buildJson(tasks: ReturnType<typeof loadAllTasks>): SummaryJson {
   }
 
   return {
-    generated: now.toISOString().replace("T", " ").slice(0, 19),
+    generated: formatTimestampJson(now),
     total: tasks.length,
     byStatus,
     nextAction,
@@ -101,7 +102,7 @@ export async function cmdSummary(json?: boolean): Promise<void> {
   const now = new Date();
   logHeader("# TaskForge Summary");
   logDivider();
-  logSub(`Generated: ${now.toISOString().replace("T", " ").slice(0, 19)}`);
+  logSub(`Generated: ${formatTimestampMarkdown(now)}`);
   logDivider();
 
   const active = tasks.filter((t) => t.status === STATUS.IN_PROGRESS);

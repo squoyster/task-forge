@@ -1,0 +1,58 @@
+{
+  "agents": [
+    {
+      "session_id": "d5aa02494e",
+      "agent_id": "alexs-Mac-mini.local:27979",
+      "last_heartbeat": "2026-05-28T14:36:01.090Z",
+      "current_task": "TASK-233",
+      "status": "active",
+      "worktree_path": "/Volumes/Transcend/devel/worktrees/task-forge/TASK-233",
+      "registered_at": "2026-05-28T14:36:01.090Z"
+    },
+    {
+      "session_id": "94d1b8bb55",
+      "agent_id": "alexs-Mac-mini.local:42601",
+      "last_heartbeat": "2026-05-28T15:05:59.277Z",
+      "current_task": "TASK-241",
+      "status": "active",
+      "worktree_path": "/Volumes/Transcend/devel/worktrees/task-forge/TASK-241",
+      "registered_at": "2026-05-28T15:05:59.277Z"
+    },
+    {
+      "session_id": "6141b31587",
+      "agent_id": "alexs-Mac-mini.local:53593",
+      "last_heartbeat": "2026-05-28T15:21:35.103Z",
+      "current_task": "TASK-241",
+      "status": "active",
+      "worktree_path": "/Volumes/Transcend/devel/worktrees/task-forge/TASK-241",
+      "registered_at": "2026-05-28T15:21:35.103Z"
+    },
+    {
+      "session_id": "a34e9e4c25",
+      "agent_id": "alexs-Mac-mini.local:60270",
+      "last_heartbeat": "2026-05-28T16:16:55.605Z",
+      "current_task": "TASK-244",
+      "status": "active",
+      "worktree_path": "/Volumes/Transcend/devel/worktrees/task-forge/TASK-244",
+      "registered_at": "2026-05-28T16:16:55.605Z"
+    },
+    {
+      "session_id": "14bee24522",
+      "agent_id": "alexs-Mac-mini.local:61317",
+      "last_heartbeat": "2026-05-28T16:21:51.356Z",
+      "current_task": "TASK-245",
+      "status": "active",
+      "worktree_path": "/Volumes/Transcend/devel/worktrees/task-forge/TASK-245",
+      "registered_at": "2026-05-28T16:21:51.356Z"
+    }
+  ],
+  "max_concurrent_agents": 5,
+  "agent_history": [
+    "alexs-Mac-mini.local:27979",
+    "alexs-Mac-mini.local:42601",
+    "alexs-Mac-mini.local:53593",
+    "alexs-Mac-mini.local:60270",
+    "alexs-Mac-mini.local:61317"
+  ],
+  "last_updated": "2026-05-28T16:21:51.356Z"
+}

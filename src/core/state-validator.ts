@@ -1,5 +1,7 @@
 import type { ParsedTask } from "./task-store.js";
 import { STATUS } from "../util/status-constants.js";
+import { TaskForgeCommandResultSchema, STANDARD_PROHIBITED_ACTIONS } from "./command-result.js";
+import { NEXT_COMMAND_MAPS } from "./next-command-maps.js";
 
 export type ValidationSeverity = "error" | "warning";
 
@@ -98,9 +100,96 @@ export function validateTaskState(tasks: ParsedTask[]): StateValidationResult {
     }
   }
 
+  // Command return schema validation
+  const schemaResult = validateCommandReturnSchema();
+  errors.push(...schemaResult.errors);
+  warnings.push(...schemaResult.warnings);
+
   return {
     ok: errors.length === 0,
     errors,
     warnings,
   };
+}
+
+export function validateCommandReturnSchema(): { errors: StateValidationIssue[]; warnings: StateValidationIssue[] } {
+  const errors: StateValidationIssue[] = [];
+  const warnings: StateValidationIssue[] = [];
+
+  // Check that standard prohibited actions exist
+  if (STANDARD_PROHIBITED_ACTIONS.length !== 5) {
+    errors.push({
+      severity: "error",
+      code: "INVALID_PROHIBITED_ACTIONS",
+      message: `Expected 5 standard prohibited actions, found ${STANDARD_PROHIBITED_ACTIONS.length}`,
+      suggestedFix: "Ensure STANDARD_PROHIBITED_ACTIONS has exactly 5 entries",
+    });
+  }
+
+  // Check that prohibited actions don't include --force for normal agents
+  const forceActions = STANDARD_PROHIBITED_ACTIONS.filter((a) => a.action.includes("--force"));
+  if (forceActions.length > 0) {
+    errors.push({
+      severity: "error",
+      code: "FORCE_IN_PROHIBITED",
+      message: "Standard prohibited actions should not include --force references",
+      suggestedFix: "Remove --force from standard prohibited actions",
+    });
+  }
+
+  // Check that next command maps exist for major commands
+  const majorCommands = ["init", "next", "start", "done", "claim", "release", "heartbeat", "checkpoint", "submit", "pr"];
+  for (const cmd of majorCommands) {
+    if (!NEXT_COMMAND_MAPS[cmd]) {
+      errors.push({
+        severity: "error",
+        code: "MISSING_NEXT_COMMAND_MAP",
+        message: `No validNextCommands map defined for command: ${cmd}`,
+        suggestedFix: `Add next command map for ${cmd} in next-command-maps.ts`,
+      });
+    }
+  }
+
+  // Check that no normal-agent next commands include --force
+  for (const [cmd, outcomes] of Object.entries(NEXT_COMMAND_MAPS)) {
+    for (const [outcome, commands] of Object.entries(outcomes)) {
+      for (const nextCmd of commands) {
+        if (nextCmd.command.includes("--force") && nextCmd.allowedFor !== "human" && nextCmd.allowedFor !== "doctor") {
+          errors.push({
+            severity: "error",
+            code: "FORCE_IN_NEXT_COMMANDS",
+            message: `Command ${cmd} (${outcome}) includes --force in validNextCommands for normal agents: ${nextCmd.command}`,
+            suggestedFix: "Remove --force from next commands or set allowedFor to human/doctor",
+          });
+        }
+      }
+    }
+  }
+
+  // Validate a sample result against the schema
+  const sampleResult = {
+    ok: true,
+    status: "success",
+    metadata: { command: "test", timestamp: new Date().toISOString() },
+    context: {},
+    agentPrompt: { role: "implementer" },
+    validNextCommands: [],
+    todoMerge: { required: false, items: [] },
+    contextCleanup: { required: false, actions: [] },
+    prohibitedActions: STANDARD_PROHIBITED_ACTIONS,
+    recovery: { required: false, steps: [] },
+    diagnostics: [],
+  };
+
+  const parsed = TaskForgeCommandResultSchema.safeParse(sampleResult);
+  if (!parsed.success) {
+    errors.push({
+      severity: "error",
+      code: "INVALID_COMMAND_RESULT_SCHEMA",
+      message: "TaskForgeCommandResult schema validation failed for sample result",
+      suggestedFix: "Fix the schema definition in command-result.ts",
+    });
+  }
+
+  return { errors, warnings };
 }

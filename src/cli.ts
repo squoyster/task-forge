@@ -46,7 +46,7 @@ const program = new Command();
 program
   .name("taskforge")
   .description("TaskForge Autonomous Coding Board CLI")
-  .version("0.1.0");
+  .version("0.3.0");
 
 program
   .command("init")

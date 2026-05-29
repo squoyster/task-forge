@@ -8,6 +8,7 @@ import path from "node:path";
 import { execSync } from "node:child_process";
 import { STATUS } from "../util/status-constants.js";
 import { readSessionState } from "../core/session-state.js";
+import { formatTimestampMarkdown, parseTimestamp } from "../util/timestamp.js";
 
 interface RecoveryResult {
   taskId: string;
@@ -235,7 +236,14 @@ export async function cmdResume(taskId?: string, options?: { json?: boolean }): 
   logSub(`**Worktree:** ${recovery.worktreePath}`);
   logSub(`**Branch:** ${recovery.branch || task.branch || "none"}`);
   logSub(`**Session ID:** ${recovery.sessionId || "unknown"}`);
+<<<<<<< Updated upstream
   logSub(`**Claimed At:** ${recovery.claimedAt || "unknown"}`);
+=======
+  const claimedAtDisplay = recovery.claimedAt
+    ? (formatTimestampMarkdown(parseTimestamp(recovery.claimedAt)) || recovery.claimedAt)
+    : "unknown";
+  logSub(`**Claimed At:** ${claimedAtDisplay}`);
+>>>>>>> Stashed changes
   logDivider();
   logHeader("### Agent Instructions");
   logDivider();

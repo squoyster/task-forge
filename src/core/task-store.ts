@@ -3,6 +3,7 @@ import fs from "node:fs";
 import { TaskSchema, type Task, STATUS } from "./task.js";
 import { getTaskFilePath, getTaskStateDir, getRepoRoot } from "../util/paths.js";
 import { logWarn } from "../util/logging.js";
+import { formatAgentNoteTimestamp } from "../util/timestamp.js";
 
 export interface ParsedTask extends Task {
   body: string;
@@ -168,7 +169,19 @@ export function appendAgentNote(
   const task = parseTaskFile(filePath);
   if (!task) return;
 
-  const noteBlock = `\n### ${date} ${role}\n${notes.map((n) => `- ${n}`).join("\n")}`;
+  // Ensure timestamp has timezone indicator
+  // If date is just a date (e.g., "2026-05-21"), append time with Z
+  // If date already has time (contains "T"), ensure it has Z
+  let timestamp: string;
+  if (date.includes("T")) {
+    // Already has time component - ensure Z suffix
+    timestamp = date.endsWith("Z") ? date : date + "Z";
+  } else {
+    // Date-only format - append time with Z for consistency
+    timestamp = `${date}T00:00:00Z`;
+  }
+
+  const noteBlock = `\n### ${timestamp} ${role}\n${notes.map((n) => `- ${n}`).join("\n")}`;
 
   // Find or create Agent Notes section
   if (task.body.includes("## Agent Notes")) {

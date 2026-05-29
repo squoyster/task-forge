@@ -9,12 +9,16 @@ import { getDefaultGuidanceAdapter } from "../core/guidance-adapter.js";
 import { logInfo, logHeader, logSub, logDivider, logWarn } from "../util/logging.js";
 import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
 import { getRepoRoot } from "../util/paths.js";
+import { doctorRequiredResult, blockedResult, successResult, noopResult } from "../core/result-builder.js";
+import { getValidNextCommands } from "../core/next-command-maps.js";
+import { renderResultMarkdown, renderResultJson } from "../core/result-renderer.js";
 
 export interface NextOptions {
   json?: boolean;
 }
 
 export async function cmdNext(options?: NextOptions): Promise<void> {
+  const startTime = Date.now();
   // Pull latest task-state before reading
   await pullTaskState();
 
@@ -28,68 +32,50 @@ export async function cmdNext(options?: NextOptions): Promise<void> {
   // Doctor-lock: refuse if system is in recovery
   const lock = isDoctorLocked();
   if (lock.locked) {
-    const result = nextStateMachine({
-      hasTasks: tasks.length > 0,
-      hasActionableTask: false,
-      hasOutstandingTask: false,
-      doctorLocked: true,
-      doctorReason: lock.reason,
-      uncommittedWorktrees: [],
+    const result = doctorRequiredResult({
+      command: "next",
+      reason: lock.reason ?? "System is in recovery mode",
+      nextCommands: getValidNextCommands("next", "failed"),
+      duration: Date.now() - startTime,
     });
-    getDefaultGuidanceAdapter().pushGuidance(result);
     if (options?.json) {
-      printJson(jsonError(
-        result.guidance,
-        result.errorCode ?? "DOCTOR_LOCKED",
-        { nextActions: [result.nextAction], guidance: result.guidance },
-      ));
+      process.stdout.write(renderResultJson(result) + "\n");
       return;
     }
-    logWarn(result.guidance);
+    process.stdout.write(renderResultMarkdown(result) + "\n");
     return;
   }
 
   // Hard guardrail: check outstanding session tasks
   const outstandingTask = await checkOutstandingSessionTasks(tasks, repoRoot);
   if (outstandingTask) {
-    const result = nextStateMachine({
-      hasTasks: tasks.length > 0,
-      hasActionableTask: false,
-      hasOutstandingTask: true,
-      outstandingTaskId: outstandingTask,
-      doctorLocked: false,
-      uncommittedWorktrees: [],
+    const result = blockedResult({
+      command: "next",
+      reason: `You have an outstanding task: ${outstandingTask}. Complete or release it before starting new work.`,
+      nextCommands: getValidNextCommands("next", "failed"),
+      duration: Date.now() - startTime,
     });
-    getDefaultGuidanceAdapter().pushGuidance(result);
     if (options?.json) {
-      printJson(jsonError(
-        result.guidance,
-        result.errorCode ?? "OUTSTANDING_TASK",
-        { nextActions: [result.nextAction], guidance: result.guidance },
-      ));
+      process.stdout.write(renderResultJson(result) + "\n");
       return;
     }
-    logWarn(result.guidance);
+    process.stdout.write(renderResultMarkdown(result) + "\n");
     return;
   }
 
   if (tasks.length === 0) {
-    const result = nextStateMachine({
-      hasTasks: false,
-      hasActionableTask: false,
-      hasOutstandingTask: false,
-      doctorLocked: false,
-      uncommittedWorktrees: [],
+    const result = noopResult({
+      command: "next",
+      reason: "No task files found.",
+      nextCommands: getValidNextCommands("next", "noop"),
+      duration: Date.now() - startTime,
     });
-    getDefaultGuidanceAdapter().pushGuidance(result);
     if (options?.json) {
-      printJson(jsonError("No task files found.", "NO_TASKS", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance,
-      }));
+      process.stdout.write(renderResultJson(result) + "\n");
       return;
     }
     logInfo("No task files found.");
+    process.stdout.write(renderResultMarkdown(result) + "\n");
     return;
   }
 
@@ -98,86 +84,64 @@ export async function cmdNext(options?: NextOptions): Promise<void> {
 
   if (uncommittedWorktrees.length > 0) {
     const dirty = uncommittedWorktrees[0];
-    const result = nextStateMachine({
-      hasTasks: true,
-      hasActionableTask: false,
-      hasOutstandingTask: false,
-      doctorLocked: false,
-      uncommittedWorktrees: [{
-        taskId: dirty.taskId,
-        status: dirty.status,
-        dirtyFiles: dirty.dirtyFiles,
-      }],
+    const result = blockedResult({
+      command: "next",
+      reason: `Task ${dirty.taskId} has uncommitted changes. Commit or complete it first.`,
+      nextCommands: getValidNextCommands("next", "failed"),
+      duration: Date.now() - startTime,
     });
-    getDefaultGuidanceAdapter().pushGuidance(result);
     if (options?.json) {
-      printJson(jsonError(
-        result.guidance,
-        result.errorCode ?? "UNCOMMITTED_CHANGES",
-        { nextActions: [result.nextAction], guidance: result.guidance },
-      ));
+      process.stdout.write(renderResultJson(result) + "\n");
       return;
     }
-    logWarn(result.guidance);
+    process.stdout.write(renderResultMarkdown(result) + "\n");
     return;
   }
 
   const next = selectNextTask(tasks);
 
   if (!next) {
-    const result = nextStateMachine({
-      hasTasks: true,
-      hasActionableTask: false,
-      hasOutstandingTask: false,
-      doctorLocked: false,
-      uncommittedWorktrees: [],
+    const result = noopResult({
+      command: "next",
+      reason: "No actionable tasks found.",
+      nextCommands: getValidNextCommands("next", "noop"),
+      duration: Date.now() - startTime,
     });
-    getDefaultGuidanceAdapter().pushGuidance(result);
     if (options?.json) {
-      printJson(jsonError("No actionable tasks found.", "NO_ACTIONABLE_TASKS", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance,
-      }));
+      process.stdout.write(renderResultJson(result) + "\n");
       return;
     }
     logInfo("No actionable tasks found.");
     logDivider();
     logInfo("All tasks are in Inbox, Needs Spec, Blocked, Done, Rejected, Deferred, or blocked by dependencies.");
+    process.stdout.write(renderResultMarkdown(result) + "\n");
     return;
   }
 
   // Happy path — task selected
   const unmet = hasUnmetDependencies(next, tasks);
-  const result = nextStateMachine({
-    hasTasks: true,
-    hasActionableTask: true,
-    hasOutstandingTask: false,
-    doctorLocked: false,
-    uncommittedWorktrees: [],
-    selectedTaskId: next.id,
-    selectedTaskDependsOn: next.dependsOn,
-    unmetDependencies: unmet.length > 0 ? unmet : undefined,
+  const result = successResult({
+    command: "next",
+    taskId: next.id,
+    guidance: `Next task: ${next.id}. Run 'taskforge start ${next.id}' to begin.`,
+    nextCommands: getValidNextCommands("next", "success"),
+    duration: Date.now() - startTime,
   });
-  getDefaultGuidanceAdapter().pushGuidance(result);
 
   if (options?.json) {
-    const jsonResult: Record<string, unknown> = {
-      ok: true,
-      task: buildJsonTask(next),
-      score: scoreTask(next),
-      nextActions: [result.nextAction],
-      guidance: result.guidance,
-    };
+    const jsonOutput = JSON.parse(renderResultJson(result)) as Record<string, unknown>;
+    jsonOutput.task = buildJsonTask(next);
+    jsonOutput.score = scoreTask(next);
     if (unmet.length > 0) {
-      jsonResult.waitingOn = unmet;
+      jsonOutput.waitingOn = unmet;
     }
     if (next.worktree || next.branch) {
-      jsonResult.workspace = {
+      jsonOutput.workspace = {
         worktree: next.worktree,
         branch: next.branch,
       };
     }
-    printJson(jsonResult as unknown as ReturnType<typeof jsonOk>);
+    process.stdout.write(JSON.stringify(jsonOutput, null, 2) + "\n");
     return;
   }
 
@@ -217,5 +181,5 @@ export async function cmdNext(options?: NextOptions): Promise<void> {
   }
 
   logDivider();
-  logInfo(result.guidance);
+  process.stdout.write(renderResultMarkdown(result) + "\n");
 }
