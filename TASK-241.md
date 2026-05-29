@@ -1,7 +1,7 @@
 ---
 id: TASK-241
 type: Task
-status: In Progress
+status: Review
 priority: P0
 agentRole: Implementer
 riskLevel: Low
@@ -85,6 +85,13 @@ Commands currently return ad-hoc output. Agents infer workflow from unstructured
 - [x] Documentation of return contract in docs/architecture/ — `docs/architecture/command-return-contract.md`: Full documentation of schema, builders, renderers, invariants, and migration guide
 
 ## Agent Notes
+
+### 2026-05-29T00:00:00Z System
+- Report generated — task moved to Review
+- Changed files: none
+- Commits: none
+- AC section: present
+- AC has unchecked items
 
 ### 2026-05-29T00:00:00Z System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-241
