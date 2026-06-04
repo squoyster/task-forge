@@ -8,3 +8,17 @@ worktrees/
 session-*.md
 .taskforge-session.json
 logs/
+
+# Local OpenCode/runtime state
+.opencode/node_modules/
+.opencode/log/
+.opencode/cache/
+.opencode/tmp/
+
+# Accidentally nested mounted/relocated paths
+Volumes/
+**/node_modules/
+
+# Large generated/session transcripts
+session-ses_*.md
+specs/session-ses_*.md

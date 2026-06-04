@@ -1,0 +1,37 @@
+TFSPEC.v=1
+
+SPEC control-plane:
+  path=specs/taskforge-control-plane-closure-spec.md
+  use=control-plane-completion,closure-criteria,remaining-gaps
+
+SPEC command-output:
+  path=specs/task-forge-prescriptive-command-output-task-pack.md
+  use=command-output-shape,task-pack-rules
+
+SPEC command-return:
+  path=specs/taskforge-command-return-template.md
+  use=return-contract,status-fields,error-format
+
+SPEC roadmap:
+  path=specs/task-forge-rationalization-roadmap.md
+  use=cleanup-order,architecture-direction
+
+SPEC agent-defs:
+  path=specs/taskforge-agent-definitions-gap-analysis-tasks.md
+  use=agent-roles,definition-gaps
+
+SPEC agent-policy:
+  path=specs/taskforge-agent-policy-tasks.md
+  use=agent-policy,permissions,behavior-rules
+
+SPEC deploy:
+  path=specs/taskforge-container-deployment-gap-analysis-tasks.md
+  use=container,deployment,runtime-gaps
+
+SPEC state-machine:
+  path=docs/architecture/command-state-machine-and-invariants.md
+  use=state-machine,invariants,transition-rules
+
+SPEC return-contract:
+  path=docs/architecture/command-return-contract.md
+  use=command-return-api

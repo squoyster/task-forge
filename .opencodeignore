@@ -1,0 +1,7 @@
+.git/
+node_modules/
+**/node_modules/
+.opencode/node_modules/
+Volumes/
+session-ses_*.md
+specs/session-ses_*.md

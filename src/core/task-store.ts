@@ -3,7 +3,6 @@ import fs from "node:fs";
 import { TaskSchema, type Task, STATUS } from "./task.js";
 import { getTaskFilePath, getTaskStateDir, getRepoRoot } from "../util/paths.js";
 import { logWarn } from "../util/logging.js";
-import { formatAgentNoteTimestamp } from "../util/timestamp.js";
 
 export interface ParsedTask extends Task {
   body: string;

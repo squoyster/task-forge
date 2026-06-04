@@ -1,0 +1,19 @@
+CMD:review
+OBJ:task-state-machine
+FILES:
+  src/control/TaskService.ts
+  src/control/TaskStore.ts
+CHECK:
+  atomic-claim
+  owner-only-start
+  owner-only-complete
+  expired-lease-recovery
+  retry-idempotency
+OUT:
+  bugs
+  risky-races
+  minimal-patch-plan
+LIMIT:
+  no-large-md
+  no-archive
+  max-output=800

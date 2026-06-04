@@ -249,7 +249,7 @@ describe("appendAgentNote", () => {
     const fp = makeTaskFile("TASK-400", { body: "# TASK-400: Test\n\n## Agent Notes\n\n" });
     appendAgentNote(fp, "2026-05-21", "Agent", ["Did something", "Ran tests"]);
     const reread = parseTaskFile(fp);
-    expect(reread!.body).toContain("### 2026-05-21 Agent");
+    expect(reread!.body).toContain("### 2026-05-21T00:00:00Z Agent");
     expect(reread!.body).toContain("- Did something");
     expect(reread!.body).toContain("- Ran tests");
   });
@@ -259,7 +259,7 @@ describe("appendAgentNote", () => {
     appendAgentNote(fp, "2026-05-21", "System", ["Started task"]);
     const reread = parseTaskFile(fp);
     expect(reread!.body).toContain("## Agent Notes");
-    expect(reread!.body).toContain("### 2026-05-21 System");
+    expect(reread!.body).toContain("### 2026-05-21T00:00:00Z System");
     expect(reread!.body).toContain("- Started task");
   });
 
