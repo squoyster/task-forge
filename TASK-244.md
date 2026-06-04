@@ -68,6 +68,9 @@ All commands in src/commands/:
 ## Agent Notes
 
 ### 2026-06-04T00:00:00Z System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-244
+
+### 2026-06-04T00:00:00Z System
 - Task claimed via taskforge start TASK-244
 - Session: cfbcd1d849
 - Branch: agent/TASK-244-wire-all-35-cli-commands-to-taskforgecom--a34e9e4c25
