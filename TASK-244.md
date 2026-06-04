@@ -1,12 +1,14 @@
 ---
 id: TASK-244
 type: Task
-status: Ready
+status: In Progress
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-context_hash: 021bc40dc10bc3c5
+assignee: cfbcd1d849
+claimed_at: '2026-06-04 05:12:42'
+context_hash: 87da9585c90be1d7
 branch: agent/TASK-244-wire-all-35-cli-commands-to-taskforgecom--a34e9e4c25
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-244
 ---
@@ -64,6 +66,11 @@ All commands in src/commands/:
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-04T00:00:00Z System
+- Task claimed via taskforge start TASK-244
+- Session: cfbcd1d849
+- Branch: agent/TASK-244-wire-all-35-cli-commands-to-taskforgecom--a34e9e4c25
 
 ### 2026-06-04T00:00:00Z System
 - Task swept by Sweeper Protocol — reset to Ready. Claim by "5aa5bf71aa" was 145.9h old (threshold: 4h).
