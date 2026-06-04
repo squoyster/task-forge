@@ -1,13 +1,11 @@
 ---
 id: TASK-244
 type: Task
-status: In Progress
+status: Ready
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 5aa5bf71aa
-claimed_at: '2026-05-29 03:19:17'
 context_hash: 021bc40dc10bc3c5
 branch: agent/TASK-244-wire-all-35-cli-commands-to-taskforgecom--a34e9e4c25
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-244
@@ -67,6 +65,9 @@ All commands in src/commands/:
 
 ## Agent Notes
 
+### 2026-06-04T00:00:00Z System
+- Task swept by Sweeper Protocol — reset to Ready. Claim by "5aa5bf71aa" was 145.9h old (threshold: 4h).
+
 ### 2026-05-29T00:00:00Z System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-244
 
@@ -85,3 +86,19 @@ All commands in src/commands/:
 - Task claimed via taskforge start TASK-244
 - Session: a34e9e4c25
 - Branch: agent/TASK-244-wire-all-35-cli-commands-to-taskforgecom--a34e9e4c25
+
+### 2026-05-29 implementer
+- Migrated 9 of 28 commands to result-builder system: status, gates, init, summary, block, next, list, inspect, validate-state
+- All 552 tests passing
+- Fixed issues with JSON output format and markdown logging in conditional blocks
+- Gates command now returns successResult even when gates fail (ok: true, allPassed: false)
+- Summary and status commands merge data at top level (not nested) for JSON output
+- List command maintains backward compatibility with flat array JSON format
+
+### 2026-05-29 implementer (continue)
+- Migrated 11 of 28 commands: +doctor, +unlock (total: status, gates, init, summary, block, next, list, inspect, validate-state, doctor, unlock)
+- Doctor maintains exact JSON format with ok, issues, repairs, checks, counts fields
+- Unlock maintains JSON for all paths: not found, not claimed, needs force, force requires human, success
+- All 552 tests passing after each migration
+- Pushed 2 commits to branch: agent/TASK-244-wire-all-35-cli-commands-to-taskforgecom--a34e9e4c25
+- Remaining: 17 of 28 commands in src/commands/ + 11 in src/commands/deps/
