@@ -122,6 +122,27 @@ _Source: discovered during TASK-255..TASK-266 bulk task creation session_
 
 ## Agent Notes
 
+### 2026-06-08T00:00:00Z Implementer
+- ## Implementation Summary
+- 
+- Implemented taskforge update command.
+- 
+- ### Changes Made
+- 
+- 1. **New command** (`src/commands/update-task.ts`): `taskforge update <taskId>` supports --field/--value (priority, type, status, dependsOn, agentRole, riskLevel, humanInterventionRequired), --body (replace), --append-body (append), and --json output.
+- 
+- 2. **Field validation**: Priority P0-P3, type enum, status values, riskLevel, humanInterventionRequired boolean. Read-only fields (id, assignee, etc.) are rejected.
+- 
+- 3. **Transactional**: All mutations go through withTaskStateTransaction with audit notes.
+- 
+- 4. **CLI registered**: In cli.ts with help text.
+- 
+- 5. **Tests**: 12 tests covering all AC scenarios.
+- 
+- ### Verification
+- - Typecheck: passed
+- - Tests: 60 files, 745 tests, all passed
+
 ### 2026-06-08T00:00:00Z System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-267
 
