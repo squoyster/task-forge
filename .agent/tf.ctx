@@ -43,3 +43,11 @@ REVIEW:
 CTX:
   prefer=.agent/tf.ctx,.agent/spec.idx,changed-files,nearby-tests
   avoid=session-ses_*.md,specs/session-ses_*.md,docs/archive,.opencode/node_modules,Volumes,node_modules
+
+CTX_BUDGET:
+  soft_limit=40000
+  hard_limit=55000
+  action_at_soft_limit=emit compact state and avoid broad reads
+  action_at_hard_limit=stop; let OpenCode compact or restart
+  max_output_default=500
+  max_files_read_default=6
