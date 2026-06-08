@@ -10,6 +10,7 @@ assignee: aa5153ce41
 claimed_at: '2026-06-08 13:21:11'
 context_hash: 98789b0cbdd97405
 branch: agent/TASK-258-enforce-the-taskforge-mutation-boundary--aa5153ce41
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-258
 ---
 
 # TASK-258: ENFORCE THE TASKFORGE MUTATION BOUNDARY
@@ -23,6 +24,9 @@ Describe the desired outcome.
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-08T00:00:00Z System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-258
 
 ### 2026-06-08T00:00:00Z System
 - Task claimed via taskforge start TASK-258
