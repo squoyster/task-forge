@@ -32,3 +32,45 @@ For routine work, read only:
 4. directly relevant docs
 
 If a needed file is not in the index, use grep/glob narrowly and then update `.agent/index.overrides` or regenerate indexes.
+
+<!-- TASKFORGE:BEGIN managed-agent-policy -->
+## TaskForge Managed Policy (🔹 Managed)
+
+This repository is managed by TaskForge. All agents operating in this repository must follow these policies.
+
+### Normal Agent Rules
+
+- Use TaskForge lifecycle commands: `taskforge start`, `taskforge done`, `taskforge checkpoint`, `taskforge submit`
+- Never run `git` directly (use `taskforge diff`, `taskforge checkpoint`, `taskforge submit` instead)
+- Never edit files under `../task-state/*.md` directly
+- Never edit legacy `tasks/*.md` files
+- All task-state changes must flow through TaskForge CLI commands
+- Do not edit `.opencode/**` or `.taskforge/**` unless role is doctor
+- Stop all normal operations when `.doctor-lock` exists
+
+### Doctor Mode Protocol
+
+Doctor agents operate under elevated but constrained permissions:
+
+- Run `taskforge doctor --check` first for diagnostics
+- Acquire doctor lock: `taskforge doctor --lock`
+- Minimize direct task-state edits — prefer TaskForge commands
+- Release doctor lock after repair: `taskforge done` on recovery task
+- Never force push to main or task-state branches
+
+### Allowed Normal Agent Commands
+
+```bash
+taskforge next
+taskforge start TASK-ID
+taskforge heartbeat TASK-ID
+taskforge inspect TASK-ID
+taskforge diff TASK-ID
+taskforge checkpoint TASK-ID --message "..."
+taskforge submit TASK-ID
+taskforge done TASK-ID
+taskforge block TASK-ID "reason"
+taskforge release TASK-ID
+taskforge doctor --check
+```
+<!-- TASKFORGE:END managed-agent-policy -->

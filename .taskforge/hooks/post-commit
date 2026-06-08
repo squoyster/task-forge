@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# TaskForge managed post-commit hook
+# Do not edit directly — managed by taskforge init
+
+set -euo pipefail
+
+commit_hash=$(git rev-parse HEAD)
+branch=$(git rev-parse --abbrev-ref HEAD)
+author=$(git log -1 --format='%an')
+timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+message=$(git log -1 --format='%s')
+
+audit_dir="logs/taskforge/audit"
+mkdir -p "$audit_dir"
+
+cat >> "$audit_dir/git.jsonl" <<EOF
+{"timestamp":"$timestamp","event":"git.commit","branch":"$branch","commit":"$commit_hash","author":"$author","message":"$message"}
+EOF
+
+exit 0

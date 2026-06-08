@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# TaskForge managed pre-commit hook
+# Do not edit directly — managed by taskforge init
+
+set -euo pipefail
+
+# Allow TaskForge internal operations
+if [[ -n "${TASKFORGE_INTERNAL:-}" ]] || [[ -n "${TASKFORGE_DOCTOR:-}" ]]; then
+  exit 0
+fi
+
+branch=$(git rev-parse --abbrev-ref HEAD)
+
+# Block commits on task-state unless internal
+if [[ "$branch" == "task-state" ]]; then
+  echo "ERROR: Direct commits to task-state are forbidden."
+  echo "Use TaskForge CLI commands to modify task state."
+  exit 1
+fi
+
+# Block commits on main from agent worktrees
+if [[ "$branch" == "main" && -d "../worktrees" ]]; then
+  echo "ERROR: Direct commits to main from agent-managed worktree are forbidden."
+  exit 1
+fi
+
+# Block staged changes to legacy tasks directory
+if git diff --cached --name-only | grep -q "^tasks/.*\.md$"; then
+  echo "ERROR: Direct edits to tasks/*.md are forbidden."
+  echo "Task files live on the task-state branch."
+  exit 1
+fi
+
+# Block staged changes to .git paths
+if git diff --cached --name-only | grep -q "^\.git/"; then
+  echo "ERROR: Direct edits to .git/ are forbidden."
+  exit 1
+fi
+
+exit 0
