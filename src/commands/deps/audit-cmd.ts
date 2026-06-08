@@ -3,6 +3,9 @@ import { loadConfig } from "../../core/config.js";
 import { getRepoRoot } from "../../util/paths.js";
 import { logHeader, logSub, logDivider, logError } from "../../util/logging.js";
 import { cmdDepsCreateTasks } from "./create-tasks.js";
+import { successResult, noopResult, failedResult } from "../../core/result-builder.js";
+import { getValidNextCommands } from "../../core/next-command-maps.js";
+import { renderResultMarkdown } from "../../core/result-renderer.js";
 
 export async function cmdDepsAudit(
   severity?: string,
@@ -15,29 +18,55 @@ export async function cmdDepsAudit(
   logHeader(`## Dependency Audit`);
   logDivider();
 
-  const result = await runAudit(pm, repoRoot);
+  const auditResult = await runAudit(pm, repoRoot);
 
-  if (!result.ok) {
-    logError(result.raw);
+  if (!auditResult.ok) {
+    logError(auditResult.raw);
+    const errResult = failedResult({
+      command: "deps audit",
+      error: auditResult.raw,
+      code: "AUDIT_FAILED",
+      nextCommands: getValidNextCommands("deps audit", "failed"),
+    });
+    process.stdout.write(renderResultMarkdown(errResult) + "\n");
     return;
   }
 
-  if (result.findings.length === 0) {
+  if (auditResult.findings.length === 0) {
     logSub("No vulnerabilities found.");
+    const noop = noopResult({
+      command: "deps audit",
+      reason: "No vulnerabilities found.",
+      nextCommands: getValidNextCommands("deps audit", "success"),
+    });
+    process.stdout.write(renderResultMarkdown(noop) + "\n");
     return;
   }
 
   // Filter by severity if specified
-  let findings = result.findings;
+  let findings = auditResult.findings;
   if (severity) {
     const validSeverities = ["critical", "high", "medium", "low", "info"];
     if (!validSeverities.includes(severity)) {
       logError(`Invalid severity level: ${severity}. Must be one of: ${validSeverities.join(", ")}`);
+      const errResult = failedResult({
+        command: "deps audit",
+        error: `Invalid severity level: ${severity}.`,
+        code: "INVALID_SEVERITY",
+        nextCommands: getValidNextCommands("deps audit", "failed"),
+      });
+      process.stdout.write(renderResultMarkdown(errResult) + "\n");
       return;
     }
-    findings = result.findings.filter(f => f.severity === severity);
+    findings = auditResult.findings.filter(f => f.severity === severity);
     if (findings.length === 0) {
       logSub(`No vulnerabilities found with severity: ${severity}`);
+      const noop = noopResult({
+        command: "deps audit",
+        reason: `No vulnerabilities found with severity: ${severity}`,
+        nextCommands: getValidNextCommands("deps audit", "success"),
+      });
+      process.stdout.write(renderResultMarkdown(noop) + "\n");
       return;
     }
   }
@@ -62,6 +91,13 @@ export async function cmdDepsAudit(
   }
 
   logSub(`Total findings: ${findings.length}`);
+
+  const success = successResult({
+    command: "deps audit",
+    guidance: `Found ${findings.length} vulnerability(ies)${severity ? ` (severity: ${severity})` : ""}.`,
+    nextCommands: getValidNextCommands("deps audit", "success"),
+  });
+  process.stdout.write(renderResultMarkdown(success) + "\n");
 
   // Automatically create tasks if requested
   if (createTasks && findings.length > 0) {

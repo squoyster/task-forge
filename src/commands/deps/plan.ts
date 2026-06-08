@@ -4,6 +4,9 @@ import { checkDeprecated, type DeprecatedPackage } from "./deprecated.js";
 import { loadConfig } from "../../core/config.js";
 import { getRepoRoot } from "../../util/paths.js";
 import { logInfo } from "../../util/logging.js";
+import { successResult } from "../../core/result-builder.js";
+import { getValidNextCommands } from "../../core/next-command-maps.js";
+import { renderResultMarkdown } from "../../core/result-renderer.js";
 
 export interface DepsPlan {
   critical: AuditFinding[];
@@ -151,4 +154,11 @@ export async function cmdDepsPlan(): Promise<void> {
   const plan = await generateDepsPlan();
   const formatted = formatPlan(plan);
   logInfo(formatted);
+
+  const result = successResult({
+    command: "deps plan",
+    guidance: plan.summary,
+    nextCommands: getValidNextCommands("deps plan", "success"),
+  });
+  process.stdout.write(renderResultMarkdown(result) + "\n");
 }

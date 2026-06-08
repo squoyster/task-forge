@@ -2,6 +2,9 @@ import { runOutdated } from "./outdated.js";
 import { loadConfig } from "../../core/config.js";
 import { getRepoRoot } from "../../util/paths.js";
 import { logHeader, logSub, logDivider } from "../../util/logging.js";
+import { successResult, noopResult } from "../../core/result-builder.js";
+import { getValidNextCommands } from "../../core/next-command-maps.js";
+import { renderResultMarkdown } from "../../core/result-renderer.js";
 
 export async function cmdDepsOutdated(): Promise<void> {
   const repoRoot = getRepoRoot();
@@ -15,6 +18,12 @@ export async function cmdDepsOutdated(): Promise<void> {
 
   if (result.packages.length === 0) {
     logSub("All packages are up to date.");
+    const noop = noopResult({
+      command: "deps outdated",
+      reason: "All packages are up to date.",
+      nextCommands: getValidNextCommands("deps outdated", "success"),
+    });
+    process.stdout.write(renderResultMarkdown(noop) + "\n");
     return;
   }
 
@@ -40,4 +49,11 @@ export async function cmdDepsOutdated(): Promise<void> {
   }
 
   logSub(`Total outdated: ${result.packages.length}`);
+
+  const success = successResult({
+    command: "deps outdated",
+    guidance: `Found ${result.packages.length} outdated package(s) (${major.length} major, ${minor.length} minor/patch).`,
+    nextCommands: getValidNextCommands("deps outdated", "success"),
+  });
+  process.stdout.write(renderResultMarkdown(success) + "\n");
 }

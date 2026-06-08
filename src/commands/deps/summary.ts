@@ -1,5 +1,8 @@
 import { generateDepsPlan } from "./plan.js";
 import { logHeader, logSub, logDivider } from "../../util/logging.js";
+import { successResult } from "../../core/result-builder.js";
+import { getValidNextCommands } from "../../core/next-command-maps.js";
+import { renderResultMarkdown } from "../../core/result-renderer.js";
 
 export async function cmdDepsSummary(): Promise<void> {
   const plan = await generateDepsPlan();
@@ -72,4 +75,11 @@ export async function cmdDepsSummary(): Promise<void> {
   } else {
     logSub("All dependencies are healthy.");
   }
+
+  const result = successResult({
+    command: "deps summary",
+    guidance: plan.summary,
+    nextCommands: getValidNextCommands("deps summary", "success"),
+  });
+  process.stdout.write(renderResultMarkdown(result) + "\n");
 }

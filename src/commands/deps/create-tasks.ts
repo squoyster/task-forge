@@ -4,6 +4,9 @@ import { STATUS } from "../../util/status-constants.js";
 import { getTaskStateDir, getRepoRoot } from "../../util/paths.js";
 import { commitAndPushTaskState } from "../../core/git.js";
 import { logInfo, logSuccess, logDivider } from "../../util/logging.js";
+import { successResult, noopResult } from "../../core/result-builder.js";
+import { getValidNextCommands } from "../../core/next-command-maps.js";
+import { renderResultMarkdown } from "../../core/result-renderer.js";
 import path from "node:path";
 
 export async function cmdDepsCreateTasks(): Promise<void> {
@@ -108,6 +111,19 @@ export async function cmdDepsCreateTasks(): Promise<void> {
     const statusMsg = `chore: create ${created} dependency task(s)`;
     await commitAndPushTaskState(repoRoot, statusMsg);
   }
+
+  const result = created === 0
+    ? noopResult({
+        command: "deps create-tasks",
+        reason: "No new dependency tasks needed.",
+        nextCommands: getValidNextCommands("deps create-tasks", "success"),
+      })
+    : successResult({
+        command: "deps create-tasks",
+        guidance: `Created ${created} dependency task(s).`,
+        nextCommands: getValidNextCommands("deps create-tasks", "success"),
+      });
+  process.stdout.write(renderResultMarkdown(result) + "\n");
 }
 
 function generateSecTaskBody(

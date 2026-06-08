@@ -2,6 +2,9 @@ import { generateDepsPlan, formatPlan } from "./plan.js";
 import { loadConfig } from "../../core/config.js";
 import { getRepoRoot } from "../../util/paths.js";
 import { logInfo, logHeader, logSub, logDivider } from "../../util/logging.js";
+import { successResult } from "../../core/result-builder.js";
+import { getValidNextCommands } from "../../core/next-command-maps.js";
+import { renderResultMarkdown } from "../../core/result-renderer.js";
 
 export async function cmdDepsScan(): Promise<void> {
   const repoRoot = getRepoRoot();
@@ -29,4 +32,11 @@ export async function cmdDepsScan(): Promise<void> {
 
   // Print full plan
   logInfo(formatPlan(plan));
+
+  const result = successResult({
+    command: "deps scan",
+    guidance: plan.summary,
+    nextCommands: getValidNextCommands("deps scan", "success"),
+  });
+  process.stdout.write(renderResultMarkdown(result) + "\n");
 }

@@ -6,6 +6,9 @@ import { execa } from "execa";
 import simpleGit from "simple-git";
 import fs from "node:fs";
 import path from "node:path";
+import { successResult, noopResult } from "../../core/result-builder.js";
+import { getValidNextCommands } from "../../core/next-command-maps.js";
+import { renderResultMarkdown } from "../../core/result-renderer.js";
 
 export interface PrResult {
   created: boolean;
@@ -29,6 +32,12 @@ export async function cmdDepsPr(): Promise<void> {
 
   if (outdatedResult.packages.length === 0) {
     logInfo("All packages are up to date. Nothing to create PRs for.");
+    const noop = noopResult({
+      command: "deps pr",
+      reason: "All packages are up to date.",
+      nextCommands: getValidNextCommands("deps pr", "success"),
+    });
+    process.stdout.write(renderResultMarkdown(noop) + "\n");
     return;
   }
 
@@ -64,6 +73,16 @@ export async function cmdDepsPr(): Promise<void> {
   if (created.length === 0 && skipped.length === 0) {
     logInfo("No packages processed.");
   }
+
+  const guidance = created.length > 0
+    ? `Created ${created.length} PR(s), skipped ${skipped.length}.`
+    : `No PRs created (${skipped.length} skipped).`;
+  const result = successResult({
+    command: "deps pr",
+    guidance,
+    nextCommands: getValidNextCommands("deps pr", "success"),
+  });
+  process.stdout.write(renderResultMarkdown(result) + "\n");
 }
 
 async function processPackage(
