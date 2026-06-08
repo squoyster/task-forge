@@ -1,7 +1,7 @@
 ---
 id: TASK-252
 type: Bug
-status: In Progress
+status: Verify
 priority: P2
 agentRole: Implementer
 riskLevel: Low
