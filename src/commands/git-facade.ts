@@ -11,6 +11,9 @@ import type { Task } from "../core/task.js";
 import { logInfo, logHeader, logSuccess, logWarn, logError } from "../util/logging.js";
 import { checkpointStateMachine, submitStateMachine } from "../core/command-states.js";
 import { getDefaultGuidanceAdapter } from "../core/guidance-adapter.js";
+import { successResult, failedResult, noopResult } from "../core/result-builder.js";
+import { getValidNextCommands } from "../core/next-command-maps.js";
+import { renderResultMarkdown } from "../core/result-renderer.js";
 
 function requireTask(taskId: string): Task {
   const task = loadTaskById(taskId);

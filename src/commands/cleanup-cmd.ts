@@ -4,7 +4,6 @@ import { inspectTask } from "./inspect.js";
 import { getRepoRoot } from "../util/paths.js";
 import { logSuccess, logWarn, logInfo, logSub, logError, logDivider } from "../util/logging.js";
 import { TaskNotFoundError } from "../core/errors.js";
-import { printJson, jsonOk, jsonError } from "../util/json-result.js";
 import { resolveAuthority, assertCanForce, getForceRejectionNextActions, ForceRequiresHumanOrDoctorError } from "../core/authority.js";
 import { successResult, noopResult, failedResult } from "../core/result-builder.js";
 import { getValidNextCommands } from "../core/next-command-maps.js";
