@@ -10,6 +10,7 @@ assignee: 6bd650dc97
 claimed_at: '2026-06-08 22:55:03'
 context_hash: c920478ff4788012
 branch: agent/TASK-257-add-lifecycle-reconciliation-and-invalid--6bd650dc97
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-257
 ---
 
 # TASK-257: ADD LIFECYCLE RECONCILIATION AND INVALID-STATE DETECTION
@@ -23,6 +24,9 @@ Describe the desired outcome.
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-08T00:00:00Z System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-257
 
 ### 2026-06-08T00:00:00Z System
 - Task claimed via taskforge start TASK-257
