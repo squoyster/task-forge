@@ -3,7 +3,7 @@ import { createWorktree, checkUncommittedWorktrees } from "../core/git.js";
 import { withTaskStateTransaction } from "../core/task-state-transaction.js";
 import { makeBranchName } from "../util/paths.js";
 import { generateSessionId } from "../core/session.js";
-import { checkOutstandingSessionTasks } from "../core/session.js";
+import { parseSessionIdFromBranch, checkOutstandingSessionTasks } from "../core/session.js";
 import { isDoctorLocked } from "../core/doctor-lock.js";
 import { hashControlFiles } from "../core/control-files.js";
 import { sweepStaleTasks } from "../core/sweeper.js";
@@ -250,6 +250,14 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
     const titleMatch = task.body.match(/^#\s+\S+:\s+(.+)$/m);
     const title = titleMatch ? titleMatch[1] : taskId;
     task.branch = makeBranchName(taskId, title, sessionId);
+  } else {
+    // Re-claim with different session — regenerate branch to match
+    const oldSession = parseSessionIdFromBranch(task.branch);
+    if (oldSession && oldSession !== sessionId) {
+      const titleMatch = task.body.match(/^#\s+\S+:\s+(.+)$/m);
+      const title = titleMatch ? titleMatch[1] : taskId;
+      task.branch = makeBranchName(taskId, title, sessionId);
+    }
   }
 
   const contextHash = hashControlFiles(repoRoot);

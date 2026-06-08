@@ -1,7 +1,7 @@
 import { loadTaskById, loadAllTasks } from "../core/task-store.js";
 import { pullTaskState, createWorktree, checkUncommittedWorktrees } from "../core/git.js";
 import { withTaskStateTransaction } from "../core/task-state-transaction.js";
-import { generateSessionId } from "../core/session.js";
+import { generateSessionId, parseSessionIdFromBranch } from "../core/session.js";
 import { sweepStaleTasks } from "../core/sweeper.js";
 import { STATUS } from "../util/status-constants.js";
 import { logInfo, logSuccess, logWarn, logError, logDivider, logSub } from "../util/logging.js";
@@ -249,6 +249,14 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
           const titleMatch = fresh.body.match(/^#\s+\S+:\s+(.+)$/m);
           const title = titleMatch ? titleMatch[1] : taskId;
           fresh.branch = makeBranchName(taskId, title, sessionId);
+        } else {
+          // Check whether existing branch name has a stale session ID
+          const oldSession = parseSessionIdFromBranch(fresh.branch);
+          if (oldSession && oldSession !== sessionId) {
+            const titleMatch = fresh.body.match(/^#\s+\S+:\s+(.+)$/m);
+            const title = titleMatch ? titleMatch[1] : taskId;
+            fresh.branch = makeBranchName(taskId, title, sessionId);
+          }
         }
         tx.updateTask(fresh);
         branchName = fresh.branch;
