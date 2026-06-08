@@ -9,8 +9,6 @@ humanInterventionRequired: false
 assignee: dd85c550bb
 claimed_at: '2026-06-08 14:34:41'
 context_hash: b516925ba8cef30c
-submitted_sha: 504b3a3
-submitted_at: '2026-06-08T08:39:00Z'
 branch: agent/TASK-261-replace-direct-task-state-editing-with-s--dd85c550bb
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-261
 ---
