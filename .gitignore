@@ -22,3 +22,4 @@ Volumes/
 # Large generated/session transcripts
 session-ses_*.md
 specs/session-ses_*.md
+node_modules
