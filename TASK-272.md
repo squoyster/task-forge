@@ -7,8 +7,6 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: c920478ff4788012
-branch: agent/TASK-272-fix-mcp-capturestdout-crash-in-strict-mo--78ddab2c8c
-worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-272
 ---
 
 # TASK-272: Fix MCP captureStdout crash in strict mode on Node 24
@@ -59,6 +57,9 @@ Replace the assignment with `Object.defineProperty` to temporarily swap the gett
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-08T00:00:00Z System
+- Cleanup: worktree and branch removed
 
 ### 2026-06-08T00:00:00Z System
 - Task marked Done
