@@ -10,6 +10,7 @@ assignee: 78ddab2c8c
 claimed_at: '2026-06-08 18:34:10'
 context_hash: c920478ff4788012
 branch: agent/TASK-272-fix-mcp-capturestdout-crash-in-strict-mo--78ddab2c8c
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-272
 ---
 
 # TASK-272: Fix MCP captureStdout crash in strict mode on Node 24
@@ -60,6 +61,9 @@ Replace the assignment with `Object.defineProperty` to temporarily swap the gett
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-08T00:00:00Z System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-272
 
 ### 2026-06-08T00:00:00Z System
 - Task claimed via taskforge start TASK-272
