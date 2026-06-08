@@ -10,6 +10,7 @@ assignee: dd85c550bb
 claimed_at: '2026-06-08 14:34:41'
 context_hash: b516925ba8cef30c
 branch: agent/TASK-261-replace-direct-task-state-editing-with-s--dd85c550bb
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-261
 ---
 
 # TASK-261: REPLACE DIRECT TASK-STATE EDITING WITH SUPPORTED COMMANDS
@@ -23,6 +24,9 @@ Describe the desired outcome.
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-08T00:00:00Z System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-261
 
 ### 2026-06-08T00:00:00Z System
 - Task claimed via taskforge start TASK-261
