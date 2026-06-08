@@ -1,15 +1,12 @@
 ---
 id: TASK-271
 type: Feature
-status: Implementation Complete
+status: Done
 priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: agent
-claimed_at: '2026-06-08 17:35:21'
 branch: agent/TASK-271-add-mcp-command
-worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-271
 ---
 
 # TASK-271: Add MCP command to TaskForge CLI
