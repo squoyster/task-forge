@@ -1,7 +1,7 @@
 ---
 id: TASK-247
 type: Task
-status: In Progress
+status: Review
 priority: P2
 agentRole: Implementer
 riskLevel: Low
@@ -25,6 +25,12 @@ Fix the gate verification failures (ESLint, typecheck, build, test) that were bl
 - [x] Build succeeds
 
 ## Agent Notes
+
+### 2026-06-08T00:00:00Z System
+- Report generated — task moved to Review
+- Changed files: src/core/command-result.ts
+- Commits: 6b94162 fix: remove unused imports in command-result.ts to fix lint errors
+- AC section: present
 
 ### 2026-06-08T00:00:00Z System
 - Task claimed via taskforge claim TASK-247
