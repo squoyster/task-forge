@@ -1,7 +1,7 @@
 ---
 id: TASK-253
 type: Bug
-status: In Progress
+status: Done
 priority: P2
 agentRole: Implementer
 riskLevel: Low
@@ -117,6 +117,16 @@ No
 Auto-continue unless a stopping condition occurs.
 
 ## Agent Notes
+
+### 2026-06-08 Implementer
+- **PR conflict resolution**: Rebuilt branch from origin/main (fb0c7c5), resolving all merge conflicts. The original branch contained stale TASK-244 commits that conflicted with main. The new branch has only 1 commit with the TASK-253 changes.
+- Implemented `getMainRepoRoot()` in `src/util/paths.ts` using `git rev-parse --git-common-dir`
+- Changed `getTaskStateDir()` to resolve `../task-state` relative to main repo root instead of worktree root
+- Fixed hardcoded path in `src/commands/doctor.ts` — now uses `getTaskStateDir(repoRoot)`
+- Also fixed pre-existing lint errors in `claim.ts`, `cleanup-cmd.ts`, `git-facade.ts`
+- Verified from nested worktree: `getTaskStateDir()` returns /Volumes/Transcend/devel/task-state (correct)
+- All 621 tests pass via taskforge gates
+- Status: Done
 
 ### 2026-06-08 System
 - Task claimed via taskforge claim TASK-253

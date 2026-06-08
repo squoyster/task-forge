@@ -145,6 +145,7 @@ Auto-continue unless a stopping condition occurs.
 - Task created during TASK-252 review to document session ID churn bug discovered in agent registry data
 
 ### 2026-06-08 Implementer
+- **PR conflict resolution**: Rebuilt branch from origin/main (fb0c7c5), resolving all merge conflicts cleanly. The original branch contained 14 stale TASK-244 commits that caused conflicts with main. The new branch has only 1 commit with the TASK-254 changes.
 - **`src/core/session.ts`**: Added `resolveSessionId(repoRoot)` that extracts the session ID from the current branch name via `parseSessionIdFromBranch()`, falling back to `generateSessionId()` only when no branch session exists. This is the core fix.
 - **`src/commands/claim.ts`**: Replaced `generateSessionId()` with `await resolveSessionId(repoRoot)` — now reuses the current branch's session ID instead of creating a new one each invocation.
 - **`src/commands/start.ts`**: Same change as claim.ts.
@@ -152,5 +153,5 @@ Auto-continue unless a stopping condition occurs.
 - **`src/commands/git-facade.ts`**: Removed unused imports (lint fix).
 - **`tests/commands/start.test.ts`**: Updated session mock to include `resolveSessionId`; renamed test from "generates a new session ID each invocation" to "reuses existing branch session ID when already in a task worktree".
 - **`tests/commands/claim.test.ts`**: Added session mock (`resolveSessionId`, `checkOutstandingSessionTasks`) and `getCurrentBranch` to git mock.
-- **Gates**: typecheck ✓, lint ✓, build ✓, test ✓ (all 552 tests pass).
+- **Gates**: typecheck ✓, lint ✓, build ✓, test ✓ (all 621 tests pass).
 - **Design**: The session ID embedded in the branch name IS the mutex lock key. By reusing it, the same agent naturally holds the same lock across multiple claims. `checkOutstandingSessionTasks()` now correctly prevents an agent from starting a second task while the first is still In Progress.
