@@ -1,0 +1,186 @@
+import {
+  isExecutable
+} from "./chunk-5JWCMI7A.js";
+import {
+  logInfo,
+  logSuccess
+} from "./chunk-OPCWHN3N.js";
+
+// src/core/hooks.ts
+import fs from "fs";
+import path from "path";
+
+// src/util/exec.ts
+import { execa } from "execa";
+async function run(cmd, args = [], cwd) {
+  const result = await execa(cmd, args, { cwd, reject: false });
+  return {
+    stdout: result.stdout,
+    stderr: result.stderr,
+    exitCode: result.exitCode ?? 1
+  };
+}
+
+// src/core/hooks.ts
+var HOOKS_DIR = ".taskforge/hooks";
+function installGitHooks(options) {
+  const { projectRoot, dryRun, installHooks } = options;
+  const hooksDir = path.join(projectRoot, HOOKS_DIR);
+  if (!installHooks) {
+    logInfo("Git hooks installation skipped (installHooks: false).");
+    return;
+  }
+  if (dryRun) {
+    logInfo("Git hooks would be installed:");
+    logInfo(`  .taskforge/hooks/pre-commit`);
+    logInfo(`  .taskforge/hooks/pre-push`);
+    logInfo(`  .taskforge/hooks/post-commit`);
+    logInfo(`  git config core.hooksPath .taskforge/hooks`);
+    return;
+  }
+  if (!fs.existsSync(hooksDir)) {
+    fs.mkdirSync(hooksDir, { recursive: true });
+  }
+  fs.writeFileSync(path.join(hooksDir, "pre-commit"), generatePreCommitHook(), { mode: 493 });
+  fs.writeFileSync(path.join(hooksDir, "pre-push"), generatePrePushHook(), { mode: 493 });
+  fs.writeFileSync(path.join(hooksDir, "post-commit"), generatePostCommitHook(), { mode: 493 });
+  setHooksPath(projectRoot);
+  logSuccess("Git hooks installed: .taskforge/hooks/pre-commit, pre-push, post-commit");
+  logInfo("Set git config core.hooksPath to .taskforge/hooks");
+}
+async function setHooksPath(projectRoot) {
+  await run("git", ["config", "core.hooksPath", HOOKS_DIR], projectRoot);
+}
+function checkHooks(projectRoot) {
+  const issues = [];
+  const hooksDir = path.join(projectRoot, HOOKS_DIR);
+  const requiredHooks = ["pre-commit", "pre-push", "post-commit"];
+  for (const hook of requiredHooks) {
+    const hookPath = path.join(hooksDir, hook);
+    if (!fs.existsSync(hookPath)) {
+      issues.push(`Missing hook: .taskforge/hooks/${hook}`);
+    } else if (!isExecutable(hookPath)) {
+      issues.push(`Hook not executable: .taskforge/hooks/${hook}`);
+    }
+  }
+  return { ok: issues.length === 0, issues };
+}
+function generatePreCommitHook() {
+  return `#!/usr/bin/env bash
+# TaskForge managed pre-commit hook
+# Do not edit directly \u2014 managed by taskforge init
+
+set -euo pipefail
+
+# Allow TaskForge internal operations
+if [[ -n "\${TASKFORGE_INTERNAL:-}" ]] || [[ -n "\${TASKFORGE_DOCTOR:-}" ]]; then
+  exit 0
+fi
+
+branch=$(git rev-parse --abbrev-ref HEAD)
+
+# Block commits on task-state unless internal
+if [[ "$branch" == "task-state" ]]; then
+  echo "ERROR: Direct commits to task-state are forbidden."
+  echo "Use TaskForge CLI commands to modify task state."
+  exit 1
+fi
+
+# Block commits on main from agent worktrees
+if [[ "$branch" == "main" && -d "../worktrees" ]]; then
+  echo "ERROR: Direct commits to main from agent-managed worktree are forbidden."
+  exit 1
+fi
+
+# Block staged changes to legacy tasks directory
+if git diff --cached --name-only | grep -q "^tasks/.*\\.md$"; then
+  echo "ERROR: Direct edits to tasks/*.md are forbidden."
+  echo "Task files live on the task-state branch."
+  exit 1
+fi
+
+# Block staged changes to .git paths
+if git diff --cached --name-only | grep -q "^\\.git/"; then
+  echo "ERROR: Direct edits to .git/ are forbidden."
+  exit 1
+fi
+
+exit 0
+`;
+}
+function generatePrePushHook() {
+  return `#!/usr/bin/env bash
+# TaskForge managed pre-push hook
+# Do not edit directly \u2014 managed by taskforge init
+
+set -euo pipefail
+
+# Allow TaskForge internal operations
+if [[ -n "\${TASKFORGE_INTERNAL:-}" ]]; then
+  exit 0
+fi
+
+remote="$1"
+url="$2"
+
+# Block push to main from agent context
+while read -r local_ref local_sha remote_ref remote_sha; do
+  if [[ "$remote_ref" == "refs/heads/main" ]]; then
+    echo "ERROR: Pushing to main is forbidden for agents."
+    echo "Use pull requests or TaskForge facade commands."
+    exit 1
+  fi
+
+  # Block push to task-state unless internal
+  if [[ "$remote_ref" == "refs/heads/task-state" ]]; then
+    echo "ERROR: Pushing to task-state is forbidden for agents."
+    echo "Use TaskForge CLI commands to modify task state."
+    exit 1
+  fi
+
+  # Block force push
+  if [[ "$local_sha" == "0000000000000000000000000000000000000000" ]]; then
+    :
+  else
+    base=$(git merge-base "$local_sha" "$remote_sha" 2>/dev/null || echo "")
+    if [[ "$base" != "$remote_sha" ]]; then
+      echo "ERROR: Force push is forbidden."
+      exit 1
+    fi
+  fi
+done
+
+exit 0
+`;
+}
+function generatePostCommitHook() {
+  return `#!/usr/bin/env bash
+# TaskForge managed post-commit hook
+# Do not edit directly \u2014 managed by taskforge init
+
+set -euo pipefail
+
+commit_hash=$(git rev-parse HEAD)
+branch=$(git rev-parse --abbrev-ref HEAD)
+author=$(git log -1 --format='%an')
+timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+message=$(git log -1 --format='%s')
+
+audit_dir="logs/taskforge/audit"
+mkdir -p "$audit_dir"
+
+cat >> "$audit_dir/git.jsonl" <<EOF
+{"timestamp":"$timestamp","event":"git.commit","branch":"$branch","commit":"$commit_hash","author":"$author","message":"$message"}
+EOF
+
+exit 0
+`;
+}
+
+export {
+  run,
+  installGitHooks,
+  setHooksPath,
+  checkHooks
+};
+//# sourceMappingURL=chunk-SNMMMNDR.js.map

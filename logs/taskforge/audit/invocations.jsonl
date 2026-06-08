@@ -1,0 +1,3 @@
+{"timestamp":"2026-06-08T17:33:01.398Z","command":"start","args":["TASK-271"],"flags":{},"exitCode":0,"sessionId":"a08bb87d9d","taskId":"TASK-271","duration":883,"error":null}
+{"timestamp":"2026-06-08T17:33:52.759Z","command":"start","args":["TASK-271"],"flags":{},"exitCode":0,"sessionId":"a08bb87d9d","taskId":"TASK-271","duration":1066,"error":null}
+{"timestamp":"2026-06-08T17:34:14.670Z","command":"start","args":["TASK-271"],"flags":{},"exitCode":0,"sessionId":"a08bb87d9d","taskId":"TASK-271","duration":885,"error":null}
