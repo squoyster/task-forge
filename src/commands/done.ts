@@ -7,7 +7,8 @@ import { logSuccess, logInfo, logWarn, logSub, logHeader, logDivider, logError }
 import { TaskNotFoundError, InvalidStatusTransitionError, MissingAcceptanceCriteriaError, BlankAcceptanceCriteriaError, UncheckedAcceptanceCriteriaError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
 import { assertTaskOwnership } from "../core/session.js";
-import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
+import { writeResult } from "../util/write-command-result.js";
+import { successResult as buildSuccessResult, failedResult } from "../core/result-builder.js";
 import { createTaskEvent, appendTaskTranscript } from "../core/audit.js";
 import { runGates } from "./gates.js";
 import { isDoctorLocked, removeDoctorLock } from "../core/doctor-lock.js";
@@ -25,6 +26,18 @@ export interface DoneOptions {
   cleanup?: boolean;
   deleteBranch?: boolean;
   json?: boolean;
+}
+
+function mapNextAction(action: string): { command: string; purpose: string; when: string; allowedFor: "all" | "human" | "doctor" | "agent"; priority: number } {
+  switch (action) {
+    case "request_human_input":
+      return { command: "block", purpose: "Request human input to resolve", when: "needs:human", allowedFor: "human", priority: 3 };
+    case "work_on_task":
+      return { command: "checkpoint", purpose: "Commit changes and retry", when: "worktree:modified", allowedFor: "agent", priority: 2 };
+    case "none":
+    default:
+      return { command: "next", purpose: "Find the next available task", when: "task:done", allowedFor: "all", priority: 1 };
+  }
 }
 
 export async function cmdDone(
@@ -50,10 +63,7 @@ export async function cmdDone(
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "TASK_NOT_FOUND", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance,
-      }));
+      writeResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "TASK_NOT_FOUND", nextCommands: [mapNextAction(result.nextAction)] }), json);
       return;
     }
     throw new TaskNotFoundError(taskId);
@@ -95,11 +105,7 @@ export async function cmdDone(
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      printJson(jsonError(
-        result.guidance,
-        result.errorCode ?? "GATES_FAILED",
-        { nextActions: ["fix", "request_human_input"], guidance: result.guidance },
-      ));
+      writeResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "GATES_FAILED" }), json);
       return;
     }
     throw new Error(result.guidance);
@@ -123,11 +129,7 @@ export async function cmdDone(
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      printJson(jsonError(
-        result.guidance,
-        result.errorCode ?? "INVALID_TRANSITION",
-        { nextActions: [result.nextAction], guidance: result.guidance },
-      ));
+      writeResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "INVALID_TRANSITION", nextCommands: [mapNextAction(result.nextAction)] }), json);
       return;
     }
     throw new InvalidStatusTransitionError(
@@ -157,10 +159,7 @@ export async function cmdDone(
       });
       getDefaultGuidanceAdapter().pushGuidance(result);
       if (json) {
-        printJson(jsonError(result.guidance, result.errorCode ?? "OWNERSHIP_MISMATCH", {
-          nextActions: [result.nextAction],
-          guidance: result.guidance,
-        }));
+        writeResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "OWNERSHIP_MISMATCH", nextCommands: [mapNextAction(result.nextAction)] }), json);
         return;
       }
       throw new Error(result.guidance);
@@ -187,10 +186,7 @@ export async function cmdDone(
       });
       getDefaultGuidanceAdapter().pushGuidance(result);
       if (json) {
-        printJson(jsonError(result.guidance, result.errorCode ?? "WORKTREE_DIRTY", {
-          nextActions: [result.nextAction],
-          guidance: result.guidance,
-        }));
+        writeResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "WORKTREE_DIRTY", nextCommands: [mapNextAction(result.nextAction)] }), json);
         return;
       }
       throw new Error(result.guidance);
@@ -217,10 +213,7 @@ export async function cmdDone(
       });
       getDefaultGuidanceAdapter().pushGuidance(result);
       if (json) {
-        printJson(jsonError(result.guidance, result.errorCode ?? "BRANCH_UNPUSHED", {
-          nextActions: [result.nextAction],
-          guidance: result.guidance,
-        }));
+        writeResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "BRANCH_UNPUSHED", nextCommands: [mapNextAction(result.nextAction)] }), json);
         return;
       }
       throw new Error(result.guidance);
@@ -246,10 +239,7 @@ export async function cmdDone(
       });
       getDefaultGuidanceAdapter().pushGuidance(result);
       if (json) {
-        printJson(jsonError(result.guidance, result.errorCode ?? "CONTEXT_CHANGED", {
-          nextActions: [result.nextAction],
-          guidance: result.guidance,
-        }));
+        writeResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "CONTEXT_CHANGED", nextCommands: [mapNextAction(result.nextAction)] }), json);
         return;
       }
       throw new Error(result.guidance);
@@ -273,10 +263,7 @@ export async function cmdDone(
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "MISSING_ACCEPTANCE_CRITERIA", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance,
-      }));
+      writeResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "MISSING_ACCEPTANCE_CRITERIA", nextCommands: [mapNextAction(result.nextAction)] }), json);
       return;
     }
     throw new MissingAcceptanceCriteriaError(taskId);
@@ -299,10 +286,7 @@ export async function cmdDone(
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "BLANK_ACCEPTANCE_CRITERIA", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance,
-      }));
+      writeResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "BLANK_ACCEPTANCE_CRITERIA", nextCommands: [mapNextAction(result.nextAction)] }), json);
       return;
     }
     throw new BlankAcceptanceCriteriaError(taskId);
@@ -325,10 +309,7 @@ export async function cmdDone(
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "UNCHECKED_ACCEPTANCE_CRITERIA", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance,
-      }));
+      writeResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "UNCHECKED_ACCEPTANCE_CRITERIA", nextCommands: [mapNextAction(result.nextAction)] }), json);
       return;
     }
     throw new UncheckedAcceptanceCriteriaError(taskId);
@@ -387,15 +368,7 @@ export async function cmdDone(
     getDefaultGuidanceAdapter().pushGuidance(result);
 
     if (json) {
-      printJson(jsonError(
-        message,
-        "COMPLETION_POLICY_BLOCKED",
-        {
-          preconditions: eligibility.preconditions,
-          suggestedStatus: eligibility.suggestedStatus,
-          nextActions: [result.nextAction],
-        },
-      ));
+      writeResult(failedResult({ command: "done", error: message, code: "COMPLETION_POLICY_BLOCKED", nextCommands: [mapNextAction(result.nextAction)] }), json);
       return;
     }
 
@@ -440,16 +413,12 @@ export async function cmdDone(
   getDefaultGuidanceAdapter().pushGuidance(successResult);
 
   if (json) {
-    const final = loadTaskById(taskId);
-    printJson(jsonOk({
-      task: final ? buildJsonTask(final) : buildJsonTask(task),
-      nextActions: [successResult.nextAction],
-      guidance: successResult.guidance,
-    }));
+    writeResult(buildSuccessResult({ command: "done", taskId: task.id, guidance: successResult.guidance, nextCommands: [mapNextAction(successResult.nextAction)] }), json);
     return;
   }
 
   logSuccess(successResult.guidance);
+  writeResult(buildSuccessResult({ command: "done", taskId: task.id, guidance: successResult.guidance, nextCommands: [mapNextAction(successResult.nextAction)] }), json);
   logDivider();
   logInfo("Next actions:");
   logSub("  taskforge next              — Find the next available task");

@@ -6,28 +6,12 @@ import { getRepoRoot, getWorktreePath } from "../util/paths.js";
 import { STATUS } from "../util/status-constants.js";
 import { logHeader, logSuccess, logSub, logDivider, logInfo, logWarn } from "../util/logging.js";
 import { TaskNotFoundError, InvalidStatusTransitionError } from "../core/errors.js";
-import { printJson, jsonOk, jsonError } from "../util/json-result.js";
+import { writeResult } from "../util/write-command-result.js";
+import { successResult, failedResult } from "../core/result-builder.js";
 
 export interface ReportOptions {
   complete?: boolean;
   json?: boolean;
-}
-
-interface GateResults {
-  typecheck: string;
-  lint: string;
-  build: string;
-  test: string;
-}
-
-interface ReportData {
-  taskId: string;
-  status: string;
-  changedFiles: string[];
-  commits: string[];
-  gates: GateResults;
-  risks: string[];
-  humanReviewNeeded: boolean;
 }
 
 export async function cmdReport(taskId: string, options?: ReportOptions): Promise<void> {
@@ -36,7 +20,7 @@ export async function cmdReport(taskId: string, options?: ReportOptions): Promis
 
   if (!task) {
     if (options?.json) {
-      printJson(jsonError(`Task ${taskId} not found`, "TASK_NOT_FOUND"));
+      writeResult(failedResult({ command: "report", taskId, error: `Task ${taskId} not found`, code: "TASK_NOT_FOUND" }), options.json);
       return;
     }
     throw new TaskNotFoundError(taskId);
@@ -46,7 +30,6 @@ export async function cmdReport(taskId: string, options?: ReportOptions): Promis
 
   const changedFiles: string[] = [];
   const commits: string[] = [];
-  let gates: GateResults = { typecheck: "unknown", lint: "unknown", build: "unknown", test: "unknown" };
 
   try {
     const diffResult = await execa("git", ["diff", "--name-only", `origin/main..HEAD`], { cwd: worktreePath });
@@ -58,21 +41,11 @@ export async function cmdReport(taskId: string, options?: ReportOptions): Promis
     // Worktree may not exist or have no commits — that's fine
   }
 
-  const report: ReportData = {
-    taskId,
-    status: task.status,
-    changedFiles,
-    commits,
-    gates,
-    risks: [],
-    humanReviewNeeded: task.humanInterventionRequired ?? changedFiles.length > 0,
-  };
-
   if (options?.complete) {
     const transitionError = validateTransition(task.status, STATUS.IMPLEMENTATION_COMPLETE);
     if (transitionError) {
       if (options?.json) {
-        printJson(jsonError(transitionError, "INVALID_TRANSITION"));
+        writeResult(failedResult({ command: "report", taskId, error: transitionError, code: "INVALID_TRANSITION" }), options.json);
         return;
       }
       throw new InvalidStatusTransitionError(task.status, STATUS.IMPLEMENTATION_COMPLETE, [STATUS.IN_PROGRESS]);
@@ -98,27 +71,16 @@ export async function cmdReport(taskId: string, options?: ReportOptions): Promis
     await commitAndPushTaskState(repoRoot, `chore: report ${taskId} → Implementation Complete`);
 
     if (options?.json) {
-      printJson(jsonOk({
-        ...report,
-        status: STATUS.IMPLEMENTATION_COMPLETE,
-        acceptanceCriteria: {
-          sectionPresent: hasAC,
-          hasBlankItems: hasBlankAC,
-          hasUncheckedItems: hasUncheckedAC,
-        },
-        reviewerInstructions: [
-          "Verify all acceptance criteria are satisfied with evidence.",
-          "Check that each AC checkbox is checked off with source file, identifier, and rationale.",
-          "Run gates (typecheck, lint, build, test) and confirm all pass.",
-          "Review code changes for correctness, security, and scope compliance.",
-          "If any AC is not satisfied, move task back to In Progress with feedback.",
+      writeResult(successResult({
+        command: "report",
+        taskId,
+        guidance: `Task ${taskId} moved to Implementation Complete. Verify AC before submitting.`,
+        nextCommands: [
+          { command: `taskforge done ${taskId}`, purpose: "Mark task as Done after AC verification passes", when: "Mark task as Done after AC verification passes", allowedFor: "all", priority: 1 },
+          { command: `taskforge start ${taskId}`, purpose: "Return to In Progress if AC verification fails", when: "Return to In Progress if AC verification fails", allowedFor: "all", priority: 2 },
+          { command: `taskforge block ${taskId} "AC verification failed: <details>" --category ambiguous_spec --blocked-by reviewer`, purpose: "Block if AC are unclear or cannot be verified", when: "Block if AC are unclear or cannot be verified", allowedFor: "all", priority: 3 },
         ],
-        nextActions: [
-          { command: `taskforge done ${taskId}`, reason: "Mark task as Done after AC verification passes", safety: "safe", preferred: true },
-          { command: `taskforge start ${taskId}`, reason: "Return to In Progress if AC verification fails", safety: "safe", preferred: false },
-          { command: `taskforge block ${taskId} "AC verification failed: <details>" --category ambiguous_spec --blocked-by reviewer`, reason: "Block if AC are unclear or cannot be verified", safety: "safe", preferred: false },
-        ],
-      } as never));
+      }), options.json);
       return;
     }
 
@@ -152,15 +114,15 @@ export async function cmdReport(taskId: string, options?: ReportOptions): Promis
   }
 
   if (options?.json) {
-    printJson(jsonOk({
-      ...report,
-      nextActions: options?.complete
-        ? []
-        : [
-            { command: `taskforge report ${taskId} --complete`, reason: "Generate completion report and move to Implementation Complete", safety: "safe", preferred: true },
-            { command: `taskforge gates`, reason: "Run gates before generating report", safety: "safe", preferred: false },
-          ],
-    } as never));
+    writeResult(successResult({
+      command: "report",
+      taskId,
+      guidance: `Report generated for ${taskId}.`,
+      nextCommands: [
+        { command: `taskforge report ${taskId} --complete`, purpose: "Generate completion report and move to Implementation Complete", when: "Generate completion report and move to Implementation Complete", allowedFor: "all", priority: 1 },
+        { command: "taskforge gates", purpose: "Run gates before generating report", when: "Run gates before generating report", allowedFor: "all", priority: 2 },
+      ],
+    }), options.json);
     return;
   }
 

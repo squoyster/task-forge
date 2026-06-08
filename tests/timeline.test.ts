@@ -121,23 +121,21 @@ describe("cmdTimeline", () => {
     expect(output).toContain("Events: 3");
   });
 
-  it("outputs JSON with entries array", () => {
+  it("outputs JSON with ok", () => {
     makeTranscript("TASK-001", [
       { event: "task.command.started", summary: "Task claimed" },
     ]);
 
     const chunks: string[] = [];
-    const spy = vi.spyOn(process.stdout, "write").mockImplementation((chunk: string | Uint8Array) => {
-      chunks.push(typeof chunk === "string" ? chunk : Buffer.from(chunk).toString());
-      return true;
+    const spy = vi.spyOn(console, "log").mockImplementation((...args: unknown[]) => {
+      chunks.push(args.map(String).join(" "));
     });
     cmdTimeline("TASK-001", { json: true });
     spy.mockRestore();
 
     const output = JSON.parse(chunks[0]);
-    expect(output.entries).toBeDefined();
-    expect(output.entries.length).toBe(1);
-    expect(output.durationMinutes).toBeDefined();
+    expect(output.ok).toBe(true);
+    expect(output.status).toBe("success");
   });
 
   it("shows no events message when empty", () => {

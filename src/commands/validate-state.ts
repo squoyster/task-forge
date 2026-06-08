@@ -1,7 +1,8 @@
 import { loadAllTasks } from "../core/task-store.js";
 import { validateTaskState } from "../core/state-validator.js";
 import { logSuccess, logWarn, logInfo, logHeader, logDivider, logError, logSub } from "../util/logging.js";
-import { printJson, jsonOk, jsonError } from "../util/json-result.js";
+import { writeResult } from "../util/write-command-result.js";
+import { successResult, failedResult } from "../core/result-builder.js";
 
 export interface ValidateStateOptions {
   json?: boolean;
@@ -16,45 +17,45 @@ export async function cmdValidateState(options?: ValidateStateOptions): Promise<
 
   if (options?.json) {
     if (hasIssues) {
-      printJson(jsonError(
-        strict
+      writeResult(failedResult({
+        command: "validate-state",
+        error: strict
           ? `${result.errors.length} error(s), ${result.warnings.length} warning(s) found (strict mode).`
           : `${result.errors.length} error(s) found.`,
-        "VALIDATION_ERROR",
-        {
-          errors: result.errors,
-          warnings: result.warnings,
-          nextActions: [
-            {
-              command: "taskforge doctor --json",
-              reason: "Diagnose and get repair guidance for validation issues.",
-              safety: "safe" as const,
-              preferred: true,
-            },
-            ...(result.errors.length > 0
-              ? [{
-                  command: "taskforge validate-state --json",
-                  reason: "Re-run validation after fixing issues.",
-                  safety: "safe" as const,
-                  preferred: false,
-                }]
-              : []),
-          ],
-        },
-      ));
+        code: "VALIDATION_ERROR",
+        nextCommands: [
+          {
+            command: "taskforge doctor --json",
+            purpose: "Diagnose and get repair guidance for validation issues.",
+            when: "on validation failure",
+            allowedFor: "all",
+            priority: 1,
+          },
+          ...(result.errors.length > 0
+            ? [{
+                command: "taskforge validate-state --json",
+                purpose: "Re-run validation after fixing issues.",
+                when: "after fixing issues",
+                allowedFor: "all" as const,
+                priority: 2,
+              }]
+            : []),
+        ],
+      }), options.json);
     } else {
-      printJson(jsonOk({
-        errors: result.errors,
-        warnings: result.warnings,
-        nextActions: [
+      writeResult(successResult({
+        command: "validate-state",
+        guidance: "State is valid — no issues found.",
+        nextCommands: [
           {
             command: "taskforge next",
-            reason: "State is valid — find the next task to work on.",
-            safety: "safe" as const,
-            preferred: true,
+            purpose: "State is valid — find the next task to work on.",
+            when: "on valid state",
+            allowedFor: "all",
+            priority: 1,
           },
         ],
-      }));
+      }), options.json);
     }
 
     if (hasIssues) {

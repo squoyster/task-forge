@@ -4,16 +4,19 @@ import { STATUS } from "../util/status-constants.js";
 import { logSuccess, logInfo, logDivider, logSub } from "../util/logging.js";
 import { TaskNotFoundError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
-import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
+import { successResult, failedResult } from "../core/result-builder.js";
+import { writeResult } from "../util/write-command-result.js";
 
 export async function cmdReject(taskId: string, reason: string, options?: { json?: boolean }): Promise<void> {
   const repoRoot = getRepoRoot();
   const task = loadTaskById(taskId);
 
   if (!task) {
-    if (options?.json) printJson(jsonError(`Task ${taskId} not found`, "TASK_NOT_FOUND"));
-    else throw new TaskNotFoundError(taskId);
-    return;
+    if (options?.json) {
+      writeResult(failedResult({ command: "reject", taskId, error: `Task ${taskId} not found`, code: "TASK_NOT_FOUND" }), true);
+      return;
+    }
+    throw new TaskNotFoundError(taskId);
   }
 
   updateTaskStatus(task.filePath, STATUS.REJECTED);
@@ -24,12 +27,11 @@ export async function cmdReject(taskId: string, reason: string, options?: { json
   await commitAndPushTaskState(repoRoot, `chore: reject ${taskId}`);
 
   if (options?.json) {
-    const updated = loadTaskById(taskId);
-    printJson(jsonOk({
-      task: updated ? buildJsonTask(updated) : buildJsonTask(task),
-      nextActions: ["new", "next"],
-      guidance: `Task ${taskId} rejected. Run 'taskforge new "<title>"' to create a replacement task, or 'taskforge next' to find the next available task.`,
-    }));
+    const nextCommands = [
+      { command: 'taskforge new "<title>"', purpose: "Create a replacement task", when: "After rejection", allowedFor: "all" as const, priority: 1 },
+      { command: "taskforge next", purpose: "Find the next available task", when: "After rejection", allowedFor: "all" as const, priority: 2 },
+    ];
+    writeResult(successResult({ command: "reject", taskId, guidance: `Task ${taskId} rejected. Run 'taskforge new "<title>"' to create a replacement task, or 'taskforge next' to find the next available task.`, nextCommands }), true);
     return;
   }
 

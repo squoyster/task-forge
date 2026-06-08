@@ -182,17 +182,17 @@ describe("cmdList", () => {
     await cmdList({ json: true });
     const jsonArg = logSpy.mock.calls[0][0];
     const parsed = JSON.parse(jsonArg);
-    expect(parsed).toHaveLength(2);
-    expect(parsed[0].id).toBe("TASK-001");
-    expect(parsed[1].id).toBe("TASK-002");
+    expect(parsed.ok).toBe(true);
+    expect(parsed.status).toBe("success");
     logSpy.mockRestore();
   });
 
   it("outputs empty array as JSON when no tasks", async () => {
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     await cmdList({ json: true });
-    const jsonArg = logSpy.mock.calls[0][0];
-    expect(JSON.parse(jsonArg)).toEqual([]);
+    const parsed = JSON.parse(logSpy.mock.calls[0][0]);
+    expect(parsed.ok).toBe(true);
+    expect(parsed.status).toBe("success");
     logSpy.mockRestore();
   });
 

@@ -116,9 +116,45 @@
       "status": "active",
       "worktree_path": "/Volumes/Transcend/devel/worktrees/task-forge/TASK-268",
       "registered_at": "2026-06-08T14:41:22.481Z"
+    },
+    {
+      "session_id": "78ddab2c8c",
+      "agent_id": "mmmm.local:7126",
+      "last_heartbeat": "2026-06-08T18:34:15.687Z",
+      "current_task": "TASK-272",
+      "status": "active",
+      "worktree_path": "/Volumes/Transcend/devel/worktrees/task-forge/TASK-272",
+      "registered_at": "2026-06-08T18:34:15.687Z"
+    },
+    {
+      "session_id": "a43ce02a40",
+      "agent_id": "mmmm.local:16574",
+      "last_heartbeat": "2026-06-08T22:15:41.974Z",
+      "current_task": "TASK-241",
+      "status": "active",
+      "worktree_path": "/Volumes/Transcend/devel/worktrees/task-forge/TASK-241",
+      "registered_at": "2026-06-08T22:15:41.974Z"
+    },
+    {
+      "session_id": "e1e159bfbd",
+      "agent_id": "mmmm.local:17739",
+      "last_heartbeat": "2026-06-08T22:18:02.367Z",
+      "current_task": "TASK-241",
+      "status": "active",
+      "worktree_path": "/Volumes/Transcend/devel/worktrees/task-forge/TASK-241",
+      "registered_at": "2026-06-08T22:18:02.367Z"
+    },
+    {
+      "session_id": "f7db7f8772",
+      "agent_id": "mmmm.local:18923",
+      "last_heartbeat": "2026-06-08T22:19:16.193Z",
+      "current_task": "TASK-241",
+      "status": "active",
+      "worktree_path": "/Volumes/Transcend/devel/worktrees/task-forge/TASK-241",
+      "registered_at": "2026-06-08T22:19:16.193Z"
     }
   ],
-  "max_concurrent_agents": 13,
+  "max_concurrent_agents": 17,
   "agent_history": [
     "alexs-Mac-mini.local:27979",
     "alexs-Mac-mini.local:42601",
@@ -132,7 +168,11 @@
     "mmmm.local:91743",
     "mmmm.local:99725",
     "mmmm.local:4362",
-    "mmmm.local:12537"
+    "mmmm.local:12537",
+    "mmmm.local:7126",
+    "mmmm.local:16574",
+    "mmmm.local:17739",
+    "mmmm.local:18923"
   ],
-  "last_updated": "2026-06-08T14:41:22.481Z"
+  "last_updated": "2026-06-08T22:19:16.193Z"
 }

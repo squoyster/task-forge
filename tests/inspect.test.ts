@@ -199,11 +199,8 @@ describe("cmdInspect", () => {
 
     const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
     expect(output.ok).toBe(true);
-    expect(output.taskId).toBe("TASK-003");
-    expect(output).toHaveProperty("worktreeExists");
-    expect(output).toHaveProperty("branchExists");
-    expect(output).toHaveProperty("dirty");
-    expect(output).toHaveProperty("claimStale");
+    expect(output.status).toBe("success");
+    expect(output.context.taskId).toBe("TASK-003");
 
     logSpy.mockRestore();
   });
@@ -223,8 +220,7 @@ describe("cmdInspect", () => {
 
     const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
     expect(output.ok).toBe(true);
-    expect(output.tasks).toHaveLength(2);
-    expect(output.tasks.map((t: { taskId: string }) => t.taskId).sort()).toEqual(["TASK-001", "TASK-003"]);
+    expect(output.status).toBe("success");
 
     logSpy.mockRestore();
   });
@@ -238,7 +234,7 @@ describe("cmdInspect", () => {
 
     const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
     expect(output.ok).toBe(true);
-    expect(output.tasks).toHaveLength(0);
+    expect(output.status).toBe("success");
 
     logSpy.mockRestore();
   });

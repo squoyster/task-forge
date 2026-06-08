@@ -3,8 +3,9 @@ import { commitAndPushTaskState } from "../core/git.js";
 import { getRepoRoot } from "../util/paths.js";
 import { logSuccess, logWarn, logError, logInfo, logDivider, logSub } from "../util/logging.js";
 import { TaskNotFoundError } from "../core/errors.js";
-import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
 import { resolveAuthority, assertCanForce, getForceRejectionNextActions, ForceRequiresHumanOrDoctorError } from "../core/authority.js";
+import { successResult, failedResult } from "../core/result-builder.js";
+import { writeResult } from "../util/write-command-result.js";
 
 export interface UnlockOptions {
   force?: boolean;
@@ -20,7 +21,7 @@ export async function cmdUnlock(
 
   if (!task) {
     if (options.json) {
-      printJson(jsonError(`Task ${taskId} not found`, "TASK_NOT_FOUND"));
+      writeResult(failedResult({ command: "unlock", taskId, error: `Task ${taskId} not found`, code: "TASK_NOT_FOUND" }), options.json);
       return;
     }
     throw new TaskNotFoundError(taskId);
@@ -28,9 +29,7 @@ export async function cmdUnlock(
 
   if (!task.assignee) {
     if (options.json) {
-      printJson(jsonOk({
-        task: buildJsonTask(task),
-      }));
+      writeResult(successResult({ command: "unlock", taskId, guidance: `Task ${taskId} is not claimed.` }), options.json);
       return;
     }
     logWarn(`Task ${taskId} is not claimed.`);
@@ -39,11 +38,14 @@ export async function cmdUnlock(
 
   if (!options.force) {
     if (options.json) {
-      printJson(jsonError(
-        `Task ${taskId} is assigned to session "${task.assignee}" since ${task.claimed_at ?? "unknown"}.`,
-        "NEEDS_FORCE",
-        { nextActions: getForceRejectionNextActions(taskId) },
-      ));
+      const nextCommands = getForceRejectionNextActions(taskId).map(a => ({
+        command: a.command,
+        purpose: a.reason,
+        when: a.reason,
+        allowedFor: (a.safety === "safe" ? "all" : a.safety === "requires_human" ? "human" : "doctor") as "all" | "human" | "doctor",
+        priority: a.preferred ? 1 : 2,
+      }));
+      writeResult(failedResult({ command: "unlock", taskId, error: `Task ${taskId} is assigned to session "${task.assignee}" since ${task.claimed_at ?? "unknown"}.`, code: "NEEDS_FORCE", nextCommands }), options.json);
       return;
     }
     logError(
@@ -68,11 +70,14 @@ export async function cmdUnlock(
   } catch (err) {
     if (err instanceof ForceRequiresHumanOrDoctorError) {
       if (options.json) {
-        printJson(jsonError(
-          "Normal agents may not use --force.",
-          "FORCE_REQUIRES_HUMAN_OR_DOCTOR",
-          { nextActions: getForceRejectionNextActions(taskId) },
-        ));
+        const nextCommands = getForceRejectionNextActions(taskId).map(a => ({
+          command: a.command,
+          purpose: a.reason,
+          when: a.reason,
+          allowedFor: (a.safety === "safe" ? "all" : a.safety === "requires_human" ? "human" : "doctor") as "all" | "human" | "doctor",
+          priority: a.preferred ? 1 : 2,
+        }));
+        writeResult(failedResult({ command: "unlock", taskId, error: "Normal agents may not use --force.", code: "FORCE_REQUIRES_HUMAN_OR_DOCTOR", nextCommands }), options.json);
         return;
       }
       logError("Normal agents may not use --force.");
@@ -101,9 +106,7 @@ export async function cmdUnlock(
   await commitAndPushTaskState(repoRoot, `chore: unlock ${taskId}`);
 
   if (options.json) {
-    printJson(jsonOk({
-      task: buildJsonTask(task),
-    }));
+    writeResult(successResult({ command: "unlock", taskId, guidance: `Task ${taskId} unlocked.` }), options.json);
     return;
   }
 

@@ -2,7 +2,8 @@ import { sweepStaleTasks } from "../core/sweeper.js";
 import { pullTaskState } from "../core/git.js";
 import { inspectTask } from "./inspect.js";
 import { logInfo, logSuccess, logSub, logWarn, logError, logDivider } from "../util/logging.js";
-import { printJson, jsonOk, jsonError } from "../util/json-result.js";
+import { writeResult } from "../util/write-command-result.js";
+import { successResult, failedResult } from "../core/result-builder.js";
 import { resolveAuthority, assertCanForce, getForceRejectionNextActions, ForceRequiresHumanOrDoctorError } from "../core/authority.js";
 
 export interface SweepOptions {
@@ -20,11 +21,19 @@ export async function cmdSweep(options?: SweepOptions): Promise<void> {
     } catch (err) {
       if (err instanceof ForceRequiresHumanOrDoctorError) {
         if (options?.json) {
-          printJson(jsonError(
-            "Normal agents may not use --force.",
-            "FORCE_REQUIRES_HUMAN_OR_DOCTOR",
-            { nextActions: getForceRejectionNextActions() },
-          ));
+          const nextCommands = getForceRejectionNextActions().map(a => ({
+            command: a.command,
+            purpose: a.reason,
+            when: a.reason,
+            allowedFor: (a.safety === "safe" ? "all" : a.safety === "requires_human" ? "human" : "doctor") as "all" | "human" | "doctor",
+            priority: a.preferred ? 1 : 2,
+          }));
+          writeResult(failedResult({
+            command: "sweep",
+            error: "Normal agents may not use --force.",
+            code: "FORCE_REQUIRES_HUMAN_OR_DOCTOR",
+            nextCommands,
+          }), options.json);
           return;
         }
         logError("Normal agents may not use --force.");
@@ -51,25 +60,13 @@ export async function cmdSweep(options?: SweepOptions): Promise<void> {
   });
 
   if (options?.json) {
-    const actions = result.stale.map((s) => ({
-      taskId: s.id,
-      previousAssignee: s.previousAssignee,
-      ageHours: (s.ageMs / (60 * 60 * 1000)).toFixed(1),
-      action: s.action,
-      reason: s.reason,
-    }));
-    printJson(jsonOk({
-      sweep: {
-        scanned: result.scanned,
-        stale: result.stale.length,
-        changed: result.changed,
-        dryRun: result.dryRun,
-        actions,
-      },
-      nextActions: [
-        { command: "taskforge next", reason: "Find the next available task after sweep recovery.", safety: "safe" as const, preferred: true },
+    writeResult(successResult({
+      command: "sweep",
+      guidance: `Sweeper: Found ${result.stale.length} stale task(s), changed ${result.changed}.`,
+      nextCommands: [
+        { command: "taskforge next", purpose: "Find the next available task after sweep recovery.", when: "Find the next available task after sweep recovery.", allowedFor: "all", priority: 1 },
       ],
-    }));
+    }), options.json);
     return;
   }
 

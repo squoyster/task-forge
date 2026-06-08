@@ -8,6 +8,8 @@ import {
 } from "../markdown/templates.js";
 import { ensureTaskStateBranch } from "../core/git.js";
 import { logSuccess, logInfo, logWarn } from "../util/logging.js";
+import { writeResult } from "../util/write-command-result.js";
+import { successResult } from "../core/result-builder.js";
 import { getAdapter } from "../agent-frameworks/registry.js";
 import { loadConfig } from "../core/config.js";
 import { InitAuditLog } from "../core/init-audit.js";
@@ -27,6 +29,7 @@ export interface InitOptions {
   guard?: boolean;
   dryRun?: boolean;
   repair?: boolean;
+  json?: boolean;
 }
 
 export async function cmdInit(options: InitOptions = {}): Promise<void> {
@@ -170,6 +173,11 @@ export async function cmdInit(options: InitOptions = {}): Promise<void> {
   logInfo(`Audit log: ${auditLog.getSummary()}`);
   logSuccess("\nTaskForge initialized successfully.");
   logInfo("Run 'taskforge next' to find the next task to work on.");
+
+  writeResult(successResult({
+    command: "init",
+    guidance: "TaskForge initialized successfully. Run 'taskforge next' to find the next task to work on.",
+  }), options.json ?? false);
 }
 
 async function initAgentFramework(

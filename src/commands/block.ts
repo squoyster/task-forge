@@ -6,7 +6,8 @@ import { logSuccess, logSub, logInfo, logDivider } from "../util/logging.js";
 import { TaskNotFoundError, InvalidStatusTransitionError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
 import { assertTaskOwnership } from "../core/session.js";
-import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
+import { writeResult } from "../util/write-command-result.js";
+import { successResult, failedResult } from "../core/result-builder.js";
 
 export interface BlockOptions {
   json?: boolean;
@@ -24,7 +25,7 @@ export async function cmdBlock(
 
   if (!task) {
     if (options.json) {
-      printJson(jsonError(`Task ${taskId} not found`, "TASK_NOT_FOUND"));
+      writeResult(failedResult({ command: "block", taskId, error: `Task ${taskId} not found`, code: "TASK_NOT_FOUND" }), options.json);
       return;
     }
     throw new TaskNotFoundError(taskId);
@@ -34,11 +35,20 @@ export async function cmdBlock(
   if (transitionError) {
     const allowed = getAllowedTransitions(task.status);
     if (options.json) {
-      printJson(jsonError(
-        `Cannot transition from "${task.status}" to "${STATUS.BLOCKED}". Allowed: ${allowed.join(", ")}`,
-        "INVALID_TRANSITION",
-        { nextActions: allowed.includes("Done") ? ["done"] : ["start"] },
-      ));
+      const nextCommands = (allowed.includes("Done") ? ["done"] : ["start"]).map(cmd => ({
+        command: `taskforge ${cmd}${cmd === "done" ? ` ${taskId}` : ""}`,
+        purpose: cmd === "done" ? "Mark the task as Done" : "Start the task",
+        when: "after invalid transition attempt",
+        allowedFor: "all" as const,
+        priority: 1 as const,
+      }));
+      writeResult(failedResult({
+        command: "block",
+        taskId,
+        error: `Cannot transition from "${task.status}" to "${STATUS.BLOCKED}". Allowed: ${allowed.join(", ")}`,
+        code: "INVALID_TRANSITION",
+        nextCommands,
+      }), options.json);
       return;
     }
     throw new InvalidStatusTransitionError(task.status, STATUS.BLOCKED, allowed);
@@ -76,12 +86,15 @@ export async function cmdBlock(
   await commitAndPushTaskState(repoRoot, `chore: block ${taskId} — ${reason}`);
 
   if (options.json) {
-    const final = loadTaskById(taskId);
-    printJson(jsonOk({
-      task: final ? buildJsonTask(final) : buildJsonTask(current),
-      nextActions: ["next", "resume"],
+    writeResult(successResult({
+      command: "block",
+      taskId,
       guidance: `Task ${taskId} is now blocked. Run 'taskforge next' to find the next available task, or 'taskforge resume <taskId>' to continue working on another in-progress task.`,
-    }));
+      nextCommands: [
+        { command: "taskforge next", purpose: "Find the next available task", when: "after blocking task", allowedFor: "all", priority: 1 },
+        { command: `taskforge resume ${taskId}`, purpose: "Continue working on another in-progress task", when: "after blocking task", allowedFor: "all", priority: 2 },
+      ],
+    }), options.json);
     return;
   }
 

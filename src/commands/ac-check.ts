@@ -1,7 +1,8 @@
 import { loadAllTasks, loadTaskById, hasAcceptanceCriteriaSection, hasBlankAcceptanceCriteria, hasUncheckedAcceptanceCriteria } from "../core/task-store.js";
 import { getRepoRoot } from "../util/paths.js";
 import { logInfo, logHeader, logSuccess, logError, logDivider } from "../util/logging.js";
-import { printJson, jsonOk, jsonError } from "../util/json-result.js";
+import { successResult, failedResult } from "../core/result-builder.js";
+import { writeResult } from "../util/write-command-result.js";
 
 export interface AcCheckOptions {
   json?: boolean;
@@ -21,7 +22,12 @@ export function cmdAcCheck(taskId?: string, options: AcCheckOptions = {}): void 
     const task = loadTaskById(taskId, repoRoot);
     if (!task) {
       if (options.json) {
-        printJson(jsonError(`Task ${taskId} not found`, "TASK_NOT_FOUND"));
+        writeResult(failedResult({
+          command: "ac-check",
+          taskId,
+          error: `Task ${taskId} not found`,
+          code: "TASK_NOT_FOUND",
+        }), options.json);
         return;
       }
       throw new Error(`Task ${taskId} not found`);
@@ -35,11 +41,13 @@ export function cmdAcCheck(taskId?: string, options: AcCheckOptions = {}): void 
   }
 
   if (options.json) {
-    printJson(jsonOk({
-      issues,
-      total: issues.length,
-      scanned: taskId ? 1 : loadAllTasks(repoRoot).length,
-    }));
+    writeResult(successResult({
+      command: "ac-check",
+      taskId,
+      guidance: issues.length === 0
+        ? "All acceptance criteria look good."
+        : `Found ${issues.length} acceptance criteria issue(s) in ${taskId ? 1 : loadAllTasks(repoRoot).length} task(s).`,
+    }), options.json);
     return;
   }
 

@@ -1,7 +1,8 @@
-import { readAgentRegistry, findStaleAgents, markStaleAgentsAsCrashed, type AgentEntry } from "../core/agent-registry.js";
+import { readAgentRegistry, findStaleAgents, markStaleAgentsAsCrashed } from "../core/agent-registry.js";
 import { getRepoRoot } from "../util/paths.js";
 import { logHeader, logSub, logDivider, logSuccess, logInfo } from "../util/logging.js";
-import { printJson, jsonOk } from "../util/json-result.js";
+import { successResult } from "../core/result-builder.js";
+import { writeResult } from "../util/write-command-result.js";
 
 export interface AgentsOptions {
   json?: boolean;
@@ -30,14 +31,12 @@ export async function cmdAgents(options?: AgentsOptions): Promise<void> {
     const threshold = options.threshold ?? 15;
     const crashed = markStaleAgentsAsCrashed(threshold, repoRoot);
     if (options.json) {
-      printJson(jsonOk({
-        recovered: crashed.map((a) => ({
-          sessionId: a.session_id,
-          agentId: a.agent_id,
-          currentTask: a.current_task,
-        })),
-        count: crashed.length,
-      }));
+      writeResult(successResult({
+        command: "agents",
+        guidance: crashed.length === 0
+          ? "No stale agents found."
+          : `Marked ${crashed.length} stale agent(s) as crashed.`,
+      }), options.json);
     } else {
       if (crashed.length === 0) {
         logSuccess("No stale agents found.");
@@ -55,17 +54,12 @@ export async function cmdAgents(options?: AgentsOptions): Promise<void> {
     const threshold = options.threshold ?? 15;
     const stale = findStaleAgents(threshold, repoRoot);
     if (options.json) {
-      printJson(jsonOk({
-        stale: stale.map((a) => ({
-          sessionId: a.session_id,
-          agentId: a.agent_id,
-          currentTask: a.current_task,
-          lastHeartbeat: a.last_heartbeat,
-          age: formatAge(a.last_heartbeat),
-        })),
-        count: stale.length,
-        thresholdMinutes: threshold,
-      }));
+      writeResult(successResult({
+        command: "agents",
+        guidance: stale.length === 0
+          ? "No stale agents found."
+          : `Found ${stale.length} stale agent(s) (threshold: ${threshold}m). Run 'taskforge agents --recover' to mark them as crashed.`,
+      }), options.json);
     } else {
       if (stale.length === 0) {
         logSuccess("No stale agents found.");
@@ -87,22 +81,12 @@ export async function cmdAgents(options?: AgentsOptions): Promise<void> {
   const crashed = registry.agents.filter((a) => a.status === "crashed");
 
   if (options?.json) {
-    printJson(jsonOk({
-      registry: {
-        active: active.map(formatAgentEntry),
-        idle: idle.map(formatAgentEntry),
-        crashed: crashed.map(formatAgentEntry),
-        maxConcurrentAgents: registry.max_concurrent_agents,
-        agentHistoryCount: registry.agent_history.length,
-        lastUpdated: registry.last_updated,
-      },
-      summary: {
-        total: registry.agents.length,
-        active: active.length,
-        idle: idle.length,
-        crashed: crashed.length,
-      },
-    }));
+    writeResult(successResult({
+      command: "agents",
+      guidance: registry.agents.length === 0
+        ? "No agents registered yet. Agents are registered when they claim or start a task."
+        : `Agent registry: ${registry.agents.length} total, ${active.length} active, ${idle.length} idle, ${crashed.length} crashed.`,
+    }), options.json);
     return;
   }
 
@@ -141,17 +125,4 @@ export async function cmdAgents(options?: AgentsOptions): Promise<void> {
   }
 
   logSuccess(`Total: ${registry.agents.length} agents (${active.length} active, ${idle.length} idle, ${crashed.length} crashed)`);
-}
-
-function formatAgentEntry(agent: AgentEntry) {
-  return {
-    sessionId: agent.session_id,
-    agentId: agent.agent_id,
-    status: agent.status,
-    currentTask: agent.current_task,
-    worktreePath: agent.worktree_path,
-    registeredAt: agent.registered_at,
-    lastHeartbeat: agent.last_heartbeat,
-    age: formatAge(agent.last_heartbeat),
-  };
 }

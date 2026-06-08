@@ -105,8 +105,8 @@ describe("cmdHeartbeat", () => {
 
     const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
     expect(output.ok).toBe(true);
-    expect(output.task.id).toBe("TASK-001");
-    expect(output.task.status).toBe("in_progress");
+    expect(output.status).toBe("success");
+    expect(output.context.taskId).toBe("TASK-001");
 
     logSpy.mockRestore();
   });

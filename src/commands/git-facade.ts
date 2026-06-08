@@ -9,6 +9,8 @@ import { createPullRequest } from "../integrations/github/service.js";
 import type { GitHubConfig } from "../integrations/github/types.js";
 import type { Task } from "../core/task.js";
 import { logInfo, logHeader, logSuccess, logWarn, logError } from "../util/logging.js";
+import { writeResult } from "../util/write-command-result.js";
+import { successResult, noopResult } from "../core/result-builder.js";
 import { checkpointStateMachine, submitStateMachine } from "../core/command-states.js";
 import { getDefaultGuidanceAdapter } from "../core/guidance-adapter.js";
 
@@ -18,7 +20,7 @@ function requireTask(taskId: string): Task {
   return task;
 }
 
-export async function cmdDiff(taskId: string): Promise<void> {
+export async function cmdDiff(taskId: string, json = false): Promise<void> {
   const repoRoot = getRepoRoot();
   const task = requireTask(taskId);
 
@@ -31,9 +33,15 @@ export async function cmdDiff(taskId: string): Promise<void> {
   logHeader(`Diff: ${taskId}`);
   const result = await run("git", ["-C", task.worktree, "diff"], repoRoot);
   process.stdout.write(result.stdout);
+
+  writeResult(successResult({
+    command: "diff",
+    taskId,
+    guidance: `Diff shown for ${taskId}.`,
+  }), json);
 }
 
-export async function cmdCheckpoint(taskId: string, message: string): Promise<void> {
+export async function cmdCheckpoint(taskId: string, message: string, json = false): Promise<void> {
   const repoRoot = getRepoRoot();
   const task = loadTaskById(taskId);
 
@@ -103,6 +111,11 @@ export async function cmdCheckpoint(taskId: string, message: string): Promise<vo
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     logInfo(result.guidance);
+    writeResult(noopResult({
+      command: "checkpoint",
+      taskId,
+      guidance: result.guidance,
+    }), json);
     return;
   }
 
@@ -141,12 +154,18 @@ export async function cmdCheckpoint(taskId: string, message: string): Promise<vo
 
   logSuccess(result.guidance);
 
+  writeResult(successResult({
+    command: "checkpoint",
+    taskId,
+    guidance: result.guidance,
+  }), json);
+
   appendTaskTranscript(repoRoot, taskId, createTaskEvent(taskId, "git.commit", {
     summary: message,
   }));
 }
 
-export async function cmdSubmit(taskId: string): Promise<void> {
+export async function cmdSubmit(taskId: string, json = false): Promise<void> {
   const repoRoot = getRepoRoot();
   const task = loadTaskById(taskId);
 
@@ -223,12 +242,18 @@ export async function cmdSubmit(taskId: string): Promise<void> {
 
   logSuccess(result.guidance);
 
+  writeResult(successResult({
+    command: "submit",
+    taskId,
+    guidance: result.guidance,
+  }), json);
+
   appendTaskTranscript(repoRoot, taskId, createTaskEvent(taskId, "git.push", {
     summary: `Pushed branch ${task.branch}`,
   }));
 }
 
-export async function cmdPr(taskId: string): Promise<void> {
+export async function cmdPr(taskId: string, json = false): Promise<void> {
   const repoRoot = getRepoRoot();
   const task = loadTaskById(taskId);
   const config = loadConfig(repoRoot);
@@ -281,6 +306,12 @@ export async function cmdPr(taskId: string): Promise<void> {
 
       logSuccess(result.guidance);
 
+      writeResult(successResult({
+        command: "pr",
+        taskId,
+        guidance: result.guidance,
+      }), json);
+
       appendTaskTranscript(repoRoot, taskId, createTaskEvent(taskId, "github.pr.created", {
         summary: `Created PR #${pr.number}`,
         metadata: { prNumber: pr.number, prUrl: pr.url },
@@ -316,6 +347,12 @@ export async function cmdPr(taskId: string): Promise<void> {
     logInfo(`To create a PR manually:`);
     logInfo(`  gh pr create --title "${title}" --head ${task.branch} --base main --body "${body}"`);
     logInfo(`  Or visit: https://github.com/<owner>/<repo>/compare/main...${task.branch}`);
+
+    writeResult(successResult({
+      command: "pr",
+      taskId,
+      guidance: result.guidance,
+    }), json);
 
     appendTaskTranscript(repoRoot, taskId, createTaskEvent(taskId, "github.pr.manual", {
       summary: "Manual PR creation required - GitHub not configured",

@@ -2,6 +2,8 @@ import { loadTaskById } from "../core/task-store.js";
 import { getRepoRoot, getWorktreePath } from "../util/paths.js";
 import { logHeader, logSub, logDivider, logInfo } from "../util/logging.js";
 import { TaskNotFoundError } from "../core/errors.js";
+import { successResult } from "../core/result-builder.js";
+import { writeResult } from "../util/write-command-result.js";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -13,14 +15,12 @@ export async function cmdPrompt(taskId: string, options?: { json?: boolean }): P
   const wtPath = getWorktreePath(repoRoot, taskId);
 
   if (options?.json) {
-    console.log(JSON.stringify({
-      ok: true,
-      task: { id: task.id, status: task.status, priority: task.priority, title: task.body.match(/^#\s+\S+:\s+(.+)$/m)?.[1]?.trim() ?? task.id },
-      workspace: { branch: task.branch, worktree: task.worktree ?? wtPath },
-      body: task.body,
-      acceptanceCriteria: extractAcceptanceCriteria(task.body),
-      verification: "npm run typecheck && npm run lint && npm run build && npm test -- --run",
-    }, null, 2));
+    const title = task.body.match(/^#\s+\S+:\s+(.+)$/m)?.[1]?.trim() ?? task.id;
+    writeResult(successResult({
+      command: "prompt",
+      taskId,
+      guidance: `Task ${taskId}: ${title} (${task.status}, ${task.priority}). Worktree: ${task.worktree ?? wtPath}. Branch: ${task.branch ?? "none"}. ${extractAcceptanceCriteria(task.body).length} acceptance criteria.`,
+    }), options.json);
     return;
   }
 

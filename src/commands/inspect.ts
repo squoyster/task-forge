@@ -6,6 +6,8 @@ import { logHeader, logInfo, logSub, logDivider } from "../util/logging.js";
 import { TaskNotFoundError } from "../core/errors.js";
 import { STATUS } from "../util/status-constants.js";
 import type { ParsedTask } from "../core/task-store.js";
+import { successResult } from "../core/result-builder.js";
+import { writeResult } from "../util/write-command-result.js";
 
 export interface InspectResult {
   taskId: string;
@@ -37,7 +39,10 @@ export async function cmdInspect(
 
     if (tasks.length === 0) {
       if (json) {
-        console.log(JSON.stringify({ ok: true, tasks: [] }, null, 2));
+        writeResult(successResult({
+          command: "inspect",
+          guidance: "No In Progress tasks to inspect.",
+        }), json);
         return null;
       }
       logInfo("No In Progress tasks to inspect.");
@@ -50,7 +55,10 @@ export async function cmdInspect(
     }
 
     if (json) {
-      console.log(JSON.stringify({ ok: true, tasks: results }, null, 2));
+      writeResult(successResult({
+        command: "inspect",
+        guidance: `Inspected ${results.length} In Progress task(s).`,
+      }), json);
       return null;
     }
 
@@ -70,7 +78,11 @@ export async function cmdInspect(
   const result = await inspectTask(task, repoRoot);
 
   if (json) {
-    console.log(JSON.stringify({ ok: true, ...result }, null, 2));
+    writeResult(successResult({
+      command: "inspect",
+      taskId,
+      guidance: `Inspected task ${taskId}: worktree ${result.worktreeExists ? "exists" : "missing"}, ${result.dirty ? "dirty" : "clean"}, ${result.aheadOfMain} ahead, ${result.behindMain} behind.`,
+    }), json);
     return result;
   }
 

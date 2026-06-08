@@ -1,6 +1,8 @@
 import { loadConfig } from "../core/config.js";
 import { getRepoRoot } from "../util/paths.js";
 import { logSuccess, logWarn } from "../util/logging.js";
+import { successResult, failedResult } from "../core/result-builder.js";
+import { writeResult } from "../util/write-command-result.js";
 
 export async function cmdConfigValidate(options?: { json?: boolean }): Promise<void> {
   const repoRoot = getRepoRoot();
@@ -12,7 +14,12 @@ export async function cmdConfigValidate(options?: { json?: boolean }): Promise<v
   } catch (err) {
     issues.push(`Failed to load config: ${err instanceof Error ? err.message : String(err)}`);
     if (options?.json) {
-      console.log(JSON.stringify({ ok: false, issues }, null, 2));
+      writeResult(failedResult({
+        command: "config-validate",
+        error: issues[0],
+        code: "CONFIG_INVALID",
+        guidance: `Config validation failed: ${issues[0]}`,
+      }), options.json);
       return;
     }
     logWarn(`Config invalid: ${issues[0]}`);
@@ -28,10 +35,15 @@ export async function cmdConfigValidate(options?: { json?: boolean }): Promise<v
   }
 
   if (issues.length === 0) {
-    if (options?.json) console.log(JSON.stringify({ ok: true, issues: [] }, null, 2));
+    if (options?.json) writeResult(successResult({ command: "config-validate", guidance: "Config is valid." }), options.json);
     else logSuccess("Config is valid.");
   } else {
-    if (options?.json) console.log(JSON.stringify({ ok: false, issues }, null, 2));
+    if (options?.json) writeResult(failedResult({
+      command: "config-validate",
+      error: issues.join("; "),
+      code: "CONFIG_INVALID",
+      guidance: `Config validation failed: ${issues.join("; ")}`,
+    }), options.json);
     else issues.forEach((i) => logWarn(i));
   }
 }

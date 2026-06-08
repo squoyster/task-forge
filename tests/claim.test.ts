@@ -206,8 +206,8 @@ describe("cmdClaim", () => {
     logSpy.mockRestore();
     const output = JSON.parse(capturedOutput);
     expect(output.ok).toBe(true);
-    expect(output.task.id).toBe("TASK-001");
-    expect(output.task.status).toBe("in_progress");
+    expect(output.status).toBe("success");
+    expect(output.context.taskId).toBe("TASK-001");
   });
 
   it("throws for non-existent task", async () => {

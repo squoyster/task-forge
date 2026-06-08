@@ -2,13 +2,19 @@ import { getRepoRoot } from "../util/paths.js";
 import { readTaskAudit, summarizeTaskAudit, type TimelineEntry } from "../core/audit.js";
 import { readTaskInvocations } from "../core/cli-audit.js";
 import { logInfo, logHeader, logSub, logDivider } from "../util/logging.js";
+import { successResult } from "../core/result-builder.js";
+import { writeResult } from "../util/write-command-result.js";
 
 export function cmdAudit(taskId: string, opts: { json?: boolean }): void {
   const repoRoot = getRepoRoot();
   const events = readTaskAudit(repoRoot, taskId);
 
   if (opts.json) {
-    process.stdout.write(JSON.stringify(events, null, 2) + "\n");
+    writeResult(successResult({
+      command: "audit",
+      taskId,
+      guidance: `Audit for ${taskId}: ${events.length} event(s).`,
+    }), opts.json);
     return;
   }
 
@@ -29,7 +35,11 @@ export function cmdTranscript(taskId: string, opts: { json?: boolean }): void {
   const events = readTaskAudit(repoRoot, taskId);
 
   if (opts.json) {
-    process.stdout.write(JSON.stringify(events, null, 2) + "\n");
+    writeResult(successResult({
+      command: "transcript",
+      taskId,
+      guidance: `Transcript for ${taskId}: ${events.length} event(s).`,
+    }), opts.json);
     return;
   }
 
@@ -74,11 +84,11 @@ export function cmdTimeline(taskId: string, opts: { json?: boolean } = {}): void
   );
 
   if (opts.json) {
-    process.stdout.write(JSON.stringify({
-      ...summary,
-      entries: allEntries,
-      cliInvocations: invocations,
-    }, null, 2) + "\n");
+    writeResult(successResult({
+      command: "timeline",
+      taskId,
+      guidance: `Timeline for ${taskId}: ${allEntries.length} events, ${invocations.length} CLI invocations.`,
+    }), opts.json);
     return;
   }
 

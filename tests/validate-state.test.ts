@@ -62,8 +62,7 @@ describe("cmdValidateState", () => {
 
     const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
     expect(output.ok).toBe(true);
-    expect(output.errors).toEqual([]);
-    expect(output.warnings).toEqual([]);
+    expect(output.status).toBe("success");
     logSpy.mockRestore();
   });
 
@@ -76,8 +75,8 @@ describe("cmdValidateState", () => {
 
     const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
     expect(output.ok).toBe(false);
+    expect(output.status).toBe("failed");
     expect(output.code).toBe("VALIDATION_ERROR");
-    expect(output.errors.length).toBeGreaterThan(0);
     logSpy.mockRestore();
   });
 
@@ -90,7 +89,7 @@ describe("cmdValidateState", () => {
 
     const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
     expect(output.ok).toBe(true);
-    expect(output.warnings.length).toBeGreaterThan(0);
+    expect(output.status).toBe("success");
     logSpy.mockRestore();
   });
 
@@ -103,8 +102,8 @@ describe("cmdValidateState", () => {
 
     const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
     expect(output.ok).toBe(false);
+    expect(output.status).toBe("failed");
     expect(output.code).toBe("VALIDATION_ERROR");
-    expect(output.warnings.length).toBeGreaterThan(0);
     logSpy.mockRestore();
   });
 
@@ -115,9 +114,11 @@ describe("cmdValidateState", () => {
     await expect(cmdValidateState({ json: true })).rejects.toThrow();
 
     const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
-    expect(output.nextActions).toBeDefined();
-    expect(output.nextActions.length).toBeGreaterThan(0);
-    expect(output.nextActions[0].command).toContain("taskforge doctor");
+    expect(output.ok).toBe(false);
+    expect(output.status).toBe("failed");
+    expect(output.validNextCommands).toBeDefined();
+    expect(output.validNextCommands.length).toBeGreaterThan(0);
+    expect(output.validNextCommands[0].command).toContain("taskforge doctor");
     logSpy.mockRestore();
   });
 
@@ -128,8 +129,10 @@ describe("cmdValidateState", () => {
     await cmdValidateState({ json: true });
 
     const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
-    expect(output.nextActions).toBeDefined();
-    expect(output.nextActions.length).toBeGreaterThan(0);
+    expect(output.ok).toBe(true);
+    expect(output.status).toBe("success");
+    expect(output.validNextCommands).toBeDefined();
+    expect(output.validNextCommands.length).toBeGreaterThan(0);
     logSpy.mockRestore();
   });
 

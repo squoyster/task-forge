@@ -9,7 +9,8 @@ import { loadTaskById } from "../core/task-store.js";
 import { getRepoRoot } from "../util/paths.js";
 import { run } from "../util/exec.js";
 import { logInfo, logHeader, logDivider, logSub, logSuccess } from "../util/logging.js";
-import { printJson, jsonOk, jsonError } from "../util/json-result.js";
+import { writeResult } from "../util/write-command-result.js";
+import { successResult, failedResult } from "../core/result-builder.js";
 import { TaskNotFoundError } from "../core/errors.js";
 import {
   isManagedSession,
@@ -41,11 +42,10 @@ export async function cmdGuardStatus(opts: GuardStatusOptions = {}): Promise<voi
   };
 
   if (opts.json) {
-    printJson(jsonOk({
-      ...status,
-      deniedCommands: DENIED_GIT_COMMANDS,
-      readOnlyCommands: READ_ONLY_GIT_COMMANDS,
-    }));
+    writeResult(successResult({
+      command: "guard:status",
+      guidance: `Mutation guard: ${status.managed ? "active" : "inactive"}`,
+    }), opts.json);
     return;
   }
 
@@ -82,7 +82,7 @@ export async function cmdGuardOverride(
   if (actor !== "doctor") {
     const msg = "Only doctor agents may issue mutation overrides. Set TASKFORGE_ACTOR=doctor.";
     if (opts.json) {
-      printJson(jsonError(msg, "UNAUTHORIZED"));
+      writeResult(failedResult({ command: "guard:override", taskId, error: msg, code: "UNAUTHORIZED" }), opts.json);
       return;
     }
     throw new Error(msg);
@@ -93,7 +93,7 @@ export async function cmdGuardOverride(
   if (result.allowed) {
     const msg = `Command "${command}" is not denied — no override needed.`;
     if (opts.json) {
-      printJson(jsonOk({ message: msg, guidance: `Command "${command}" is not denied — no override needed.` }));
+      writeResult(successResult({ command: "guard:override", taskId, guidance: `Command "${command}" is not denied — no override needed.` }), opts.json);
       return;
     }
     logInfo(msg);
@@ -122,10 +122,7 @@ export async function cmdGuardOverride(
   recordOverride(override);
 
   if (opts.json) {
-    printJson(jsonOk({
-      message: `Override issued for command "${command}" (task ${taskId}). Valid for 5 minutes.`,
-      override: override as unknown as Record<string, unknown>,
-    }));
+    writeResult(successResult({ command: "guard:override", taskId, guidance: `Override issued for command "${command}" (task ${taskId}). Valid for 5 minutes.` }), opts.json);
     return;
   }
 

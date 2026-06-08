@@ -4,11 +4,12 @@ import { assertTaskOwnership } from "../core/session.js";
 import { getRepoRoot } from "../util/paths.js";
 import { logSuccess, logInfo, logError, logDivider, logSub } from "../util/logging.js";
 import { TaskNotFoundError } from "../core/errors.js";
-import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
 import { STATUS } from "../util/status-constants.js";
 import { resolveAuthority, assertCanForce, getForceRejectionNextActions, ForceRequiresHumanOrDoctorError } from "../core/authority.js";
 import { updateSessionHeartbeat } from "../core/session-state.js";
 import { updateAgentHeartbeat } from "../core/agent-registry.js";
+import { successResult, failedResult } from "../core/result-builder.js";
+import { writeResult } from "../util/write-command-result.js";
 
 export interface HeartbeatOptions {
   force?: boolean;
@@ -25,7 +26,7 @@ export async function cmdHeartbeat(
 
   if (!task) {
     if (json) {
-      printJson(jsonError(`Task ${taskId} not found`, "TASK_NOT_FOUND"));
+      writeResult(failedResult({ command: "heartbeat", taskId, error: `Task ${taskId} not found`, code: "TASK_NOT_FOUND" }), json);
       return;
     }
     throw new TaskNotFoundError(taskId);
@@ -33,10 +34,7 @@ export async function cmdHeartbeat(
 
   if (task.status !== STATUS.IN_PROGRESS) {
     if (json) {
-      printJson(jsonError(
-        `Task ${taskId} is in "${task.status}" status, not "${STATUS.IN_PROGRESS}". Heartbeat is only valid for In Progress tasks.`,
-        "INVALID_STATUS",
-      ));
+      writeResult(failedResult({ command: "heartbeat", taskId, error: `Task ${taskId} is in "${task.status}" status, not "${STATUS.IN_PROGRESS}". Heartbeat is only valid for In Progress tasks.`, code: "INVALID_STATUS" }), json);
       return;
     }
     logError(
@@ -54,11 +52,14 @@ export async function cmdHeartbeat(
     } catch (err) {
       if (err instanceof ForceRequiresHumanOrDoctorError) {
         if (json) {
-          printJson(jsonError(
-            "Normal agents may not use --force.",
-            "FORCE_REQUIRES_HUMAN_OR_DOCTOR",
-            { nextActions: getForceRejectionNextActions(taskId) },
-          ));
+          const nextCommands = getForceRejectionNextActions(taskId).map(a => ({
+            command: a.command,
+            purpose: a.reason,
+            when: a.reason,
+            allowedFor: (a.safety === "safe" ? "all" : a.safety === "requires_human" ? "human" : "doctor") as "all" | "human" | "doctor",
+            priority: a.preferred ? 1 : 2,
+          }));
+          writeResult(failedResult({ command: "heartbeat", taskId, error: "Normal agents may not use --force.", code: "FORCE_REQUIRES_HUMAN_OR_DOCTOR", nextCommands }), json);
           return;
         }
         logError("Normal agents may not use --force.");
@@ -81,11 +82,14 @@ export async function cmdHeartbeat(
       await assertTaskOwnership(task, repoRoot);
     } catch (err) {
       if (json) {
-        printJson(jsonError(
-          `Task ${taskId} is assigned to session "${task.assignee}".`,
-          "OWNERSHIP_MISMATCH",
-          { nextActions: getForceRejectionNextActions(taskId) },
-        ));
+        const nextCommands = getForceRejectionNextActions(taskId).map(a => ({
+          command: a.command,
+          purpose: a.reason,
+          when: a.reason,
+          allowedFor: (a.safety === "safe" ? "all" : a.safety === "requires_human" ? "human" : "doctor") as "all" | "human" | "doctor",
+          priority: a.preferred ? 1 : 2,
+        }));
+        writeResult(failedResult({ command: "heartbeat", taskId, error: `Task ${taskId} is assigned to session "${task.assignee}".`, code: "OWNERSHIP_MISMATCH", nextCommands }), json);
         return;
       }
       throw err;
@@ -129,9 +133,7 @@ export async function cmdHeartbeat(
   await commitAndPushTaskState(repoRoot, `chore: heartbeat ${taskId}`);
 
   if (json) {
-    printJson(jsonOk({
-      task: buildJsonTask(current),
-    }));
+    writeResult(successResult({ command: "heartbeat", taskId, guidance: `Heartbeat: task ${taskId} lease renewed.` }), json);
     return;
   }
 

@@ -2,6 +2,8 @@ import { loadAllTasks } from "../core/task-store.js";
 import { hasUnmetDependencies, getDependents } from "../core/scheduler.js";
 import { STATUS } from "../util/status-constants.js";
 import { logHeader, logSub, logDivider, logInfo } from "../util/logging.js";
+import { successResult } from "../core/result-builder.js";
+import { writeResult } from "../util/write-command-result.js";
 
 interface StatusRow {
   id: string;
@@ -110,7 +112,10 @@ export async function cmdStatus(json?: boolean): Promise<void> {
 
   if (json) {
     const output = buildJson(tasks);
-    console.log(JSON.stringify(output, null, 2));
+    writeResult(successResult({
+      command: "status",
+      guidance: `TaskForge Status: ${output.total} total tasks, ${Object.entries(output.byStatus).map(([s, c]) => `${s}: ${c}`).join(", ")}.`,
+    }), json);
     return;
   }
 

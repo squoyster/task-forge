@@ -2,7 +2,8 @@ import { loadTaskById, loadAllTasks } from "../core/task-store.js";
 import { getRepoRoot, getWorktreePath } from "../util/paths.js";
 import { logHeader, logSub, logDivider, logWarn, logSuccess, logInfo } from "../util/logging.js";
 import { TaskNotFoundError } from "../core/errors.js";
-import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
+import { writeResult } from "../util/write-command-result.js";
+import { successResult, failedResult } from "../core/result-builder.js";
 import fs from "node:fs";
 import path from "node:path";
 import { execSync } from "node:child_process";
@@ -193,11 +194,16 @@ export async function cmdResume(taskId?: string, options?: { json?: boolean }): 
 
   if (!recovery) {
     if (options?.json) {
-      printJson(jsonError(
-        "No recoverable session found",
-        "NO_RECOVERABLE_SESSION",
-        { nextActions: ["next", "claim"], guidance: "No active sessions found. Use 'taskforge next' to find a task, or 'taskforge claim' to claim one." },
-      ));
+      writeResult(failedResult({
+        command: "resume",
+        error: "No recoverable session found",
+        code: "NO_RECOVERABLE_SESSION",
+        guidance: "No active sessions found. Use 'taskforge next' to find a task, or 'taskforge claim' to claim one.",
+        nextCommands: [
+          { command: "taskforge next", purpose: "Find the next available task", when: "no active sessions", allowedFor: "all", priority: 1 },
+          { command: "taskforge claim <TASK-ID>", purpose: "Claim a task", when: "no active sessions", allowedFor: "all", priority: 2 },
+        ],
+      }), options.json);
     } else {
       logWarn("No recoverable session found.");
       logDivider();
@@ -211,23 +217,24 @@ export async function cmdResume(taskId?: string, options?: { json?: boolean }): 
   // Load the task to get full details
   const task = loadTaskById(recovery.taskId);
   if (!task) {
-    if (options?.json) printJson(jsonError(`Task ${recovery.taskId} not found`, "TASK_NOT_FOUND"));
+    if (options?.json) writeResult(failedResult({ command: "resume", taskId: recovery.taskId, error: `Task ${recovery.taskId} not found`, code: "TASK_NOT_FOUND" }), options.json);
     else throw new TaskNotFoundError(recovery.taskId);
     return;
   }
 
   if (options?.json) {
-    printJson(jsonOk({
-      task: buildJsonTask(task),
-      workspace: { branch: recovery.branch || task.branch, worktree: recovery.worktreePath, exists: true },
-      recovery: {
-        method: recovery.method,
-        sessionId: recovery.sessionId,
-        claimedAt: recovery.claimedAt,
-      },
-      nextActions: ["work", "checkpoint", "done"],
+    writeResult(successResult({
+      command: "resume",
+      taskId: recovery.taskId,
+      worktree: recovery.worktreePath,
+      branch: recovery.branch || task.branch,
       guidance: `Resume working in ${recovery.worktreePath}. Use 'taskforge checkpoint ${recovery.taskId}' to save progress, or 'taskforge done ${recovery.taskId}' when complete.`,
-    }));
+      nextCommands: [
+        { command: "work", purpose: "Continue working in the worktree", when: "after resume", allowedFor: "all", priority: 1 },
+        { command: `taskforge checkpoint ${recovery.taskId}`, purpose: "Save progress", when: "after resume", allowedFor: "all", priority: 2 },
+        { command: `taskforge done ${recovery.taskId}`, purpose: "Complete the task", when: "after resume", allowedFor: "all", priority: 3 },
+      ],
+    }), options.json);
     return;
   }
 
