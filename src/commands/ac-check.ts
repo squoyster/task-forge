@@ -1,7 +1,10 @@
 import { loadAllTasks, loadTaskById, hasAcceptanceCriteriaSection, hasBlankAcceptanceCriteria, hasUncheckedAcceptanceCriteria } from "../core/task-store.js";
 import { getRepoRoot } from "../util/paths.js";
-import { logInfo, logHeader, logSuccess, logError, logDivider } from "../util/logging.js";
-import { printJson, jsonOk, jsonError } from "../util/json-result.js";
+import { logInfo, logHeader, logError, logDivider } from "../util/logging.js";
+import { printJson, jsonOk } from "../util/json-result.js";
+import { successResult, failedResult } from "../core/result-builder.js";
+import { getValidNextCommands } from "../core/next-command-maps.js";
+import { renderResultMarkdown, renderResultJson } from "../core/result-renderer.js";
 
 export interface AcCheckOptions {
   json?: boolean;
@@ -14,21 +17,33 @@ interface AcIssue {
 }
 
 export function cmdAcCheck(taskId?: string, options: AcCheckOptions = {}): void {
+  const startTime = Date.now();
   const repoRoot = getRepoRoot();
   const issues: AcIssue[] = [];
+  let scannedCount = 0;
 
   if (taskId) {
     const task = loadTaskById(taskId, repoRoot);
     if (!task) {
+      const result = failedResult({
+        command: "ac-check",
+        error: `Task ${taskId} not found`,
+        code: "TASK_NOT_FOUND",
+        nextCommands: getValidNextCommands("ac-check", "success"),
+        duration: Date.now() - startTime,
+      });
       if (options.json) {
-        printJson(jsonError(`Task ${taskId} not found`, "TASK_NOT_FOUND"));
-        return;
+        process.stdout.write(renderResultJson(result) + "\n");
+      } else {
+        throw new Error(`Task ${taskId} not found`);
       }
-      throw new Error(`Task ${taskId} not found`);
+      return;
     }
     checkTaskAc(task, issues);
+    scannedCount = 1;
   } else {
     const tasks = loadAllTasks(repoRoot);
+    scannedCount = tasks.length;
     for (const task of tasks) {
       checkTaskAc(task, issues);
     }
@@ -38,13 +53,19 @@ export function cmdAcCheck(taskId?: string, options: AcCheckOptions = {}): void 
     printJson(jsonOk({
       issues,
       total: issues.length,
-      scanned: taskId ? 1 : loadAllTasks(repoRoot).length,
+      scanned: scannedCount,
     }));
     return;
   }
 
   if (issues.length === 0) {
-    logSuccess("All acceptance criteria look good.");
+    const result = successResult({
+      command: "ac-check",
+      guidance: "All acceptance criteria look good.",
+      nextCommands: getValidNextCommands("ac-check", "success"),
+      duration: Date.now() - startTime,
+    });
+    process.stdout.write(renderResultMarkdown(result) + "\n");
     return;
   }
 
@@ -57,7 +78,15 @@ export function cmdAcCheck(taskId?: string, options: AcCheckOptions = {}): void 
   }
 
   logDivider();
-  logInfo(`Scanned ${taskId ? 1 : loadAllTasks(repoRoot).length} task(s), found ${issues.length} issue(s).`);
+  logInfo(`Scanned ${scannedCount} task(s), found ${issues.length} issue(s).`);
+
+  const result = successResult({
+    command: "ac-check",
+    guidance: `Found ${issues.length} AC issue(s) across ${scannedCount} task(s).`,
+    nextCommands: getValidNextCommands("ac-check", "success"),
+    duration: Date.now() - startTime,
+  });
+  process.stdout.write(renderResultMarkdown(result) + "\n");
 }
 
 function checkTaskAc(task: { id: string; body: string }, issues: AcIssue[]): void {

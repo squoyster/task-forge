@@ -13,8 +13,12 @@ import {
 } from "../integrations/github/index.js";
 import { STATUS_LABELS } from "../integrations/github/types.js";
 import { syncTaskToProject } from "../integrations/github/projects.js";
+import { successResult } from "../core/result-builder.js";
+import { getValidNextCommands } from "../core/next-command-maps.js";
+import { renderResultMarkdown } from "../core/result-renderer.js";
 
 export async function cmdSync(): Promise<void> {
+  const startTime = Date.now();
   const repoRoot = getRepoRoot();
   const config = loadConfig(repoRoot);
 
@@ -94,6 +98,14 @@ export async function cmdSync(): Promise<void> {
   } else {
     logSuccess("All tasks synced to GitHub Issues.");
   }
+
+  const result = successResult({
+    command: "sync",
+    guidance: `Synced ${syncedIssues.length} task(s) to ${githubConfig.owner}/${githubConfig.repo}.`,
+    nextCommands: getValidNextCommands("sync", "success"),
+    duration: Date.now() - startTime,
+  });
+  process.stdout.write(renderResultMarkdown(result) + "\n");
 }
 
 /**
