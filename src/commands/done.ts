@@ -62,6 +62,53 @@ export async function cmdDone(
     throw new TaskNotFoundError(taskId);
   }
 
+  // --- Early exit: already-Done task with --cleanup only ---
+  if (task.status === STATUS.DONE && (cleanup || deleteBranch)) {
+    const today = new Date().toISOString().split("T")[0];
+    const notes: string[] = ["Task already Done — cleanup only"];
+
+    if (task.assignee) {
+      try {
+        await assertTaskOwnership(task, repoRoot);
+      } catch {
+        const errResult = failedResult({
+          command: "done",
+          taskId,
+          error: `Task ${taskId} is owned by another agent — cannot clean up. Use 'taskforge doctor' or --force.`,
+          code: "OWNERSHIP_MISMATCH",
+          nextCommands: getValidNextCommands("done", "failed"),
+        });
+        if (json) {
+          process.stdout.write(renderResultJson(errResult) + "\n");
+          return;
+        }
+        throw new Error(`Task ${taskId} is owned by another agent. Use --force with doctor/human authority.`);
+      }
+    }
+
+    await performCleanup(repoRoot, task, deleteBranch, today, notes);
+
+    appendAgentNote(task.filePath, today, "System", notes);
+    await withTaskStateTransaction(
+      { command: `done ${taskId} --cleanup` },
+      (tx) => { tx.clearClaim(taskId); },
+    );
+
+    const okResult = successResult({
+      command: "done",
+      taskId,
+      guidance: `Cleanup completed for already-Done task ${taskId}.`,
+      nextCommands: getValidNextCommands("done", "success"),
+    });
+    if (json) {
+      process.stdout.write(renderResultJson(okResult) + "\n");
+      return;
+    }
+    logSuccess(`Cleanup complete for already-Done task ${taskId}.`);
+    process.stdout.write(renderResultMarkdown(okResult) + "\n");
+    return;
+  }
+
   // --- Check gates ---
   const { passed: gatesPassed, results: gateResults } = await runGates();
   if (!json) {

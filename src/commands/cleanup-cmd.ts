@@ -5,9 +5,10 @@ import { getRepoRoot } from "../util/paths.js";
 import { logSuccess, logWarn, logInfo, logSub, logError, logDivider } from "../util/logging.js";
 import { TaskNotFoundError } from "../core/errors.js";
 import { resolveAuthority, assertCanForce, getForceRejectionNextActions, ForceRequiresHumanOrDoctorError } from "../core/authority.js";
-import { successResult, noopResult, failedResult } from "../core/result-builder.js";
+import { successResult, failedResult } from "../core/result-builder.js";
 import { getValidNextCommands } from "../core/next-command-maps.js";
 import { renderResultMarkdown, renderResultJson } from "../core/result-renderer.js";
+import { STATUS } from "../util/status-constants.js";
 
 export interface CleanupOptions {
   dryRun?: boolean;
@@ -46,8 +47,13 @@ export async function cmdCleanup(taskId: string, options?: CleanupOptions): Prom
   const apply = options?.apply ?? false;
   const force = options?.force ?? false;
   const dryRun = !apply && !force;
+  const isTerminal = task.status === STATUS.DONE || task.status === STATUS.REJECTED || task.status === STATUS.DEFERRED;
 
-  // Force authority check
+  // For terminal-state tasks, --apply is sufficient (no --force needed for safety checks)
+  // This allows normal agents to clean up their own completed tasks
+  const canRemove = force || (isTerminal && apply);
+
+  // Force authority check (only for explicit --force)
   if (force) {
     const authority = resolveAuthority();
     try {
@@ -98,10 +104,12 @@ export async function cmdCleanup(taskId: string, options?: CleanupOptions): Prom
   }
 
   // Check worktree
+  // For terminal-state tasks (Done, Rejected, Deferred), --apply is sufficient to bypass
+  // dirty/ahead safety checks — the task is complete and the worktree is no longer needed
   if (task.worktree && insp?.worktreeExists) {
-    if (insp.dirty && !force) {
+    if (insp.dirty && !canRemove) {
       items.push({ resource: "worktree", status: dryRun ? "would_remove" : "skipped", reason: "dirty worktree — uncommitted changes" });
-    } else if (insp.aheadOfMain > 0 && !force) {
+    } else if (insp.aheadOfMain > 0 && !canRemove) {
       items.push({ resource: "worktree", status: dryRun ? "would_remove" : "skipped", reason: `${insp.aheadOfMain} commit(s) ahead of main` });
     } else if (!dryRun) {
       await removeWorktree(repoRoot, taskId);

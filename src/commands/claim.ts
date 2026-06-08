@@ -367,8 +367,6 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
   });
 
   if (json) {
-    // Re-read the task after push for accurate state
-    const updated = loadTaskById(taskId);
     eventLogEvent(taskId, "claimed", { session: sessionId, forced: force });
     process.stdout.write(renderResultJson(okResult) + "\n");
     return;
