@@ -1,0 +1,4 @@
+SYMBOLIDX.v=1
+ROOT:/Volumes/Transcend/devel/task-forge
+
+S:genericAdapter; file=src/agent-frameworks/generic.ts; line=10; kind=export; owns=generic

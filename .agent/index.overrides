@@ -1,0 +1,8 @@
+# Manual high-value routing hints.
+# Format:
+# F:<path>; kind=<kind>; owns=<tags>; read=<condition>
+
+F:src/commands/next.ts; kind=cmd; owns=tf-next,task-dispatch,task-selection; read=when CMD=next|taskforge-next|dispatch
+F:src/core/scheduler.ts; kind=core; owns=ranking,task-selection,claim-start-choice; read=when selecting next task
+F:tasks/README.md; kind=doc; owns=task-storage-format; read=when task format unknown
+F:tasks/TEMPLATE.md; kind=doc; owns=task-create-shape; read=when creating task
