@@ -45,3 +45,13 @@ Describe the desired outcome.
 ### 2026-06-08T00:00:00Z System
 - Task claimed via taskforge claim TASK-247
 - Session: 42a0aaaa59
+
+### 2026-06-08T04:46:00Z Agent
+- Fixed ESLint errors in `src/core/command-result.ts`:
+  - Removed duplicate `import { z } from "zod"` import
+  - Removed unused imports (`CommandResult`, `BuilderOptions`, `successResult`, `blockedResult`, `failedResult`, `noopResult`, `humanRequiredResult`, `doctorRequiredResult`, `contextCleanupResult`, `getValidNextCommands`)
+- All 4 verification gates now pass (typecheck, lint, build, test):
+  - ESLint: 0 errors (down from 10), 15 warnings (all `@typescript-eslint/no-explicit-any` in test files, configured as "warn")
+  - TypeScript typecheck: 0 errors
+  - Build: succeeds
+  - Tests: 621/621 passing
