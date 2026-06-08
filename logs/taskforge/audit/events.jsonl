@@ -1,0 +1,1 @@
+{"timestamp":"2026-06-08T17:16:19.108Z","event":"task.command.completed","sessionId":"a08bb87d9d","summary":"CLI: taskforge start TASK-270","metadata":{"type":"cli.invocation","command":"start","args":["TASK-270"],"flags":{},"exitCode":0,"duration":169,"error":null,"agentSession":"a08bb87d9d"},"taskId":"TASK-270"}
