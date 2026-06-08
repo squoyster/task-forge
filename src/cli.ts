@@ -37,6 +37,7 @@ import { cmdAudit, cmdTranscript, cmdTimeline } from "./commands/audit.js";
 import { cmdAcCheck } from "./commands/ac-check.js";
 import { cmdDiff, cmdCheckpoint, cmdSubmit, cmdPr } from "./commands/git-facade.js";
 import { cmdGuardStatus, cmdGuardOverride } from "./commands/guard-cmd.js";
+import { cmdMcp } from "./commands/mcp.js";
 import { TaskForgeError } from "./core/errors.js";
 import { logError } from "./util/logging.js";
 import { recordCliInvocation } from "./core/cli-audit.js";
@@ -497,6 +498,15 @@ program
   .description("Create a PR for the task")
   .action((taskId: string) =>
     wrapWithAudit("pr", [taskId], {}, async () => { await cmdPr(taskId); })(),
+  );
+
+program
+  .command("mcp")
+  .description("Start a Model Context Protocol (MCP) server for TaskForge")
+  .option("--config <path>", "Path to config directory")
+  .option("--json", "Output in JSON format")
+  .action((opts: { config?: string; json?: boolean }) =>
+    wrapWithAudit("mcp", [], opts, async () => { await cmdMcp({ config: opts.config, json: opts.json }); })(),
   );
 
 const guard = program.command("guard").description("Manage the mutation boundary");
