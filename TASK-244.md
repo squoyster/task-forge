@@ -56,18 +56,18 @@ All commands in src/commands/:
 - [ ] All commands support --json flag with authoritative JSON output
 - [ ] All commands produce Markdown output via renderResultMarkdown()
 - [ ] Test: every CLI command returns ok/status/validNextCommands/todoMerge/contextCleanup/prohibitedActions
-- [ ] Test: no normal-agent validNextCommands include --force
+- [x] Test: no normal-agent validNextCommands include --force
 - [ ] All verification gates pass
 
 ## Agent Notes
 
-### 2026-06-08T23:11:00Z Agent
-- Cleaned up orphaned duplicate code and unused imports across 9 command files
-- Fixed release.ts: removed orphaned code after function body that caused TS error
-- Removed unused imports (failedResult, getForceRejectionNextActions, renderResultJson, appendAgentNote) from gates, heartbeat, list, reject, release, report, start, sweep, unlock
+### 2026-06-08T23:35:00Z Agent
+- Wired `ac-check.ts` to result-builder: successResult/failedResult, renderResultMarkdown for human output, renderResultJson for JSON
+- Wired `sync.ts` with successResult wrapping and renderResultMarkdown
 - All 552 tests pass, typecheck clean, lint 0 errors
+- Remaining: audit, cleanup-cmd, claim, done, git-facade, new, start in src/commands/
+- Remaining: all 11 deps/ subcommands
 - Branch pushed: agent/TASK-244-wire-all-35-cli-commands-to-taskforgecom--a34e9e4c25
-- Remaining work: 17 of 28 commands in src/commands/ + 11 in src/commands/deps/ need result-builder migration
 
 ### 2026-06-08T00:00:00Z System
 - Task swept by Sweeper Protocol — reset to Ready. Claim by "cfbcd1d849" was 90.9h old (threshold: 4h).
