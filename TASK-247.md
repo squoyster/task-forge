@@ -1,13 +1,11 @@
 ---
 id: TASK-247
 type: Task
-status: Review
+status: Done
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 42a0aaaa59
-claimed_at: '2026-06-08 04:45:52'
 branch: agent/TASK-247-update-agentic-descriptions-and-docs--42a0aaaa59
 ---
 
@@ -25,6 +23,9 @@ Fix the gate verification failures (ESLint, typecheck, build, test) that were bl
 - [x] Build succeeds
 
 ## Agent Notes
+
+### 2026-06-08T00:00:00Z System
+- Task marked Done
 
 ### 2026-06-08T00:00:00Z System
 - Report generated — task moved to Review
