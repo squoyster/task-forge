@@ -37,6 +37,7 @@ import { cmdAudit, cmdTranscript, cmdTimeline } from "./commands/audit.js";
 import { cmdAcCheck } from "./commands/ac-check.js";
 import { cmdDiff, cmdCheckpoint, cmdSubmit, cmdPr } from "./commands/git-facade.js";
 import { cmdGuardStatus, cmdGuardOverride } from "./commands/guard-cmd.js";
+import { cmdBlockTask, cmdRecordGates, cmdEvidenceAdd, cmdReconcile } from "./commands/task-mutations.js";
 import { TaskForgeError } from "./core/errors.js";
 import { logError } from "./util/logging.js";
 import { recordCliInvocation } from "./core/cli-audit.js";
@@ -497,6 +498,53 @@ program
   .description("Create a PR for the task")
   .action((taskId: string) =>
     wrapWithAudit("pr", [taskId], {}, async () => { await cmdPr(taskId); })(),
+  );
+
+// --- TASK-261: Task-state mutation commands ---
+
+program
+  .command("block <taskId>")
+  .description("Block a task with a reason")
+  .option("--reason <text>", "Reason for blocking")
+  .option("--category <cat>", "Block category (external, blocked-on-task, etc.)")
+  .option("--json", "Output in JSON format")
+  .action((taskId: string, opts: { reason?: string; category?: string; json?: boolean }) => {
+    if (!opts.reason) { console.error("--reason is required"); process.exit(1); }
+    wrapWithAudit("block", [taskId], opts, () => cmdBlockTask(taskId, { reason: opts.reason!, category: opts.category, json: opts.json }))();
+  });
+
+program
+  .command("record-gates <taskId>")
+  .description("Record gate results for a task")
+  .option("--report <file>", "Path to gate report file")
+  .option("--passed <bool>", "Whether gates passed")
+  .option("--json", "Output in JSON format")
+  .action((taskId: string, opts: { report?: string; passed?: string; json?: boolean }) =>
+    wrapWithAudit("record-gates", [taskId], opts, () => cmdRecordGates(taskId, {
+      report: opts.report,
+      passed: opts.passed !== "false",
+      json: opts.json,
+    }))(),
+  );
+
+program
+  .command("evidence <taskId>")
+  .description("Add completion evidence to a task")
+  .option("--type <type>", "Evidence type (test-report, screenshots, logs, etc.)")
+  .option("--file <path>", "Path to evidence file")
+  .option("--summary <text>", "Brief summary of the evidence")
+  .option("--json", "Output in JSON format")
+  .action((taskId: string, opts: { type?: string; file?: string; summary?: string; json?: boolean }) => {
+    if (!opts.type) { console.error("--type is required"); process.exit(1); }
+    wrapWithAudit("evidence", [taskId], opts, () => cmdEvidenceAdd(taskId, { type: opts.type!, file: opts.file, summary: opts.summary, json: opts.json }))();
+  });
+
+program
+  .command("reconcile <taskId>")
+  .description("Reconcile task state with reality")
+  .option("--json", "Output in JSON format")
+  .action((taskId: string, opts: { json?: boolean }) =>
+    wrapWithAudit("reconcile", [taskId], opts, () => cmdReconcile(taskId, opts))(),
   );
 
 const guard = program.command("guard").description("Manage the mutation boundary");
