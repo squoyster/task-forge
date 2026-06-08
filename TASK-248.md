@@ -19,13 +19,19 @@ When the Sweeper Protocol resets a stale task claim, a new agent can re-claim th
 
 ## Acceptance Criteria
 
-- [ ] When a task is claimed after being swept (or the assignee changes), the branch name's embedded session ID is updated to match the new assignee
+- [x] When a task is claimed after being swept (or the assignee changes), the branch name's embedded session ID is updated to match the new assignee
 - [ ] OR: The `assertTaskOwnership` check uses the task frontmatter's `assignee` field directly instead of parsing it from the branch name
-- [ ] A swept-then-re-claimed task can be marked Done without manual intervention to sync session IDs
-- [ ] Existing tests for ownership assertion, sweeper, and done continue to pass
+- [x] A swept-then-re-claimed task can be marked Done without manual intervention to sync session IDs
+- [x] Existing tests for ownership assertion, sweeper, and done continue to pass
 
 ## Agent Notes
 
 ### 2026-06-08T00:00:00Z System
 - Task claimed via taskforge claim TASK-248
 - Session: 2012cb0590
+
+### 2026-06-08T23:00:00Z Agent
+- Root cause: `claim` and `start` commands reused existing branch name without checking if the embedded session ID matched the current session
+- Fix: Added `parseSessionIdFromBranch` check in both `claim.ts` and `start.ts` — when a branch exists but contains a stale session ID, a new branch name is generated with the current session
+- Files changed: `src/commands/claim.ts`, `src/commands/start.ts`, `tests/commands/start.test.ts`
+- All 621 tests pass
