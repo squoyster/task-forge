@@ -15,11 +15,14 @@ branch: agent/TASK-247-update-agentic-descriptions-and-docs--42a0aaaa59
 
 ## Goal
 
-Describe the desired outcome.
+Fix the gate verification failures (ESLint, typecheck, build, test) that were blocking TASK-247 from completing.
 
 ## Acceptance Criteria
 
-- [ ]
+- [x] All 4 verification gates pass (typecheck, lint, build, test)
+- [x] No ESLint errors remain in the codebase
+- [x] TypeScript typecheck passes with 0 errors
+- [x] Build succeeds
 
 ## Agent Notes
 
