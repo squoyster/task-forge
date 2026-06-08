@@ -1,11 +1,15 @@
 ---
 id: TASK-261
 type: Feature
-status: Ready
+status: In Progress
 priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: dd85c550bb
+claimed_at: '2026-06-08 14:34:41'
+context_hash: b516925ba8cef30c
+branch: agent/TASK-261-replace-direct-task-state-editing-with-s--dd85c550bb
 ---
 
 # TASK-261: REPLACE DIRECT TASK-STATE EDITING WITH SUPPORTED COMMANDS
@@ -19,6 +23,11 @@ Describe the desired outcome.
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-08T00:00:00Z System
+- Task claimed via taskforge start TASK-261
+- Session: dd85c550bb
+- Branch: agent/TASK-261-replace-direct-task-state-editing-with-s--dd85c550bb
 
 
 ## Problem
