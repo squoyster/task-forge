@@ -186,19 +186,18 @@ describe("cmdClaim", () => {
 
   it("supports --json output", async () => {
     let capturedOutput = "";
-    const logSpy = vi.spyOn(console, "log").mockImplementation((...args: unknown[]) => {
-      capturedOutput = args.map(a => typeof a === "string" ? a : JSON.stringify(a)).join(" ");
-    });
+    const originalWrite = process.stdout.write.bind(process.stdout);
+    process.stdout.write = (chunk: string) => { capturedOutput += chunk; return true; };
 
     makeTaskFile("TASK-001", { status: "Ready" });
 
     await cmdClaim("TASK-001", { json: true, session: "json-test" });
 
-    logSpy.mockRestore();
+    process.stdout.write = originalWrite;
     const output = JSON.parse(capturedOutput);
     expect(output.ok).toBe(true);
-    expect(output.task.id).toBe("TASK-001");
-    expect(output.task.status).toBe("in_progress");
+    expect(output.context.taskId).toBe("TASK-001");
+    expect(output.status).toBe("success");
   });
 
   it("throws for non-existent task", async () => {

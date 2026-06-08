@@ -7,13 +7,15 @@ import { STATUS } from "../util/status-constants.js";
 import { logInfo, logSuccess, logWarn, logError, logDivider, logSub } from "../util/logging.js";
 import { TaskNotFoundError } from "../core/errors.js";
 import { getRepoRoot, getWorktreePath, makeBranchName } from "../util/paths.js";
-import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
 import { eventLogEvent } from "../core/event-log.js";
 import { checkOutstandingSessionTasks } from "../core/session.js";
 import { isDoctorLocked } from "../core/doctor-lock.js";
 import { resolveAuthority, assertCanForce, getForceRejectionNextActions, ForceRequiresHumanOrDoctorError } from "../core/authority.js";
 import { claimStateMachine } from "../core/command-states.js";
 import { getDefaultGuidanceAdapter } from "../core/guidance-adapter.js";
+import { successResult, failedResult } from "../core/result-builder.js";
+import { getValidNextCommands } from "../core/next-command-maps.js";
+import { renderResultMarkdown, renderResultJson } from "../core/result-renderer.js";
 import fs from "node:fs";
 
 export interface ClaimOptions {
@@ -35,7 +37,7 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
   // Doctor-lock check
   const lock = isDoctorLocked(repoRoot);
   if (lock.locked) {
-    const result = claimStateMachine({
+    const smResult = claimStateMachine({
       taskFound: !!task,
       taskStatus: task?.status,
       doctorLocked: true,
@@ -43,22 +45,29 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
       hasOutstandingTask: false,
       pushSucceeded: false,
     });
-    getDefaultGuidanceAdapter().pushGuidance(result);
+    getDefaultGuidanceAdapter().pushGuidance(smResult);
+    const errResult = failedResult({
+      command: "claim",
+      taskId,
+      error: smResult.guidance,
+      code: smResult.errorCode ?? "DOCTOR_LOCKED",
+      nextCommands: smResult.nextAction
+        ? [{ command: smResult.nextAction, purpose: "Suggested next action", when: "On doctor lock", allowedFor: "all", priority: 1 }]
+        : getValidNextCommands("claim", "failed"),
+    });
     if (json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "DOCTOR_LOCKED", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance,
-      }));
+      process.stdout.write(renderResultJson(errResult) + "\n");
       return;
     }
-    logWarn(result.guidance);
+    logWarn(smResult.guidance);
+    process.stdout.write(renderResultMarkdown(errResult) + "\n");
     return;
   }
 
   // Hard guardrail: check outstanding session tasks
   const outstanding = await checkOutstandingSessionTasks(loadAllTasks(repoRoot), repoRoot, taskId);
   if (outstanding) {
-    const result = claimStateMachine({
+    const smResult = claimStateMachine({
       taskFound: !!task,
       taskStatus: task?.status,
       doctorLocked: false,
@@ -66,15 +75,22 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
       outstandingTaskId: outstanding,
       pushSucceeded: false,
     });
-    getDefaultGuidanceAdapter().pushGuidance(result);
+    getDefaultGuidanceAdapter().pushGuidance(smResult);
+    const errResult = failedResult({
+      command: "claim",
+      taskId,
+      error: smResult.guidance,
+      code: smResult.errorCode ?? "OUTSTANDING_TASK",
+      nextCommands: smResult.nextAction
+        ? [{ command: smResult.nextAction, purpose: "Suggested next action", when: "On outstanding task", allowedFor: "all", priority: 1 }]
+        : getValidNextCommands("claim", "failed"),
+    });
     if (json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "OUTSTANDING_TASK", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance,
-      }));
+      process.stdout.write(renderResultJson(errResult) + "\n");
       return;
     }
-    logError(result.guidance);
+    logError(smResult.guidance);
+    process.stdout.write(renderResultMarkdown(errResult) + "\n");
     return;
   }
 
@@ -83,7 +99,7 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
   const uncommittedWorktrees = await checkUncommittedWorktrees(repoRoot, allTasks);
   if (uncommittedWorktrees.length > 0) {
     const dirty = uncommittedWorktrees[0];
-    const result = claimStateMachine({
+    const smResult = claimStateMachine({
       taskFound: !!task,
       taskStatus: task?.status,
       doctorLocked: false,
@@ -96,39 +112,52 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
         dirtyFiles: dirty.dirtyFiles,
       }],
     });
-    getDefaultGuidanceAdapter().pushGuidance(result);
+    getDefaultGuidanceAdapter().pushGuidance(smResult);
+    const errResult = failedResult({
+      command: "claim",
+      taskId,
+      error: smResult.guidance,
+      code: smResult.errorCode ?? "UNCOMMITTED_CHANGES",
+      nextCommands: smResult.nextAction
+        ? [{ command: smResult.nextAction, purpose: "Suggested next action", when: "On uncommitted changes", allowedFor: "all", priority: 1 }]
+        : getValidNextCommands("claim", "failed"),
+    });
     if (json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "UNCOMMITTED_CHANGES", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance,
-      }));
+      process.stdout.write(renderResultJson(errResult) + "\n");
       return;
     }
-    logWarn(result.guidance);
+    logWarn(smResult.guidance);
+    process.stdout.write(renderResultMarkdown(errResult) + "\n");
     return;
   }
 
   if (!task) {
-    const result = claimStateMachine({
+    const smResult = claimStateMachine({
       taskFound: false,
       doctorLocked: false,
       hasOutstandingTask: false,
       pushSucceeded: false,
       taskId,
     });
-    getDefaultGuidanceAdapter().pushGuidance(result);
+    getDefaultGuidanceAdapter().pushGuidance(smResult);
+    const errResult = failedResult({
+      command: "claim",
+      taskId,
+      error: smResult.guidance,
+      code: smResult.errorCode ?? "TASK_NOT_FOUND",
+      nextCommands: smResult.nextAction
+        ? [{ command: smResult.nextAction, purpose: "Suggested next action", when: "On task not found", allowedFor: "all", priority: 1 }]
+        : getValidNextCommands("claim", "failed"),
+    });
     if (json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "TASK_NOT_FOUND", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance,
-      }));
+      process.stdout.write(renderResultJson(errResult) + "\n");
       return;
     }
     throw new TaskNotFoundError(taskId);
   }
 
   if (task.status !== STATUS.READY && task.status !== STATUS.IN_PROGRESS) {
-    const result = claimStateMachine({
+    const smResult = claimStateMachine({
       taskFound: true,
       taskStatus: task.status,
       doctorLocked: false,
@@ -136,19 +165,25 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
       pushSucceeded: false,
       taskId,
     });
-    getDefaultGuidanceAdapter().pushGuidance(result);
+    getDefaultGuidanceAdapter().pushGuidance(smResult);
+    const errResult = failedResult({
+      command: "claim",
+      taskId,
+      error: smResult.guidance,
+      code: smResult.errorCode ?? "INVALID_STATUS",
+      nextCommands: smResult.nextAction
+        ? [{ command: smResult.nextAction, purpose: "Suggested next action", when: "On invalid task status", allowedFor: "all", priority: 1 }]
+        : getValidNextCommands("claim", "failed"),
+    });
     if (json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "INVALID_STATUS", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance,
-      }));
+      process.stdout.write(renderResultJson(errResult) + "\n");
       return;
     }
-    throw new Error(result.guidance);
+    throw new Error(smResult.guidance);
   }
 
   if (task.assignee && !force) {
-    const result = claimStateMachine({
+    const smResult = claimStateMachine({
       taskFound: true,
       taskStatus: task.status,
       taskAssignee: task.assignee,
@@ -158,16 +193,21 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
       pushSucceeded: false,
       taskId,
     });
-    getDefaultGuidanceAdapter().pushGuidance(result);
+    getDefaultGuidanceAdapter().pushGuidance(smResult);
+    const errResult = failedResult({
+      command: "claim",
+      taskId,
+      error: smResult.guidance,
+      code: smResult.errorCode ?? "ALREADY_CLAIMED",
+      nextCommands: smResult.nextAction
+        ? [{ command: smResult.nextAction, purpose: "Suggested next action", when: "On already claimed", allowedFor: "all", priority: 1 }]
+        : getValidNextCommands("claim", "failed"),
+    });
     if (json) {
-      printJson(jsonError(
-        result.guidance,
-        result.errorCode ?? "ALREADY_CLAIMED",
-        { nextActions: getForceRejectionNextActions(taskId) },
-      ));
+      process.stdout.write(renderResultJson(errResult) + "\n");
       return;
     }
-    logError(result.guidance);
+    logError(smResult.guidance);
     logDivider();
     logInfo("Valid next actions:");
     logSub("1. taskforge doctor --json");
@@ -176,6 +216,7 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
     logSub(`2. taskforge block ${taskId} "Force operation requires human or doctor-mode authorization" --category unsafe_operation --blocked-by human`);
     logSub("   Reason: Escalate unsafe operation without bypassing TaskForge.");
     logSub("   Safety: requires_human");
+    process.stdout.write(renderResultMarkdown(errResult) + "\n");
     return;
   }
 
@@ -186,24 +227,21 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
       assertCanForce(authority);
     } catch (err) {
       if (err instanceof ForceRequiresHumanOrDoctorError) {
-        const result = claimStateMachine({
-          taskFound: true,
-          taskStatus: task.status,
-          taskAssignee: task.assignee,
-      taskClaimedAt: task.claimed_at ? String(task.claimed_at) : undefined,
-          force: true,
-          doctorLocked: false,
-          hasOutstandingTask: false,
-          pushSucceeded: false,
+        const errResult = failedResult({
+          command: "claim",
           taskId,
+          error: "Normal agents may not use --force.",
+          code: "FORCE_REQUIRES_HUMAN_OR_DOCTOR",
+          nextCommands: getForceRejectionNextActions(taskId).map((nc) => ({
+            command: nc.command,
+            purpose: nc.reason,
+            when: "When force operation is denied",
+            allowedFor: nc.safety === "requires_human" ? ("human" as const) : ("doctor" as const),
+            priority: 1,
+          })),
         });
-        getDefaultGuidanceAdapter().pushGuidance(result);
         if (json) {
-          printJson(jsonError(
-            "Normal agents may not use --force.",
-            "FORCE_REQUIRES_HUMAN_OR_DOCTOR",
-            { nextActions: getForceRejectionNextActions(taskId) },
-          ));
+          process.stdout.write(renderResultJson(errResult) + "\n");
           return;
         }
         logError("Normal agents may not use --force.");
@@ -215,6 +253,7 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
         logSub(`2. taskforge block ${taskId} "Force operation requires human or doctor-mode authorization" --category unsafe_operation --blocked-by human`);
         logSub("   Reason: Escalate unsafe operation without bypassing TaskForge.");
         logSub("   Safety: requires_human");
+        process.stdout.write(renderResultMarkdown(errResult) + "\n");
         return;
       }
       throw err;
@@ -258,7 +297,7 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
       },
     );
   } catch {
-    const result = claimStateMachine({
+    const smResult = claimStateMachine({
       taskFound: true,
       taskStatus: task.status,
       doctorLocked: false,
@@ -266,16 +305,22 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
       pushSucceeded: false,
       taskId,
     });
-    getDefaultGuidanceAdapter().pushGuidance(result);
+    getDefaultGuidanceAdapter().pushGuidance(smResult);
+    const errResult = failedResult({
+      command: "claim",
+      taskId,
+      error: smResult.guidance,
+      code: smResult.errorCode ?? "PUSH_FAILED",
+      nextCommands: smResult.nextAction
+        ? [{ command: smResult.nextAction, purpose: "Suggested next action", when: "On push failure", allowedFor: "all", priority: 1 }]
+        : getValidNextCommands("claim", "failed"),
+    });
     if (json) {
-      printJson(jsonError(
-        result.guidance,
-        result.errorCode ?? "PUSH_FAILED",
-        { nextActions: [result.nextAction], guidance: result.guidance },
-      ));
+      process.stdout.write(renderResultJson(errResult) + "\n");
       return;
     }
-    logError(result.guidance);
+    logError(smResult.guidance);
+    process.stdout.write(renderResultMarkdown(errResult) + "\n");
     return;
   }
 
@@ -298,7 +343,7 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
   }
 
   // Build success result through state machine
-  const successResult = claimStateMachine({
+  const smSuccessResult = claimStateMachine({
     taskFound: true,
     taskStatus: task.status,
     doctorLocked: false,
@@ -309,21 +354,23 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
     taskId,
     sessionId,
   });
-  getDefaultGuidanceAdapter().pushGuidance(successResult);
+  getDefaultGuidanceAdapter().pushGuidance(smSuccessResult);
+
+  const okResult = successResult({
+    command: "claim",
+    taskId,
+    sessionId,
+    worktree: worktreePath,
+    branch: branchName,
+    guidance: smSuccessResult.guidance,
+    nextCommands: getValidNextCommands("claim", "success"),
+  });
 
   if (json) {
     // Re-read the task after push for accurate state
     const updated = loadTaskById(taskId);
     eventLogEvent(taskId, "claimed", { session: sessionId, forced: force });
-    printJson(jsonOk({
-      task: updated ? buildJsonTask(updated) : buildJsonTask(task),
-      workspace: {
-        branch: branchName,
-        worktree: worktreePath,
-      },
-      nextActions: [successResult.nextAction],
-      guidance: successResult.guidance,
-    }));
+    process.stdout.write(renderResultJson(okResult) + "\n");
     return;
   }
 
@@ -332,11 +379,12 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
     logSuccess(`Status updated: ${STATUS.READY} → ${STATUS.IN_PROGRESS}`);
   }
 
-  logSuccess(successResult.guidance);
+  logSuccess(smSuccessResult.guidance);
   if (worktreePath) {
     logSuccess(`Worktree: ${worktreePath}`);
     logSuccess(`Branch: ${branchName}`);
     logInfo(`cd ${worktreePath} to begin work.`);
   }
   eventLogEvent(taskId, "claimed", { session: sessionId, forced: force });
+  process.stdout.write(renderResultMarkdown(okResult) + "\n");
 }
