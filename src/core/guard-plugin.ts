@@ -100,11 +100,25 @@ function isReadOnly(normalised: string): boolean {
   return false;
 }
 
+function warnNoEnv(): void {
+  // Only warn once per session
+  if (typeof globalThis !== "undefined" && !(globalThis as Record<string, unknown>)._taskforgeEnvWarned) {
+    (globalThis as Record<string, unknown>)._taskforgeEnvWarned = true;
+    console.warn("[taskforge-guard] TASK_FORGE_ACTIVE is not set — mutation boundary is inactive. Set TASK_FORGE_ACTIVE=true to enable enforcement.");
+  }
+}
+
 function hasBlock(command: string): { blocked: boolean; reason?: string; replacement?: string } {
   const c = command.trim();
 
   // Non-managed sessions are not restricted
-  if (!isManagedSession()) return { blocked: false };
+  if (!isManagedSession()) {
+    // Still warn if a denied command is attempted so the user knows enforcement is off
+    if (c.startsWith("git ")) {
+      warnNoEnv();
+    }
+    return { blocked: false };
+  }
 
   // Doctor lock check
   const doctorLockReason = checkDoctorLock();

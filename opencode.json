@@ -8,7 +8,10 @@
   "agent": {
     "implementer": {
       "description": "Implements one task at a time in isolated worktrees",
-      "mode": "primary"
+      "mode": "primary",
+      "env": {
+        "TASK_FORGE_ACTIVE": "true"
+      }
     },
     "intake": {
       "description": "Converts raw requests into structured task records",

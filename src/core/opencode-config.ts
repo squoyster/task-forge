@@ -52,6 +52,11 @@ export function generateOpenCodeConfig(policy: string, audit: boolean, guard: bo
       },
     },
     agent: {
+      implementer: {
+        env: {
+          TASK_FORGE_ACTIVE: "true",
+        },
+      },
       doctor: {
         permission: {
           bash: {
