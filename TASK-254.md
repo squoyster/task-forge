@@ -1,13 +1,11 @@
 ---
 id: TASK-254
 type: Bug
-status: In Progress
+status: Done
 priority: P1
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
-assignee: e2a31df025
-claimed_at: '2026-06-08 10:14:07'
 branch: agent/TASK-254-session-id-churn-breaks-the-distributed--e2a31df025
 ---
 
