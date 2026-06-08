@@ -6,11 +6,7 @@ priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: a08bb87d9d
-claimed_at: '2026-06-08 14:41:18'
 context_hash: b516925ba8cef30c
-submitted_sha: 9a4a528
-submitted_at: '2026-06-08T08:45:00Z'
 branch: agent/TASK-268-add-taskforgeactive-warning-to-guardstat--a08bb87d9d
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-268
 ---
@@ -51,6 +47,9 @@ Enhance `taskforge guard:status` to detect and warn when `TASK_FORGE_ACTIVE` is 
 - Manual verification: run `taskforge guard:status` with and without the env var
 
 ## Agent Notes
+
+### 2026-06-08T00:00:00Z System
+- Task released by session "a08bb87d9d"
 
 ### 2026-06-08T00:00:00Z System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-268
