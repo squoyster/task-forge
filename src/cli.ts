@@ -37,6 +37,7 @@ import { cmdAudit, cmdTranscript, cmdTimeline } from "./commands/audit.js";
 import { cmdAcCheck } from "./commands/ac-check.js";
 import { cmdDiff, cmdCheckpoint, cmdSubmit, cmdPr } from "./commands/git-facade.js";
 import { cmdGuardStatus, cmdGuardOverride } from "./commands/guard-cmd.js";
+import { cmdUpdateTask } from "./commands/update-task.js";
 import { TaskForgeError } from "./core/errors.js";
 import { logError } from "./util/logging.js";
 import { recordCliInvocation } from "./core/cli-audit.js";
@@ -497,6 +498,24 @@ program
   .description("Create a PR for the task")
   .action((taskId: string) =>
     wrapWithAudit("pr", [taskId], {}, async () => { await cmdPr(taskId); })(),
+  );
+
+program
+  .command("update <taskId>")
+  .description("Update task fields (priority, type, status, body, etc.)")
+  .option("--field <name>", "Field name to update (priority, type, status, dependsOn, agentRole, riskLevel)")
+  .option("--value <val>", "New value for the field")
+  .option("--body <text>", "Replace the entire body content")
+  .option("--append-body <text>", "Append text to the body content")
+  .option("--json", "Output in JSON format")
+  .action((taskId: string, opts: { field?: string; value?: string; body?: string; appendBody?: string; json?: boolean }) =>
+    wrapWithAudit("update", [taskId], opts, () => cmdUpdateTask(taskId, {
+      field: opts.field,
+      value: opts.value,
+      body: opts.body,
+      appendBody: opts.appendBody,
+      json: opts.json,
+    }))(),
   );
 
 const guard = program.command("guard").description("Manage the mutation boundary");
