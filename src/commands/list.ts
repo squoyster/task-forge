@@ -4,7 +4,7 @@ import { logHeader, logSub, logDivider, logInfo } from "../util/logging.js";
 import type { ParsedTask } from "../core/task-store.js";
 import { successResult, noopResult } from "../core/result-builder.js";
 import { getValidNextCommands } from "../core/next-command-maps.js";
-import { renderResultMarkdown, renderResultJson } from "../core/result-renderer.js";
+import { renderResultMarkdown } from "../core/result-renderer.js";
 
 export interface ListOptions {
   status?: string;

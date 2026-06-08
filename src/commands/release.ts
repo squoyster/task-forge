@@ -5,7 +5,7 @@ import { STATUS } from "../util/status-constants.js";
 import { logSuccess, logInfo, logDivider, logSub } from "../util/logging.js";
 import { TaskNotFoundError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
-import { successResult, failedResult, noopResult } from "../core/result-builder.js";
+import { successResult, noopResult } from "../core/result-builder.js";
 import { getValidNextCommands } from "../core/next-command-maps.js";
 import { renderResultMarkdown } from "../core/result-renderer.js";
 
@@ -120,57 +120,4 @@ export async function cmdRelease(taskId: string, options?: ReleaseOptions): Prom
     duration: Date.now() - startTime,
   });
   process.stdout.write(renderResultMarkdown(result) + "\n");
-}
-
-  if (!task.assignee) {
-    if (options?.json) {
-      printJson(jsonOk({
-        task: buildJsonTask(task),
-        nextActions: ["claim", "start"],
-        guidance: `Task ${taskId} is not claimed. Run 'taskforge claim ${taskId}' to claim it, or 'taskforge start ${taskId}' to claim and create a worktree.`,
-      }));
-    } else {
-      logInfo(`Task ${taskId} is not claimed — nothing to release.`);
-      logDivider();
-      logInfo("Next actions:");
-      logSub(`  taskforge claim ${taskId}   — Claim this task`);
-      logSub(`  taskforge start ${taskId}   — Claim and create worktree`);
-    }
-    return;
-  }
-
-  const previousAssignee = task.assignee;
-  const wasInProgress = task.status === STATUS.IN_PROGRESS;
-
-  // Assert ownership (no --force — release is voluntary)
-  await assertTaskOwnership(task, repoRoot);
-
-  clearTaskLock(task.filePath);
-
-  if (wasInProgress) {
-    updateTaskStatus(task.filePath, STATUS.READY);
-  }
-
-  const today = new Date().toISOString().split("T")[0];
-  appendAgentNote(task.filePath, today, "System", [
-    `Task released by session "${previousAssignee}"${wasInProgress ? " — reset to Ready" : ""}`,
-  ]);
-
-  await commitAndPushTaskState(repoRoot, `chore: release ${taskId}`);
-
-  if (options?.json) {
-    const updated = loadTaskById(taskId);
-    printJson(jsonOk({
-      task: updated ? buildJsonTask(updated) : buildJsonTask(task),
-      nextActions: ["next", "claim"],
-      guidance: `Task ${taskId} released by "${previousAssignee}"${wasInProgress ? " and reset to Ready" : ""}. Run 'taskforge next' to find the next task, or 'taskforge claim <id>' to claim a different task.`,
-    }));
-    return;
-  }
-
-  logSuccess(`Task ${taskId} released.${wasInProgress ? " Status reset to Ready." : ""}`);
-  logDivider();
-  logInfo("Next actions:");
-  logSub("  taskforge next            — Find the next available task");
-  logSub("  taskforge claim <id>      — Claim a different task");
 }

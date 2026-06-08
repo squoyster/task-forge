@@ -3,7 +3,7 @@ import { commitAndPushTaskState } from "../core/git.js";
 import { getRepoRoot } from "../util/paths.js";
 import { logSuccess, logWarn, logError, logInfo, logDivider, logSub } from "../util/logging.js";
 import { TaskNotFoundError } from "../core/errors.js";
-import { resolveAuthority, assertCanForce, getForceRejectionNextActions, ForceRequiresHumanOrDoctorError } from "../core/authority.js";
+import { resolveAuthority, assertCanForce, ForceRequiresHumanOrDoctorError } from "../core/authority.js";
 import { failedResult, successResult, noopResult } from "../core/result-builder.js";
 import { getValidNextCommands } from "../core/next-command-maps.js";
 import { renderResultMarkdown } from "../core/result-renderer.js";

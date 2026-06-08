@@ -1,4 +1,4 @@
-import { loadTaskById, loadAllTasks, appendAgentNote } from "../core/task-store.js";
+import { loadTaskById, loadAllTasks } from "../core/task-store.js";
 import { createWorktree, checkUncommittedWorktrees } from "../core/git.js";
 import { withTaskStateTransaction } from "../core/task-state-transaction.js";
 import { makeBranchName } from "../util/paths.js";

@@ -5,7 +5,7 @@ import { logInfo, logSuccess, logSub, logWarn, logError, logDivider } from "../u
 import { successResult, failedResult, noopResult } from "../core/result-builder.js";
 import { getValidNextCommands } from "../core/next-command-maps.js";
 import { renderResultMarkdown } from "../core/result-renderer.js";
-import { resolveAuthority, assertCanForce, getForceRejectionNextActions, ForceRequiresHumanOrDoctorError } from "../core/authority.js";
+import { resolveAuthority, assertCanForce, ForceRequiresHumanOrDoctorError } from "../core/authority.js";
 
 export interface SweepOptions {
   json?: boolean;

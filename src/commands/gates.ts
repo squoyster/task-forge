@@ -2,7 +2,7 @@ import { execa } from "execa";
 import { loadConfig } from "../core/config.js";
 import { logHeader, logDivider, logError, logSuccess, logInfo } from "../util/logging.js";
 import { getRepoRoot } from "../util/paths.js";
-import { successResult, failedResult } from "../core/result-builder.js";
+import { successResult } from "../core/result-builder.js";
 import { getValidNextCommands } from "../core/next-command-maps.js";
 import { renderResultMarkdown, renderResultJson } from "../core/result-renderer.js";
 import { gatesStateMachine } from "../core/command-states.js";

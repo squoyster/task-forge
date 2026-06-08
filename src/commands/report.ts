@@ -6,7 +6,7 @@ import { getRepoRoot, getWorktreePath } from "../util/paths.js";
 import { STATUS } from "../util/status-constants.js";
 import { logHeader, logSuccess, logSub, logDivider, logInfo, logWarn } from "../util/logging.js";
 import { TaskNotFoundError, InvalidStatusTransitionError } from "../core/errors.js";
-import { successResult, failedResult } from "../core/result-builder.js";
+import { successResult } from "../core/result-builder.js";
 import { getValidNextCommands } from "../core/next-command-maps.js";
 import { renderResultMarkdown } from "../core/result-renderer.js";
 import { statusToJson } from "../util/json-result.js";

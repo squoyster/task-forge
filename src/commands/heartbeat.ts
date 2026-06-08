@@ -9,7 +9,7 @@ import { getValidNextCommands } from "../core/next-command-maps.js";
 import { renderResultMarkdown } from "../core/result-renderer.js";
 import { statusToJson } from "../util/json-result.js";
 import { STATUS } from "../util/status-constants.js";
-import { resolveAuthority, assertCanForce, getForceRejectionNextActions, ForceRequiresHumanOrDoctorError } from "../core/authority.js";
+import { resolveAuthority, assertCanForce, ForceRequiresHumanOrDoctorError } from "../core/authority.js";
 
 export interface HeartbeatOptions {
   force?: boolean;
