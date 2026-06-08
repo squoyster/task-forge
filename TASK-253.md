@@ -6,8 +6,6 @@ priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 889fce87ef
-claimed_at: '2026-06-08 10:21:27'
 branch: agent/TASK-253-task-state-path-resolution-breaks-from-n--889fce87ef
 ---
 
@@ -117,6 +115,9 @@ No
 Auto-continue unless a stopping condition occurs.
 
 ## Agent Notes
+
+### 2026-06-08T00:00:00Z System
+- Repair: cleared stale assignee/claimed_at for Done task
 
 ### 2026-06-08 Implementer
 - **PR conflict resolution**: Rebuilt branch from origin/main (fb0c7c5), resolving all merge conflicts. The original branch contained stale TASK-244 commits that conflicted with main. The new branch has only 1 commit with the TASK-253 changes.
