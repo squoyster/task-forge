@@ -1,13 +1,11 @@
 ---
 id: TASK-248
 type: Bug
-status: Review
+status: Done
 priority: P1
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
-assignee: 2012cb0590
-claimed_at: '2026-06-08 04:57:41'
 branch: agent/TASK-248-fix-session-ownership-mismatch-after-swe--2012cb0590
 ---
 
@@ -24,6 +22,9 @@ When the Sweeper Protocol resets a stale task claim, a new agent can re-claim th
 - [x] Existing tests for ownership assertion, sweeper, and done continue to pass
 
 ## Agent Notes
+
+### 2026-06-08T00:00:00Z System
+- Task marked Done
 
 ### 2026-06-08T00:00:00Z System
 - Report generated — task moved to Review
