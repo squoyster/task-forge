@@ -1,11 +1,15 @@
 ---
 id: TASK-258
 type: Feature
-status: Ready
+status: In Progress
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: aa5153ce41
+claimed_at: '2026-06-08 13:21:11'
+context_hash: 98789b0cbdd97405
+branch: agent/TASK-258-enforce-the-taskforge-mutation-boundary--aa5153ce41
 ---
 
 # TASK-258: ENFORCE THE TASKFORGE MUTATION BOUNDARY
@@ -19,6 +23,11 @@ Describe the desired outcome.
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-08T00:00:00Z System
+- Task claimed via taskforge start TASK-258
+- Session: aa5153ce41
+- Branch: agent/TASK-258-enforce-the-taskforge-mutation-boundary--aa5153ce41
 
 
 ## Problem
