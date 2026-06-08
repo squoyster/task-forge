@@ -1,7 +1,7 @@
 import { loadTaskById, loadAllTasks } from "../core/task-store.js";
 import { pullTaskState, createWorktree, checkUncommittedWorktrees } from "../core/git.js";
 import { withTaskStateTransaction } from "../core/task-state-transaction.js";
-import { generateSessionId, parseSessionIdFromBranch } from "../core/session.js";
+import { parseSessionIdFromBranch, resolveSessionId } from "../core/session.js";
 import { sweepStaleTasks } from "../core/sweeper.js";
 import { STATUS } from "../util/status-constants.js";
 import { logInfo, logSuccess, logWarn, logError, logDivider, logSub } from "../util/logging.js";
@@ -226,7 +226,7 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
     }
   }
 
-  const sessionId = options?.session ?? generateSessionId();
+  const sessionId = options?.session ?? await resolveSessionId(repoRoot);
 
   // Push claim through transaction — all file writes happen inside the transaction
   // to avoid inconsistent state if the push fails.

@@ -13,6 +13,27 @@ export function generateSessionId(): string {
 }
 
 /**
+ * Resolve a stable session ID by checking the current branch first.
+ *
+ * If the current branch contains a session ID (e.g., `agent/TASK-NNN-desc--abc123`),
+ * reuse that ID. This ensures a single agent keeps the same session across
+ * multiple `claim`/`start` invocations from the same worktree.
+ *
+ * Only generates a new random ID when no branch session is found
+ * (e.g., running from `main` or a non-task branch).
+ *
+ * This is how the distributed mutex works: the session ID embedded in the
+ * branch name IS the lock key. Reusing it means the same agent holds the
+ * same lock across multiple tasks.
+ */
+export async function resolveSessionId(repoRoot: string): Promise<string> {
+  const branch = await getCurrentBranch(repoRoot);
+  const existing = parseSessionIdFromBranch(branch);
+  if (existing) return existing;
+  return generateSessionId();
+}
+
+/**
  * Extract the session GUID from a branch name.
  * Branch format: agent/TASK-NNN-<slug>--<10-char-hex>
  * The `--` separator makes the GUID unambiguous.
