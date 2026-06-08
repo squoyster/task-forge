@@ -10,6 +10,7 @@ assignee: f7db7f8772
 claimed_at: '2026-06-08 22:19:12'
 context_hash: c920478ff4788012
 branch: agent/TASK-241-enforce-taskforgecommandresult-return-sc--f7db7f8772
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-241
 ---
 
 # TASK-241: Enforce TaskForgeCommandResult return schema as invariant across all CLI commands
@@ -84,6 +85,9 @@ Commands currently return ad-hoc output. Agents infer workflow from unstructured
 - [x] Documentation of return contract in docs/architecture/ — `docs/architecture/command-return-contract.md`: Full documentation of schema, builders, renderers, invariants, and migration guide
 
 ## Agent Notes
+
+### 2026-06-08T00:00:00Z System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-241
 
 ### 2026-06-08T00:00:00Z System
 - Task claimed via taskforge start TASK-241
