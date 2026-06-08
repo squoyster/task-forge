@@ -1,11 +1,15 @@
 ---
 id: TASK-267
 type: Feature
-status: Ready
+status: In Progress
 priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 7c30c62341
+claimed_at: '2026-06-08 14:18:53'
+context_hash: b516925ba8cef30c
+branch: agent/TASK-267-add-taskforge-update-command-for-task-fi--7c30c62341
 ---
 
 # TASK-267: Add TaskForge update command for task fields
@@ -114,3 +118,10 @@ TASK-261 (Replace Direct Task-State Editing with Supported Commands) — this ta
 ---
 
 _Source: discovered during TASK-255..TASK-266 bulk task creation session_
+
+## Agent Notes
+
+### 2026-06-08T00:00:00Z System
+- Task claimed via taskforge start TASK-267
+- Session: 7c30c62341
+- Branch: agent/TASK-267-add-taskforge-update-command-for-task-fi--7c30c62341
