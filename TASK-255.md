@@ -25,6 +25,41 @@ Describe the desired outcome.
 
 ## Agent Notes
 
+### 2026-06-08T00:00:00Z Implementer
+- ## Implementation Summary
+- 
+- Implemented TASK-255: Enforce PR-Backed Terminal Task State.
+- 
+- ### Changes Made
+- 
+- 1. **New lifecycle statuses**: Added `Implementation Complete`, `Submitted`, and `Merge Ready` intermediate states to the task status model. Updated status-constants.ts, status-transition.ts, and all related validation.
+- 
+- 2. **New task fields**: Added `submitted_sha`, `submitted_at`, `pr_merged`, `pr_head_sha`, `pr_base_branch`, and `code_task` fields to the Task schema in task.ts and task-store.ts.
+- 
+- 3. **Centralized completion policy** (`src/core/completion-policy.ts`): Created a unified policy module with `checkCompletionEligibility()` that enforces PR-backed verification for code-bearing tasks. Checks include: PR recorded, PR targets integration branch, SHA match, PR merged, SHA reachable, and required checks passing. Includes `isCodeTask()` for non-code task classification.
+- 
+- 4. **PR verification provider** (`src/core/pr-verifier.ts`): Implemented `GitHubPullRequestVerifier` class with checkMerged, getHeadSha, checkReachable, and checkRequiredChecks methods using Octokit.
+- 
+- 5. **Updated `done` command**: Integrated completion policy check after standard gates, rejecting `Done` for code-bearing tasks without verified PR integration. Non-code tasks (Documentation, Chore, Research, etc.) bypass PR checks.
+- 
+- 6. **Updated `report --complete` command**: Changed target status from `Review` to `Implementation Complete` to match the new lifecycle flow.
+- 
+- 7. **New lifecycle transitions**:
+-    - In Progress → Implementation Complete (implementation done)
+-    - Implementation Complete → Submitted (branch pushed)
+-    - Submitted → Review (PR created)
+-    - Review → Merge Ready (PR mergeable, checks passing)
+-    - Merge Ready → Verify (PR merged)
+-    - Verify → Done (SHA reachable, verified)
+- 
+- 8. **Tests**: 49 new tests in tests/completion-policy.test.ts covering all AC scenarios including non-code tasks, missing PR, wrong base branch, SHA mismatch, PR not merged, SHA not reachable, checks failing, and full happy path. Updated 24 existing tests for new transition rules.
+- 
+- ### Verification
+- - Typecheck: passed
+- - Lint: 0 errors (19 pre-existing warnings)
+- - Build: passed
+- - Tests: 58 test files, 670 tests, all passed
+
 ### 2026-06-08T00:00:00Z System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-255
 
