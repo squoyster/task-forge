@@ -6,7 +6,10 @@ export const STATUS = {
   READY: "Ready",
   IN_PROGRESS: "In Progress",
   BLOCKED: "Blocked",
+  IMPLEMENTATION_COMPLETE: "Implementation Complete",
+  SUBMITTED: "Submitted",
   REVIEW: "Review",
+  MERGE_READY: "Merge Ready",
   VERIFY: "Verify",
   DONE: "Done",
   REJECTED: "Rejected",
@@ -15,7 +18,15 @@ export const STATUS = {
 
 export const ALL_STATUSES: readonly string[] = Object.values(STATUS);
 
-export const ACTIVE_STATUSES = [STATUS.READY, STATUS.IN_PROGRESS, STATUS.REVIEW, STATUS.VERIFY] as const;
+export const ACTIVE_STATUSES = [
+  STATUS.READY,
+  STATUS.IN_PROGRESS,
+  STATUS.IMPLEMENTATION_COMPLETE,
+  STATUS.SUBMITTED,
+  STATUS.REVIEW,
+  STATUS.MERGE_READY,
+  STATUS.VERIFY,
+] as const;
 
 export const TERMINAL_STATUSES = [STATUS.DONE, STATUS.REJECTED, STATUS.DEFERRED] as const;
 
@@ -68,8 +79,22 @@ export function normalizeStatus(input: string): string {
     // Blocked variants
     "blocked": STATUS.BLOCKED,
 
+    // Implementation Complete variants
+    "implementation_complete": STATUS.IMPLEMENTATION_COMPLETE,
+    "implementation-complete": STATUS.IMPLEMENTATION_COMPLETE,
+    "implementation complete": STATUS.IMPLEMENTATION_COMPLETE,
+    "implcomplete": STATUS.IMPLEMENTATION_COMPLETE,
+
+    // Submitted variants
+    "submitted": STATUS.SUBMITTED,
+
     // Review variants
     "review": STATUS.REVIEW,
+
+    // Merge Ready variants
+    "merge_ready": STATUS.MERGE_READY,
+    "merge-ready": STATUS.MERGE_READY,
+    "merge ready": STATUS.MERGE_READY,
 
     // Verify variants
     "verify": STATUS.VERIFY,
@@ -91,6 +116,8 @@ export function normalizeStatus(input: string): string {
   const camelCaseMap: Record<string, StatusValue> = {
     "InProgress": STATUS.IN_PROGRESS,
     "NeedsSpec": STATUS.NEEDS_SPEC,
+    "ImplementationComplete": STATUS.IMPLEMENTATION_COMPLETE,
+    "MergeReady": STATUS.MERGE_READY,
   };
 
   if (variantMap[lower]) {
@@ -114,6 +141,6 @@ export function createStatusSchema() {
       if (typeof val !== "string") return val;
       return normalizeStatus(val);
     },
-    z.enum([STATUS.INBOX, STATUS.NEEDS_SPEC, STATUS.READY, STATUS.IN_PROGRESS, STATUS.BLOCKED, STATUS.REVIEW, STATUS.VERIFY, STATUS.DONE, STATUS.REJECTED, STATUS.DEFERRED]),
+    z.enum([STATUS.INBOX, STATUS.NEEDS_SPEC, STATUS.READY, STATUS.IN_PROGRESS, STATUS.BLOCKED, STATUS.IMPLEMENTATION_COMPLETE, STATUS.SUBMITTED, STATUS.REVIEW, STATUS.MERGE_READY, STATUS.VERIFY, STATUS.DONE, STATUS.REJECTED, STATUS.DEFERRED]),
   );
 }

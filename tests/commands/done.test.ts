@@ -15,6 +15,17 @@ vi.mock("../../src/core/git.js", () => ({
   removeBranch: vi.fn(),
 }));
 
+vi.mock("../../src/core/completion-policy.js", () => ({
+  checkCompletionEligibility: vi.fn().mockResolvedValue({
+    eligible: true,
+    reasons: [],
+    preconditions: [{ name: "Mocked", passed: true, message: "test", code: "MOCKED" }],
+    suggestedStatus: undefined,
+  }),
+  isCodeTask: vi.fn().mockReturnValue(false),
+  deriveExpectedStatus: vi.fn().mockImplementation((t: any) => t.status),
+}));
+
 vi.mock("../../src/core/task-state-transaction.js", () => ({
   withTaskStateTransaction: vi.fn().mockResolvedValue(undefined),
 }));
@@ -38,8 +49,8 @@ function makeTaskFile(id: string, overrides: Record<string, unknown> = {}): stri
   const { body: bodyOverride, ...frontmatterOverrides } = overrides;
   const frontmatter: Record<string, unknown> = {
     id,
-    type: "Task",
-    status: "Review",
+    type: "Chore", // non-code to skip PR verification
+    status: "Verify",
     priority: "P2",
     ...frontmatterOverrides,
   };

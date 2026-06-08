@@ -62,6 +62,8 @@ export interface JsonResult {
   recovered?: Array<Record<string, unknown>>;
   count?: number;
   thresholdMinutes?: number;
+  preconditions?: Array<{ name: string; passed: boolean; message: string; code: string }>;
+  suggestedStatus?: string;
 }
 
 export interface GateResult {

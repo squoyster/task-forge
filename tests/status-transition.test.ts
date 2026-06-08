@@ -18,8 +18,8 @@ describe("Status Transitions", () => {
     expect(isValidTransition("Ready", "In Progress")).toBe(true);
   });
 
-  it("allows In Progress → Review", () => {
-    expect(isValidTransition("In Progress", "Review")).toBe(true);
+  it("allows In Progress → Implementation Complete", () => {
+    expect(isValidTransition("In Progress", "Implementation Complete")).toBe(true);
   });
 
   it("allows In Progress → Blocked", () => {
@@ -30,8 +30,8 @@ describe("Status Transitions", () => {
     expect(isValidTransition("Blocked", "Ready")).toBe(true);
   });
 
-  it("allows Review → Done", () => {
-    expect(isValidTransition("Review", "Done")).toBe(true);
+  it("rejects Review → Done (must go through Verify)", () => {
+    expect(isValidTransition("Review", "Done")).toBe(false);
   });
 
   it("allows Verify → Done", () => {
@@ -55,10 +55,9 @@ describe("Status Transitions", () => {
     expect(isValidTransition("Rejected", "In Progress")).toBe(false);
   });
 
-  it("returns correct allowed transitions", () => {
+  it("returns correct allowed transitions from In Progress", () => {
     const transitions = getAllowedTransitions("In Progress");
-    expect(transitions).toContain("Review");
-    expect(transitions).toContain("Verify");
+    expect(transitions).toContain("Implementation Complete");
     expect(transitions).toContain("Blocked");
     expect(transitions).toContain("Deferred");
     expect(transitions).not.toContain("Done");

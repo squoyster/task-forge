@@ -49,12 +49,13 @@ export function validateTaskState(tasks: ParsedTask[]): StateValidationResult {
       warnings.push({ severity: "warning", code: "TERMINAL_WITH_ASSIGNEE", taskId: t.id, message: `${t.status} but still has assignee`, suggestedFix: "Clear the claim fields" });
     }
 
-    // In Progress should have assignee
-    if (t.status === STATUS.IN_PROGRESS && !t.assignee) {
-      warnings.push({ severity: "warning", code: "IN_PROGRESS_NO_ASSIGNEE", taskId: t.id, message: "In Progress but no assignee", suggestedFix: "Claim the task or reset to Ready" });
+    // Active states should have assignee
+    const activeNeedsAssignee = [STATUS.IN_PROGRESS, STATUS.IMPLEMENTATION_COMPLETE, STATUS.SUBMITTED, STATUS.REVIEW, STATUS.MERGE_READY, STATUS.VERIFY];
+    if (activeNeedsAssignee.includes(t.status as any) && !t.assignee) {
+      warnings.push({ severity: "warning", code: "ACTIVE_NO_ASSIGNEE", taskId: t.id, message: `${t.status} but no assignee`, suggestedFix: "Claim the task or reset to Ready" });
     }
-    if (t.status === STATUS.IN_PROGRESS && !t.claimed_at) {
-      warnings.push({ severity: "warning", code: "IN_PROGRESS_NO_CLAIMED_AT", taskId: t.id, message: "In Progress but no claimed_at" });
+    if (activeNeedsAssignee.includes(t.status as any) && !t.claimed_at) {
+      warnings.push({ severity: "warning", code: "ACTIVE_NO_CLAIMED_AT", taskId: t.id, message: `${t.status} but no claimed_at` });
     }
 
     // Blocked must have blocked_reason

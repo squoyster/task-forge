@@ -16,6 +16,9 @@ import { doneStateMachine } from "../core/command-states.js";
 import { getDefaultGuidanceAdapter } from "../core/guidance-adapter.js";
 import { removeSessionState } from "../core/session-state.js";
 import { markAgentIdle } from "../core/agent-registry.js";
+import { checkCompletionEligibility } from "../core/completion-policy.js";
+import { GitHubPullRequestVerifier } from "../core/pr-verifier.js";
+import { loadConfig } from "../core/config.js";
 import type { ParsedTask } from "../core/task-store.js";
 
 export interface DoneOptions {
@@ -329,6 +332,79 @@ export async function cmdDone(
       return;
     }
     throw new UncheckedAcceptanceCriteriaError(taskId);
+  }
+
+  // --- Completion policy check (PR-backed verification for code-bearing tasks) ---
+  const config = loadConfig(repoRoot);
+  const githubConfig = config.github;
+  let verifier: GitHubPullRequestVerifier | undefined;
+  if (githubConfig?.enabled && githubConfig.owner && githubConfig.repo) {
+    verifier = new GitHubPullRequestVerifier(process.env.GITHUB_TOKEN);
+  }
+
+  const eligibility = await checkCompletionEligibility(
+    task,
+    {
+      github: githubConfig,
+      integrationBranch: config.project?.defaultBranch ?? "main",
+    },
+    verifier,
+  );
+
+  if (!eligibility.eligible) {
+    // Build detailed failure message
+    const details = eligibility.preconditions
+      .filter((p) => !p.passed)
+      .map((p) => `  [${p.code}] ${p.message}`)
+      .join("\n");
+
+    const message = [
+      `Task ${taskId} cannot enter Done:`,
+      details,
+      eligibility.suggestedStatus
+        ? `\nSuggested next status: ${eligibility.suggestedStatus}`
+        : "",
+    ].filter(Boolean).join("\n");
+
+    if (!json) {
+      logError(message);
+    }
+
+    const result = doneStateMachine({
+      validTransition: true,
+      gatesPassed: true,
+      ownershipMatch: true,
+      worktreeClean: true,
+      branchPushed: true,
+      controlFileHashMatch: true,
+      hasAcSection: true,
+      hasBlankAc: false,
+      hasUncheckedAc: false,
+      taskId,
+      currentStatus: task.status,
+    });
+
+    getDefaultGuidanceAdapter().pushGuidance(result);
+
+    if (json) {
+      printJson(jsonError(
+        message,
+        "COMPLETION_POLICY_BLOCKED",
+        {
+          preconditions: eligibility.preconditions,
+          suggestedStatus: eligibility.suggestedStatus,
+          nextActions: [result.nextAction],
+        },
+      ));
+      return;
+    }
+
+    throw new Error(message);
+  }
+
+  // Log successful completion policy in non-JSON mode
+  if (!json && eligibility.preconditions.length > 0) {
+    logSuccess("Completion policy: all preconditions satisfied");
   }
 
   updateTaskStatus(task.filePath, STATUS.DONE);
