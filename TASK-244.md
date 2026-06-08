@@ -6,8 +6,6 @@ priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 62ef43fef2
-claimed_at: '2026-06-08 05:09:12'
 context_hash: 87da9585c90be1d7
 branch: agent/TASK-244-wire-all-35-cli-commands-to-taskforgecom--62ef43fef2
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-244
