@@ -1,11 +1,15 @@
 ---
 id: TASK-255
 type: Feature
-status: Ready
+status: In Progress
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 91cc2a34aa
+claimed_at: '2026-06-08 12:58:38'
+context_hash: 98789b0cbdd97405
+branch: agent/TASK-255-enforce-pr-backed-terminal-task-state--91cc2a34aa
 ---
 
 # TASK-255: ENFORCE PR-BACKED TERMINAL TASK STATE
@@ -19,6 +23,11 @@ Describe the desired outcome.
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-08T00:00:00Z System
+- Task claimed via taskforge start TASK-255
+- Session: 91cc2a34aa
+- Branch: agent/TASK-255-enforce-pr-backed-terminal-task-state--91cc2a34aa
 
 
 ## Problem
