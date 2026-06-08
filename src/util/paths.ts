@@ -26,12 +26,40 @@ export function setRepoRoot(root: string): void {
   _repoRoot = root;
 }
 
+/**
+ * Get the main repository root by resolving the shared `.git` directory.
+ *
+ * Uses `git rev-parse --git-common-dir` which always returns the path to
+ * the shared `.git` directory regardless of whether we're in the main repo,
+ * a proper worktree, or a nested worktree. The parent of that directory is
+ * the main repo root.
+ *
+ * Falls back to the given repoRoot when not in a git repo (e.g., in tests).
+ */
+export function getMainRepoRoot(repoRoot: string): string {
+  try {
+    const gitDir = execSync("git rev-parse --git-common-dir", {
+      encoding: "utf-8",
+      cwd: repoRoot,
+    }).trim();
+    return path.resolve(repoRoot, gitDir, "..");
+  } catch {
+    return repoRoot;
+  }
+}
+
 export function getTasksDir(repoRoot: string): string {
   return path.join(repoRoot, "tasks");
 }
 
+/**
+ * Resolve the task-state directory relative to the MAIN repo root,
+ * not the worktree root. This ensures the path is correct regardless
+ * of whether the command is invoked from the main repo, a proper
+ * worktree, or a nested worktree.
+ */
 export function getTaskStateDir(repoRoot: string): string {
-  return path.resolve(repoRoot, "..", "task-state");
+  return path.resolve(getMainRepoRoot(repoRoot), "..", "task-state");
 }
 
 export function getTaskFilePath(repoRoot: string, id: string): string {
