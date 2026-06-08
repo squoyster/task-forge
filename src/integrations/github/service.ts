@@ -162,6 +162,42 @@ export interface PullRequestResult {
   url: string;
 }
 
+/**
+ * Find a pull request by head branch. Returns null if not found.
+ * Used for idempotent submission — re-running submit should not
+ * create a duplicate PR.
+ */
+export async function findPullRequestByBranch(
+  config: GitHubConfig,
+  head: string,
+): Promise<PullRequestResult | null> {
+  const octokit = config.token ? new Octokit({ auth: config.token }) : getOctokit();
+
+  try {
+    const { data } = await octokit.pulls.list({
+      owner: config.owner,
+      repo: config.repo,
+      head: `${config.owner}:${head}`,
+      state: "all",
+      per_page: 10,
+    });
+
+    // Return the first open PR for this branch, or the first closed one
+    if (data.length === 0) return null;
+
+    const openPr = data.find((pr) => pr.state === "open");
+    if (openPr) {
+      return { number: openPr.number, url: openPr.html_url };
+    }
+
+    // No open PR — return the most recent closed one
+    const closed = data[0];
+    return { number: closed.number, url: closed.html_url };
+  } catch {
+    return null;
+  }
+}
+
 export async function createPullRequest(
   config: GitHubConfig,
   title: string,
