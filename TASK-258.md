@@ -25,6 +25,27 @@ Describe the desired outcome.
 
 ## Agent Notes
 
+### 2026-06-08T00:00:00Z Implementer
+- ## Implementation Summary
+- 
+- Implemented TASK-258: Enforce the TaskForge Mutation Boundary.
+- 
+- ### Changes Made
+- 
+- 1. **Core mutation guard** (`src/core/mutation-guard.ts`): Centralized enforcement module that checks TASK_FORGE_ACTIVE env var, classifies git commands as denied (commit, push, merge, rebase, cherry-pick, reset, branch -d/-D, worktree add/remove, update-ref, etc.) or read-only (status, diff, log, show, rev-parse, fetch, ls-remote, etc.), normalizes absolute git paths, and provides replacement suggestions. Includes override mechanism with audit logging.
+- 
+- 2. **Updated guard plugin** (`src/core/guard-plugin.ts`): Enhanced OpenCode plugin generator that embeds the denied/read-only command lists directly, validates TASK_FORGE_ACTIVE, checks doctor lock, detects task-state file edits, and provides context-aware replacement commands.
+- 
+- 3. **Updated agent files** (`src/core/agent-files.ts`): Added Mutation Boundary section to implementer.md documenting all denied/allowed commands, replacement mappings, and override information.
+- 
+- 4. **Tests**: 63 new tests in tests/mutation-guard.test.ts covering isManagedSession, normaliseCommand, parseGitCommand, isDeniedGitCommand, isReadOnlyGitCommand, checkMutationAllowed (with env override pattern), isTaskStateEditCommand, override audit recording, edge cases, and command list validations. Updated guard plugin tests for new output format.
+- 
+- ### Verification
+- - Typecheck: passed
+- - Lint: 0 errors
+- - Build: passed
+- - Tests: 58 test files, 684 tests, all passed
+
 ### 2026-06-08T00:00:00Z System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-258
 
