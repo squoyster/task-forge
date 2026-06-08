@@ -244,11 +244,10 @@ describe("cmdDone", () => {
     makeTaskFile("TASK-005", { body });
 
     const logs: string[] = [];
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation((...args: unknown[]) => {
-      logs.push(args.map(String).join(" "));
-    });
+    const originalWrite = process.stdout.write.bind(process.stdout);
+    process.stdout.write = (chunk: string) => { logs.push(chunk); return true; };
     await cmdDone("TASK-005", { json: true });
-    consoleSpy.mockRestore();
+    process.stdout.write = originalWrite;
 
     expect(logs.length).toBeGreaterThan(0);
     const output = JSON.parse(logs[0]);
@@ -270,11 +269,10 @@ describe("cmdDone", () => {
     makeTaskFile("TASK-005", { body });
 
     const logs: string[] = [];
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation((...args: unknown[]) => {
-      logs.push(args.map(String).join(" "));
-    });
+    const originalWrite = process.stdout.write.bind(process.stdout);
+    process.stdout.write = (chunk: string) => { logs.push(chunk); return true; };
     await cmdDone("TASK-005", { json: true });
-    consoleSpy.mockRestore();
+    process.stdout.write = originalWrite;
 
     expect(logs.length).toBeGreaterThan(0);
     const output = JSON.parse(logs[0]);
@@ -296,11 +294,10 @@ describe("cmdDone", () => {
     makeTaskFile("TASK-005", { body });
 
     const logs: string[] = [];
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation((...args: unknown[]) => {
-      logs.push(args.map(String).join(" "));
-    });
+    const originalWrite = process.stdout.write.bind(process.stdout);
+    process.stdout.write = (chunk: string) => { logs.push(chunk); return true; };
     await cmdDone("TASK-005", { json: true });
-    consoleSpy.mockRestore();
+    process.stdout.write = originalWrite;
 
     expect(logs.length).toBeGreaterThan(0);
     const output = JSON.parse(logs[0]);
@@ -328,11 +325,10 @@ describe("cmdDone", () => {
     });
 
     const logs: string[] = [];
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation((...args: unknown[]) => {
-      logs.push(args.map(String).join(" "));
-    });
+    const originalWrite = process.stdout.write.bind(process.stdout);
+    process.stdout.write = (chunk: string) => { logs.push(chunk); return true; };
     await cmdDone("TASK-005", { json: true });
-    consoleSpy.mockRestore();
+    process.stdout.write = originalWrite;
 
     expect(logs.length).toBeGreaterThan(0);
     const output = JSON.parse(logs[0]);
@@ -363,11 +359,10 @@ describe("cmdDone", () => {
     });
 
     const logs: string[] = [];
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation((...args: unknown[]) => {
-      logs.push(args.map(String).join(" "));
-    });
+    const originalWrite = process.stdout.write.bind(process.stdout);
+    process.stdout.write = (chunk: string) => { logs.push(chunk); return true; };
     await cmdDone("TASK-005", { json: true });
-    consoleSpy.mockRestore();
+    process.stdout.write = originalWrite;
 
     expect(logs.length).toBeGreaterThan(0);
     const output = JSON.parse(logs[0]);

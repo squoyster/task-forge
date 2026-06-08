@@ -7,7 +7,6 @@ import { logSuccess, logInfo, logWarn, logSub, logHeader, logDivider, logError }
 import { TaskNotFoundError, InvalidStatusTransitionError, MissingAcceptanceCriteriaError, BlankAcceptanceCriteriaError, UncheckedAcceptanceCriteriaError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
 import { assertTaskOwnership } from "../core/session.js";
-import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
 import { createTaskEvent, appendTaskTranscript } from "../core/audit.js";
 import { runGates } from "./gates.js";
 import { isDoctorLocked, removeDoctorLock } from "../core/doctor-lock.js";
@@ -15,6 +14,9 @@ import { hashControlFiles } from "../core/control-files.js";
 import { doneStateMachine } from "../core/command-states.js";
 import { getDefaultGuidanceAdapter } from "../core/guidance-adapter.js";
 import type { ParsedTask } from "../core/task-store.js";
+import { successResult, failedResult } from "../core/result-builder.js";
+import { getValidNextCommands } from "../core/next-command-maps.js";
+import { renderResultMarkdown, renderResultJson } from "../core/result-renderer.js";
 
 export interface DoneOptions {
   cleanup?: boolean;
@@ -31,7 +33,7 @@ export async function cmdDone(
   const task = loadTaskById(taskId);
 
   if (!task) {
-    const result = doneStateMachine({
+    const smResult = doneStateMachine({
       validTransition: false,
       gatesPassed: false,
       ownershipMatch: false,
@@ -43,12 +45,18 @@ export async function cmdDone(
       hasUncheckedAc: false,
       taskId,
     });
-    getDefaultGuidanceAdapter().pushGuidance(result);
+    getDefaultGuidanceAdapter().pushGuidance(smResult);
+    const errResult = failedResult({
+      command: "done",
+      taskId,
+      error: smResult.guidance,
+      code: "TASK_NOT_FOUND",
+      nextCommands: smResult.nextAction
+        ? [{ command: smResult.nextAction, purpose: "Suggested next action", when: "On task not found", allowedFor: "all", priority: 1 }]
+        : getValidNextCommands("done", "failed"),
+    });
     if (json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "TASK_NOT_FOUND", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance,
-      }));
+      process.stdout.write(renderResultJson(errResult) + "\n");
       return;
     }
     throw new TaskNotFoundError(taskId);
@@ -75,7 +83,7 @@ export async function cmdDone(
     }
   }
   if (!gatesPassed) {
-    const result = doneStateMachine({
+    const smResult = doneStateMachine({
       validTransition: true,
       gatesPassed: false,
       ownershipMatch: true,
@@ -88,22 +96,27 @@ export async function cmdDone(
       taskId,
       currentStatus: task.status,
     });
-    getDefaultGuidanceAdapter().pushGuidance(result);
+    getDefaultGuidanceAdapter().pushGuidance(smResult);
+    const errResult = failedResult({
+      command: "done",
+      taskId,
+      error: smResult.guidance,
+      code: smResult.errorCode ?? "GATES_FAILED",
+      nextCommands: smResult.nextAction
+        ? [{ command: smResult.nextAction, purpose: "Fix gates before completing", when: "On gate failure", allowedFor: "all", priority: 1 }]
+        : getValidNextCommands("done", "failed"),
+    });
     if (json) {
-      printJson(jsonError(
-        result.guidance,
-        result.errorCode ?? "GATES_FAILED",
-        { nextActions: ["fix", "request_human_input"], guidance: result.guidance },
-      ));
+      process.stdout.write(renderResultJson(errResult) + "\n");
       return;
     }
-    throw new Error(result.guidance);
+    throw new Error(smResult.guidance);
   }
 
   // --- Status transition ---
   const transitionError = validateTransition(task.status, STATUS.DONE);
   if (transitionError) {
-    const result = doneStateMachine({
+    const smResult = doneStateMachine({
       validTransition: false,
       gatesPassed: true,
       ownershipMatch: true,
@@ -116,13 +129,18 @@ export async function cmdDone(
       taskId,
       currentStatus: task.status,
     });
-    getDefaultGuidanceAdapter().pushGuidance(result);
+    getDefaultGuidanceAdapter().pushGuidance(smResult);
+    const errResult = failedResult({
+      command: "done",
+      taskId,
+      error: smResult.guidance,
+      code: "INVALID_TRANSITION",
+      nextCommands: smResult.nextAction
+        ? [{ command: smResult.nextAction, purpose: "Use valid transition path", when: "On invalid transition", allowedFor: "all", priority: 1 }]
+        : getValidNextCommands("done", "failed"),
+    });
     if (json) {
-      printJson(jsonError(
-        result.guidance,
-        result.errorCode ?? "INVALID_TRANSITION",
-        { nextActions: [result.nextAction], guidance: result.guidance },
-      ));
+      process.stdout.write(renderResultJson(errResult) + "\n");
       return;
     }
     throw new InvalidStatusTransitionError(
@@ -137,7 +155,7 @@ export async function cmdDone(
     try {
       await assertTaskOwnership(task, repoRoot);
     } catch {
-      const result = doneStateMachine({
+      const smResult = doneStateMachine({
         validTransition: true,
         gatesPassed: true,
         ownershipMatch: false,
@@ -150,15 +168,21 @@ export async function cmdDone(
         taskId,
         currentStatus: task.status,
       });
-      getDefaultGuidanceAdapter().pushGuidance(result);
+      getDefaultGuidanceAdapter().pushGuidance(smResult);
+      const errResult = failedResult({
+        command: "done",
+        taskId,
+        error: smResult.guidance,
+        code: "OWNERSHIP_MISMATCH",
+        nextCommands: smResult.nextAction
+          ? [{ command: smResult.nextAction, purpose: "Resolve ownership", when: "On ownership mismatch", allowedFor: "all", priority: 1 }]
+          : getValidNextCommands("done", "failed"),
+      });
       if (json) {
-        printJson(jsonError(result.guidance, result.errorCode ?? "OWNERSHIP_MISMATCH", {
-          nextActions: [result.nextAction],
-          guidance: result.guidance,
-        }));
+        process.stdout.write(renderResultJson(errResult) + "\n");
         return;
       }
-      throw new Error(result.guidance);
+      throw new Error(smResult.guidance);
     }
   }
 
@@ -166,7 +190,7 @@ export async function cmdDone(
   if (task.worktree) {
     const dirtyFiles = await getWorktreeDirtyFiles(task.worktree);
     if (dirtyFiles.length > 0) {
-      const result = doneStateMachine({
+      const smResult = doneStateMachine({
         validTransition: true,
         gatesPassed: true,
         ownershipMatch: true,
@@ -180,15 +204,21 @@ export async function cmdDone(
         taskId,
         currentStatus: task.status,
       });
-      getDefaultGuidanceAdapter().pushGuidance(result);
+      getDefaultGuidanceAdapter().pushGuidance(smResult);
+      const errResult = failedResult({
+        command: "done",
+        taskId,
+        error: smResult.guidance,
+        code: "WORKTREE_DIRTY",
+        nextCommands: smResult.nextAction
+          ? [{ command: smResult.nextAction, purpose: "Commit or stash changes", when: "On dirty worktree", allowedFor: "all", priority: 1 }]
+          : getValidNextCommands("done", "failed"),
+      });
       if (json) {
-        printJson(jsonError(result.guidance, result.errorCode ?? "WORKTREE_DIRTY", {
-          nextActions: [result.nextAction],
-          guidance: result.guidance,
-        }));
+        process.stdout.write(renderResultJson(errResult) + "\n");
         return;
       }
-      throw new Error(result.guidance);
+      throw new Error(smResult.guidance);
     }
   }
 
@@ -196,7 +226,7 @@ export async function cmdDone(
   if (task.branch) {
     const commitsAhead = await getBranchCommitsAhead(repoRoot, task.branch);
     if (commitsAhead > 0) {
-      const result = doneStateMachine({
+      const smResult = doneStateMachine({
         validTransition: true,
         gatesPassed: true,
         ownershipMatch: true,
@@ -210,15 +240,21 @@ export async function cmdDone(
         taskId,
         currentStatus: task.status,
       });
-      getDefaultGuidanceAdapter().pushGuidance(result);
+      getDefaultGuidanceAdapter().pushGuidance(smResult);
+      const errResult = failedResult({
+        command: "done",
+        taskId,
+        error: smResult.guidance,
+        code: "BRANCH_UNPUSHED",
+        nextCommands: smResult.nextAction
+          ? [{ command: smResult.nextAction, purpose: "Push branch before completing", when: "On unpushed branch", allowedFor: "all", priority: 1 }]
+          : getValidNextCommands("done", "failed"),
+      });
       if (json) {
-        printJson(jsonError(result.guidance, result.errorCode ?? "BRANCH_UNPUSHED", {
-          nextActions: [result.nextAction],
-          guidance: result.guidance,
-        }));
+        process.stdout.write(renderResultJson(errResult) + "\n");
         return;
       }
-      throw new Error(result.guidance);
+      throw new Error(smResult.guidance);
     }
   }
 
@@ -226,7 +262,7 @@ export async function cmdDone(
   if (task.context_hash) {
     const currentHash = hashControlFiles(repoRoot);
     if (currentHash !== task.context_hash) {
-      const result = doneStateMachine({
+      const smResult = doneStateMachine({
         validTransition: true,
         gatesPassed: true,
         ownershipMatch: true,
@@ -239,21 +275,27 @@ export async function cmdDone(
         taskId,
         currentStatus: task.status,
       });
-      getDefaultGuidanceAdapter().pushGuidance(result);
+      getDefaultGuidanceAdapter().pushGuidance(smResult);
+      const errResult = failedResult({
+        command: "done",
+        taskId,
+        error: smResult.guidance,
+        code: "CONTEXT_CHANGED",
+        nextCommands: smResult.nextAction
+          ? [{ command: smResult.nextAction, purpose: "Update context and retry", when: "On context change", allowedFor: "all", priority: 1 }]
+          : getValidNextCommands("done", "failed"),
+      });
       if (json) {
-        printJson(jsonError(result.guidance, result.errorCode ?? "CONTEXT_CHANGED", {
-          nextActions: [result.nextAction],
-          guidance: result.guidance,
-        }));
+        process.stdout.write(renderResultJson(errResult) + "\n");
         return;
       }
-      throw new Error(result.guidance);
+      throw new Error(smResult.guidance);
     }
   }
 
   // Acceptance Criteria section check
   if (!hasAcceptanceCriteriaSection(task.body)) {
-    const result = doneStateMachine({
+    const smResult = doneStateMachine({
       validTransition: true,
       gatesPassed: true,
       ownershipMatch: true,
@@ -266,12 +308,18 @@ export async function cmdDone(
       taskId,
       currentStatus: task.status,
     });
-    getDefaultGuidanceAdapter().pushGuidance(result);
+    getDefaultGuidanceAdapter().pushGuidance(smResult);
+    const errResult = failedResult({
+      command: "done",
+      taskId,
+      error: smResult.guidance,
+      code: "MISSING_ACCEPTANCE_CRITERIA",
+      nextCommands: smResult.nextAction
+        ? [{ command: smResult.nextAction, purpose: "Add acceptance criteria", when: "On missing AC", allowedFor: "all", priority: 1 }]
+        : getValidNextCommands("done", "failed"),
+    });
     if (json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "MISSING_ACCEPTANCE_CRITERIA", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance,
-      }));
+      process.stdout.write(renderResultJson(errResult) + "\n");
       return;
     }
     throw new MissingAcceptanceCriteriaError(taskId);
@@ -279,7 +327,7 @@ export async function cmdDone(
 
   // Blank acceptance criteria check
   if (hasBlankAcceptanceCriteria(task.body)) {
-    const result = doneStateMachine({
+    const smResult = doneStateMachine({
       validTransition: true,
       gatesPassed: true,
       ownershipMatch: true,
@@ -292,12 +340,18 @@ export async function cmdDone(
       taskId,
       currentStatus: task.status,
     });
-    getDefaultGuidanceAdapter().pushGuidance(result);
+    getDefaultGuidanceAdapter().pushGuidance(smResult);
+    const errResult = failedResult({
+      command: "done",
+      taskId,
+      error: smResult.guidance,
+      code: "BLANK_ACCEPTANCE_CRITERIA",
+      nextCommands: smResult.nextAction
+        ? [{ command: smResult.nextAction, purpose: "Fill in blank ACs", when: "On blank AC", allowedFor: "all", priority: 1 }]
+        : getValidNextCommands("done", "failed"),
+    });
     if (json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "BLANK_ACCEPTANCE_CRITERIA", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance,
-      }));
+      process.stdout.write(renderResultJson(errResult) + "\n");
       return;
     }
     throw new BlankAcceptanceCriteriaError(taskId);
@@ -305,7 +359,7 @@ export async function cmdDone(
 
   // Unchecked acceptance criteria check
   if (hasUncheckedAcceptanceCriteria(task.body)) {
-    const result = doneStateMachine({
+    const smResult = doneStateMachine({
       validTransition: true,
       gatesPassed: true,
       ownershipMatch: true,
@@ -318,12 +372,18 @@ export async function cmdDone(
       taskId,
       currentStatus: task.status,
     });
-    getDefaultGuidanceAdapter().pushGuidance(result);
+    getDefaultGuidanceAdapter().pushGuidance(smResult);
+    const errResult = failedResult({
+      command: "done",
+      taskId,
+      error: smResult.guidance,
+      code: "UNCHECKED_ACCEPTANCE_CRITERIA",
+      nextCommands: smResult.nextAction
+        ? [{ command: smResult.nextAction, purpose: "Check all AC items", when: "On unchecked AC", allowedFor: "all", priority: 1 }]
+        : getValidNextCommands("done", "failed"),
+    });
     if (json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "UNCHECKED_ACCEPTANCE_CRITERIA", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance,
-      }));
+      process.stdout.write(renderResultJson(errResult) + "\n");
       return;
     }
     throw new UncheckedAcceptanceCriteriaError(taskId);
@@ -346,7 +406,7 @@ export async function cmdDone(
   }
 
   // Build success result through state machine
-  const successResult = doneStateMachine({
+  const smSuccessResult = doneStateMachine({
     validTransition: true,
     gatesPassed: true,
     ownershipMatch: true,
@@ -359,19 +419,21 @@ export async function cmdDone(
     taskId,
     currentStatus: task.status,
   });
-  getDefaultGuidanceAdapter().pushGuidance(successResult);
+  getDefaultGuidanceAdapter().pushGuidance(smSuccessResult);
+
+  const okResult = successResult({
+    command: "done",
+    taskId,
+    guidance: smSuccessResult.guidance,
+    nextCommands: getValidNextCommands("done", "success"),
+  });
 
   if (json) {
-    const final = loadTaskById(taskId);
-    printJson(jsonOk({
-      task: final ? buildJsonTask(final) : buildJsonTask(task),
-      nextActions: [successResult.nextAction],
-      guidance: successResult.guidance,
-    }));
+    process.stdout.write(renderResultJson(okResult) + "\n");
     return;
   }
 
-  logSuccess(successResult.guidance);
+  logSuccess(smSuccessResult.guidance);
   logDivider();
   logInfo("Next actions:");
   logSub("  taskforge next              — Find the next available task");
@@ -395,6 +457,8 @@ export async function cmdDone(
     { command: `done ${taskId}` },
     (tx) => { tx.clearClaim(taskId); },
   );
+
+  process.stdout.write(renderResultMarkdown(okResult) + "\n");
 }
 
 async function performCleanup(
