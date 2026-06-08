@@ -80,9 +80,45 @@
       "status": "active",
       "worktree_path": "/Volumes/Transcend/devel/worktrees/task-forge/TASK-247",
       "registered_at": "2026-06-08T04:45:54.742Z"
+    },
+    {
+      "session_id": "7c30c62341",
+      "agent_id": "mmmm.local:91743",
+      "last_heartbeat": "2026-06-08T14:18:58.306Z",
+      "current_task": "TASK-267",
+      "status": "active",
+      "worktree_path": "/Volumes/Transcend/devel/worktrees/task-forge/TASK-267",
+      "registered_at": "2026-06-08T14:18:58.306Z"
+    },
+    {
+      "session_id": "30f7d54c39",
+      "agent_id": "mmmm.local:99725",
+      "last_heartbeat": "2026-06-08T14:25:54.896Z",
+      "current_task": "TASK-256",
+      "status": "active",
+      "worktree_path": "/Volumes/Transcend/devel/worktrees/task-forge/TASK-256",
+      "registered_at": "2026-06-08T14:25:54.896Z"
+    },
+    {
+      "session_id": "dd85c550bb",
+      "agent_id": "mmmm.local:4362",
+      "last_heartbeat": "2026-06-08T14:34:46.129Z",
+      "current_task": "TASK-261",
+      "status": "active",
+      "worktree_path": "/Volumes/Transcend/devel/worktrees/task-forge/TASK-261",
+      "registered_at": "2026-06-08T14:34:46.129Z"
+    },
+    {
+      "session_id": "a08bb87d9d",
+      "agent_id": "mmmm.local:12537",
+      "last_heartbeat": "2026-06-08T14:41:22.481Z",
+      "current_task": "TASK-268",
+      "status": "active",
+      "worktree_path": "/Volumes/Transcend/devel/worktrees/task-forge/TASK-268",
+      "registered_at": "2026-06-08T14:41:22.481Z"
     }
   ],
-  "max_concurrent_agents": 9,
+  "max_concurrent_agents": 13,
   "agent_history": [
     "alexs-Mac-mini.local:27979",
     "alexs-Mac-mini.local:42601",
@@ -92,7 +128,11 @@
     "alexs-Mac-mini.local:87607",
     "alexs-Mac-mini.local:97400",
     "mmmm.local:36399",
-    "mmmm.local:6864"
+    "mmmm.local:6864",
+    "mmmm.local:91743",
+    "mmmm.local:99725",
+    "mmmm.local:4362",
+    "mmmm.local:12537"
   ],
-  "last_updated": "2026-06-08T04:45:54.742Z"
+  "last_updated": "2026-06-08T14:41:22.481Z"
 }
