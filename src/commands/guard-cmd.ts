@@ -30,14 +30,34 @@ export interface GuardOverrideOptions {
 
 export async function cmdGuardStatus(opts: GuardStatusOptions = {}): Promise<void> {
   const managed = isManagedSession();
+  const envVar = process.env.TASK_FORGE_ACTIVE;
+  const warningsList: string[] = [];
+
+  // Detect inactive enforcement
+  if (!managed) {
+    warningsList.push(
+      "TASK_FORGE_ACTIVE is not set to \"true\". The mutation boundary is inactive.",
+    );
+    warningsList.push(
+      "To enable: ensure TASK_FORGE_ACTIVE=true is set in the agent environment.",
+    );
+    warningsList.push(
+      "For OpenCode: add it to agent.implementer.env in opencode.json.",
+    );
+    if (process.env.TASKFORGE_ACTOR !== "doctor") {
+      warningsList.push(
+        "The guard plugin is installed but has no effect until TASK_FORGE_ACTIVE is set.",
+      );
+    }
+  }
 
   const status = {
     managed,
-    envVar: process.env.TASK_FORGE_ACTIVE,
+    envVar,
     doctorOverrideAvailable: true,
     deniedCommandCount: DENIED_GIT_COMMANDS.length,
     readOnlyCommandCount: READ_ONLY_GIT_COMMANDS.length,
-    doctorOverrideExists: false, // Placeholder — could check doctor lock
+    doctorOverrideExists: false,
   };
 
   if (opts.json) {
@@ -45,13 +65,27 @@ export async function cmdGuardStatus(opts: GuardStatusOptions = {}): Promise<voi
       ...status,
       deniedCommands: DENIED_GIT_COMMANDS,
       readOnlyCommands: READ_ONLY_GIT_COMMANDS,
-    }));
+      warnings: warningsList.length > 0 ? warningsList : undefined,
+    } as never));
     return;
   }
 
   logHeader("Mutation Boundary Status");
   logDivider();
-  logSub(`Managed session: ${managed ? "YES" : "NO (TASK_FORGE_ACTIVE not set)"}`);
+
+  // Show warning prominently if enforcement is inactive
+  if (!managed) {
+    logInfo("╔══════════════════════════════════════════════════════════════╗");
+    logInfo("║  ⚠  MUTATION BOUNDARY IS INACTIVE                         ║");
+    logInfo("╠══════════════════════════════════════════════════════════════╣");
+    for (const w of warningsList) {
+      logInfo(`║  ${w.padEnd(57)}║`);
+    }
+    logInfo("╚══════════════════════════════════════════════════════════════╝");
+    logDivider();
+  }
+
+  logSub(`Managed session: ${managed ? "YES (TASK_FORCE_ACTIVE=true)" : "NO (TASK_FORCE_ACTIVE not set)"}`);
   logSub(`Denied commands: ${DENIED_GIT_COMMANDS.length}`);
   logSub(`Read-only commands: ${READ_ONLY_GIT_COMMANDS.length}`);
   logSub(`Doctor override: available`);
