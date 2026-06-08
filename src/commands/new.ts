@@ -4,9 +4,11 @@ import { getNextId } from "../core/task-store.js";
 import { withTaskStateTransaction } from "../core/task-state-transaction.js";
 import { getRepoRoot, getTaskStateDir } from "../util/paths.js";
 import { logSuccess, logInfo, logDivider, logSub } from "../util/logging.js";
-import { printJson, jsonOk, jsonError } from "../util/json-result.js";
 import { newStateMachine } from "../core/command-states.js";
 import { getDefaultGuidanceAdapter } from "../core/guidance-adapter.js";
+import { successResult, failedResult } from "../core/result-builder.js";
+import { getValidNextCommands } from "../core/next-command-maps.js";
+import { renderResultMarkdown, renderResultJson } from "../core/result-renderer.js";
 
 export interface NewOptions {
   type?: string;
@@ -64,22 +66,28 @@ export async function cmdNew(title: string, options?: NewOptions): Promise<void>
   try {
     fs.writeFileSync(filePath, content, "utf-8");
   } catch (err) {
-    const result = newStateMachine({
+    const smResult = newStateMachine({
       writeSucceeded: false,
       pushSucceeded: false,
       taskId: nextId,
       filePath,
       errorMessage: err instanceof Error ? err.message : String(err),
     });
-    getDefaultGuidanceAdapter().pushGuidance(result);
+    getDefaultGuidanceAdapter().pushGuidance(smResult);
+    const result = failedResult({
+      command: "new",
+      taskId: nextId,
+      error: smResult.guidance,
+      code: "WRITE_FAILED",
+      nextCommands: smResult.nextAction
+        ? [{ command: smResult.nextAction, purpose: "Retry after write failure", when: "On write failure", allowedFor: "all", priority: 1 }]
+        : getValidNextCommands("new", "failed"),
+    });
     if (json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "WRITE_FAILED", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance,
-      }));
+      process.stdout.write(renderResultJson(result) + "\n");
       return;
     }
-    throw new Error(result.guidance);
+    throw new Error(smResult.guidance);
   }
 
   // Push through transaction — if this fails, the local file exists but
@@ -97,47 +105,58 @@ export async function cmdNew(title: string, options?: NewOptions): Promise<void>
     pushSucceeded = true;
   } catch (err) {
     pushSucceeded = false;
-    const result = newStateMachine({
+    const smResult = newStateMachine({
       writeSucceeded: true,
       pushSucceeded: false,
       taskId: nextId,
       filePath,
       errorMessage: err instanceof Error ? err.message : String(err),
     });
-    getDefaultGuidanceAdapter().pushGuidance(result);
+    getDefaultGuidanceAdapter().pushGuidance(smResult);
+    const result = failedResult({
+      command: "new",
+      taskId: nextId,
+      error: smResult.guidance,
+      code: smResult.errorCode ?? "PUSH_FAILED",
+      nextCommands: smResult.nextAction
+        ? [{ command: smResult.nextAction, purpose: "Retry after push failure", when: "On push failure", allowedFor: "all", priority: 1 }]
+        : getValidNextCommands("new", "failed"),
+    });
     if (json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "PUSH_FAILED", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance,
-      }));
+      process.stdout.write(renderResultJson(result) + "\n");
       return;
     }
-    logInfo(result.guidance);
+    logInfo(smResult.guidance);
+    process.stdout.write(renderResultMarkdown(result) + "\n");
     return;
   }
 
-  const result = newStateMachine({
+  const smResult = newStateMachine({
     writeSucceeded: true,
     pushSucceeded,
     taskId: nextId,
     filePath,
   });
-  getDefaultGuidanceAdapter().pushGuidance(result);
+  getDefaultGuidanceAdapter().pushGuidance(smResult);
+
+  const result = successResult({
+    command: "new",
+    taskId: nextId,
+    guidance: smResult.guidance,
+    nextCommands: getValidNextCommands("new", "success"),
+  });
 
   if (json) {
-    printJson(jsonOk({
-      task: { id: nextId, file: filePath, status },
-      nextActions: [result.nextAction],
-      guidance: result.guidance,
-    } as never));
+    process.stdout.write(renderResultJson(result) + "\n");
     return;
   }
 
-  logSuccess(result.guidance);
+  logSuccess(smResult.guidance);
   logInfo(`File: ${filePath}`);
   logDivider();
   logInfo("Next actions:");
   logSub(`  taskforge start ${nextId}   — Begin working on this task (creates worktree)`);
   logSub(`  taskforge claim ${nextId}   — Claim this task without creating a worktree`);
   logSub("  taskforge next            — Find the next available task");
+  process.stdout.write(renderResultMarkdown(result) + "\n");
 }

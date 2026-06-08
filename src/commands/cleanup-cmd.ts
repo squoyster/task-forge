@@ -6,6 +6,9 @@ import { logSuccess, logWarn, logInfo, logSub, logError, logDivider } from "../u
 import { TaskNotFoundError } from "../core/errors.js";
 import { printJson, jsonOk, jsonError } from "../util/json-result.js";
 import { resolveAuthority, assertCanForce, getForceRejectionNextActions, ForceRequiresHumanOrDoctorError } from "../core/authority.js";
+import { successResult, noopResult, failedResult } from "../core/result-builder.js";
+import { getValidNextCommands } from "../core/next-command-maps.js";
+import { renderResultMarkdown, renderResultJson } from "../core/result-renderer.js";
 
 export interface CleanupOptions {
   dryRun?: boolean;
@@ -23,17 +26,27 @@ interface CleanupItem {
 export async function cmdCleanup(taskId: string, options?: CleanupOptions): Promise<void> {
   const repoRoot = getRepoRoot();
   const task = loadTaskById(taskId);
+  const json = options?.json ?? false;
 
   if (!task) {
-    if (options?.json) printJson(jsonError(`Task ${taskId} not found`, "TASK_NOT_FOUND"));
-    else throw new TaskNotFoundError(taskId);
+    const errorResult = failedResult({
+      command: "cleanup",
+      taskId,
+      error: `Task ${taskId} not found`,
+      code: "TASK_NOT_FOUND",
+      nextCommands: getValidNextCommands("cleanup", "failed"),
+    });
+    if (json) {
+      process.stdout.write(renderResultJson(errorResult) + "\n");
+    } else {
+      throw new TaskNotFoundError(taskId);
+    }
     return;
   }
 
   const apply = options?.apply ?? false;
   const force = options?.force ?? false;
   const dryRun = !apply && !force;
-  const json = options?.json ?? false;
 
   // Force authority check
   if (force) {
@@ -42,12 +55,21 @@ export async function cmdCleanup(taskId: string, options?: CleanupOptions): Prom
       assertCanForce(authority);
     } catch (err) {
       if (err instanceof ForceRequiresHumanOrDoctorError) {
+        const errorResult = failedResult({
+          command: "cleanup",
+          taskId,
+          error: "Normal agents may not use --force.",
+          code: "FORCE_REQUIRES_HUMAN_OR_DOCTOR",
+          nextCommands: getForceRejectionNextActions(taskId).map((nc) => ({
+            command: nc.command,
+            purpose: nc.reason,
+            when: "When force operation is denied",
+            allowedFor: nc.safety === "requires_human" ? "human" : "doctor" as "doctor" | "human",
+            priority: 1,
+          })),
+        });
         if (json) {
-          printJson(jsonError(
-            "Normal agents may not use --force.",
-            "FORCE_REQUIRES_HUMAN_OR_DOCTOR",
-            { nextActions: getForceRejectionNextActions(taskId) },
-          ));
+          process.stdout.write(renderResultJson(errorResult) + "\n");
           return;
         }
         logError("Normal agents may not use --force.");
@@ -59,6 +81,7 @@ export async function cmdCleanup(taskId: string, options?: CleanupOptions): Prom
         logSub(`2. taskforge block ${taskId} "Force operation requires human or doctor-mode authorization" --category unsafe_operation --blocked-by human`);
         logSub("   Reason: Escalate unsafe operation without bypassing TaskForge.");
         logSub("   Safety: requires_human");
+        process.stdout.write(renderResultMarkdown(errorResult) + "\n");
         return;
       }
       throw err;
@@ -123,13 +146,19 @@ export async function cmdCleanup(taskId: string, options?: CleanupOptions): Prom
     }
   }
 
+  const itemsApplied = apply || force;
+
+  const success = successResult({
+    command: "cleanup",
+    taskId,
+    guidance: itemsApplied
+      ? `Cleanup ${taskId}: ${items.filter(i => i.status === "removed").length} resource(s) removed.`
+      : `Cleanup ${taskId} (dry-run): ${items.filter(i => i.status === "would_remove").length} resource(s) would be removed.`,
+    nextCommands: getValidNextCommands("cleanup", "success"),
+  });
+
   if (json) {
-    printJson(jsonOk({
-      cleanup: { items },
-      nextActions: [
-        { command: "taskforge next", reason: "Find the next available task after cleanup.", safety: "safe" as const, preferred: true },
-      ],
-    } as never));
+    process.stdout.write(renderResultJson(success) + "\n");
     return;
   }
 
@@ -147,4 +176,5 @@ export async function cmdCleanup(taskId: string, options?: CleanupOptions): Prom
       logSuccess(`  ${item.resource}: removed`);
     }
   }
+  process.stdout.write(renderResultMarkdown(success) + "\n");
 }

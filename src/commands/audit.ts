@@ -1,48 +1,81 @@
 import { getRepoRoot } from "../util/paths.js";
 import { readTaskAudit, summarizeTaskAudit } from "../core/audit.js";
 import { logInfo, logHeader, logSub, logDivider } from "../util/logging.js";
+import { successResult, noopResult } from "../core/result-builder.js";
+import { getValidNextCommands } from "../core/next-command-maps.js";
+import { renderResultMarkdown } from "../core/result-renderer.js";
 
 export function cmdAudit(taskId: string, opts: { json?: boolean }): void {
+  const start = Date.now();
   const repoRoot = getRepoRoot();
   const events = readTaskAudit(repoRoot, taskId);
 
   if (opts.json) {
-    process.stdout.write(JSON.stringify(events, null, 2) + "\n");
+    process.stdout.write(JSON.stringify({ ok: true, events }, null, 2) + "\n");
     return;
   }
+
+  const result = events.length === 0
+    ? noopResult({
+        command: "audit",
+        reason: "No audit events found.",
+        nextCommands: getValidNextCommands("audit", "success"),
+        duration: Date.now() - start,
+      })
+    : successResult({
+        command: "audit",
+        guidance: `Audit: ${taskId} (${events.length} event(s))`,
+        nextCommands: getValidNextCommands("audit", "success"),
+        duration: Date.now() - start,
+      });
 
   logHeader(`Audit: ${taskId}`);
   if (events.length === 0) {
     logInfo("No audit events found.");
-    return;
+  } else {
+    for (const event of events) {
+      logSub(`${event.timestamp} [${event.event}]`);
+      if (event.summary) logInfo(`  ${event.summary}`);
+    }
   }
-
-  for (const event of events) {
-    logSub(`${event.timestamp} [${event.event}]`);
-    if (event.summary) logInfo(`  ${event.summary}`);
-  }
+  process.stdout.write(renderResultMarkdown(result) + "\n");
 }
 
 export function cmdTranscript(taskId: string, opts: { json?: boolean }): void {
+  const start = Date.now();
   const repoRoot = getRepoRoot();
   const events = readTaskAudit(repoRoot, taskId);
 
   if (opts.json) {
-    process.stdout.write(JSON.stringify(events, null, 2) + "\n");
+    process.stdout.write(JSON.stringify({ ok: true, events }, null, 2) + "\n");
     return;
   }
+
+  const result = events.length === 0
+    ? noopResult({
+        command: "transcript",
+        reason: "No transcript events found.",
+        nextCommands: getValidNextCommands("transcript", "success"),
+        duration: Date.now() - start,
+      })
+    : successResult({
+        command: "transcript",
+        guidance: `Transcript: ${taskId} (${events.length} event(s))`,
+        nextCommands: getValidNextCommands("transcript", "success"),
+        duration: Date.now() - start,
+      });
 
   logHeader(`Transcript: ${taskId}`);
   if (events.length === 0) {
     logInfo("No transcript events found.");
-    return;
+  } else {
+    for (const event of events) {
+      const time = event.timestamp.slice(11, 19);
+      const label = event.summary ?? event.event;
+      logInfo(`[${time}] ${label}`);
+    }
   }
-
-  for (const event of events) {
-    const time = event.timestamp.slice(11, 19);
-    const label = event.summary ?? event.event;
-    logInfo(`[${time}] ${label}`);
-  }
+  process.stdout.write(renderResultMarkdown(result) + "\n");
 }
 
 function getEventIcon(eventType: string): string {
@@ -53,30 +86,43 @@ function getEventIcon(eventType: string): string {
 }
 
 export function cmdTimeline(taskId: string, opts: { json?: boolean } = {}): void {
+  const start = Date.now();
   const repoRoot = getRepoRoot();
   const summary = summarizeTaskAudit(repoRoot, taskId);
 
   if (opts.json) {
-    process.stdout.write(JSON.stringify(summary, null, 2) + "\n");
+    process.stdout.write(JSON.stringify({ ok: true, ...summary }, null, 2) + "\n");
     return;
   }
+
+  const result = summary.entries.length === 0
+    ? noopResult({
+        command: "timeline",
+        reason: "No events found.",
+        nextCommands: getValidNextCommands("timeline", "success"),
+        duration: Date.now() - start,
+      })
+    : successResult({
+        command: "timeline",
+        guidance: `Timeline: ${taskId} (${summary.totalEvents} events, ${summary.durationMinutes ?? 0}m)`,
+        nextCommands: getValidNextCommands("timeline", "success"),
+        duration: Date.now() - start,
+      });
 
   logHeader(`Timeline: ${taskId}`);
 
   if (summary.entries.length === 0) {
     logInfo("No events found.");
-    return;
+  } else {
+    logDivider();
+    for (const entry of summary.entries) {
+      const time = entry.timestamp.slice(11, 19);
+      const icon = getEventIcon(entry.event);
+      const detail = entry.detail ? `  ${entry.detail}` : "";
+      logInfo(`${time}  ${icon} ${entry.event}${detail}`);
+    }
+    logDivider();
+    logInfo(`Duration: ${summary.durationMinutes ?? 0}m  |  Events: ${summary.totalEvents}  |  Errors: ${summary.errorCount}`);
   }
-
-  logDivider();
-
-  for (const entry of summary.entries) {
-    const time = entry.timestamp.slice(11, 19);
-    const icon = getEventIcon(entry.event);
-    const detail = entry.detail ? `  ${entry.detail}` : "";
-    logInfo(`${time}  ${icon} ${entry.event}${detail}`);
-  }
-
-  logDivider();
-  logInfo(`Duration: ${summary.durationMinutes ?? 0}m  |  Events: ${summary.totalEvents}  |  Errors: ${summary.errorCount}`);
+  process.stdout.write(renderResultMarkdown(result) + "\n");
 }
