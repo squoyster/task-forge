@@ -1,13 +1,11 @@
 ---
 id: TASK-252
 type: Bug
-status: Verify
+status: Done
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 31be71bad1
-claimed_at: '2026-06-08 05:59:48'
 branch: agent/TASK-252-normal-agents-cannot-clean-up-done-task--31be71bad1
 ---
 
