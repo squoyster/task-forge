@@ -72,6 +72,12 @@ export const TaskSchema = z.object({
   override_failed_gates: z.array(z.string()).optional(),
   issue: z.number().optional(),
   pr: z.number().optional(),
+  submitted_sha: z.string().optional(),
+  submitted_at: z.union([z.string(), z.date()]).optional(),
+  pr_merged: z.boolean().optional(),
+  pr_head_sha: z.string().optional(),
+  pr_base_branch: z.string().optional(),
+  code_task: z.boolean().optional(),
 });
 
 export type Task = z.infer<typeof TaskSchema>;

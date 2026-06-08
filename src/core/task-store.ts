@@ -52,6 +52,14 @@ export function parseTaskFile(filePath: string): ParsedTask | null {
     override_failed_gates: frontmatter.override_failed_gates as string[] | undefined,
     issue: frontmatter.issue ? Number(frontmatter.issue) : undefined,
     pr: frontmatter.pr ? Number(frontmatter.pr) : undefined,
+    submitted_sha: frontmatter.submitted_sha as string | undefined,
+    submitted_at: frontmatter.submitted_at as string | Date | undefined,
+    pr_merged: frontmatter.pr_merged === true || frontmatter.pr_merged === "true" ? true :
+                frontmatter.pr_merged === false || frontmatter.pr_merged === "false" ? false : undefined,
+    pr_head_sha: frontmatter.pr_head_sha as string | undefined,
+    pr_base_branch: frontmatter.pr_base_branch as string | undefined,
+    code_task: frontmatter.code_task === true || frontmatter.code_task === "true" ? true :
+                frontmatter.code_task === false || frontmatter.code_task === "false" ? false : undefined,
   };
 
   const result = TaskSchema.safeParse(taskData);

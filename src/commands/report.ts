@@ -69,13 +69,13 @@ export async function cmdReport(taskId: string, options?: ReportOptions): Promis
   };
 
   if (options?.complete) {
-    const transitionError = validateTransition(task.status, STATUS.REVIEW);
+    const transitionError = validateTransition(task.status, STATUS.IMPLEMENTATION_COMPLETE);
     if (transitionError) {
       if (options?.json) {
         printJson(jsonError(transitionError, "INVALID_TRANSITION"));
         return;
       }
-      throw new InvalidStatusTransitionError(task.status, STATUS.REVIEW, [STATUS.IN_PROGRESS]);
+      throw new InvalidStatusTransitionError(task.status, STATUS.IMPLEMENTATION_COMPLETE, [STATUS.IN_PROGRESS]);
     }
 
     // Check AC state for reviewer awareness
@@ -83,11 +83,11 @@ export async function cmdReport(taskId: string, options?: ReportOptions): Promis
     const hasBlankAC = hasAC && hasBlankAcceptanceCriteria(task.body);
     const hasUncheckedAC = hasAC && hasUncheckedAcceptanceCriteria(task.body);
 
-    updateTaskStatus(task.filePath, STATUS.REVIEW);
+    updateTaskStatus(task.filePath, STATUS.IMPLEMENTATION_COMPLETE);
 
     const today = new Date().toISOString().split("T")[0];
     appendAgentNote(task.filePath, today, "System", [
-      `Report generated — task moved to Review`,
+      `Report generated — task moved to Implementation Complete`,
       `Changed files: ${changedFiles.length > 0 ? changedFiles.join(", ") : "none"}`,
       `Commits: ${commits.length > 0 ? commits.join(", ") : "none"}`,
       `AC section: ${hasAC ? "present" : "missing"}`,
@@ -95,12 +95,12 @@ export async function cmdReport(taskId: string, options?: ReportOptions): Promis
       hasUncheckedAC ? "AC has unchecked items" : "",
     ].filter(Boolean));
 
-    await commitAndPushTaskState(repoRoot, `chore: report ${taskId} → Review`);
+    await commitAndPushTaskState(repoRoot, `chore: report ${taskId} → Implementation Complete`);
 
     if (options?.json) {
       printJson(jsonOk({
         ...report,
-        status: STATUS.REVIEW,
+        status: STATUS.IMPLEMENTATION_COMPLETE,
         acceptanceCriteria: {
           sectionPresent: hasAC,
           hasBlankItems: hasBlankAC,
@@ -124,11 +124,11 @@ export async function cmdReport(taskId: string, options?: ReportOptions): Promis
 
     logHeader(`# Report: ${taskId}`);
     logDivider();
-    logSub(`Status: ${STATUS.REVIEW}`);
+    logSub(`Status: ${STATUS.IMPLEMENTATION_COMPLETE}`);
     logSub(`Changed files: ${changedFiles.length > 0 ? changedFiles.join(", ") : "none"}`);
     logSub(`Commits: ${commits.length > 0 ? commits.join(", ") : "none"}`);
     logDivider();
-    logSuccess(`Task ${taskId} moved to Review.`);
+    logSuccess(`Task ${taskId} moved to Implementation Complete.`);
     logDivider();
     logInfo("Reviewer Instructions:");
     logSub("1. Read the task file and extract every acceptance criterion.");
@@ -157,7 +157,7 @@ export async function cmdReport(taskId: string, options?: ReportOptions): Promis
       nextActions: options?.complete
         ? []
         : [
-            { command: `taskforge report ${taskId} --complete`, reason: "Generate completion report and move to Review", safety: "safe", preferred: true },
+            { command: `taskforge report ${taskId} --complete`, reason: "Generate completion report and move to Implementation Complete", safety: "safe", preferred: true },
             { command: `taskforge gates`, reason: "Run gates before generating report", safety: "safe", preferred: false },
           ],
     } as never));
@@ -166,13 +166,13 @@ export async function cmdReport(taskId: string, options?: ReportOptions): Promis
 
   logHeader(`# Report: ${taskId}`);
   logDivider();
-  logSub(`Status: ${options?.complete ? STATUS.REVIEW : task.status}`);
+  logSub(`Status: ${options?.complete ? STATUS.IMPLEMENTATION_COMPLETE : task.status}`);
   logSub(`Changed files: ${changedFiles.length > 0 ? changedFiles.join(", ") : "none"}`);
   logSub(`Commits: ${commits.length > 0 ? commits.join(", ") : "none"}`);
   logDivider();
   if (!options?.complete) {
     logInfo("Next actions:");
-    logSub(`  taskforge report ${taskId} --complete  — Generate completion report and move to Review`);
+    logSub(`  taskforge report ${taskId} --complete  — Generate completion report and move to Implementation Complete`);
     logSub(`  taskforge gates                       — Run gates before generating report`);
   }
 }
