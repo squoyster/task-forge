@@ -1,11 +1,14 @@
 ---
 id: TASK-253
 type: Bug
-status: Ready
+status: In Progress
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 889fce87ef
+claimed_at: '2026-06-08 10:21:27'
+branch: agent/TASK-253-task-state-path-resolution-breaks-from-n--889fce87ef
 ---
 
 # TASK-253: Task-state path resolution breaks from nested worktrees
@@ -114,6 +117,10 @@ No
 Auto-continue unless a stopping condition occurs.
 
 ## Agent Notes
+
+### 2026-06-08 System
+- Task claimed via taskforge claim TASK-253
+- Session: 889fce87ef
 
 ### 2026-06-08 System
 - Task created during TASK-252 review to document branch-invariance issues discovered during implementation
