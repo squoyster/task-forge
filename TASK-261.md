@@ -1,7 +1,7 @@
 ---
 id: TASK-261
 type: Feature
-status: In Progress
+status: Implementation Complete
 priority: P1
 agentRole: Implementer
 riskLevel: Low
@@ -9,6 +9,8 @@ humanInterventionRequired: false
 assignee: dd85c550bb
 claimed_at: '2026-06-08 14:34:41'
 context_hash: b516925ba8cef30c
+submitted_sha: 504b3a3
+submitted_at: '2026-06-08T08:39:00Z'
 branch: agent/TASK-261-replace-direct-task-state-editing-with-s--dd85c550bb
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-261
 ---
@@ -115,3 +117,16 @@ Depends on TASK-258 (Enforce the TaskForge Mutation Boundary).
 ---
 
 _Source: docs/taskforge-agentic-workflow-hardening-tasks.md_
+
+
+## Agent Notes
+
+### Implementation Summary
+
+Added gap-filling mutation commands:
+- block: Block a task with reason/category via cmdBlockTask
+- record-gates: Record gate results via cmdRecordGates
+- evidence: Add completion evidence via cmdEvidenceAdd
+- reconcile: Reconcile task state via cmdReconcile
+
+All use withTaskStateTransaction. Registered in CLI. 744 tests passing.
