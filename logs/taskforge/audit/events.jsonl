@@ -1,0 +1,1 @@
+{"timestamp":"2026-06-08T05:54:08.536Z","event":"task.command.completed","summary":"CLI: taskforge list ","metadata":{"type":"cli.invocation","command":"list","args":[],"flags":{},"exitCode":0,"duration":131,"error":null,"agentSession":null},"taskId":"list"}

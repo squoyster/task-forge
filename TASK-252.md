@@ -1,11 +1,14 @@
 ---
 id: TASK-252
 type: Bug
-status: Ready
+status: In Progress
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 31be71bad1
+claimed_at: '2026-06-08 05:59:48'
+branch: agent/TASK-252-normal-agents-cannot-clean-up-done-task--31be71bad1
 ---
 
 # TASK-252: Normal agents cannot clean up Done task worktrees without --force
@@ -27,3 +30,7 @@ This creates a dead end where stale worktrees accumulate and agents must resort 
 - [ ] No security regression: normal agents cannot use cleanup to interfere with other agents' active tasks
 
 ## Agent Notes
+
+### 2026-06-08 System
+- Task claimed via taskforge claim TASK-252
+- Session: 31be71bad1
