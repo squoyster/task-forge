@@ -1,13 +1,11 @@
 ---
 id: TASK-244
 type: Task
-status: In Progress
+status: Ready
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: cfbcd1d849
-claimed_at: '2026-06-04 05:12:42'
 context_hash: 87da9585c90be1d7
 branch: agent/TASK-244-wire-all-35-cli-commands-to-taskforgecom--a34e9e4c25
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-244
@@ -66,6 +64,9 @@ All commands in src/commands/:
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-08T00:00:00Z System
+- Task swept by Sweeper Protocol — reset to Ready. Claim by "cfbcd1d849" was 90.9h old (threshold: 4h).
 
 ### 2026-06-04T00:00:00Z System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-244
