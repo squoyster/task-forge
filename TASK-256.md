@@ -1,11 +1,15 @@
 ---
 id: TASK-256
 type: Feature
-status: Ready
+status: In Progress
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 30f7d54c39
+claimed_at: '2026-06-08 14:25:50'
+context_hash: b516925ba8cef30c
+branch: agent/TASK-256-make-submission-atomic-and-idempotent--30f7d54c39
 ---
 
 # TASK-256: MAKE SUBMISSION ATOMIC AND IDEMPOTENT
@@ -19,6 +23,11 @@ Describe the desired outcome.
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-08T00:00:00Z System
+- Task claimed via taskforge start TASK-256
+- Session: 30f7d54c39
+- Branch: agent/TASK-256-make-submission-atomic-and-idempotent--30f7d54c39
 
 
 ## Problem

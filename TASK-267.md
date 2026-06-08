@@ -10,8 +10,6 @@ assignee: 7c30c62341
 claimed_at: '2026-06-08 14:18:53'
 context_hash: b516925ba8cef30c
 branch: agent/TASK-267-add-taskforge-update-command-for-task-fi--7c30c62341
-submitted_sha: 2420d59
-submitted_at: '2026-06-08T08:24:00Z'
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-267
 ---
 
