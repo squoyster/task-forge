@@ -20,7 +20,6 @@ When the Sweeper Protocol resets a stale task claim, a new agent can re-claim th
 ## Acceptance Criteria
 
 - [x] When a task is claimed after being swept (or the assignee changes), the branch name's embedded session ID is updated to match the new assignee
-- [ ] OR: The `assertTaskOwnership` check uses the task frontmatter's `assignee` field directly instead of parsing it from the branch name
 - [x] A swept-then-re-claimed task can be marked Done without manual intervention to sync session IDs
 - [x] Existing tests for ownership assertion, sweeper, and done continue to pass
 
