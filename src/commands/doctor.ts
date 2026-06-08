@@ -1,6 +1,6 @@
 import { loadAllTasks, hasAcceptanceCriteriaSection, hasBlankAcceptanceCriteria, hasUncheckedAcceptanceCriteria } from "../core/task-store.js";
 import { listWorktrees } from "../core/git.js";
-import { getRepoRoot, getWorktreePath } from "../util/paths.js";
+import { getRepoRoot, getWorktreePath, getTaskStateDir } from "../util/paths.js";
 import { loadConfig } from "../core/config.js";
 import { logHeader, logSuccess, logWarn, logInfo, logDivider } from "../util/logging.js";
 import { STATUS } from "../util/status-constants.js";
@@ -26,7 +26,7 @@ export async function cmdDoctor(options?: { json?: boolean; fix?: boolean }): Pr
   }
 
   // 1. Task-state exists
-  const taskStateDir = `${repoRoot}/../task-state`;
+  const taskStateDir = getTaskStateDir(repoRoot);
   if (!fs.existsSync(taskStateDir)) {
     add("error", "Task-state worktree missing — run 'taskforge init'");
   } else {

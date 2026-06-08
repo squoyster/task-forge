@@ -336,11 +336,11 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
   getDefaultGuidanceAdapter().pushGuidance(successResult);
 
   if (json) {
-    // Re-read the task after push for accurate state
-    const updated = loadTaskById(taskId);
+    // Reload after push to get the latest claimed state
+    const refreshedTask = loadTaskById(taskId);
     eventLogEvent(taskId, "claimed", { session: sessionId, forced: force });
     printJson(jsonOk({
-      task: updated ? buildJsonTask(updated) : buildJsonTask(task),
+      task: refreshedTask ? buildJsonTask(refreshedTask) : buildJsonTask(task),
       workspace: {
         branch: branchName,
         worktree: worktreePath,
