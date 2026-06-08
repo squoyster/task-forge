@@ -30,6 +30,10 @@ let currentSessionId = "test-session-123";
 
 vi.mock("../../src/core/session.js", () => ({
   generateSessionId: vi.fn().mockImplementation(() => currentSessionId),
+  parseSessionIdFromBranch: vi.fn().mockImplementation((branch: string) => {
+    const match = branch.match(/--([a-f0-9]{10})$/);
+    return match ? match[1] : null;
+  }),
   checkOutstandingSessionTasks: vi.fn().mockResolvedValue(null),
 }));
 

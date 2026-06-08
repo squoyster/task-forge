@@ -71,9 +71,18 @@
       "status": "active",
       "worktree_path": "/Volumes/Transcend/devel/worktrees/task-forge/TASK-244",
       "registered_at": "2026-06-04T05:12:47.324Z"
+    },
+    {
+      "session_id": "8265fbd099",
+      "agent_id": "mmmm.local:6864",
+      "last_heartbeat": "2026-06-08T04:45:54.742Z",
+      "current_task": "TASK-247",
+      "status": "active",
+      "worktree_path": "/Volumes/Transcend/devel/worktrees/task-forge/TASK-247",
+      "registered_at": "2026-06-08T04:45:54.742Z"
     }
   ],
-  "max_concurrent_agents": 8,
+  "max_concurrent_agents": 9,
   "agent_history": [
     "alexs-Mac-mini.local:27979",
     "alexs-Mac-mini.local:42601",
@@ -82,7 +91,8 @@
     "alexs-Mac-mini.local:61317",
     "alexs-Mac-mini.local:87607",
     "alexs-Mac-mini.local:97400",
-    "mmmm.local:36399"
+    "mmmm.local:36399",
+    "mmmm.local:6864"
   ],
-  "last_updated": "2026-06-04T05:12:47.324Z"
+  "last_updated": "2026-06-08T04:45:54.742Z"
 }
