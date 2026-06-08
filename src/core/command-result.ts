@@ -1,20 +1,4 @@
 import { z } from "zod";
-import type { CommandResult } from "./command-states.js";
-import { BuilderOptions } from "./result-builder.js";
-import { 
-  successResult, 
-  blockedResult, 
-  failedResult, 
-  noopResult, 
-  humanRequiredResult, 
-  doctorRequiredResult, 
-  contextCleanupResult 
-} from "./result-builder.js";
-import { getValidNextCommands } from "./next-command-maps.js";
-
-
-
-
 
 // ─── Sub-schemas ───────────────────────────────────────────────────────────
 
