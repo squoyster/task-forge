@@ -6,13 +6,9 @@ export interface OpenCodePermissions {
   [key: string]: unknown;
 }
 
-export function generateOpenCodeConfig(policy: string, audit: boolean, guard: boolean): Record<string, unknown> {
+export function generateOpenCodeConfig(_policy: string, _audit: boolean, _guard: boolean): Record<string, unknown> {
   const config: Record<string, unknown> = {
     $schema: "https://opencode.ai/config.json",
-    taskforge: {
-      managed: true,
-      policyVersion: 1,
-    },
     permission: {
       "*": "ask",
       edit: {
@@ -80,13 +76,6 @@ export function generateOpenCodeConfig(policy: string, audit: boolean, guard: bo
     },
   };
 
-  if (audit) {
-    config.taskforge = { ...config.taskforge as Record<string, unknown>, audit: true };
-  }
-  if (guard) {
-    config.taskforge = { ...config.taskforge as Record<string, unknown>, guard: true };
-  }
-
   return config;
 }
 
@@ -125,9 +114,7 @@ export function mergeConfig(existing: Record<string, unknown>, generated: Record
 
   for (const [key, value] of Object.entries(generated)) {
     if (key === "$schema") continue;
-    if (key === "taskforge") {
-      result.taskforge = { ...result.taskforge as Record<string, unknown>, ...(value as Record<string, unknown>) };
-    } else if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+    if (typeof value === "object" && value !== null && !Array.isArray(value)) {
       result[key] = deepMerge(result[key] as Record<string, unknown> ?? {}, value as Record<string, unknown>);
     } else {
       result[key] = value;

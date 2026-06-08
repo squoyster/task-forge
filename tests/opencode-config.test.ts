@@ -12,7 +12,7 @@ describe("generateOpenCodeConfig", () => {
   it("generates valid config with managed policy", () => {
     const config = generateOpenCodeConfig("managed", true, true);
     expect(config.$schema).toBeDefined();
-    expect(config.taskforge).toEqual({ managed: true, policyVersion: 1, audit: true, guard: true });
+    expect(config.taskforge).toBeUndefined();
 
     const perm = config.permission as Record<string, unknown>;
     expect(perm["*"]).toBe("ask");
@@ -34,9 +34,9 @@ describe("generateOpenCodeConfig", () => {
     expect(docBash["git push --force*"]).toBe("deny");
   });
 
-  it("disables audit and guard when false", () => {
+  it("no longer emits taskforge block (moved to .taskforge/config.json)", () => {
     const config = generateOpenCodeConfig("managed", false, false);
-    expect(config.taskforge).toEqual({ managed: true, policyVersion: 1 });
+    expect(config.taskforge).toBeUndefined();
   });
 });
 
@@ -46,7 +46,7 @@ describe("installOpenCodeConfig", () => {
     installOpenCodeConfig(tmp, "managed", true, true, false);
     const raw = fs.readFileSync(path.join(tmp, "opencode.json"), "utf-8");
     const config = JSON.parse(raw);
-    expect(config.taskforge.managed).toBe(true);
+    expect(config.taskforge).toBeUndefined();
     const bash = config.permission.bash as Record<string, string>;
     expect(bash["git *"]).toBe("deny");
     fs.rmSync(tmp, { recursive: true, force: true });
@@ -66,7 +66,7 @@ describe("installOpenCodeConfig", () => {
     const config = JSON.parse(raw);
     expect(config.providers.openai.apiKey).toBe("sk-test");
     expect(config.theme).toBe("dark");
-    expect(config.taskforge.managed).toBe(true);
+    expect(config.taskforge).toBeUndefined();
     const bash = config.permission.bash as Record<string, string>;
     expect(bash["git *"]).toBe("deny");
     fs.rmSync(tmp, { recursive: true, force: true });
@@ -104,11 +104,11 @@ describe("mergeConfig", () => {
     expect(result.permission).toEqual(generated.permission);
   });
 
-  it("deep merges taskforge section", () => {
-    const existing = { taskforge: { custom: "value" } };
-    const generated = { taskforge: { managed: true } };
+  it("deep merges nested sections", () => {
+    const existing = { customSection: { existingKey: "value1" } };
+    const generated = { customSection: { newKey: "value2" } };
     const result = mergeConfig(existing, generated);
-    expect(result.taskforge).toEqual({ custom: "value", managed: true });
+    expect(result.customSection).toEqual({ existingKey: "value1", newKey: "value2" });
   });
 
   it("does not overwrite $schema", () => {

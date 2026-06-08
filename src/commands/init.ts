@@ -34,10 +34,10 @@ export async function cmdInit(options: InitOptions = {}): Promise<void> {
   const auditLog = new InitAuditLog(repoRoot);
   const config = loadConfig(repoRoot);
   const agentFramework = options.agentFramework ?? config.agentFramework.id ?? "auto";
-  const policy = options.policy ?? config.agentFramework.policy ?? "managed";
+  const policy = options.policy ?? config.opencode.policy ?? "managed";
   const installHooks = options.installHooks ?? config.agentFramework.installHooks ?? true;
-  const audit = options.audit ?? config.agentFramework.audit ?? true;
-  const guard = options.guard ?? config.agentFramework.guard ?? true;
+  const audit = options.audit ?? config.opencode.audit ?? true;
+  const guard = options.guard ?? config.opencode.guard ?? true;
   const dryRun = options.dryRun ?? false;
   const taskforgeDir = getTaskforgeDir(repoRoot);
 

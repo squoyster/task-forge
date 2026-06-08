@@ -51,6 +51,12 @@ export const ConfigSchema = z.object({
     .object({
       enabled: z.boolean().default(true),
       command: z.string().default("opencode"),
+      policy: z
+        .enum(["permissive", "managed", "locked-down"])
+        .default("managed"),
+      audit: z.boolean().default(true),
+      guard: z.boolean().default(true),
+      policyVersion: z.number().default(1),
     })
     .optional()
     .default({}),
@@ -113,13 +119,7 @@ dependencies: z
         id: z
           .union([z.literal("generic"), z.literal("opencode"), z.string()])
           .optional(),
-        policy: z
-          .enum(["permissive", "managed", "locked-down"])
-          .default("managed"),
         installHooks: z.boolean().default(true),
-        audit: z.boolean().default(true),
-        guard: z.boolean().default(true),
-        policyVersion: z.number().default(1),
       })
       .optional()
       .default({}),

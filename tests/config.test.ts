@@ -67,25 +67,33 @@ describe("ConfigSchema", () => {
     }
   });
 
+  it("provides opencode defaults", () => {
+    const result = ConfigSchema.safeParse({});
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.opencode.policy).toBe("managed");
+      expect(result.data.opencode.audit).toBe(true);
+      expect(result.data.opencode.guard).toBe(true);
+      expect(result.data.opencode.policyVersion).toBe(1);
+      expect(result.data.opencode.enabled).toBe(true);
+    }
+  });
+
   it("provides agentFramework defaults", () => {
     const result = ConfigSchema.safeParse({});
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data.agentFramework.policy).toBe("managed");
       expect(result.data.agentFramework.installHooks).toBe(true);
-      expect(result.data.agentFramework.audit).toBe(true);
-      expect(result.data.agentFramework.guard).toBe(true);
-      expect(result.data.agentFramework.policyVersion).toBe(1);
       expect(result.data.agentFramework.id).toBeUndefined();
     }
   });
 
-  it("parses full agentFramework config", () => {
+  it("parses full opencode config", () => {
     const result = ConfigSchema.safeParse({
-      agentFramework: {
-        id: "opencode",
+      opencode: {
+        enabled: false,
+        command: "custom-cli",
         policy: "locked-down",
-        installHooks: false,
         audit: false,
         guard: true,
         policyVersion: 2,
@@ -93,18 +101,32 @@ describe("ConfigSchema", () => {
     });
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data.agentFramework.id).toBe("opencode");
-      expect(result.data.agentFramework.policy).toBe("locked-down");
-      expect(result.data.agentFramework.installHooks).toBe(false);
-      expect(result.data.agentFramework.audit).toBe(false);
-      expect(result.data.agentFramework.guard).toBe(true);
-      expect(result.data.agentFramework.policyVersion).toBe(2);
+      expect(result.data.opencode.enabled).toBe(false);
+      expect(result.data.opencode.command).toBe("custom-cli");
+      expect(result.data.opencode.policy).toBe("locked-down");
+      expect(result.data.opencode.audit).toBe(false);
+      expect(result.data.opencode.guard).toBe(true);
+      expect(result.data.opencode.policyVersion).toBe(2);
     }
   });
 
-  it("rejects invalid agentFramework policy", () => {
+  it("parses full agentFramework config", () => {
     const result = ConfigSchema.safeParse({
-      agentFramework: { policy: "nonexistent" },
+      agentFramework: {
+        id: "opencode",
+        installHooks: false,
+      },
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.agentFramework.id).toBe("opencode");
+      expect(result.data.agentFramework.installHooks).toBe(false);
+    }
+  });
+
+  it("rejects invalid opencode policy", () => {
+    const result = ConfigSchema.safeParse({
+      opencode: { policy: "nonexistent" },
     });
     expect(result.success).toBe(false);
   });
@@ -129,7 +151,7 @@ describe("ConfigSchema", () => {
     }
   });
 
-  it("loads existing config without agentFramework", () => {
+  it("loads existing config without opencode or agentFramework", () => {
     const legacyConfig = {
       project: { name: "old-project" },
       continuation: { autoContinue: false },
@@ -139,7 +161,7 @@ describe("ConfigSchema", () => {
     if (result.success) {
       expect(result.data.project.name).toBe("old-project");
       expect(result.data.continuation.autoContinue).toBe(false);
-      expect(result.data.agentFramework.policy).toBe("managed");
+      expect(result.data.opencode.policy).toBe("managed");
       expect(result.data.agentFramework.installHooks).toBe(true);
     }
   });

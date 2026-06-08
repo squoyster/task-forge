@@ -24,7 +24,11 @@
   },
   "opencode": {
     "enabled": true,
-    "command": "opencode"
+    "command": "opencode",
+    "policy": "managed",
+    "audit": true,
+    "guard": true,
+    "policyVersion": 1
   },
   "continuation": {
     "autoContinue": true,

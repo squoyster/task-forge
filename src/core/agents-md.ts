@@ -7,7 +7,7 @@ import { logInfo, logSuccess } from "../util/logging.js";
 export function installAgentsMd(projectRoot: string, dryRun: boolean): void {
   const agentsPath = path.join(projectRoot, "AGENTS.md");
   const config = loadConfig(projectRoot);
-  const policy = config.agentFramework.policy ?? "managed";
+  const policy = config.opencode.policy ?? "managed";
 
   const managedBlockContent = generateAgentsPolicyBlock(policy);
 

@@ -50,7 +50,7 @@ describe("init integration — OpenCode managed policy", () => {
     const merged = JSON.parse(fs.readFileSync(path.join(tmp, "opencode.json"), "utf-8"));
     expect(merged.providers.openai.apiKey).toBe("sk-test123");
     expect(merged.theme).toBe("dark");
-    expect(merged.taskforge.managed).toBe(true);
+    expect(merged.taskforge).toBeUndefined();
 
     fs.rmSync(tmp, { recursive: true, force: true });
   });

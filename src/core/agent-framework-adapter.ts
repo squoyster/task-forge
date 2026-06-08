@@ -75,9 +75,9 @@ export class OpenCodeAgentFrameworkAdapter implements AgentFrameworkAdapter {
   fix(repoRoot: string): DoctorRepair[] {
     const repairs: DoctorRepair[] = [];
     const config = loadConfig(repoRoot);
-    const policy = config.agentFramework?.policy ?? "managed";
-    const audit = config.agentFramework?.audit ?? true;
-    const guard = config.agentFramework?.guard ?? true;
+    const policy = config.opencode?.policy ?? "managed";
+    const audit = config.opencode?.audit ?? true;
+    const guard = config.opencode?.guard ?? true;
 
     // Fix AGENTS.md
     const agentsMdPath = path.join(repoRoot, "AGENTS.md");
