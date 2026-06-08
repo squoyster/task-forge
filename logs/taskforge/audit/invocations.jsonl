@@ -1,9 +1,0 @@
-{"timestamp":"2026-06-08T17:16:19.108Z","command":"start","args":["TASK-270"],"flags":{},"exitCode":0,"sessionId":"a08bb87d9d","taskId":"TASK-270","duration":169,"error":null}
-{"timestamp":"2026-06-08T17:16:23.424Z","command":"checkpoint","args":["TASK-268"],"flags":{"message":"checkpoint before closing"},"exitCode":0,"sessionId":"a08bb87d9d","taskId":"TASK-268","duration":132,"error":null}
-{"timestamp":"2026-06-08T17:16:35.647Z","command":"done","args":["TASK-268"],"flags":{"cleanup":true},"exitCode":1,"sessionId":"a08bb87d9d","taskId":"TASK-268","duration":8579,"error":"Cannot transition from \"Implementation Complete\" to \"Done\". Allowed: Review, Verify"}
-{"timestamp":"2026-06-08T17:17:06.224Z","command":"done","args":["TASK-268"],"flags":{},"exitCode":1,"sessionId":"a08bb87d9d","taskId":"TASK-268","duration":8249,"error":"Cannot transition from \"Implementation Complete\" to \"Done\". Allowed: Review, Verify"}
-{"timestamp":"2026-06-08T17:20:01.841Z","command":"release","args":["TASK-268"],"flags":{},"exitCode":0,"sessionId":"a08bb87d9d","taskId":"TASK-268","duration":2309,"error":null}
-{"timestamp":"2026-06-08T17:20:04.565Z","command":"start","args":["TASK-270"],"flags":{},"exitCode":0,"sessionId":"a08bb87d9d","taskId":"TASK-270","duration":2364,"error":null}
-{"timestamp":"2026-06-08T17:20:18.779Z","command":"start","args":["TASK-270"],"flags":{"force":true},"exitCode":0,"sessionId":"a08bb87d9d","taskId":"TASK-270","duration":1625,"error":null}
-{"timestamp":"2026-06-08T17:24:02.576Z","command":"start","args":["TASK-270"],"flags":{},"exitCode":1,"sessionId":"a08bb87d9d","taskId":"TASK-270","duration":472,"error":"Cannot transition from \"Done\" to \"In Progress\". Allowed: Ready, In Progress"}
-{"timestamp":"2026-06-08T17:31:49.460Z","command":"checkpoint","args":["TASK-268"],"flags":{"message":"checkpoint dist files"},"exitCode":0,"sessionId":"a08bb87d9d","taskId":"TASK-268","duration":252,"error":null}
