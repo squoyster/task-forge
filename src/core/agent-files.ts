@@ -30,6 +30,27 @@ Before marking a task Done, all must pass:
 - Never work directly on main — use worktrees/branches
 - Never edit files under ../task-state/ directly — use TaskForge CLI
 - Never run git directly — use taskforge facade commands
+
+## Mutation Boundary
+
+This session is running in a managed agent context (\`TASK_FORGE_ACTIVE\` is set).
+The following restrictions are enforced:
+
+- **Denied**: \`git commit\`, \`git push\`, \`git merge\`, \`git rebase\`, \`git cherry-pick\`,
+  \`git reset\`, \`git branch -d/-D\`, \`git worktree add/remove\`, \`git update-ref\`,
+  and direct edits to \`task-state/\` files.
+- **Allowed**: \`git status\`, \`git diff\`, \`git log\`, \`git show\`, \`git branch\`,
+  \`git rev-parse\`, \`git fetch\`, \`git ls-remote\`, and other read-only commands.
+- **Override**: A Human or Doctor may authorise specific mutations via
+  \`taskforge doctor --override\` with a structured reason. Overrides are
+  audited and time-limited.
+
+If a command is blocked, use the suggested TaskForge replacement:
+- \`git commit\` → \`taskforge checkpoint TASK-ID --message "..."\`
+- \`git push\` → \`taskforge submit TASK-ID\`
+- \`git branch -d/-D\` → \`taskforge done TASK-ID --delete-branch\`
+- \`git worktree add\` → \`taskforge start TASK-ID\`
+- \`git worktree remove\` → \`taskforge done TASK-ID --cleanup\`
 `,
 
   "reviewer.md": `# Reviewer Agent
