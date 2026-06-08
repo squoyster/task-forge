@@ -2,8 +2,7 @@ import { loadTaskById, loadAllTasks } from "../core/task-store.js";
 import { createWorktree, checkUncommittedWorktrees } from "../core/git.js";
 import { withTaskStateTransaction } from "../core/task-state-transaction.js";
 import { makeBranchName } from "../util/paths.js";
-import { generateSessionId } from "../core/session.js";
-import { parseSessionIdFromBranch, checkOutstandingSessionTasks } from "../core/session.js";
+import { resolveSessionId, parseSessionIdFromBranch, checkOutstandingSessionTasks } from "../core/session.js";
 import { isDoctorLocked } from "../core/doctor-lock.js";
 import { hashControlFiles } from "../core/control-files.js";
 import { sweepStaleTasks } from "../core/sweeper.js";
@@ -34,9 +33,10 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
   // Reload task after sweeping (it may have been reset to Ready)
   const task = loadTaskById(taskId);
 
-  // Generate session ID early so pre-checks can distinguish same-session
+  // Resolve session ID early so pre-checks can distinguish same-session
   // re-entry from cross-session conflicts.
-  const sessionId = generateSessionId();
+  // Reuses the existing branch's session ID if already in a task worktree.
+  const sessionId = await resolveSessionId(repoRoot);
   // Doctor-lock check
   const lock = isDoctorLocked(repoRoot);
   if (lock.locked) {

@@ -29,6 +29,7 @@ vi.mock("../../src/core/task-store.js", () => ({
 let currentSessionId = "test-session-123";
 
 vi.mock("../../src/core/session.js", () => ({
+  resolveSessionId: vi.fn().mockResolvedValue("test-session-123"),
   generateSessionId: vi.fn().mockImplementation(() => currentSessionId),
   parseSessionIdFromBranch: vi.fn().mockImplementation((branch: string) => {
     const match = branch.match(/--([a-f0-9]{10})$/);
@@ -46,6 +47,7 @@ vi.mock("../../src/core/git.js", () => ({
   jitteredPush: vi.fn(),
   pullTaskState: vi.fn().mockResolvedValue(true),
   checkUncommittedWorktrees: vi.fn().mockResolvedValue([]),
+  getCurrentBranch: vi.fn().mockResolvedValue("agent/TASK-001-test--test-session-123"),
 }));
 
 vi.mock("../../src/core/status-transition.js", () => ({
@@ -74,7 +76,7 @@ vi.mock("../../src/core/authority.js", () => ({
 // Import mocked functions
 import { sweepStaleTasks } from "../../src/core/sweeper.js";
 import { loadTaskById } from "../../src/core/task-store.js";
-import { generateSessionId } from "../../src/core/session.js";
+import { resolveSessionId } from "../../src/core/session.js";
 import { createWorktree } from "../../src/core/git.js";
 
 let uniqueDir: string;
@@ -228,7 +230,7 @@ describe("cmdStart", () => {
     expect(createWorktree).toHaveBeenCalled();
   });
 
-  it("generates a new session ID each invocation", async () => {
+  it("reuses existing branch session ID when already in a task worktree", async () => {
     const mockTask = {
       id: "TASK-001",
       status: "Ready",
@@ -249,7 +251,7 @@ describe("cmdStart", () => {
 
     await cmdStart("TASK-001");
 
-    expect(generateSessionId).toHaveBeenCalled();
+    expect(resolveSessionId).toHaveBeenCalled();
   });
 
   it("already-assigned error does not recommend --force as valid action", async () => {
