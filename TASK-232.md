@@ -20,6 +20,10 @@ The `taskforge done` command must refuse to mark a task Done if the worktree has
 
 Multiple tasks (TASK-077, TASK-083, TASK-086, TASK-099, and dozens more) were marked Done despite having dirty worktrees with uncommitted files. The `cmdDone` function validates gates, status transition, ownership, control-file hash, and acceptance criteria — but never checks whether the worktree is clean or the branch is pushed.
 
+## Note
+
+This task is superseded by TASK-255 ("Enforce PR-Backed Terminal Task State") for code-bearing tasks. TASK-255 requires verified PR integration (merged PR, reachable SHA, checks passed) before marking a task Done, not merely a clean worktree and pushed branch. The worktree/branch checks implemented here remain as necessary preconditions but are no longer sufficient for code-bearing tasks. Non-code tasks may still rely solely on these preconditions per TASK-255's configurable completion policy.
+
 ## Acceptance Criteria
 
 - [x] `cmdDone` rejects with a clear error when the task's worktree has uncommitted/dirty files — `src/commands/done.ts` `cmdDone(~L165)`: calls `getWorktreeDirtyFiles()` and throws with WORKTREE_DIRTY error
