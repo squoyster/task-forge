@@ -1,7 +1,7 @@
 ---
 id: TASK-256
 type: Feature
-status: In Progress
+status: Implementation Complete
 priority: P0
 agentRole: Implementer
 riskLevel: Low
@@ -10,6 +10,8 @@ assignee: 30f7d54c39
 claimed_at: '2026-06-08 14:25:50'
 context_hash: b516925ba8cef30c
 branch: agent/TASK-256-make-submission-atomic-and-idempotent--30f7d54c39
+submitted_sha: b922ba3
+submitted_at: '2026-06-08T08:30:00Z'
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-256
 ---
 
@@ -129,3 +131,17 @@ Depends on TASK-255 (Enforce PR-Backed Terminal Task State).
 ---
 
 _Source: docs/taskforge-agentic-workflow-hardening-tasks.md_
+
+
+## Agent Notes
+
+### Implementation Summary
+
+Enhanced cmdSubmit to be the authoritative submission operation:
+- Auto-checkpoint uncommitted changes before push
+- Push the task branch
+- Create PR if absent, reconcile if existing (idempotent)
+- Record submitted_sha, PR metadata via withTaskStateTransaction
+- Transition task status to Submitted
+- JSON and human-readable output
+- Add findPullRequestByBranch to GitHub service
