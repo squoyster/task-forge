@@ -6,7 +6,7 @@ priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 8265fbd099
+assignee: 42a0aaaa59
 claimed_at: '2026-06-08 04:45:52'
 branch: agent/TASK-247-update-agentic-descriptions-and-docs--42a0aaaa59
 ---
