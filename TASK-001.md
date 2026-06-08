@@ -2,7 +2,7 @@
 id: TASK-001
 type: Task
 status: Done
-priority: P0
+priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
@@ -65,6 +65,10 @@ No
 Auto-continue unless a stopping condition occurs.
 
 ## Agent Notes
+
+### 2026-06-08T00:00:00Z System
+- Task updated via taskforge update:
+- priority: "P0" → "P1"
 
 ### 2026-06-08T00:00:00Z System
 - Task updated via taskforge update:
