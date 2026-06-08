@@ -42,11 +42,12 @@ describe("cmdGuardStatus warnings", () => {
     expect(logs.length).toBeGreaterThan(0);
     const output = JSON.parse(logs[0]);
     expect(output.ok).toBe(true);
-    expect(output.managed).toBe(false);
-    expect(output.warnings).toBeDefined();
-    expect(Array.isArray(output.warnings)).toBe(true);
-    expect(output.warnings.length).toBeGreaterThan(0);
-    expect(output.warnings[0]).toContain("TASK_FORGE_ACTIVE");
+    expect(output.guidance).toContain("inactive");
+    expect(output.diagnostics).toBeDefined();
+    expect(Array.isArray(output.diagnostics)).toBe(true);
+    const warnDiags = output.diagnostics.filter((d: { level: string; message: string }) => d.message.includes("⚠"));
+    expect(warnDiags.length).toBeGreaterThan(0);
+    expect(warnDiags[0].message).toContain("TASK_FORGE_ACTIVE");
   });
 
   it("shows no warning in JSON mode when managed session", async () => {
@@ -60,8 +61,9 @@ describe("cmdGuardStatus warnings", () => {
     expect(logs.length).toBeGreaterThan(0);
     const output = JSON.parse(logs[0]);
     expect(output.ok).toBe(true);
-    expect(output.managed).toBe(true);
-    expect(output.warnings).toBeUndefined();
+    expect(output.guidance).toContain("active");
+    const warnDiags = (output.diagnostics ?? []).filter((d: { message: string }) => d.message.includes("⚠"));
+    expect(warnDiags.length).toBe(0);
   });
 
   it("shows no warning box in text mode when managed session", async () => {
