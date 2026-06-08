@@ -1,15 +1,15 @@
 ---
 id: TASK-241
 type: Task
-status: Review
+status: In Progress
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 83283a1f28
-claimed_at: '2026-05-29 03:13:09'
-context_hash: 021bc40dc10bc3c5
-branch: agent/TASK-241-enforce-taskforgecommandresult-return-sc--94d1b8bb55
+assignee: a43ce02a40
+claimed_at: '2026-06-08 22:15:37'
+context_hash: c920478ff4788012
+branch: agent/TASK-241-enforce-taskforgecommandresult-return-sc--a43ce02a40
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-241
 ---
 
@@ -85,6 +85,11 @@ Commands currently return ad-hoc output. Agents infer workflow from unstructured
 - [x] Documentation of return contract in docs/architecture/ — `docs/architecture/command-return-contract.md`: Full documentation of schema, builders, renderers, invariants, and migration guide
 
 ## Agent Notes
+
+### 2026-06-08T00:00:00Z System
+- Task claimed via taskforge start TASK-241
+- Session: a43ce02a40
+- Branch: agent/TASK-241-enforce-taskforgecommandresult-return-sc--a43ce02a40
 
 ### 2026-05-29T00:00:00Z System
 - Report generated — task moved to Review
