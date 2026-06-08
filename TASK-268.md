@@ -47,6 +47,9 @@ Enhance `taskforge guard:status` to detect and warn when `TASK_FORGE_ACTIVE` is 
 ## Agent Notes
 
 ### 2026-06-08T00:00:00Z System
+- Cleanup: worktree and branch removed
+
+### 2026-06-08T00:00:00Z System
 - Task marked Done
 
 ### 2026-06-08T00:00:00Z System
