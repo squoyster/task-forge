@@ -12,10 +12,12 @@ import { STATUS } from "../util/status-constants.js";
 import { logInfo, logSuccess, logWarn, logError, logHeader, logSub, logDivider } from "../util/logging.js";
 import { TaskNotFoundError, InvalidStatusTransitionError, WorktreeError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
-import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
 import { resolveAuthority, assertCanForce, getForceRejectionNextActions, ForceRequiresHumanOrDoctorError } from "../core/authority.js";
 import { startStateMachine } from "../core/command-states.js";
 import { getDefaultGuidanceAdapter } from "../core/guidance-adapter.js";
+import { successResult, failedResult } from "../core/result-builder.js";
+import { getValidNextCommands } from "../core/next-command-maps.js";
+import { renderResultMarkdown, renderResultJson } from "../core/result-renderer.js";
 
 export interface StartOptions {
   force?: boolean;
@@ -38,7 +40,7 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
   // Doctor-lock check
   const lock = isDoctorLocked(repoRoot);
   if (lock.locked) {
-    const result = startStateMachine({
+    const smResult = startStateMachine({
       taskFound: !!task,
       taskStatus: task?.status,
       doctorLocked: true,
@@ -47,20 +49,27 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
       pushSucceeded: false,
       worktreeCreated: false,
     });
-    getDefaultGuidanceAdapter().pushGuidance(result);
+    getDefaultGuidanceAdapter().pushGuidance(smResult);
+    const errResult = failedResult({
+      command: "start",
+      taskId,
+      error: smResult.guidance,
+      code: smResult.errorCode ?? "DOCTOR_LOCKED",
+      nextCommands: smResult.nextAction
+        ? [{ command: smResult.nextAction, purpose: "Suggested next action", when: "On doctor lock", allowedFor: "all", priority: 1 }]
+        : getValidNextCommands("start", "failed"),
+    });
     if (options?.json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "DOCTOR_LOCKED", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance,
-      }));
+      process.stdout.write(renderResultJson(errResult) + "\n");
       return;
     }
-    logWarn(result.guidance);
+    logWarn(smResult.guidance);
+    process.stdout.write(renderResultMarkdown(errResult) + "\n");
     return;
   }
 
   if (!task) {
-    const result = startStateMachine({
+    const smResult = startStateMachine({
       taskFound: false,
       doctorLocked: false,
       hasOutstandingTask: false,
@@ -68,12 +77,18 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
       worktreeCreated: false,
       taskId,
     });
-    getDefaultGuidanceAdapter().pushGuidance(result);
+    getDefaultGuidanceAdapter().pushGuidance(smResult);
+    const errResult = failedResult({
+      command: "start",
+      taskId,
+      error: smResult.guidance,
+      code: "TASK_NOT_FOUND",
+      nextCommands: smResult.nextAction
+        ? [{ command: smResult.nextAction, purpose: "Suggested next action", when: "On task not found", allowedFor: "all", priority: 1 }]
+        : getValidNextCommands("start", "failed"),
+    });
     if (options?.json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "TASK_NOT_FOUND", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance,
-      }));
+      process.stdout.write(renderResultJson(errResult) + "\n");
       return;
     }
     throw new TaskNotFoundError(taskId);
@@ -81,7 +96,7 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
 
   // Validate status
   if (task.status !== STATUS.READY && task.status !== STATUS.IN_PROGRESS) {
-    const result = startStateMachine({
+    const smResult = startStateMachine({
       taskFound: true,
       taskStatus: task.status,
       doctorLocked: false,
@@ -90,12 +105,18 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
       worktreeCreated: false,
       taskId,
     });
-    getDefaultGuidanceAdapter().pushGuidance(result);
+    getDefaultGuidanceAdapter().pushGuidance(smResult);
+    const errResult = failedResult({
+      command: "start",
+      taskId,
+      error: smResult.guidance,
+      code: "INVALID_STATUS",
+      nextCommands: smResult.nextAction
+        ? [{ command: smResult.nextAction, purpose: "Use valid status to start", when: "On invalid status", allowedFor: "all", priority: 1 }]
+        : getValidNextCommands("start", "failed"),
+    });
     if (options?.json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "INVALID_STATUS", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance,
-      }));
+      process.stdout.write(renderResultJson(errResult) + "\n");
       return;
     }
     throw new InvalidStatusTransitionError(
@@ -108,7 +129,7 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
   // Hard guardrail: check outstanding session tasks (exclude current for resume)
   const outstanding = await checkOutstandingSessionTasks(loadAllTasks(repoRoot), repoRoot, taskId);
   if (outstanding) {
-    const result = startStateMachine({
+    const smResult = startStateMachine({
       taskFound: true,
       taskStatus: task.status,
       doctorLocked: false,
@@ -118,15 +139,22 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
       worktreeCreated: false,
       taskId,
     });
-    getDefaultGuidanceAdapter().pushGuidance(result);
+    getDefaultGuidanceAdapter().pushGuidance(smResult);
+    const errResult = failedResult({
+      command: "start",
+      taskId,
+      error: smResult.guidance,
+      code: "OUTSTANDING_TASK",
+      nextCommands: smResult.nextAction
+        ? [{ command: smResult.nextAction, purpose: "Complete outstanding task first", when: "On outstanding task", allowedFor: "all", priority: 1 }]
+        : getValidNextCommands("start", "failed"),
+    });
     if (options?.json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "OUTSTANDING_TASK", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance,
-      }));
+      process.stdout.write(renderResultJson(errResult) + "\n");
       return;
     }
-    logWarn(result.guidance);
+    logWarn(smResult.guidance);
+    process.stdout.write(renderResultMarkdown(errResult) + "\n");
     return;
   }
 
@@ -136,7 +164,7 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
   const uncommittedWorktrees = await checkUncommittedWorktrees(repoRoot, allTasks);
   if (uncommittedWorktrees.length > 0) {
     const dirty = uncommittedWorktrees[0];
-    const result = startStateMachine({
+    const smResult = startStateMachine({
       taskFound: true,
       taskStatus: task.status,
       doctorLocked: false,
@@ -150,22 +178,29 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
         dirtyFiles: dirty.dirtyFiles,
       }],
     });
-    getDefaultGuidanceAdapter().pushGuidance(result);
+    getDefaultGuidanceAdapter().pushGuidance(smResult);
+    const errResult = failedResult({
+      command: "start",
+      taskId,
+      error: smResult.guidance,
+      code: "UNCOMMITTED_CHANGES",
+      nextCommands: smResult.nextAction
+        ? [{ command: smResult.nextAction, purpose: "Commit or stash changes first", when: "On uncommitted changes", allowedFor: "all", priority: 1 }]
+        : getValidNextCommands("start", "failed"),
+    });
     if (options?.json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "UNCOMMITTED_CHANGES", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance,
-      }));
+      process.stdout.write(renderResultJson(errResult) + "\n");
       return;
     }
-    logWarn(result.guidance);
+    logWarn(smResult.guidance);
+    process.stdout.write(renderResultMarkdown(errResult) + "\n");
     return;
   }
 
   // Lock check: if task is locked by a DIFFERENT session, reject unless --force.
   // Same-session re-entry is allowed (e.g., agent restart after crash).
   if (task.assignee && task.assignee !== sessionId && !options?.force) {
-    const result = startStateMachine({
+    const smResult = startStateMachine({
       taskFound: true,
       taskStatus: task.status,
       taskAssignee: task.assignee,
@@ -176,16 +211,21 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
       worktreeCreated: false,
       taskId,
     });
-    getDefaultGuidanceAdapter().pushGuidance(result);
+    getDefaultGuidanceAdapter().pushGuidance(smResult);
+    const errResult = failedResult({
+      command: "start",
+      taskId,
+      error: smResult.guidance,
+      code: smResult.errorCode ?? "ALREADY_ASSIGNED",
+      nextCommands: smResult.nextAction
+        ? [{ command: smResult.nextAction, purpose: "Use force to override", when: "On already assigned", allowedFor: "all", priority: 1 }]
+        : getValidNextCommands("start", "failed"),
+    });
     if (options?.json) {
-      printJson(jsonError(
-        result.guidance,
-        result.errorCode ?? "ALREADY_ASSIGNED",
-        { nextActions: getForceRejectionNextActions(taskId) },
-      ));
+      process.stdout.write(renderResultJson(errResult) + "\n");
       return;
     }
-    logError(result.guidance);
+    logError(smResult.guidance);
     logDivider();
     logInfo("Valid next actions:");
     logSub("1. taskforge doctor --json");
@@ -194,6 +234,7 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
     logSub(`2. taskforge block ${taskId} "Force operation requires human or doctor-mode authorization" --category unsafe_operation --blocked-by human`);
     logSub("   Reason: Escalate unsafe operation without bypassing TaskForge.");
     logSub("   Safety: requires_human");
+    process.stdout.write(renderResultMarkdown(errResult) + "\n");
     return;
   }
 
@@ -204,25 +245,21 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
       assertCanForce(authority);
     } catch (err) {
       if (err instanceof ForceRequiresHumanOrDoctorError) {
-        const result = startStateMachine({
-          taskFound: true,
-          taskStatus: task.status,
-          taskAssignee: task.assignee,
-          taskClaimedAt: task.claimed_at ? String(task.claimed_at) : undefined,
-          force: true,
-          doctorLocked: false,
-          hasOutstandingTask: false,
-          pushSucceeded: false,
-          worktreeCreated: false,
+        const errResult = failedResult({
+          command: "start",
           taskId,
+          error: "Normal agents may not use --force.",
+          code: "FORCE_REQUIRES_HUMAN_OR_DOCTOR",
+          nextCommands: getForceRejectionNextActions(taskId).map((nc) => ({
+            command: nc.command,
+            purpose: nc.reason,
+            when: "When force operation is denied",
+            allowedFor: nc.safety === "requires_human" ? ("human" as const) : ("doctor" as const),
+            priority: 1,
+          })),
         });
-        getDefaultGuidanceAdapter().pushGuidance(result);
         if (options?.json) {
-          printJson(jsonError(
-            "Normal agents may not use --force.",
-            "FORCE_REQUIRES_HUMAN_OR_DOCTOR",
-            { nextActions: getForceRejectionNextActions(taskId) },
-          ));
+          process.stdout.write(renderResultJson(errResult) + "\n");
           return;
         }
         logError("Normal agents may not use --force.");
@@ -234,6 +271,7 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
         logSub(`2. taskforge block ${taskId} "Force operation requires human or doctor-mode authorization" --category unsafe_operation --blocked-by human`);
         logSub("   Reason: Escalate unsafe operation without bypassing TaskForge.");
         logSub("   Safety: requires_human");
+        process.stdout.write(renderResultMarkdown(errResult) + "\n");
         return;
       }
       throw err;
@@ -281,7 +319,7 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
   ).catch(() => false);
 
   if (!pushed) {
-    const result = startStateMachine({
+    const smResult = startStateMachine({
       taskFound: true,
       taskStatus: task.status,
       taskAssignee: task.assignee,
@@ -293,15 +331,22 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
       worktreeCreated: false,
       taskId,
     });
-    getDefaultGuidanceAdapter().pushGuidance(result);
+    getDefaultGuidanceAdapter().pushGuidance(smResult);
+    const errResult = failedResult({
+      command: "start",
+      taskId,
+      error: smResult.guidance,
+      code: smResult.errorCode ?? "PUSH_FAILED",
+      nextCommands: smResult.nextAction
+        ? [{ command: smResult.nextAction, purpose: "Retry claim", when: "On push failure", allowedFor: "all", priority: 1 }]
+        : getValidNextCommands("start", "failed"),
+    });
     if (options?.json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "PUSH_FAILED", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance,
-      }));
+      process.stdout.write(renderResultJson(errResult) + "\n");
       return;
     }
-    logError(result.guidance);
+    logError(smResult.guidance);
+    process.stdout.write(renderResultMarkdown(errResult) + "\n");
     return;
   }
 
@@ -329,7 +374,7 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
       }
     }
   } catch (err) {
-    const result = startStateMachine({
+    const smResult = startStateMachine({
       taskFound: true,
       taskStatus: task.status,
       doctorLocked: false,
@@ -338,13 +383,18 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
       worktreeCreated: false,
       taskId,
     });
-    getDefaultGuidanceAdapter().pushGuidance(result);
+    getDefaultGuidanceAdapter().pushGuidance(smResult);
+    const errResult = failedResult({
+      command: "start",
+      taskId,
+      error: smResult.guidance,
+      code: smResult.errorCode ?? "WORKTREE_FAILED",
+      nextCommands: smResult.nextAction
+        ? [{ command: smResult.nextAction, purpose: "Create worktree manually", when: "On worktree failure", allowedFor: "all", priority: 1 }]
+        : getValidNextCommands("start", "failed"),
+    });
     if (options?.json) {
-      printJson(jsonError(
-        result.guidance,
-        result.errorCode ?? "WORKTREE_FAILED",
-        { nextActions: [result.nextAction], guidance: result.guidance },
-      ));
+      process.stdout.write(renderResultJson(errResult) + "\n");
       return;
     }
     throw new WorktreeError(
@@ -367,7 +417,7 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
   );
 
   // Build success result through state machine
-  const successResult = startStateMachine({
+  const smSuccessResult = startStateMachine({
     taskFound: true,
     taskStatus: task.status,
     doctorLocked: false,
@@ -379,19 +429,21 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
     worktreePath: task.worktree,
     branch: task.branch,
   });
-  getDefaultGuidanceAdapter().pushGuidance(successResult);
+  getDefaultGuidanceAdapter().pushGuidance(smSuccessResult);
+
+  const okResult = successResult({
+    command: "start",
+    taskId,
+    sessionId,
+    worktree: task.worktree,
+    branch: task.branch,
+    guidance: smSuccessResult.guidance,
+    nextCommands: getValidNextCommands("start", "success"),
+  });
 
   // Success output
   if (options?.json) {
-    printJson(jsonOk({
-      task: buildJsonTask(task),
-      workspace: {
-        branch: task.branch,
-        worktree: task.worktree ?? undefined,
-      },
-      nextActions: [successResult.nextAction],
-      guidance: successResult.guidance,
-    }));
+    process.stdout.write(renderResultJson(okResult) + "\n");
     return;
   }
 
@@ -419,5 +471,6 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
   logSub(`cd ${task.worktree ?? repoRoot}`);
   logSub(`opencode`);
   logDivider();
-  logInfo(successResult.guidance);
+  logInfo(smSuccessResult.guidance);
+  process.stdout.write(renderResultMarkdown(okResult) + "\n");
 }

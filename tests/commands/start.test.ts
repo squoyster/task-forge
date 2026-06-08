@@ -186,14 +186,13 @@ describe("cmdStart", () => {
     (loadTaskById as unknown as ReturnType<typeof vi.fn>).mockReturnValue(mockTask);
 
     let capturedOutput = "";
-    const logSpy = vi.spyOn(console, "log").mockImplementation((...args: unknown[]) => {
-      capturedOutput = args.map(a => typeof a === "string" ? a : JSON.stringify(a)).join(" ");
-    });
+    const originalWrite = process.stdout.write.bind(process.stdout);
+    process.stdout.write = (chunk: string) => { capturedOutput += chunk; return true; };
 
     // Should reject — different session without --force
     await cmdStart("TASK-001", { json: true });
 
-    logSpy.mockRestore();
+    process.stdout.write = originalWrite;
     const output = JSON.parse(capturedOutput);
     expect(output.ok).toBe(false);
     expect(output.code).toBe("ALREADY_ASSIGNED");
@@ -268,13 +267,12 @@ describe("cmdStart", () => {
     (loadTaskById as unknown as ReturnType<typeof vi.fn>).mockReturnValue(mockTask);
 
     let capturedOutput = "";
-    const logSpy = vi.spyOn(console, "log").mockImplementation((...args: unknown[]) => {
-      capturedOutput = args.map(a => typeof a === "string" ? a : JSON.stringify(a)).join(" ");
-    });
+    const originalWrite = process.stdout.write.bind(process.stdout);
+    process.stdout.write = (chunk: string) => { capturedOutput += chunk; return true; };
 
     await cmdStart("TASK-001", { json: true });
 
-    logSpy.mockRestore();
+    process.stdout.write = originalWrite;
     const output = JSON.parse(capturedOutput);
     expect(output.ok).toBe(false);
     expect(output.code).toBe("ALREADY_ASSIGNED");
