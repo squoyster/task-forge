@@ -36,6 +36,7 @@ import { cmdDepsSummary } from "./commands/deps/summary.js";
 import { cmdAudit, cmdTranscript, cmdTimeline } from "./commands/audit.js";
 import { cmdAcCheck } from "./commands/ac-check.js";
 import { cmdDiff, cmdCheckpoint, cmdSubmit, cmdPr } from "./commands/git-facade.js";
+import { cmdGuardStatus, cmdGuardOverride } from "./commands/guard-cmd.js";
 import { TaskForgeError } from "./core/errors.js";
 import { logError } from "./util/logging.js";
 import { recordCliInvocation } from "./core/cli-audit.js";
@@ -496,6 +497,24 @@ program
   .description("Create a PR for the task")
   .action((taskId: string) =>
     wrapWithAudit("pr", [taskId], {}, async () => { await cmdPr(taskId); })(),
+  );
+
+const guard = program.command("guard").description("Manage the mutation boundary");
+
+guard
+  .command("status")
+  .description("Show mutation boundary enforcement status")
+  .option("--json", "Output in JSON format")
+  .action((opts: { json?: boolean }) =>
+    wrapWithAudit("guard:status", [], opts, () => cmdGuardStatus(opts))(),
+  );
+
+guard
+  .command("override <taskId> <command> <reason>")
+  .description("(doctor only) Issue a time-limited mutation override")
+  .option("--json", "Output in JSON format")
+  .action((taskId: string, command: string, reason: string, opts: { json?: boolean }) =>
+    wrapWithAudit("guard:override", [taskId], opts, () => cmdGuardOverride(taskId, command, reason, opts))(),
   );
 
 program.parse();

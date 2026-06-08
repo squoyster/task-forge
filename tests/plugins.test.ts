@@ -104,9 +104,11 @@ describe("guard plugin", () => {
   it("generates guard plugin with managed policy", () => {
     const content = generateGuardPlugin("managed");
     expect(content).toContain("taskforge-guard");
-    expect(content).toContain("force push is forbidden");
-    expect(content).toContain("task-state files must only be modified");
+    expect(content).toContain("const DENIED:");
     expect(content).toContain("Doctor lock");
+    expect(content).toContain("TASK_FORGE_ACTIVE");
+    expect(content).toContain("taskforge checkpoint");
+    expect(content).toContain("taskforge submit");
   });
 
   it("generates warn mode for permissive policy", () => {

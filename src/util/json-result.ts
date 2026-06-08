@@ -64,6 +64,14 @@ export interface JsonResult {
   thresholdMinutes?: number;
   preconditions?: Array<{ name: string; passed: boolean; message: string; code: string }>;
   suggestedStatus?: string;
+  deniedCommands?: string[];
+  readOnlyCommands?: string[];
+  message?: string;
+  override?: Record<string, unknown>;
+  managed?: boolean;
+  envVar?: string;
+  doctorOverrideAvailable?: boolean;
+  doctorOverrideExists?: boolean;
 }
 
 export interface GateResult {
