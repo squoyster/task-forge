@@ -35,6 +35,7 @@ import { cmdDepsPr } from "./commands/deps/pr.js";
 import { cmdDepsSummary } from "./commands/deps/summary.js";
 import { cmdAudit, cmdTranscript, cmdTimeline } from "./commands/audit.js";
 import { cmdAcCheck } from "./commands/ac-check.js";
+import { cmdPromote, type PromoteOptions } from "./commands/promote.js";
 import { cmdDiff, cmdCheckpoint, cmdSubmit, cmdPr } from "./commands/git-facade.js";
 import { cmdGuardStatus, cmdGuardOverride } from "./commands/guard-cmd.js";
 import { cmdMcp } from "./commands/mcp.js";
@@ -172,6 +173,16 @@ program
       json: opts.json ?? false,
     };
     return wrapWithAudit("list", [], opts, () => cmdList(listOpts))();
+  });
+
+program
+  .command("promote <taskId>")
+  .description("Advance a task through the status state machine")
+  .option("--to <status>", "Target status to promote to")
+  .option("--json", "Output in JSON format")
+  .action((taskId: string, opts: { to?: string; json?: boolean }) => {
+    const promoteOpts: PromoteOptions = { to: opts.to, json: opts.json ?? false };
+    return wrapWithAudit("promote", [taskId], opts, () => cmdPromote(taskId, promoteOpts))();
   });
 
 program
