@@ -7,9 +7,10 @@ import {
   TASKS_README_TEMPLATE,
 } from "../markdown/templates.js";
 import { ensureTaskStateBranch } from "../core/git.js";
-import { logSuccess, logInfo, logWarn } from "../util/logging.js";
+import { logSuccess, logInfo, logWarn, logError } from "../util/logging.js";
 import { writeResult } from "../util/write-command-result.js";
-import { successResult } from "../core/result-builder.js";
+import { successResult, failedResult } from "../core/result-builder.js";
+import { resolveAuthority, assertCanForce, getForceRejectionNextActions } from "../core/authority.js";
 import { getAdapter } from "../agent-frameworks/registry.js";
 import { loadConfig } from "../core/config.js";
 import { InitAuditLog } from "../core/init-audit.js";
@@ -33,15 +34,38 @@ export interface InitOptions {
 }
 
 export async function cmdInit(options: InitOptions = {}): Promise<void> {
+  const opts: InitOptions = typeof options === "boolean" ? { force: options } : options;
   const repoRoot = getRepoRoot();
   const auditLog = new InitAuditLog(repoRoot);
   const config = loadConfig(repoRoot);
-  const agentFramework = options.agentFramework ?? config.agentFramework.id ?? "auto";
-  const policy = options.policy ?? config.opencode.policy ?? "managed";
-  const installHooks = options.installHooks ?? config.agentFramework.installHooks ?? true;
-  const audit = options.audit ?? config.opencode.audit ?? true;
-  const guard = options.guard ?? config.opencode.guard ?? true;
-  const dryRun = options.dryRun ?? false;
+
+  // Authority check for --force
+  if (opts.force) {
+    const authority = resolveAuthority();
+    try {
+      assertCanForce(authority);
+    } catch {
+      const nextCommands = getForceRejectionNextActions().map((a) => ({
+        command: a.command,
+        purpose: a.reason,
+        priority: a.preferred ? 1 : 2,
+        when: "needs:human" as const,
+        allowedFor: (a.safety === "safe" ? "all" : "human") as "all" | "human",
+      }));
+      if (opts.json) {
+        writeResult(failedResult({ command: "init", error: "Normal agents may not use --force.", code: "FORCE_REQUIRES_HUMAN_OR_DOCTOR", nextCommands }), opts.json);
+        return;
+      }
+      logError("Normal agents may not use --force. Use 'taskforge doctor --json' or block for human authorization.");
+      return;
+    }
+  }
+  const agentFramework = opts.agentFramework ?? config.agentFramework.id ?? "auto";
+  const policy = opts.policy ?? config.opencode.policy ?? "managed";
+  const installHooks = opts.installHooks ?? config.agentFramework.installHooks ?? true;
+  const audit = opts.audit ?? config.opencode.audit ?? true;
+  const guard = opts.guard ?? config.opencode.guard ?? true;
+  const dryRun = opts.dryRun ?? false;
   const taskforgeDir = getTaskforgeDir(repoRoot);
 
   auditLog.record("init.start", "info", `framework=${agentFramework} policy=${policy} dryRun=${dryRun}`);
@@ -177,7 +201,7 @@ export async function cmdInit(options: InitOptions = {}): Promise<void> {
   writeResult(successResult({
     command: "init",
     guidance: "TaskForge initialized successfully. Run 'taskforge next' to find the next task to work on.",
-  }), options.json ?? false);
+  }), opts.json ?? false);
 }
 
 async function initAgentFramework(

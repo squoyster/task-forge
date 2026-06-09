@@ -1,9 +1,20 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { cmdInit } from "../src/commands/init.js";
 import { setRepoRoot } from "../src/util/paths.js";
+
+// Mock authority to allow --force in tests
+vi.mock("../src/core/authority.js", () => ({
+  resolveAuthority: vi.fn(() => "human"),
+  assertCanForce: vi.fn(),
+  getForceRejectionNextActions: vi.fn(() => []),
+  canForce: vi.fn(() => true),
+  ForceRequiresHumanOrDoctorError: class extends Error {
+    code = "FORCE_REQUIRES_HUMAN_OR_DOCTOR";
+  },
+}));
 
 let uniqueDir: string;
 let stateDir: string;
