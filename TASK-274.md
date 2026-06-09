@@ -1,7 +1,7 @@
 ---
 id: TASK-274
 type: Feature
-status: Ready
+status: In Progress
 priority: P1
 agentRole: Implementer
 riskLevel: Low
@@ -89,3 +89,9 @@ The first allowed forward transition (skipping Blocked, Deferred, and rollbacks)
 - [ ] Promoting to `Verify` allows `taskforge done` to succeed
 - [ ] Promoting to `Done` skips the intermediate checks (for merged PRs)
 - [ ] Tests cover default forward path, specific targets, invalid transitions, and edge cases
+
+
+### 2026-06-09T03:39:00Z System
+- Task claimed via manual setup
+- Session: manual
+- Branch: agent/TASK-274-implement-promote-command
