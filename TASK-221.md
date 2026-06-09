@@ -10,6 +10,7 @@ assignee: c6fcc30df3
 claimed_at: '2026-06-09 03:19:42'
 context_hash: c920478ff4788012
 branch: agent/TASK-221-implement-authority-model-and-restrict-f--c6fcc30df3
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-221
 ---
 
 # TASK-221: Implement authority model and restrict --force to human/doctor mode
@@ -89,6 +90,9 @@ Every command with `--force` must call `assertCanForce(authority)` before acting
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-09T00:00:00Z System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-221
 
 ### 2026-06-09T00:00:00Z System
 - Task claimed via taskforge start TASK-221
