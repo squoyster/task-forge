@@ -4,7 +4,8 @@ import { getNextId } from "../core/task-store.js";
 import { withTaskStateTransaction } from "../core/task-state-transaction.js";
 import { getRepoRoot, getTaskStateDir } from "../util/paths.js";
 import { logSuccess, logInfo, logDivider, logSub } from "../util/logging.js";
-import { printJson, jsonOk, jsonError } from "../util/json-result.js";
+import { writeResult } from "../util/write-command-result.js";
+import { successResult, failedResult } from "../core/result-builder.js";
 import { newStateMachine } from "../core/command-states.js";
 import { getDefaultGuidanceAdapter } from "../core/guidance-adapter.js";
 
@@ -73,10 +74,11 @@ export async function cmdNew(title: string, options?: NewOptions): Promise<void>
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "WRITE_FAILED", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance,
-      }));
+      writeResult(failedResult({
+        command: "new",
+        error: result.guidance,
+        code: result.errorCode ?? "WRITE_FAILED",
+      }), json);
       return;
     }
     throw new Error(result.guidance);
@@ -106,10 +108,11 @@ export async function cmdNew(title: string, options?: NewOptions): Promise<void>
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "PUSH_FAILED", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance,
-      }));
+      writeResult(failedResult({
+        command: "new",
+        error: result.guidance,
+        code: result.errorCode ?? "PUSH_FAILED",
+      }), json);
       return;
     }
     logInfo(result.guidance);
@@ -125,11 +128,11 @@ export async function cmdNew(title: string, options?: NewOptions): Promise<void>
   getDefaultGuidanceAdapter().pushGuidance(result);
 
   if (json) {
-    printJson(jsonOk({
-      task: { id: nextId, file: filePath, status },
-      nextActions: [result.nextAction],
+    writeResult(successResult({
+      command: "new",
+      taskId: nextId,
       guidance: result.guidance,
-    } as never));
+    }), json);
     return;
   }
 

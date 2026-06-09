@@ -120,11 +120,11 @@ export async function cmdGuardOverride(
   if (!task) throw new TaskNotFoundError(taskId);
 
   // Check that the caller is a doctor
-  const actor = process.env.TASKFORGE_ACTOR;
+  const actor = process.env.TASKFORCE_ACTOR;
   if (actor !== "doctor") {
-    const msg = "Only doctor agents may issue mutation overrides. Set TASKFORGE_ACTOR=doctor.";
+    const msg = "Only doctor agents may issue mutation overrides. Set TASKFORCE_ACTOR=doctor.";
     if (opts.json) {
-      writeResult(failedResult({ command: "guard:override", error: msg, code: "UNAUTHORIZED" }), opts.json);
+      writeResult(failedResult({ command: "guard:override", taskId, error: msg, code: "UNAUTHORIZED" }), opts.json);
       return;
     }
     throw new Error(msg);
@@ -135,7 +135,7 @@ export async function cmdGuardOverride(
   if (result.allowed) {
     const msg = `Command "${command}" is not denied — no override needed.`;
     if (opts.json) {
-      writeResult(successResult({ command: "guard:override", guidance: `Command "${command}" is not denied — no override needed.` }), opts.json);
+      writeResult(successResult({ command: "guard:override", taskId, guidance: `Command "${command}" is not denied — no override needed.` }), opts.json);
       return;
     }
     logInfo(msg);

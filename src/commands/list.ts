@@ -2,6 +2,8 @@ import { loadAllTasks } from "../core/task-store.js";
 import { normalizeStatus } from "../util/status-constants.js";
 import { logHeader, logSub, logDivider, logInfo } from "../util/logging.js";
 import type { ParsedTask } from "../core/task-store.js";
+import { successResult } from "../core/result-builder.js";
+import { writeResult } from "../util/write-command-result.js";
 
 export interface ListOptions {
   status?: string;
@@ -68,7 +70,10 @@ export async function cmdList(options: ListOptions = {}): Promise<void> {
       blocked_by: t.blocked_by,
       block_category: t.block_category,
     }));
-    console.log(JSON.stringify(entries, null, 2));
+    writeResult(successResult({
+      command: "list",
+      guidance: `Found ${entries.length} task(s) matching criteria.`,
+    }), options.json);
     return;
   }
 

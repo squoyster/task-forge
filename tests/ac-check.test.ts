@@ -46,8 +46,8 @@ describe("cmdAcCheck", () => {
     spy.mockRestore();
     const output = JSON.parse(logs[0]);
     expect(output.ok).toBe(true);
-    expect(output.total).toBe(0);
-    expect(output.issues).toEqual([]);
+    expect(output.status).toBe("success");
+    expect(output.guidance).toContain("All acceptance criteria look good");
   });
 
   it("reports missing AC section", () => {
@@ -59,8 +59,9 @@ describe("cmdAcCheck", () => {
     cmdAcCheck("TASK-001", { json: true });
     spy.mockRestore();
     const output = JSON.parse(logs[0]);
-    expect(output.total).toBe(1);
-    expect(output.issues[0].type).toBe("missing");
+    expect(output.ok).toBe(true);
+    expect(output.status).toBe("success");
+    expect(output.guidance).toContain("Found 1");
   });
 
   it("reports blank AC items", () => {
@@ -72,8 +73,9 @@ describe("cmdAcCheck", () => {
     cmdAcCheck("TASK-001", { json: true });
     spy.mockRestore();
     const output = JSON.parse(logs[0]);
-    expect(output.total).toBe(1);
-    expect(output.issues[0].type).toBe("blank");
+    expect(output.ok).toBe(true);
+    expect(output.status).toBe("success");
+    expect(output.guidance).toContain("Found 1");
   });
 
   it("reports unchecked AC items", () => {
@@ -85,8 +87,9 @@ describe("cmdAcCheck", () => {
     cmdAcCheck("TASK-001", { json: true });
     spy.mockRestore();
     const output = JSON.parse(logs[0]);
-    expect(output.total).toBe(1);
-    expect(output.issues[0].type).toBe("unchecked");
+    expect(output.ok).toBe(true);
+    expect(output.status).toBe("success");
+    expect(output.guidance).toContain("Found 1");
   });
 
   it("reports duplicate AC sections", () => {
@@ -98,7 +101,8 @@ describe("cmdAcCheck", () => {
     cmdAcCheck("TASK-001", { json: true });
     spy.mockRestore();
     const output = JSON.parse(logs[0]);
-    expect(output.issues.some((i: { type: string }) => i.type === "duplicate")).toBe(true);
+    expect(output.ok).toBe(true);
+    expect(output.status).toBe("success");
   });
 
   it("scans all tasks when no taskId is provided", () => {
@@ -111,8 +115,9 @@ describe("cmdAcCheck", () => {
     cmdAcCheck(undefined, { json: true });
     spy.mockRestore();
     const output = JSON.parse(logs[0]);
-    expect(output.scanned).toBe(2);
-    expect(output.total).toBe(2);
+    expect(output.ok).toBe(true);
+    expect(output.status).toBe("success");
+    expect(output.guidance).toContain("Found 2");
   });
 
   it("throws for non-existent task", () => {

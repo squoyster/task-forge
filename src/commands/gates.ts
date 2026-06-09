@@ -2,7 +2,8 @@ import { execa } from "execa";
 import { loadConfig } from "../core/config.js";
 import { logHeader, logDivider, logError, logSuccess, logInfo } from "../util/logging.js";
 import { getRepoRoot } from "../util/paths.js";
-import { printJson, jsonOk } from "../util/json-result.js";
+import { writeResult } from "../util/write-command-result.js";
+import { successResult } from "../core/result-builder.js";
 import { gatesStateMachine } from "../core/command-states.js";
 import { getDefaultGuidanceAdapter } from "../core/guidance-adapter.js";
 
@@ -92,17 +93,10 @@ export async function cmdGates(options?: GatesOptions): Promise<boolean> {
     logDivider();
     logInfo(result.guidance);
   } else {
-    printJson(jsonOk({
-      gates: results.map((r) => ({
-        name: r.name,
-        command: r.command,
-        passed: r.passed,
-        duration: r.duration,
-      })),
-      allPassed: passed,
-      nextActions: [result.nextAction],
+    writeResult(successResult({
+      command: "gates",
       guidance: result.guidance,
-    }));
+    }), options.json);
   }
 
   return passed;

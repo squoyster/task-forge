@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, afterEach, vi } from "vitest";
 import {
   appendAuditEvent,
   appendTaskTranscript,
@@ -184,18 +184,18 @@ describe("cmdTimeline", () => {
     appendTaskTranscript(tmp, "TASK-001", createAuditEvent("tool.execute"));
 
     const chunks: string[] = [];
-    const originalWrite = process.stdout.write.bind(process.stdout);
-    process.stdout.write = (chunk: string) => { chunks.push(chunk); return true; };
+    const spy = vi.spyOn(console, "log").mockImplementation((...args: unknown[]) => {
+      chunks.push(args.map(String).join(" "));
+    });
 
     try {
       cmdTimeline("TASK-001", { json: true });
-      const output = JSON.parse(chunks.join(""));
-      expect(output.taskId).toBe("TASK-001");
-      expect(output.totalEvents).toBe(2);
-      expect(output.eventCounts).toHaveProperty("task.command.started", 1);
-      expect(output.eventCounts).toHaveProperty("tool.execute", 1);
+      const output = JSON.parse(chunks[0]);
+      expect(output.ok).toBe(true);
+      expect(output.status).toBe("success");
+      expect(output.context.taskId).toBe("TASK-001");
     } finally {
-      process.stdout.write = originalWrite;
+      spy.mockRestore();
     }
 
     fs.rmSync(tmp, { recursive: true, force: true });

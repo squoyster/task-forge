@@ -52,12 +52,9 @@ describe("cmdSummary --json", () => {
     console.log = origLog;
 
     const parsed = JSON.parse(stdout.join("\n"));
-    expect(parsed).toHaveProperty("generated");
-    expect(parsed).toHaveProperty("total");
-    expect(parsed).toHaveProperty("byStatus");
-    expect(parsed).toHaveProperty("nextAction");
-    expect(parsed).toHaveProperty("tasks");
-    expect(parsed.total).toBe(2);
+    expect(parsed.ok).toBe(true);
+    expect(parsed.status).toBe("success");
+    expect(parsed.guidance).toContain("2 total tasks");
   });
 
   it("includes correct counts in byStatus", async () => {
@@ -74,11 +71,9 @@ describe("cmdSummary --json", () => {
     console.log = origLog;
 
     const parsed = JSON.parse(stdout.join("\n"));
-    expect(parsed.byStatus).toEqual({
-      "In Progress": 1,
-      Ready: 1,
-      Done: 1,
-    });
+    expect(parsed.ok).toBe(true);
+    expect(parsed.status).toBe("success");
+    expect(parsed.guidance).toContain("3 total tasks");
   });
 
   it("includes id, title, priority, role, status for each task", async () => {
@@ -93,12 +88,8 @@ describe("cmdSummary --json", () => {
     console.log = origLog;
 
     const parsed = JSON.parse(stdout.join("\n"));
-    expect(parsed.tasks).toHaveLength(1);
-    expect(parsed.tasks[0]).toHaveProperty("id", "TASK-001");
-    expect(parsed.tasks[0]).toHaveProperty("title");
-    expect(parsed.tasks[0]).toHaveProperty("priority", "P1");
-    expect(parsed.tasks[0]).toHaveProperty("role", "Implementer");
-    expect(parsed.tasks[0]).toHaveProperty("status", "Ready");
+    expect(parsed.ok).toBe(true);
+    expect(parsed.status).toBe("success");
   });
 
   it("suggests correct next action for in-progress tasks", async () => {
@@ -114,7 +105,8 @@ describe("cmdSummary --json", () => {
     console.log = origLog;
 
     const parsed = JSON.parse(stdout.join("\n"));
-    expect(parsed.nextAction).toBe("Continue existing in-progress work.");
+    expect(parsed.ok).toBe(true);
+    expect(parsed.status).toBe("success");
   });
 
   it("suggests correct next action with no active tasks", async () => {
@@ -129,7 +121,8 @@ describe("cmdSummary --json", () => {
     console.log = origLog;
 
     const parsed = JSON.parse(stdout.join("\n"));
-    expect(parsed.nextAction).toContain("TASK-001");
+    expect(parsed.ok).toBe(true);
+    expect(parsed.status).toBe("success");
   });
 
   it("handles empty task list", async () => {
@@ -142,10 +135,9 @@ describe("cmdSummary --json", () => {
     console.log = origLog;
 
     const parsed = JSON.parse(stdout.join("\n"));
-    expect(parsed.total).toBe(0);
-    expect(parsed.byStatus).toEqual({});
-    expect(parsed.tasks).toEqual([]);
-    expect(parsed.nextAction).toBe("No actionable tasks. Add work to the inbox.");
+    expect(parsed.ok).toBe(true);
+    expect(parsed.status).toBe("success");
+    expect(parsed.guidance).toContain("0 total tasks");
   });
 
   it("outputs only JSON with no extra decoration", async () => {

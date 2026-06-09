@@ -97,7 +97,7 @@ describe("cmdReport", () => {
 
     const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
     expect(output.ok).toBe(true);
-    expect(output.taskId).toBe("TASK-001");
+    expect(output.context.taskId).toBe("TASK-001");
 
     logSpy.mockRestore();
   });

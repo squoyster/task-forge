@@ -4,7 +4,8 @@ import { inspectTask } from "./inspect.js";
 import { getRepoRoot } from "../util/paths.js";
 import { logSuccess, logWarn, logInfo, logSub, logError, logDivider } from "../util/logging.js";
 import { TaskNotFoundError } from "../core/errors.js";
-import { printJson, jsonOk, jsonError } from "../util/json-result.js";
+import { writeResult } from "../util/write-command-result.js";
+import { successResult, failedResult } from "../core/result-builder.js";
 import { resolveAuthority, assertCanForce, getForceRejectionNextActions, ForceRequiresHumanOrDoctorError } from "../core/authority.js";
 
 export interface CleanupOptions {
@@ -25,7 +26,7 @@ export async function cmdCleanup(taskId: string, options?: CleanupOptions): Prom
   const task = loadTaskById(taskId);
 
   if (!task) {
-    if (options?.json) printJson(jsonError(`Task ${taskId} not found`, "TASK_NOT_FOUND"));
+    if (options?.json) writeResult(failedResult({ command: "cleanup", taskId, error: `Task ${taskId} not found`, code: "TASK_NOT_FOUND" }), options.json);
     else throw new TaskNotFoundError(taskId);
     return;
   }
@@ -43,11 +44,20 @@ export async function cmdCleanup(taskId: string, options?: CleanupOptions): Prom
     } catch (err) {
       if (err instanceof ForceRequiresHumanOrDoctorError) {
         if (json) {
-          printJson(jsonError(
-            "Normal agents may not use --force.",
-            "FORCE_REQUIRES_HUMAN_OR_DOCTOR",
-            { nextActions: getForceRejectionNextActions(taskId) },
-          ));
+          const nextCommands = getForceRejectionNextActions(taskId).map(a => ({
+            command: a.command,
+            purpose: a.reason,
+            when: a.reason,
+            allowedFor: (a.safety === "safe" ? "all" : a.safety === "requires_human" ? "human" : "doctor") as "all" | "human" | "doctor",
+            priority: a.preferred ? 1 : 2,
+          }));
+          writeResult(failedResult({
+            command: "cleanup",
+            taskId,
+            error: "Normal agents may not use --force.",
+            code: "FORCE_REQUIRES_HUMAN_OR_DOCTOR",
+            nextCommands,
+          }), json);
           return;
         }
         logError("Normal agents may not use --force.");
@@ -124,12 +134,14 @@ export async function cmdCleanup(taskId: string, options?: CleanupOptions): Prom
   }
 
   if (json) {
-    printJson(jsonOk({
-      cleanup: { items },
-      nextActions: [
-        { command: "taskforge next", reason: "Find the next available task after cleanup.", safety: "safe" as const, preferred: true },
+    writeResult(successResult({
+      command: "cleanup",
+      taskId,
+      guidance: `Cleanup ${taskId}: removed worktree/branch.`,
+      nextCommands: [
+        { command: "taskforge next", purpose: "Find the next available task after cleanup.", when: "Find the next available task after cleanup.", allowedFor: "all", priority: 1 },
       ],
-    } as never));
+    }), json);
     return;
   }
 

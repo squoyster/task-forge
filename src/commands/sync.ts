@@ -3,6 +3,8 @@ import { loadConfig } from "../core/config.js";
 import { getRepoRoot } from "../util/paths.js";
 import { commitAndPushTaskState } from "../core/git.js";
 import { logInfo, logSuccess, logError } from "../util/logging.js";
+import { writeResult } from "../util/write-command-result.js";
+import { successResult } from "../core/result-builder.js";
 import {
   createIssue,
   updateIssueLabels,
@@ -14,7 +16,7 @@ import {
 import { STATUS_LABELS } from "../integrations/github/types.js";
 import { syncTaskToProject } from "../integrations/github/projects.js";
 
-export async function cmdSync(): Promise<void> {
+export async function cmdSync(json = false): Promise<void> {
   const repoRoot = getRepoRoot();
   const config = loadConfig(repoRoot);
 
@@ -89,11 +91,13 @@ export async function cmdSync(): Promise<void> {
   logInfo("## Sync Status");
   logInfo("");
 
-  if (config.github.projectNumber) {
-    logSuccess(`All tasks synced to GitHub Issues and Project #${config.github.projectNumber}.`);
-  } else {
-    logSuccess("All tasks synced to GitHub Issues.");
-  }
+  const projectSuffix = config.github.projectNumber ? ` and Project #${config.github.projectNumber}` : "";
+  logSuccess(`All tasks synced to GitHub Issues${projectSuffix}.`);
+
+  writeResult(successResult({
+    command: "sync",
+    guidance: `All tasks synced to GitHub Issues${projectSuffix}.`,
+  }), json);
 }
 
 /**

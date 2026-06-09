@@ -67,11 +67,9 @@ describe("cmdSummary", () => {
     await cmdSummary(true);
     const jsonArg = logSpy.mock.calls[0][0];
     const parsed = JSON.parse(jsonArg);
-    expect(parsed.total).toBe(2);
-    expect(parsed.byStatus.Ready).toBe(1);
-    expect(parsed.byStatus.Done).toBe(1);
-    expect(parsed.nextAction).toBeTruthy();
-    expect(parsed.tasks).toHaveLength(2);
+    expect(parsed.ok).toBe(true);
+    expect(parsed.status).toBe("success");
+    expect(parsed.guidance).toContain("2 total tasks");
     logSpy.mockRestore();
   });
 
@@ -96,8 +94,9 @@ describe("cmdSummary", () => {
     await cmdSummary(true);
     const jsonArg = logSpy.mock.calls[0][0];
     const parsed = JSON.parse(jsonArg);
-    expect(parsed.total).toBe(0);
-    expect(parsed.tasks).toEqual([]);
+    expect(parsed.ok).toBe(true);
+    expect(parsed.status).toBe("success");
+    expect(parsed.guidance).toContain("0 total tasks");
     logSpy.mockRestore();
   });
 

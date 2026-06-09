@@ -9,6 +9,8 @@ import { validateTaskState } from "../core/state-validator.js";
 import { checkHooks } from "../core/hooks.js";
 import { validateJsonlFiles } from "../core/audit.js";
 import { getAgentFrameworkAdapter, type DoctorIssue, type DoctorRepair } from "../core/agent-framework-adapter.js";
+import { successResult, failedResult } from "../core/result-builder.js";
+import { writeResult } from "../util/write-command-result.js";
 import path from "node:path";
 import fs from "node:fs";
 
@@ -170,23 +172,18 @@ export async function cmdDoctor(options?: { json?: boolean; fix?: boolean }): Pr
 
   // Output
   if (options?.json) {
-    console.log(JSON.stringify({
-      ok: issues.filter((i) => i.severity === "error").length === 0,
-      issues: issues.map((i) => ({ severity: i.severity, code: i.code, taskId: i.taskId, message: i.message })),
-      repairs: repairs.map((r) => ({ code: r.code, message: r.message })),
-      checks: ok,
-      counts: {
-        total: tasks.length,
-        inProgress: inProgressTasks.length,
-        ready: tasks.filter((t) => t.status === STATUS.READY).length,
-        done: tasks.filter((t) => t.status === STATUS.DONE).length,
-        worktrees: worktrees.length,
-        sweepable,
-        errors: issues.filter((i) => i.severity === "error").length,
-        warnings: issues.filter((i) => i.severity === "warn").length,
-        repairs: repairs.length,
-      },
-    }, null, 2));
+    const errCount = issues.filter((i) => i.severity === "error").length;
+    const warnCount = issues.filter((i) => i.severity === "warn").length;
+    const hasErrors = errCount > 0;
+    writeResult(hasErrors ? failedResult({
+      command: "doctor",
+      error: `${errCount} error(s) and ${warnCount} warning(s) found.`,
+      code: "DOCTOR_ISSUES",
+      guidance: `TaskForge Doctor: ${tasks.length} tasks, ${errCount} errors, ${warnCount} warnings, ${sweepable} sweepable, ${repairs.length} repairs.`,
+    }) : successResult({
+      command: "doctor",
+      guidance: `TaskForge Doctor: ${tasks.length} tasks, ${ok.length} checks passed, ${repairs.length} repairs.`,
+    }), options.json);
     return;
   }
 

@@ -3,6 +3,8 @@ import { selectNextTask } from "../core/scheduler.js";
 import { STATUS } from "../util/status-constants.js";
 import { logHeader, logSub, logDivider, logInfo } from "../util/logging.js";
 import { formatTimestampJson, formatTimestampMarkdown } from "../util/timestamp.js";
+import { successResult } from "../core/result-builder.js";
+import { writeResult } from "../util/write-command-result.js";
 
 interface SummaryJsonTask {
   id: string;
@@ -90,7 +92,10 @@ export async function cmdSummary(json?: boolean): Promise<void> {
 
   if (json) {
     const output = buildJson(tasks);
-    console.log(JSON.stringify(output, null, 2));
+    writeResult(successResult({
+      command: "summary",
+      guidance: `TaskForge Summary: ${output.total} total tasks. Next: ${output.nextAction}`,
+    }), json);
     return;
   }
 

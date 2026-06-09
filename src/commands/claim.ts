@@ -7,11 +7,12 @@ import { STATUS } from "../util/status-constants.js";
 import { logInfo, logSuccess, logWarn, logError, logDivider, logSub } from "../util/logging.js";
 import { TaskNotFoundError } from "../core/errors.js";
 import { getRepoRoot, getWorktreePath, makeBranchName } from "../util/paths.js";
-import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
 import { eventLogEvent } from "../core/event-log.js";
 import { checkOutstandingSessionTasks } from "../core/session.js";
 import { isDoctorLocked } from "../core/doctor-lock.js";
-import { resolveAuthority, assertCanForce, getForceRejectionNextActions, ForceRequiresHumanOrDoctorError } from "../core/authority.js";
+import { resolveAuthority, assertCanForce, ForceRequiresHumanOrDoctorError } from "../core/authority.js";
+import { writeResult } from "../util/write-command-result.js";
+import { successResult, failedResult } from "../core/result-builder.js";
 import { claimStateMachine } from "../core/command-states.js";
 import { getDefaultGuidanceAdapter } from "../core/guidance-adapter.js";
 import { writeSessionState } from "../core/session-state.js";
@@ -47,10 +48,7 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "DOCTOR_LOCKED", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance,
-      }));
+      writeResult(failedResult({ command: "claim", error: result.guidance, code: result.errorCode ?? "DOCTOR_LOCKED" }), json);
       return;
     }
     logWarn(result.guidance);
@@ -70,10 +68,7 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "OUTSTANDING_TASK", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance,
-      }));
+      writeResult(failedResult({ command: "claim", error: result.guidance, code: result.errorCode ?? "OUTSTANDING_TASK" }), json);
       return;
     }
     logError(result.guidance);
@@ -100,10 +95,7 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "UNCOMMITTED_CHANGES", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance,
-      }));
+      writeResult(failedResult({ command: "claim", error: result.guidance, code: result.errorCode ?? "UNCOMMITTED_CHANGES" }), json);
       return;
     }
     logWarn(result.guidance);
@@ -120,10 +112,7 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "TASK_NOT_FOUND", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance,
-      }));
+      writeResult(failedResult({ command: "claim", error: result.guidance, code: result.errorCode ?? "TASK_NOT_FOUND" }), json);
       return;
     }
     throw new TaskNotFoundError(taskId);
@@ -140,10 +129,7 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "INVALID_STATUS", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance,
-      }));
+      writeResult(failedResult({ command: "claim", error: result.guidance, code: result.errorCode ?? "INVALID_STATUS" }), json);
       return;
     }
     throw new Error(result.guidance);
@@ -162,11 +148,7 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      printJson(jsonError(
-        result.guidance,
-        result.errorCode ?? "ALREADY_CLAIMED",
-        { nextActions: getForceRejectionNextActions(taskId) },
-      ));
+      writeResult(failedResult({ command: "claim", error: result.guidance, code: result.errorCode ?? "ALREADY_CLAIMED" }), json);
       return;
     }
     logError(result.guidance);
@@ -201,11 +183,7 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
         });
         getDefaultGuidanceAdapter().pushGuidance(result);
         if (json) {
-          printJson(jsonError(
-            "Normal agents may not use --force.",
-            "FORCE_REQUIRES_HUMAN_OR_DOCTOR",
-            { nextActions: getForceRejectionNextActions(taskId) },
-          ));
+          writeResult(failedResult({ command: "claim", error: "Normal agents may not use --force.", code: "FORCE_REQUIRES_HUMAN_OR_DOCTOR" }), json);
           return;
         }
         logError("Normal agents may not use --force.");
@@ -278,11 +256,7 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      printJson(jsonError(
-        result.guidance,
-        result.errorCode ?? "PUSH_FAILED",
-        { nextActions: [result.nextAction], guidance: result.guidance },
-      ));
+      writeResult(failedResult({ command: "claim", error: result.guidance, code: result.errorCode ?? "PUSH_FAILED" }), json);
       return;
     }
     logError(result.guidance);
@@ -322,7 +296,7 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
   registerAgent(sessionId, taskId, worktreePath ?? null, repoRoot);
 
   // Build success result through state machine
-  const successResult = claimStateMachine({
+  const claimResult = claimStateMachine({
     taskFound: true,
     taskStatus: task.status,
     doctorLocked: false,
@@ -333,21 +307,19 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
     taskId,
     sessionId,
   });
-  getDefaultGuidanceAdapter().pushGuidance(successResult);
+  getDefaultGuidanceAdapter().pushGuidance(claimResult);
 
   if (json) {
     // Reload after push to get the latest claimed state
-    const refreshedTask = loadTaskById(taskId);
     eventLogEvent(taskId, "claimed", { session: sessionId, forced: force });
-    printJson(jsonOk({
-      task: refreshedTask ? buildJsonTask(refreshedTask) : buildJsonTask(task),
-      workspace: {
-        branch: branchName,
-        worktree: worktreePath,
-      },
-      nextActions: [successResult.nextAction],
-      guidance: successResult.guidance,
-    }));
+    writeResult(successResult({
+      command: "claim",
+      taskId: task.id,
+      guidance: claimResult.guidance,
+      worktree: worktreePath,
+      branch: branchName,
+      sessionId,
+    }), json);
     return;
   }
 
@@ -356,7 +328,7 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
     logSuccess(`Status updated: ${STATUS.READY} → ${STATUS.IN_PROGRESS}`);
   }
 
-  logSuccess(successResult.guidance);
+  logSuccess(claimResult.guidance);
   if (worktreePath) {
     logSuccess(`Worktree: ${worktreePath}`);
     logSuccess(`Branch: ${branchName}`);

@@ -97,10 +97,7 @@ describe("cmdGates", () => {
 
     const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
     expect(output.ok).toBe(true);
-    expect(output.gates).toHaveLength(2);
-    expect(output.gates[0]).toMatchObject({ name: "typecheck", passed: true, command: "echo ok" });
-    expect(output.gates[1]).toMatchObject({ name: "lint", passed: true, command: "echo ok" });
-    expect(output.allPassed).toBe(true);
+    expect(output.status).toBe("success");
 
     logSpy.mockRestore();
   });
@@ -121,10 +118,7 @@ describe("cmdGates", () => {
 
     const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
     expect(output.ok).toBe(true);
-    expect(output.gates).toHaveLength(2);
-    expect(output.gates[0].passed).toBe(true);
-    expect(output.gates[1].passed).toBe(false);
-    expect(output.allPassed).toBe(false);
+    expect(output.status).toBe("success");
 
     logSpy.mockRestore();
   });

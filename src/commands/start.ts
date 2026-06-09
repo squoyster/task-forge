@@ -11,7 +11,8 @@ import { STATUS } from "../util/status-constants.js";
 import { logInfo, logSuccess, logWarn, logError, logHeader, logSub, logDivider } from "../util/logging.js";
 import { TaskNotFoundError, InvalidStatusTransitionError, WorktreeError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
-import { printJson, jsonOk, jsonError, buildJsonTask } from "../util/json-result.js";
+import { writeResult } from "../util/write-command-result.js";
+import { successResult, failedResult } from "../core/result-builder.js";
 import { resolveAuthority, assertCanForce, getForceRejectionNextActions, ForceRequiresHumanOrDoctorError } from "../core/authority.js";
 import { startStateMachine } from "../core/command-states.js";
 import { getDefaultGuidanceAdapter } from "../core/guidance-adapter.js";
@@ -51,10 +52,7 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (options?.json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "DOCTOR_LOCKED", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance,
-      }));
+      writeResult(failedResult({ command: "start", error: result.guidance, code: result.errorCode ?? "DOCTOR_LOCKED" }), options.json);
       return;
     }
     logWarn(result.guidance);
@@ -72,10 +70,7 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (options?.json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "TASK_NOT_FOUND", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance,
-      }));
+      writeResult(failedResult({ command: "start", taskId, error: result.guidance, code: result.errorCode ?? "TASK_NOT_FOUND" }), options.json);
       return;
     }
     throw new TaskNotFoundError(taskId);
@@ -94,10 +89,7 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (options?.json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "INVALID_STATUS", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance,
-      }));
+      writeResult(failedResult({ command: "start", taskId, error: result.guidance, code: result.errorCode ?? "INVALID_STATUS" }), options.json);
       return;
     }
     throw new InvalidStatusTransitionError(
@@ -122,10 +114,7 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (options?.json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "OUTSTANDING_TASK", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance,
-      }));
+      writeResult(failedResult({ command: "start", taskId, error: result.guidance, code: result.errorCode ?? "OUTSTANDING_TASK" }), options.json);
       return;
     }
     logWarn(result.guidance);
@@ -154,10 +143,7 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (options?.json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "UNCOMMITTED_CHANGES", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance,
-      }));
+      writeResult(failedResult({ command: "start", taskId, error: result.guidance, code: result.errorCode ?? "UNCOMMITTED_CHANGES" }), options.json);
       return;
     }
     logWarn(result.guidance);
@@ -180,11 +166,14 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (options?.json) {
-      printJson(jsonError(
-        result.guidance,
-        result.errorCode ?? "ALREADY_ASSIGNED",
-        { nextActions: getForceRejectionNextActions(taskId) },
-      ));
+      const nextCommands = getForceRejectionNextActions(taskId).map(a => ({
+        command: a.command,
+        purpose: a.reason,
+        when: a.reason,
+        allowedFor: (a.safety === "safe" ? "all" : a.safety === "requires_human" ? "human" : a.safety === "doctor_only" ? "doctor" : "all") as "all" | "human" | "doctor" | "agent",
+        priority: a.preferred ? 1 : 2,
+      }));
+      writeResult(failedResult({ command: "start", taskId, error: result.guidance, code: result.errorCode ?? "ALREADY_ASSIGNED", nextCommands }), options.json);
       return;
     }
     logError(result.guidance);
@@ -220,11 +209,14 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
         });
         getDefaultGuidanceAdapter().pushGuidance(result);
         if (options?.json) {
-          printJson(jsonError(
-            "Normal agents may not use --force.",
-            "FORCE_REQUIRES_HUMAN_OR_DOCTOR",
-            { nextActions: getForceRejectionNextActions(taskId) },
-          ));
+          const nextCommands = getForceRejectionNextActions(taskId).map(a => ({
+            command: a.command,
+            purpose: a.reason,
+            when: a.reason,
+            allowedFor: (a.safety === "safe" ? "all" : a.safety === "requires_human" ? "human" : a.safety === "doctor_only" ? "doctor" : "all") as "all" | "human" | "doctor" | "agent",
+            priority: a.preferred ? 1 : 2,
+          }));
+          writeResult(failedResult({ command: "start", taskId, error: "Normal agents may not use --force.", code: "FORCE_REQUIRES_HUMAN_OR_DOCTOR", nextCommands }), options.json);
           return;
         }
         logError("Normal agents may not use --force.");
@@ -305,10 +297,7 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (options?.json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "PUSH_FAILED", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance,
-      }));
+      writeResult(failedResult({ command: "start", taskId, error: result.guidance, code: result.errorCode ?? "PUSH_FAILED" }), options.json);
       return;
     }
     logError(result.guidance);
@@ -350,11 +339,7 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (options?.json) {
-      printJson(jsonError(
-        result.guidance,
-        result.errorCode ?? "WORKTREE_FAILED",
-        { nextActions: [result.nextAction], guidance: result.guidance },
-      ));
+      writeResult(failedResult({ command: "start", taskId, error: result.guidance, code: result.errorCode ?? "WORKTREE_FAILED" }), options.json);
       return;
     }
     throw new WorktreeError(
@@ -391,7 +376,7 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
   registerAgent(sessionId, taskId, task.worktree ?? null, repoRoot);
 
   // Build success result through state machine
-  const successResult = startStateMachine({
+  const startResult = startStateMachine({
     taskFound: true,
     taskStatus: task.status,
     doctorLocked: false,
@@ -403,19 +388,21 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
     worktreePath: task.worktree,
     branch: task.branch,
   });
-  getDefaultGuidanceAdapter().pushGuidance(successResult);
+  getDefaultGuidanceAdapter().pushGuidance(startResult);
 
   // Success output
   if (options?.json) {
-    printJson(jsonOk({
-      task: buildJsonTask(task),
-      workspace: {
-        branch: task.branch,
-        worktree: task.worktree ?? undefined,
-      },
-      nextActions: [successResult.nextAction],
-      guidance: successResult.guidance,
-    }));
+    writeResult(successResult({
+      command: "start",
+      taskId: task.id,
+      sessionId,
+      branch: task.branch,
+      worktree: task.worktree ?? undefined,
+      guidance: startResult.guidance,
+      nextCommands: [
+        { command: "opencode", purpose: "Begin working on the task", when: "Begin working on the task", allowedFor: "all", priority: 1 },
+      ],
+    }), options.json);
     return;
   }
 
@@ -443,5 +430,5 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
   logSub(`cd ${task.worktree ?? repoRoot}`);
   logSub(`opencode`);
   logDivider();
-  logInfo(successResult.guidance);
+  logInfo(startResult.guidance);
 }
