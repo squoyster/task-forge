@@ -626,13 +626,7 @@ function writeTaskFile(task, body) {
     override_timestamp: task.override_timestamp,
     override_failed_gates: task.override_failed_gates,
     issue: task.issue,
-    pr: task.pr,
-    submitted_sha: task.submitted_sha,
-    submitted_at: task.submitted_at,
-    pr_merged: task.pr_merged,
-    pr_head_sha: task.pr_head_sha,
-    pr_base_branch: task.pr_base_branch,
-    code_task: task.code_task
+    pr: task.pr
   };
   for (const key of Object.keys(frontmatter)) {
     if (frontmatter[key] === void 0) {
@@ -1142,4 +1136,4 @@ export {
   getValidNextCommands,
   validateTaskState
 };
-//# sourceMappingURL=chunk-IN4IDJ5J.js.map
+//# sourceMappingURL=chunk-GFCBVGVF.js.map

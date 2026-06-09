@@ -1,31 +1,38 @@
 #!/usr/bin/env node
 import {
   opencodeAdapter
-} from "./chunk-VQTULHRY.js";
+} from "./chunk-ACDCJVXE.js";
 import {
   ACTIVE_STATUSES,
-  STANDARD_PROHIBITED_ACTIONS,
+  ForceRequiresHumanOrDoctorError,
   STATUS,
   appendAgentNote,
-  buildJsonTask,
+  assertCanForce,
+  blockedResult,
   clearTaskLock,
+  doctorRequiredResult,
+  failedResult,
+  getForceRejectionNextActions,
   getNextId,
   getValidNextCommands,
   hasAcceptanceCriteriaSection,
   hasBlankAcceptanceCriteria,
   hasUncheckedAcceptanceCriteria,
-  jsonError,
-  jsonOk,
   loadAllTasks,
   loadTaskById,
+  noopResult,
   normalizeStatus,
   parseTaskFile,
-  printJson,
+  renderResultJson,
+  renderResultMarkdown,
+  resolveAuthority,
+  successResult,
   updateTaskIssue,
   updateTaskStatus,
   validateTaskState,
+  writeResult,
   writeTaskFile
-} from "./chunk-G7TYBCAP.js";
+} from "./chunk-GFCBVGVF.js";
 import {
   checkUncommittedWorktrees,
   commitAndPushTaskState,
@@ -42,10 +49,10 @@ import {
 import {
   installAgentsMd,
   loadConfig
-} from "./chunk-PKL2HZ5V.js";
+} from "./chunk-R243K2GI.js";
 import {
   installOpenCodeConfig
-} from "./chunk-MCST2LCE.js";
+} from "./chunk-F6MGWUO6.js";
 import {
   checkHooks,
   run
@@ -323,10 +330,10 @@ async function cmdInit(options = {}) {
   const auditLog = new InitAuditLog(repoRoot);
   const config = loadConfig(repoRoot);
   const agentFramework = options.agentFramework ?? config.agentFramework.id ?? "auto";
-  const policy = options.policy ?? config.agentFramework.policy ?? "managed";
+  const policy = options.policy ?? config.opencode.policy ?? "managed";
   const installHooks = options.installHooks ?? config.agentFramework.installHooks ?? true;
-  const audit = options.audit ?? config.agentFramework.audit ?? true;
-  const guard2 = options.guard ?? config.agentFramework.guard ?? true;
+  const audit = options.audit ?? config.opencode.audit ?? true;
+  const guard2 = options.guard ?? config.opencode.guard ?? true;
   const dryRun = options.dryRun ?? false;
   const taskforgeDir = getTaskforgeDir(repoRoot);
   auditLog.record("init.start", "info", `framework=${agentFramework} policy=${policy} dryRun=${dryRun}`);
@@ -439,11 +446,15 @@ Initializing agent framework: ${agentFramework} (policy: ${policy})`);
   logInfo(`Audit log: ${auditLog.getSummary()}`);
   logSuccess("\nTaskForge initialized successfully.");
   logInfo("Run 'taskforge next' to find the next task to work on.");
+  writeResult(successResult({
+    command: "init",
+    guidance: "TaskForge initialized successfully. Run 'taskforge next' to find the next task to work on."
+  }), options.json ?? false);
 }
 async function initAgentFramework(repoRoot, options) {
   let frameworkId = options.agentFramework;
   if (frameworkId === "auto") {
-    const { opencodeAdapter: opencodeAdapter2 } = await import("./opencode-MBLPLYET.js");
+    const { opencodeAdapter: opencodeAdapter2 } = await import("./opencode-NBJAFWWW.js");
     const detection = await opencodeAdapter2.detect(repoRoot);
     frameworkId = detection.detected ? "opencode" : "generic";
     logInfo(`Auto-detected framework: ${frameworkId}`);
@@ -1049,260 +1060,20 @@ function isDoctorLocked(repoRoot) {
   }
 }
 
-// src/core/authority.ts
-function resolveAuthority(env = process.env) {
-  const actor = env.TASKFORGE_ACTOR;
-  if (actor === "human") return "human";
-  if (actor === "doctor") return "doctor";
-  return "agent";
+// src/util/json-result.ts
+function statusToJson(status) {
+  return status.toLowerCase().replace(/ /g, "_");
 }
-function assertCanForce(authority) {
-  if (authority === "agent") {
-    throw new ForceRequiresHumanOrDoctorError();
-  }
-}
-function getForceRejectionNextActions(taskId) {
-  const actions = [
-    {
-      command: "taskforge doctor --json",
-      reason: "Diagnose whether a recovery path exists.",
-      safety: "safe",
-      preferred: true
-    }
-  ];
-  if (taskId) {
-    actions.push({
-      command: `taskforge block ${taskId} "Force operation requires human or doctor-mode authorization" --category unsafe_operation --blocked-by human`,
-      reason: "Escalate unsafe operation without bypassing TaskForge.",
-      safety: "requires_human",
-      preferred: false
-    });
-  }
-  return actions;
-}
-var ForceRequiresHumanOrDoctorError = class extends Error {
-  code = "FORCE_REQUIRES_HUMAN_OR_DOCTOR";
-  exitCode = 1;
-  constructor() {
-    super("Normal agents may not use --force. Use 'taskforge doctor --json' or block for human authorization.");
-  }
-};
-
-// src/core/result-builder.ts
-function baseResult(status, ok, opts) {
-  const authority = resolveAuthority();
-  const isNormalAgent = authority === "agent" || !authority;
+function buildJsonTask(task) {
+  const titleMatch = task.body.match(/^#\s+\S+:\s+(.+)$/m);
+  const title = titleMatch ? titleMatch[1].trim() : task.id;
   return {
-    ok,
-    status,
-    metadata: {
-      command: opts.command,
-      timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-      duration: opts.duration,
-      sessionId: opts.sessionId
-    },
-    context: {
-      taskId: opts.taskId,
-      worktree: opts.worktree,
-      branch: opts.branch
-    },
-    agentPrompt: {
-      role: "implementer"
-    },
-    validNextCommands: [],
-    todoMerge: { required: false, items: [] },
-    contextCleanup: { required: false, actions: [] },
-    prohibitedActions: isNormalAgent ? [...STANDARD_PROHIBITED_ACTIONS] : [],
-    recovery: { required: false, steps: [] },
-    diagnostics: [],
-    guidance: opts.guidance
+    id: task.id,
+    status: statusToJson(task.status),
+    statusLabel: task.status,
+    priority: task.priority,
+    title
   };
-}
-function withNextCommands(result, commands) {
-  result.validNextCommands = commands;
-  return result;
-}
-function withRecovery(result, required, steps = [], createTaskBody) {
-  result.recovery = { required, steps, createTaskBody };
-  return result;
-}
-function withDiagnostics(result, diagnostics) {
-  result.diagnostics = diagnostics;
-  return result;
-}
-function withError(result, error2, code) {
-  result.error = error2;
-  result.code = code;
-  return result;
-}
-function successResult(opts) {
-  const result = baseResult("success", true, opts);
-  if (opts.nextCommands) {
-    withNextCommands(result, opts.nextCommands);
-  }
-  return result;
-}
-function blockedResult(opts) {
-  const result = baseResult("blocked", false, opts);
-  withError(result, opts.reason, "BLOCKED");
-  if (opts.nextCommands) {
-    withNextCommands(result, opts.nextCommands);
-  }
-  return result;
-}
-function noopResult(opts) {
-  const result = baseResult("noop", true, opts);
-  if (opts.reason) {
-    withDiagnostics(result, [{ level: "info", message: opts.reason }]);
-  }
-  if (opts.nextCommands) {
-    withNextCommands(result, opts.nextCommands);
-  }
-  return result;
-}
-function doctorRequiredResult(opts) {
-  const result = baseResult("doctor_required", false, opts);
-  withError(result, opts.reason, "DOCTOR_REQUIRED");
-  withRecovery(result, true, [
-    "Run taskforge doctor to diagnose the issue",
-    'If doctor cannot resolve, block for human: taskforge block <TASK-ID> "reason" --blocked-by human'
-  ]);
-  if (opts.nextCommands) {
-    withNextCommands(result, opts.nextCommands);
-  }
-  return result;
-}
-
-// src/core/result-renderer.ts
-function renderResultMarkdown(result) {
-  const sections = [];
-  sections.push(renderStatusSection(result));
-  if (result.context.taskId || result.context.worktree || result.context.branch) {
-    sections.push(renderContextSection(result));
-  }
-  if (result.agentPrompt.instruction) {
-    sections.push(renderAgentPromptSection(result));
-  }
-  if (result.validNextCommands.length > 0) {
-    sections.push(renderNextCommandsSection(result));
-  }
-  if (result.todoMerge.required || result.todoMerge.items.length > 0) {
-    sections.push(renderTodoMergeSection(result));
-  }
-  if (result.contextCleanup.required) {
-    sections.push(renderContextCleanupSection(result));
-  }
-  if (result.prohibitedActions.length > 0) {
-    sections.push(renderProhibitedActionsSection(result));
-  }
-  if (result.recovery.required) {
-    sections.push(renderRecoverySection(result));
-  }
-  if (result.audit || result.diagnostics.length > 0) {
-    sections.push(renderAuditSection(result));
-  }
-  return sections.join("\n\n");
-}
-function renderStatusSection(result) {
-  const statusLabel = result.status.replace(/_/g, " ");
-  const icon = result.ok ? "\u2705" : "\u274C";
-  let content = `## ${icon} Command ${result.ok ? "Success" : "Status"}: ${statusLabel}`;
-  if (result.guidance) {
-    content += `
-
-${result.guidance}`;
-  }
-  if (result.error) {
-    content += `
-
-**Error:** ${result.error}`;
-    if (result.code) {
-      content += ` (\`${result.code}\`)`;
-    }
-  }
-  return content;
-}
-function renderContextSection(result) {
-  const lines = ["## Current Context"];
-  if (result.context.taskId) lines.push(`- **Task:** ${result.context.taskId}`);
-  if (result.context.worktree) lines.push(`- **Worktree:** ${result.context.worktree}`);
-  if (result.context.branch) lines.push(`- **Branch:** ${result.context.branch}`);
-  return lines.join("\n");
-}
-function renderAgentPromptSection(result) {
-  return `## Agentic Instruction
-
-**Role:** ${result.agentPrompt.role}
-
-${result.agentPrompt.instruction}`;
-}
-function renderNextCommandsSection(result) {
-  const lines = ["## Valid Next Commands"];
-  const sorted = [...result.validNextCommands].sort((a, b) => a.priority - b.priority);
-  for (const cmd of sorted) {
-    lines.push(`- \`${cmd.command}\` \u2014 ${cmd.purpose} (${cmd.when})`);
-  }
-  return lines.join("\n");
-}
-function renderTodoMergeSection(result) {
-  const lines = ["## Todo Merge Required"];
-  for (const item of result.todoMerge.items) {
-    const icon = item.action === "add" ? "+" : item.action === "remove" ? "-" : "~";
-    lines.push(`- ${icon} ${item.taskId}: ${item.content}`);
-  }
-  return lines.join("\n");
-}
-function renderContextCleanupSection(result) {
-  const lines = ["## Context Cleanup"];
-  if (result.contextCleanup.reason) {
-    lines.push(`**Reason:** ${result.contextCleanup.reason}`);
-  }
-  for (const action of result.contextCleanup.actions) {
-    lines.push(`- ${action}`);
-  }
-  return lines.join("\n");
-}
-function renderProhibitedActionsSection(result) {
-  const lines = ["## Prohibited Actions"];
-  for (const action of result.prohibitedActions) {
-    lines.push(`- \`${action.action}\` \u2014 ${action.reason}`);
-  }
-  return lines.join("\n");
-}
-function renderRecoverySection(result) {
-  const lines = ["## Recovery Guidance"];
-  lines.push("Follow these steps to recover:");
-  for (let i = 0; i < result.recovery.steps.length; i++) {
-    lines.push(`${i + 1}. ${result.recovery.steps[i]}`);
-  }
-  if (result.recovery.createTaskBody) {
-    lines.push(`
-**Task Body:**
-
-\`\`\`
-${result.recovery.createTaskBody}
-\`\`\``);
-  }
-  return lines.join("\n");
-}
-function renderAuditSection(result) {
-  const lines = ["## Audit and Trace"];
-  if (result.audit) {
-    if (result.audit.taskId) lines.push(`- **Task:** ${result.audit.taskId}`);
-    if (result.audit.transcriptPath) lines.push(`- **Transcript:** ${result.audit.transcriptPath}`);
-    if (result.audit.eventId) lines.push(`- **Event:** ${result.audit.eventId}`);
-  }
-  if (result.diagnostics.length > 0) {
-    lines.push("\n**Diagnostics:**");
-    for (const d of result.diagnostics) {
-      const icon = d.level === "error" ? "\u{1F534}" : d.level === "warn" ? "\u{1F7E1}" : "\u{1F535}";
-      lines.push(`${icon} ${d.message}`);
-    }
-  }
-  return lines.join("\n");
-}
-function renderResultJson(result) {
-  return JSON.stringify(result, null, 2);
 }
 
 // src/commands/next.ts
@@ -2143,10 +1914,7 @@ async function cmdStart(taskId, options) {
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (options?.json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "DOCTOR_LOCKED", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance
-      }));
+      writeResult(failedResult({ command: "start", error: result.guidance, code: result.errorCode ?? "DOCTOR_LOCKED" }), options.json);
       return;
     }
     logWarn(result.guidance);
@@ -2163,10 +1931,7 @@ async function cmdStart(taskId, options) {
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (options?.json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "TASK_NOT_FOUND", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance
-      }));
+      writeResult(failedResult({ command: "start", taskId, error: result.guidance, code: result.errorCode ?? "TASK_NOT_FOUND" }), options.json);
       return;
     }
     throw new TaskNotFoundError(taskId);
@@ -2183,10 +1948,7 @@ async function cmdStart(taskId, options) {
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (options?.json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "INVALID_STATUS", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance
-      }));
+      writeResult(failedResult({ command: "start", taskId, error: result.guidance, code: result.errorCode ?? "INVALID_STATUS" }), options.json);
       return;
     }
     throw new InvalidStatusTransitionError(
@@ -2209,10 +1971,7 @@ async function cmdStart(taskId, options) {
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (options?.json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "OUTSTANDING_TASK", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance
-      }));
+      writeResult(failedResult({ command: "start", taskId, error: result.guidance, code: result.errorCode ?? "OUTSTANDING_TASK" }), options.json);
       return;
     }
     logWarn(result.guidance);
@@ -2238,10 +1997,7 @@ async function cmdStart(taskId, options) {
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (options?.json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "UNCOMMITTED_CHANGES", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance
-      }));
+      writeResult(failedResult({ command: "start", taskId, error: result.guidance, code: result.errorCode ?? "UNCOMMITTED_CHANGES" }), options.json);
       return;
     }
     logWarn(result.guidance);
@@ -2261,11 +2017,14 @@ async function cmdStart(taskId, options) {
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (options?.json) {
-      printJson(jsonError(
-        result.guidance,
-        result.errorCode ?? "ALREADY_ASSIGNED",
-        { nextActions: getForceRejectionNextActions(taskId) }
-      ));
+      const nextCommands = getForceRejectionNextActions(taskId).map((a) => ({
+        command: a.command,
+        purpose: a.reason,
+        when: a.reason,
+        allowedFor: a.safety === "safe" ? "all" : a.safety === "requires_human" ? "human" : a.safety === "doctor_only" ? "doctor" : "all",
+        priority: a.preferred ? 1 : 2
+      }));
+      writeResult(failedResult({ command: "start", taskId, error: result.guidance, code: result.errorCode ?? "ALREADY_ASSIGNED", nextCommands }), options.json);
       return;
     }
     logError(result.guidance);
@@ -2299,11 +2058,14 @@ async function cmdStart(taskId, options) {
         });
         getDefaultGuidanceAdapter().pushGuidance(result);
         if (options?.json) {
-          printJson(jsonError(
-            "Normal agents may not use --force.",
-            "FORCE_REQUIRES_HUMAN_OR_DOCTOR",
-            { nextActions: getForceRejectionNextActions(taskId) }
-          ));
+          const nextCommands = getForceRejectionNextActions(taskId).map((a) => ({
+            command: a.command,
+            purpose: a.reason,
+            when: a.reason,
+            allowedFor: a.safety === "safe" ? "all" : a.safety === "requires_human" ? "human" : a.safety === "doctor_only" ? "doctor" : "all",
+            priority: a.preferred ? 1 : 2
+          }));
+          writeResult(failedResult({ command: "start", taskId, error: "Normal agents may not use --force.", code: "FORCE_REQUIRES_HUMAN_OR_DOCTOR", nextCommands }), options.json);
           return;
         }
         logError("Normal agents may not use --force.");
@@ -2371,10 +2133,7 @@ async function cmdStart(taskId, options) {
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (options?.json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "PUSH_FAILED", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance
-      }));
+      writeResult(failedResult({ command: "start", taskId, error: result.guidance, code: result.errorCode ?? "PUSH_FAILED" }), options.json);
       return;
     }
     logError(result.guidance);
@@ -2409,11 +2168,7 @@ async function cmdStart(taskId, options) {
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (options?.json) {
-      printJson(jsonError(
-        result.guidance,
-        result.errorCode ?? "WORKTREE_FAILED",
-        { nextActions: [result.nextAction], guidance: result.guidance }
-      ));
+      writeResult(failedResult({ command: "start", taskId, error: result.guidance, code: result.errorCode ?? "WORKTREE_FAILED" }), options.json);
       return;
     }
     throw new WorktreeError(
@@ -2441,7 +2196,7 @@ async function cmdStart(taskId, options) {
     });
   }
   registerAgent(sessionId, taskId, task.worktree ?? null, repoRoot);
-  const successResult2 = startStateMachine({
+  const startResult = startStateMachine({
     taskFound: true,
     taskStatus: task.status,
     doctorLocked: false,
@@ -2453,17 +2208,19 @@ async function cmdStart(taskId, options) {
     worktreePath: task.worktree,
     branch: task.branch
   });
-  getDefaultGuidanceAdapter().pushGuidance(successResult2);
+  getDefaultGuidanceAdapter().pushGuidance(startResult);
   if (options?.json) {
-    printJson(jsonOk({
-      task: buildJsonTask(task),
-      workspace: {
-        branch: task.branch,
-        worktree: task.worktree ?? void 0
-      },
-      nextActions: [successResult2.nextAction],
-      guidance: successResult2.guidance
-    }));
+    writeResult(successResult({
+      command: "start",
+      taskId: task.id,
+      sessionId,
+      branch: task.branch,
+      worktree: task.worktree ?? void 0,
+      guidance: startResult.guidance,
+      nextCommands: [
+        { command: "opencode", purpose: "Begin working on the task", when: "Begin working on the task", allowedFor: "all", priority: 1 }
+      ]
+    }), options.json);
     return;
   }
   logDivider();
@@ -2489,7 +2246,7 @@ async function cmdStart(taskId, options) {
   logSub(`cd ${task.worktree ?? repoRoot}`);
   logSub(`opencode`);
   logDivider();
-  logInfo(successResult2.guidance);
+  logInfo(startResult.guidance);
 }
 
 // src/commands/status.ts
@@ -2559,7 +2316,10 @@ async function cmdStatus(json) {
   const tasks = loadAllTasks();
   if (json) {
     const output = buildJson(tasks);
-    console.log(JSON.stringify(output, null, 2));
+    writeResult(successResult({
+      command: "status",
+      guidance: `TaskForge Status: ${output.total} total tasks, ${Object.entries(output.byStatus).map(([s, c]) => `${s}: ${c}`).join(", ")}.`
+    }), json);
     return;
   }
   if (tasks.length === 0) {
@@ -2708,7 +2468,10 @@ async function cmdSummary(json) {
   const tasks = loadAllTasks();
   if (json) {
     const output = buildJson2(tasks);
-    console.log(JSON.stringify(output, null, 2));
+    writeResult(successResult({
+      command: "summary",
+      guidance: `TaskForge Summary: ${output.total} total tasks. Next: ${output.nextAction}`
+    }), json);
     return;
   }
   if (tasks.length === 0) {
@@ -2867,17 +2630,10 @@ async function cmdGates(options) {
     logDivider();
     logInfo(result.guidance);
   } else {
-    printJson(jsonOk({
-      gates: results.map((r) => ({
-        name: r.name,
-        command: r.command,
-        passed: r.passed,
-        duration: r.duration
-      })),
-      allPassed: passed,
-      nextActions: [result.nextAction],
+    writeResult(successResult({
+      command: "gates",
       guidance: result.guidance
-    }));
+    }), options.json);
   }
   return passed;
 }
@@ -2888,7 +2644,7 @@ async function cmdBlock(taskId, reason, options = {}) {
   const task = loadTaskById(taskId);
   if (!task) {
     if (options.json) {
-      printJson(jsonError(`Task ${taskId} not found`, "TASK_NOT_FOUND"));
+      writeResult(failedResult({ command: "block", taskId, error: `Task ${taskId} not found`, code: "TASK_NOT_FOUND" }), options.json);
       return;
     }
     throw new TaskNotFoundError(taskId);
@@ -2897,11 +2653,20 @@ async function cmdBlock(taskId, reason, options = {}) {
   if (transitionError) {
     const allowed = getAllowedTransitions(task.status);
     if (options.json) {
-      printJson(jsonError(
-        `Cannot transition from "${task.status}" to "${STATUS.BLOCKED}". Allowed: ${allowed.join(", ")}`,
-        "INVALID_TRANSITION",
-        { nextActions: allowed.includes("Done") ? ["done"] : ["start"] }
-      ));
+      const nextCommands = (allowed.includes("Done") ? ["done"] : ["start"]).map((cmd) => ({
+        command: `taskforge ${cmd}${cmd === "done" ? ` ${taskId}` : ""}`,
+        purpose: cmd === "done" ? "Mark the task as Done" : "Start the task",
+        when: "after invalid transition attempt",
+        allowedFor: "all",
+        priority: 1
+      }));
+      writeResult(failedResult({
+        command: "block",
+        taskId,
+        error: `Cannot transition from "${task.status}" to "${STATUS.BLOCKED}". Allowed: ${allowed.join(", ")}`,
+        code: "INVALID_TRANSITION",
+        nextCommands
+      }), options.json);
       return;
     }
     throw new InvalidStatusTransitionError(task.status, STATUS.BLOCKED, allowed);
@@ -2928,12 +2693,15 @@ async function cmdBlock(taskId, reason, options = {}) {
   ].filter(Boolean));
   await commitAndPushTaskState(repoRoot, `chore: block ${taskId} \u2014 ${reason}`);
   if (options.json) {
-    const final = loadTaskById(taskId);
-    printJson(jsonOk({
-      task: final ? buildJsonTask(final) : buildJsonTask(current),
-      nextActions: ["next", "resume"],
-      guidance: `Task ${taskId} is now blocked. Run 'taskforge next' to find the next available task, or 'taskforge resume <taskId>' to continue working on another in-progress task.`
-    }));
+    writeResult(successResult({
+      command: "block",
+      taskId,
+      guidance: `Task ${taskId} is now blocked. Run 'taskforge next' to find the next available task, or 'taskforge resume <taskId>' to continue working on another in-progress task.`,
+      nextCommands: [
+        { command: "taskforge next", purpose: "Find the next available task", when: "after blocking task", allowedFor: "all", priority: 1 },
+        { command: `taskforge resume ${taskId}`, purpose: "Continue working on another in-progress task", when: "after blocking task", allowedFor: "all", priority: 2 }
+      ]
+    }), options.json);
     return;
   }
   logSuccess(`Task ${taskId} blocked: ${reason}`);
@@ -3493,6 +3261,17 @@ var GitHubPullRequestVerifier = class {
 };
 
 // src/commands/done.ts
+function mapNextAction(action) {
+  switch (action) {
+    case "request_human_input":
+      return { command: "block", purpose: "Request human input to resolve", when: "needs:human", allowedFor: "human", priority: 3 };
+    case "work_on_task":
+      return { command: "checkpoint", purpose: "Commit changes and retry", when: "worktree:modified", allowedFor: "agent", priority: 2 };
+    case "none":
+    default:
+      return { command: "next", purpose: "Find the next available task", when: "task:done", allowedFor: "all", priority: 1 };
+  }
+}
 async function cmdDone(taskId, options = {}) {
   const { cleanup = false, deleteBranch = false, json = false } = options;
   const repoRoot = getRepoRoot();
@@ -3512,10 +3291,7 @@ async function cmdDone(taskId, options = {}) {
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "TASK_NOT_FOUND", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance
-      }));
+      writeResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "TASK_NOT_FOUND", nextCommands: [mapNextAction(result.nextAction)] }), json);
       return;
     }
     throw new TaskNotFoundError(taskId);
@@ -3555,11 +3331,7 @@ async function cmdDone(taskId, options = {}) {
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      printJson(jsonError(
-        result.guidance,
-        result.errorCode ?? "GATES_FAILED",
-        { nextActions: ["fix", "request_human_input"], guidance: result.guidance }
-      ));
+      writeResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "GATES_FAILED" }), json);
       return;
     }
     throw new Error(result.guidance);
@@ -3581,11 +3353,7 @@ async function cmdDone(taskId, options = {}) {
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      printJson(jsonError(
-        result.guidance,
-        result.errorCode ?? "INVALID_TRANSITION",
-        { nextActions: [result.nextAction], guidance: result.guidance }
-      ));
+      writeResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "INVALID_TRANSITION", nextCommands: [mapNextAction(result.nextAction)] }), json);
       return;
     }
     throw new InvalidStatusTransitionError(
@@ -3613,10 +3381,7 @@ async function cmdDone(taskId, options = {}) {
       });
       getDefaultGuidanceAdapter().pushGuidance(result);
       if (json) {
-        printJson(jsonError(result.guidance, result.errorCode ?? "OWNERSHIP_MISMATCH", {
-          nextActions: [result.nextAction],
-          guidance: result.guidance
-        }));
+        writeResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "OWNERSHIP_MISMATCH", nextCommands: [mapNextAction(result.nextAction)] }), json);
         return;
       }
       throw new Error(result.guidance);
@@ -3641,10 +3406,7 @@ async function cmdDone(taskId, options = {}) {
       });
       getDefaultGuidanceAdapter().pushGuidance(result);
       if (json) {
-        printJson(jsonError(result.guidance, result.errorCode ?? "WORKTREE_DIRTY", {
-          nextActions: [result.nextAction],
-          guidance: result.guidance
-        }));
+        writeResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "WORKTREE_DIRTY", nextCommands: [mapNextAction(result.nextAction)] }), json);
         return;
       }
       throw new Error(result.guidance);
@@ -3669,10 +3431,7 @@ async function cmdDone(taskId, options = {}) {
       });
       getDefaultGuidanceAdapter().pushGuidance(result);
       if (json) {
-        printJson(jsonError(result.guidance, result.errorCode ?? "BRANCH_UNPUSHED", {
-          nextActions: [result.nextAction],
-          guidance: result.guidance
-        }));
+        writeResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "BRANCH_UNPUSHED", nextCommands: [mapNextAction(result.nextAction)] }), json);
         return;
       }
       throw new Error(result.guidance);
@@ -3696,10 +3455,7 @@ async function cmdDone(taskId, options = {}) {
       });
       getDefaultGuidanceAdapter().pushGuidance(result);
       if (json) {
-        printJson(jsonError(result.guidance, result.errorCode ?? "CONTEXT_CHANGED", {
-          nextActions: [result.nextAction],
-          guidance: result.guidance
-        }));
+        writeResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "CONTEXT_CHANGED", nextCommands: [mapNextAction(result.nextAction)] }), json);
         return;
       }
       throw new Error(result.guidance);
@@ -3721,10 +3477,7 @@ async function cmdDone(taskId, options = {}) {
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "MISSING_ACCEPTANCE_CRITERIA", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance
-      }));
+      writeResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "MISSING_ACCEPTANCE_CRITERIA", nextCommands: [mapNextAction(result.nextAction)] }), json);
       return;
     }
     throw new MissingAcceptanceCriteriaError(taskId);
@@ -3745,10 +3498,7 @@ async function cmdDone(taskId, options = {}) {
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "BLANK_ACCEPTANCE_CRITERIA", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance
-      }));
+      writeResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "BLANK_ACCEPTANCE_CRITERIA", nextCommands: [mapNextAction(result.nextAction)] }), json);
       return;
     }
     throw new BlankAcceptanceCriteriaError(taskId);
@@ -3769,10 +3519,7 @@ async function cmdDone(taskId, options = {}) {
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "UNCHECKED_ACCEPTANCE_CRITERIA", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance
-      }));
+      writeResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "UNCHECKED_ACCEPTANCE_CRITERIA", nextCommands: [mapNextAction(result.nextAction)] }), json);
       return;
     }
     throw new UncheckedAcceptanceCriteriaError(taskId);
@@ -3817,15 +3564,7 @@ Suggested next status: ${eligibility.suggestedStatus}` : ""
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      printJson(jsonError(
-        message,
-        "COMPLETION_POLICY_BLOCKED",
-        {
-          preconditions: eligibility.preconditions,
-          suggestedStatus: eligibility.suggestedStatus,
-          nextActions: [result.nextAction]
-        }
-      ));
+      writeResult(failedResult({ command: "done", error: message, code: "COMPLETION_POLICY_BLOCKED", nextCommands: [mapNextAction(result.nextAction)] }), json);
       return;
     }
     throw new Error(message);
@@ -3858,15 +3597,11 @@ Suggested next status: ${eligibility.suggestedStatus}` : ""
   });
   getDefaultGuidanceAdapter().pushGuidance(successResult2);
   if (json) {
-    const final = loadTaskById(taskId);
-    printJson(jsonOk({
-      task: final ? buildJsonTask(final) : buildJsonTask(task),
-      nextActions: [successResult2.nextAction],
-      guidance: successResult2.guidance
-    }));
+    writeResult(successResult({ command: "done", taskId: task.id, guidance: successResult2.guidance, nextCommands: [mapNextAction(successResult2.nextAction)] }), json);
     return;
   }
   logSuccess(successResult2.guidance);
+  writeResult(successResult({ command: "done", taskId: task.id, guidance: successResult2.guidance, nextCommands: [mapNextAction(successResult2.nextAction)] }), json);
   logDivider();
   logInfo("Next actions:");
   logSub("  taskforge next              \u2014 Find the next available task");
@@ -3949,16 +3684,14 @@ async function cmdUnlock(taskId, options = {}) {
   const task = loadTaskById(taskId);
   if (!task) {
     if (options.json) {
-      printJson(jsonError(`Task ${taskId} not found`, "TASK_NOT_FOUND"));
+      writeResult(failedResult({ command: "unlock", taskId, error: `Task ${taskId} not found`, code: "TASK_NOT_FOUND" }), options.json);
       return;
     }
     throw new TaskNotFoundError(taskId);
   }
   if (!task.assignee) {
     if (options.json) {
-      printJson(jsonOk({
-        task: buildJsonTask(task)
-      }));
+      writeResult(successResult({ command: "unlock", taskId, guidance: `Task ${taskId} is not claimed.` }), options.json);
       return;
     }
     logWarn(`Task ${taskId} is not claimed.`);
@@ -3966,11 +3699,14 @@ async function cmdUnlock(taskId, options = {}) {
   }
   if (!options.force) {
     if (options.json) {
-      printJson(jsonError(
-        `Task ${taskId} is assigned to session "${task.assignee}" since ${task.claimed_at ?? "unknown"}.`,
-        "NEEDS_FORCE",
-        { nextActions: getForceRejectionNextActions(taskId) }
-      ));
+      const nextCommands = getForceRejectionNextActions(taskId).map((a) => ({
+        command: a.command,
+        purpose: a.reason,
+        when: a.reason,
+        allowedFor: a.safety === "safe" ? "all" : a.safety === "requires_human" ? "human" : "doctor",
+        priority: a.preferred ? 1 : 2
+      }));
+      writeResult(failedResult({ command: "unlock", taskId, error: `Task ${taskId} is assigned to session "${task.assignee}" since ${task.claimed_at ?? "unknown"}.`, code: "NEEDS_FORCE", nextCommands }), options.json);
       return;
     }
     logError(
@@ -3992,11 +3728,14 @@ async function cmdUnlock(taskId, options = {}) {
   } catch (err) {
     if (err instanceof ForceRequiresHumanOrDoctorError) {
       if (options.json) {
-        printJson(jsonError(
-          "Normal agents may not use --force.",
-          "FORCE_REQUIRES_HUMAN_OR_DOCTOR",
-          { nextActions: getForceRejectionNextActions(taskId) }
-        ));
+        const nextCommands = getForceRejectionNextActions(taskId).map((a) => ({
+          command: a.command,
+          purpose: a.reason,
+          when: a.reason,
+          allowedFor: a.safety === "safe" ? "all" : a.safety === "requires_human" ? "human" : "doctor",
+          priority: a.preferred ? 1 : 2
+        }));
+        writeResult(failedResult({ command: "unlock", taskId, error: "Normal agents may not use --force.", code: "FORCE_REQUIRES_HUMAN_OR_DOCTOR", nextCommands }), options.json);
         return;
       }
       logError("Normal agents may not use --force.");
@@ -4020,9 +3759,7 @@ async function cmdUnlock(taskId, options = {}) {
   ]);
   await commitAndPushTaskState(repoRoot, `chore: unlock ${taskId}`);
   if (options.json) {
-    printJson(jsonOk({
-      task: buildJsonTask(task)
-    }));
+    writeResult(successResult({ command: "unlock", taskId, guidance: `Task ${taskId} unlocked.` }), options.json);
     return;
   }
   logSuccess(`Task ${taskId} unlocked. Claim from session "${previousAssignee}" has been cleared.`);
@@ -4038,7 +3775,10 @@ async function cmdInspect(taskId, options = {}) {
     const tasks = loadAllTasks(repoRoot).filter((t) => t.status === STATUS.IN_PROGRESS);
     if (tasks.length === 0) {
       if (json) {
-        console.log(JSON.stringify({ ok: true, tasks: [] }, null, 2));
+        writeResult(successResult({
+          command: "inspect",
+          guidance: "No In Progress tasks to inspect."
+        }), json);
         return null;
       }
       logInfo("No In Progress tasks to inspect.");
@@ -4049,7 +3789,10 @@ async function cmdInspect(taskId, options = {}) {
       results.push(await inspectTask(task2, repoRoot));
     }
     if (json) {
-      console.log(JSON.stringify({ ok: true, tasks: results }, null, 2));
+      writeResult(successResult({
+        command: "inspect",
+        guidance: `Inspected ${results.length} In Progress task(s).`
+      }), json);
       return null;
     }
     logHeader("# Worktree Inspection");
@@ -4065,7 +3808,11 @@ async function cmdInspect(taskId, options = {}) {
   }
   const result = await inspectTask(task, repoRoot);
   if (json) {
-    console.log(JSON.stringify({ ok: true, ...result }, null, 2));
+    writeResult(successResult({
+      command: "inspect",
+      taskId,
+      guidance: `Inspected task ${taskId}: worktree ${result.worktreeExists ? "exists" : "missing"}, ${result.dirty ? "dirty" : "clean"}, ${result.aheadOfMain} ahead, ${result.behindMain} behind.`
+    }), json);
     return result;
   }
   logHeader("# Worktree Inspection");
@@ -4169,11 +3916,19 @@ async function cmdSweep(options) {
     } catch (err) {
       if (err instanceof ForceRequiresHumanOrDoctorError) {
         if (options?.json) {
-          printJson(jsonError(
-            "Normal agents may not use --force.",
-            "FORCE_REQUIRES_HUMAN_OR_DOCTOR",
-            { nextActions: getForceRejectionNextActions() }
-          ));
+          const nextCommands = getForceRejectionNextActions().map((a) => ({
+            command: a.command,
+            purpose: a.reason,
+            when: a.reason,
+            allowedFor: a.safety === "safe" ? "all" : a.safety === "requires_human" ? "human" : "doctor",
+            priority: a.preferred ? 1 : 2
+          }));
+          writeResult(failedResult({
+            command: "sweep",
+            error: "Normal agents may not use --force.",
+            code: "FORCE_REQUIRES_HUMAN_OR_DOCTOR",
+            nextCommands
+          }), options.json);
           return;
         }
         logError("Normal agents may not use --force.");
@@ -4198,25 +3953,13 @@ async function cmdSweep(options) {
     inspectTask: options?.force ? void 0 : inspectTask
   });
   if (options?.json) {
-    const actions = result.stale.map((s) => ({
-      taskId: s.id,
-      previousAssignee: s.previousAssignee,
-      ageHours: (s.ageMs / (60 * 60 * 1e3)).toFixed(1),
-      action: s.action,
-      reason: s.reason
-    }));
-    printJson(jsonOk({
-      sweep: {
-        scanned: result.scanned,
-        stale: result.stale.length,
-        changed: result.changed,
-        dryRun: result.dryRun,
-        actions
-      },
-      nextActions: [
-        { command: "taskforge next", reason: "Find the next available task after sweep recovery.", safety: "safe", preferred: true }
+    writeResult(successResult({
+      command: "sweep",
+      guidance: `Sweeper: Found ${result.stale.length} stale task(s), changed ${result.changed}.`,
+      nextCommands: [
+        { command: "taskforge next", purpose: "Find the next available task after sweep recovery.", when: "Find the next available task after sweep recovery.", allowedFor: "all", priority: 1 }
       ]
-    }));
+    }), options.json);
     return;
   }
   if (result.changed === 0) {
@@ -4256,17 +3999,14 @@ async function cmdHeartbeat(taskId, options = {}) {
   const task = loadTaskById(taskId);
   if (!task) {
     if (json) {
-      printJson(jsonError(`Task ${taskId} not found`, "TASK_NOT_FOUND"));
+      writeResult(failedResult({ command: "heartbeat", taskId, error: `Task ${taskId} not found`, code: "TASK_NOT_FOUND" }), json);
       return;
     }
     throw new TaskNotFoundError(taskId);
   }
   if (task.status !== STATUS.IN_PROGRESS) {
     if (json) {
-      printJson(jsonError(
-        `Task ${taskId} is in "${task.status}" status, not "${STATUS.IN_PROGRESS}". Heartbeat is only valid for In Progress tasks.`,
-        "INVALID_STATUS"
-      ));
+      writeResult(failedResult({ command: "heartbeat", taskId, error: `Task ${taskId} is in "${task.status}" status, not "${STATUS.IN_PROGRESS}". Heartbeat is only valid for In Progress tasks.`, code: "INVALID_STATUS" }), json);
       return;
     }
     logError(
@@ -4281,11 +4021,14 @@ async function cmdHeartbeat(taskId, options = {}) {
     } catch (err) {
       if (err instanceof ForceRequiresHumanOrDoctorError) {
         if (json) {
-          printJson(jsonError(
-            "Normal agents may not use --force.",
-            "FORCE_REQUIRES_HUMAN_OR_DOCTOR",
-            { nextActions: getForceRejectionNextActions(taskId) }
-          ));
+          const nextCommands = getForceRejectionNextActions(taskId).map((a) => ({
+            command: a.command,
+            purpose: a.reason,
+            when: a.reason,
+            allowedFor: a.safety === "safe" ? "all" : a.safety === "requires_human" ? "human" : "doctor",
+            priority: a.preferred ? 1 : 2
+          }));
+          writeResult(failedResult({ command: "heartbeat", taskId, error: "Normal agents may not use --force.", code: "FORCE_REQUIRES_HUMAN_OR_DOCTOR", nextCommands }), json);
           return;
         }
         logError("Normal agents may not use --force.");
@@ -4307,11 +4050,14 @@ async function cmdHeartbeat(taskId, options = {}) {
       await assertTaskOwnership(task, repoRoot);
     } catch (err) {
       if (json) {
-        printJson(jsonError(
-          `Task ${taskId} is assigned to session "${task.assignee}".`,
-          "OWNERSHIP_MISMATCH",
-          { nextActions: getForceRejectionNextActions(taskId) }
-        ));
+        const nextCommands = getForceRejectionNextActions(taskId).map((a) => ({
+          command: a.command,
+          purpose: a.reason,
+          when: a.reason,
+          allowedFor: a.safety === "safe" ? "all" : a.safety === "requires_human" ? "human" : "doctor",
+          priority: a.preferred ? 1 : 2
+        }));
+        writeResult(failedResult({ command: "heartbeat", taskId, error: `Task ${taskId} is assigned to session "${task.assignee}".`, code: "OWNERSHIP_MISMATCH", nextCommands }), json);
         return;
       }
       throw err;
@@ -4340,9 +4086,7 @@ async function cmdHeartbeat(taskId, options = {}) {
   }
   await commitAndPushTaskState(repoRoot, `chore: heartbeat ${taskId}`);
   if (json) {
-    printJson(jsonOk({
-      task: buildJsonTask(current)
-    }));
+    writeResult(successResult({ command: "heartbeat", taskId, guidance: `Heartbeat: task ${taskId} lease renewed.` }), json);
     return;
   }
   logSuccess(`Heartbeat: task ${taskId} lease renewed.`);
@@ -4372,10 +4116,7 @@ async function cmdClaim(taskId, options) {
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "DOCTOR_LOCKED", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance
-      }));
+      writeResult(failedResult({ command: "claim", error: result.guidance, code: result.errorCode ?? "DOCTOR_LOCKED" }), json);
       return;
     }
     logWarn(result.guidance);
@@ -4393,10 +4134,7 @@ async function cmdClaim(taskId, options) {
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "OUTSTANDING_TASK", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance
-      }));
+      writeResult(failedResult({ command: "claim", error: result.guidance, code: result.errorCode ?? "OUTSTANDING_TASK" }), json);
       return;
     }
     logError(result.guidance);
@@ -4421,10 +4159,7 @@ async function cmdClaim(taskId, options) {
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "UNCOMMITTED_CHANGES", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance
-      }));
+      writeResult(failedResult({ command: "claim", error: result.guidance, code: result.errorCode ?? "UNCOMMITTED_CHANGES" }), json);
       return;
     }
     logWarn(result.guidance);
@@ -4440,10 +4175,7 @@ async function cmdClaim(taskId, options) {
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "TASK_NOT_FOUND", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance
-      }));
+      writeResult(failedResult({ command: "claim", error: result.guidance, code: result.errorCode ?? "TASK_NOT_FOUND" }), json);
       return;
     }
     throw new TaskNotFoundError(taskId);
@@ -4459,10 +4191,7 @@ async function cmdClaim(taskId, options) {
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      printJson(jsonError(result.guidance, result.errorCode ?? "INVALID_STATUS", {
-        nextActions: [result.nextAction],
-        guidance: result.guidance
-      }));
+      writeResult(failedResult({ command: "claim", error: result.guidance, code: result.errorCode ?? "INVALID_STATUS" }), json);
       return;
     }
     throw new Error(result.guidance);
@@ -4480,11 +4209,7 @@ async function cmdClaim(taskId, options) {
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      printJson(jsonError(
-        result.guidance,
-        result.errorCode ?? "ALREADY_CLAIMED",
-        { nextActions: getForceRejectionNextActions(taskId) }
-      ));
+      writeResult(failedResult({ command: "claim", error: result.guidance, code: result.errorCode ?? "ALREADY_CLAIMED" }), json);
       return;
     }
     logError(result.guidance);
@@ -4517,11 +4242,7 @@ async function cmdClaim(taskId, options) {
         });
         getDefaultGuidanceAdapter().pushGuidance(result);
         if (json) {
-          printJson(jsonError(
-            "Normal agents may not use --force.",
-            "FORCE_REQUIRES_HUMAN_OR_DOCTOR",
-            { nextActions: getForceRejectionNextActions(taskId) }
-          ));
+          writeResult(failedResult({ command: "claim", error: "Normal agents may not use --force.", code: "FORCE_REQUIRES_HUMAN_OR_DOCTOR" }), json);
           return;
         }
         logError("Normal agents may not use --force.");
@@ -4585,11 +4306,7 @@ async function cmdClaim(taskId, options) {
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      printJson(jsonError(
-        result.guidance,
-        result.errorCode ?? "PUSH_FAILED",
-        { nextActions: [result.nextAction], guidance: result.guidance }
-      ));
+      writeResult(failedResult({ command: "claim", error: result.guidance, code: result.errorCode ?? "PUSH_FAILED" }), json);
       return;
     }
     logError(result.guidance);
@@ -4620,7 +4337,7 @@ async function cmdClaim(taskId, options) {
     });
   }
   registerAgent(sessionId, taskId, worktreePath ?? null, repoRoot);
-  const successResult2 = claimStateMachine({
+  const claimResult = claimStateMachine({
     taskFound: true,
     taskStatus: task.status,
     doctorLocked: false,
@@ -4631,25 +4348,23 @@ async function cmdClaim(taskId, options) {
     taskId,
     sessionId
   });
-  getDefaultGuidanceAdapter().pushGuidance(successResult2);
+  getDefaultGuidanceAdapter().pushGuidance(claimResult);
   if (json) {
-    const refreshedTask = loadTaskById(taskId);
     eventLogEvent(taskId, "claimed", { session: sessionId, forced: force });
-    printJson(jsonOk({
-      task: refreshedTask ? buildJsonTask(refreshedTask) : buildJsonTask(task),
-      workspace: {
-        branch: branchName,
-        worktree: worktreePath
-      },
-      nextActions: [successResult2.nextAction],
-      guidance: successResult2.guidance
-    }));
+    writeResult(successResult({
+      command: "claim",
+      taskId: task.id,
+      guidance: claimResult.guidance,
+      worktree: worktreePath,
+      branch: branchName,
+      sessionId
+    }), json);
     return;
   }
   if (task.status === STATUS.READY) {
     logSuccess(`Status updated: ${STATUS.READY} \u2192 ${STATUS.IN_PROGRESS}`);
   }
-  logSuccess(successResult2.guidance);
+  logSuccess(claimResult.guidance);
   if (worktreePath) {
     logSuccess(`Worktree: ${worktreePath}`);
     logSuccess(`Branch: ${branchName}`);
@@ -4665,7 +4380,7 @@ async function cmdReport(taskId, options) {
   const task = loadTaskById(taskId);
   if (!task) {
     if (options?.json) {
-      printJson(jsonError(`Task ${taskId} not found`, "TASK_NOT_FOUND"));
+      writeResult(failedResult({ command: "report", taskId, error: `Task ${taskId} not found`, code: "TASK_NOT_FOUND" }), options.json);
       return;
     }
     throw new TaskNotFoundError(taskId);
@@ -4673,7 +4388,6 @@ async function cmdReport(taskId, options) {
   const worktreePath = getWorktreePath(repoRoot, taskId);
   const changedFiles = [];
   const commits = [];
-  let gates = { typecheck: "unknown", lint: "unknown", build: "unknown", test: "unknown" };
   try {
     const diffResult = await execa4("git", ["diff", "--name-only", `origin/main..HEAD`], { cwd: worktreePath });
     changedFiles.push(...diffResult.stdout.trim().split("\n").filter(Boolean));
@@ -4681,20 +4395,11 @@ async function cmdReport(taskId, options) {
     commits.push(...logResult.stdout.trim().split("\n").filter(Boolean));
   } catch {
   }
-  const report = {
-    taskId,
-    status: task.status,
-    changedFiles,
-    commits,
-    gates,
-    risks: [],
-    humanReviewNeeded: task.humanInterventionRequired ?? changedFiles.length > 0
-  };
   if (options?.complete) {
     const transitionError = validateTransition(task.status, STATUS.IMPLEMENTATION_COMPLETE);
     if (transitionError) {
       if (options?.json) {
-        printJson(jsonError(transitionError, "INVALID_TRANSITION"));
+        writeResult(failedResult({ command: "report", taskId, error: transitionError, code: "INVALID_TRANSITION" }), options.json);
         return;
       }
       throw new InvalidStatusTransitionError(task.status, STATUS.IMPLEMENTATION_COMPLETE, [STATUS.IN_PROGRESS]);
@@ -4714,27 +4419,16 @@ async function cmdReport(taskId, options) {
     ].filter(Boolean));
     await commitAndPushTaskState(repoRoot, `chore: report ${taskId} \u2192 Implementation Complete`);
     if (options?.json) {
-      printJson(jsonOk({
-        ...report,
-        status: STATUS.IMPLEMENTATION_COMPLETE,
-        acceptanceCriteria: {
-          sectionPresent: hasAC,
-          hasBlankItems: hasBlankAC,
-          hasUncheckedItems: hasUncheckedAC
-        },
-        reviewerInstructions: [
-          "Verify all acceptance criteria are satisfied with evidence.",
-          "Check that each AC checkbox is checked off with source file, identifier, and rationale.",
-          "Run gates (typecheck, lint, build, test) and confirm all pass.",
-          "Review code changes for correctness, security, and scope compliance.",
-          "If any AC is not satisfied, move task back to In Progress with feedback."
-        ],
-        nextActions: [
-          { command: `taskforge done ${taskId}`, reason: "Mark task as Done after AC verification passes", safety: "safe", preferred: true },
-          { command: `taskforge start ${taskId}`, reason: "Return to In Progress if AC verification fails", safety: "safe", preferred: false },
-          { command: `taskforge block ${taskId} "AC verification failed: <details>" --category ambiguous_spec --blocked-by reviewer`, reason: "Block if AC are unclear or cannot be verified", safety: "safe", preferred: false }
+      writeResult(successResult({
+        command: "report",
+        taskId,
+        guidance: `Task ${taskId} moved to Implementation Complete. Verify AC before submitting.`,
+        nextCommands: [
+          { command: `taskforge done ${taskId}`, purpose: "Mark task as Done after AC verification passes", when: "Mark task as Done after AC verification passes", allowedFor: "all", priority: 1 },
+          { command: `taskforge start ${taskId}`, purpose: "Return to In Progress if AC verification fails", when: "Return to In Progress if AC verification fails", allowedFor: "all", priority: 2 },
+          { command: `taskforge block ${taskId} "AC verification failed: <details>" --category ambiguous_spec --blocked-by reviewer`, purpose: "Block if AC are unclear or cannot be verified", when: "Block if AC are unclear or cannot be verified", allowedFor: "all", priority: 3 }
         ]
-      }));
+      }), options.json);
       return;
     }
     logHeader(`# Report: ${taskId}`);
@@ -4766,13 +4460,15 @@ async function cmdReport(taskId, options) {
     return;
   }
   if (options?.json) {
-    printJson(jsonOk({
-      ...report,
-      nextActions: options?.complete ? [] : [
-        { command: `taskforge report ${taskId} --complete`, reason: "Generate completion report and move to Implementation Complete", safety: "safe", preferred: true },
-        { command: `taskforge gates`, reason: "Run gates before generating report", safety: "safe", preferred: false }
+    writeResult(successResult({
+      command: "report",
+      taskId,
+      guidance: `Report generated for ${taskId}.`,
+      nextCommands: [
+        { command: `taskforge report ${taskId} --complete`, purpose: "Generate completion report and move to Implementation Complete", when: "Generate completion report and move to Implementation Complete", allowedFor: "all", priority: 1 },
+        { command: "taskforge gates", purpose: "Run gates before generating report", when: "Run gates before generating report", allowedFor: "all", priority: 2 }
       ]
-    }));
+    }), options.json);
     return;
   }
   logHeader(`# Report: ${taskId}`);
@@ -4793,7 +4489,7 @@ async function cmdCleanup(taskId, options) {
   const repoRoot = getRepoRoot();
   const task = loadTaskById(taskId);
   if (!task) {
-    if (options?.json) printJson(jsonError(`Task ${taskId} not found`, "TASK_NOT_FOUND"));
+    if (options?.json) writeResult(failedResult({ command: "cleanup", taskId, error: `Task ${taskId} not found`, code: "TASK_NOT_FOUND" }), options.json);
     else throw new TaskNotFoundError(taskId);
     return;
   }
@@ -4808,11 +4504,20 @@ async function cmdCleanup(taskId, options) {
     } catch (err) {
       if (err instanceof ForceRequiresHumanOrDoctorError) {
         if (json) {
-          printJson(jsonError(
-            "Normal agents may not use --force.",
-            "FORCE_REQUIRES_HUMAN_OR_DOCTOR",
-            { nextActions: getForceRejectionNextActions(taskId) }
-          ));
+          const nextCommands = getForceRejectionNextActions(taskId).map((a) => ({
+            command: a.command,
+            purpose: a.reason,
+            when: a.reason,
+            allowedFor: a.safety === "safe" ? "all" : a.safety === "requires_human" ? "human" : "doctor",
+            priority: a.preferred ? 1 : 2
+          }));
+          writeResult(failedResult({
+            command: "cleanup",
+            taskId,
+            error: "Normal agents may not use --force.",
+            code: "FORCE_REQUIRES_HUMAN_OR_DOCTOR",
+            nextCommands
+          }), json);
           return;
         }
         logError("Normal agents may not use --force.");
@@ -4877,12 +4582,14 @@ async function cmdCleanup(taskId, options) {
     }
   }
   if (json) {
-    printJson(jsonOk({
-      cleanup: { items },
-      nextActions: [
-        { command: "taskforge next", reason: "Find the next available task after cleanup.", safety: "safe", preferred: true }
+    writeResult(successResult({
+      command: "cleanup",
+      taskId,
+      guidance: `Cleanup ${taskId}: removed worktree/branch.`,
+      nextCommands: [
+        { command: "taskforge next", purpose: "Find the next available task after cleanup.", when: "Find the next available task after cleanup.", allowedFor: "all", priority: 1 }
       ]
-    }));
+    }), json);
     return;
   }
   if (dryRun) {
@@ -4910,14 +4617,12 @@ async function cmdPrompt(taskId, options) {
   if (!task) throw new TaskNotFoundError(taskId);
   const wtPath = getWorktreePath(repoRoot, taskId);
   if (options?.json) {
-    console.log(JSON.stringify({
-      ok: true,
-      task: { id: task.id, status: task.status, priority: task.priority, title: task.body.match(/^#\s+\S+:\s+(.+)$/m)?.[1]?.trim() ?? task.id },
-      workspace: { branch: task.branch, worktree: task.worktree ?? wtPath },
-      body: task.body,
-      acceptanceCriteria: extractAcceptanceCriteria(task.body),
-      verification: "npm run typecheck && npm run lint && npm run build && npm test -- --run"
-    }, null, 2));
+    const title2 = task.body.match(/^#\s+\S+:\s+(.+)$/m)?.[1]?.trim() ?? task.id;
+    writeResult(successResult({
+      command: "prompt",
+      taskId,
+      guidance: `Task ${taskId}: ${title2} (${task.status}, ${task.priority}). Worktree: ${task.worktree ?? wtPath}. Branch: ${task.branch ?? "none"}. ${extractAcceptanceCriteria(task.body).length} acceptance criteria.`
+    }), options.json);
     return;
   }
   const title = task.body.match(/^#\s+\S+:\s+(.+)$/m)?.[1]?.trim() ?? task.id;
@@ -4998,10 +4703,11 @@ ${body}`;
     });
     getDefaultGuidanceAdapter().pushGuidance(result2);
     if (json) {
-      printJson(jsonError(result2.guidance, result2.errorCode ?? "WRITE_FAILED", {
-        nextActions: [result2.nextAction],
-        guidance: result2.guidance
-      }));
+      writeResult(failedResult({
+        command: "new",
+        error: result2.guidance,
+        code: result2.errorCode ?? "WRITE_FAILED"
+      }), json);
       return;
     }
     throw new Error(result2.guidance);
@@ -5027,10 +4733,11 @@ ${body}`;
     });
     getDefaultGuidanceAdapter().pushGuidance(result2);
     if (json) {
-      printJson(jsonError(result2.guidance, result2.errorCode ?? "PUSH_FAILED", {
-        nextActions: [result2.nextAction],
-        guidance: result2.guidance
-      }));
+      writeResult(failedResult({
+        command: "new",
+        error: result2.guidance,
+        code: result2.errorCode ?? "PUSH_FAILED"
+      }), json);
       return;
     }
     logInfo(result2.guidance);
@@ -5044,11 +4751,11 @@ ${body}`;
   });
   getDefaultGuidanceAdapter().pushGuidance(result);
   if (json) {
-    printJson(jsonOk({
-      task: { id: nextId, file: filePath, status },
-      nextActions: [result.nextAction],
+    writeResult(successResult({
+      command: "new",
+      taskId: nextId,
       guidance: result.guidance
-    }));
+    }), json);
     return;
   }
   logSuccess(result.guidance);
@@ -5187,11 +4894,16 @@ async function cmdResume(taskId, options) {
   const recovery = autoDetectRecovery(taskId);
   if (!recovery) {
     if (options?.json) {
-      printJson(jsonError(
-        "No recoverable session found",
-        "NO_RECOVERABLE_SESSION",
-        { nextActions: ["next", "claim"], guidance: "No active sessions found. Use 'taskforge next' to find a task, or 'taskforge claim' to claim one." }
-      ));
+      writeResult(failedResult({
+        command: "resume",
+        error: "No recoverable session found",
+        code: "NO_RECOVERABLE_SESSION",
+        guidance: "No active sessions found. Use 'taskforge next' to find a task, or 'taskforge claim' to claim one.",
+        nextCommands: [
+          { command: "taskforge next", purpose: "Find the next available task", when: "no active sessions", allowedFor: "all", priority: 1 },
+          { command: "taskforge claim <TASK-ID>", purpose: "Claim a task", when: "no active sessions", allowedFor: "all", priority: 2 }
+        ]
+      }), options.json);
     } else {
       logWarn("No recoverable session found.");
       logDivider();
@@ -5203,22 +4915,23 @@ async function cmdResume(taskId, options) {
   }
   const task = loadTaskById(recovery.taskId);
   if (!task) {
-    if (options?.json) printJson(jsonError(`Task ${recovery.taskId} not found`, "TASK_NOT_FOUND"));
+    if (options?.json) writeResult(failedResult({ command: "resume", taskId: recovery.taskId, error: `Task ${recovery.taskId} not found`, code: "TASK_NOT_FOUND" }), options.json);
     else throw new TaskNotFoundError(recovery.taskId);
     return;
   }
   if (options?.json) {
-    printJson(jsonOk({
-      task: buildJsonTask(task),
-      workspace: { branch: recovery.branch || task.branch, worktree: recovery.worktreePath, exists: true },
-      recovery: {
-        method: recovery.method,
-        sessionId: recovery.sessionId,
-        claimedAt: recovery.claimedAt
-      },
-      nextActions: ["work", "checkpoint", "done"],
-      guidance: `Resume working in ${recovery.worktreePath}. Use 'taskforge checkpoint ${recovery.taskId}' to save progress, or 'taskforge done ${recovery.taskId}' when complete.`
-    }));
+    writeResult(successResult({
+      command: "resume",
+      taskId: recovery.taskId,
+      worktree: recovery.worktreePath,
+      branch: recovery.branch || task.branch,
+      guidance: `Resume working in ${recovery.worktreePath}. Use 'taskforge checkpoint ${recovery.taskId}' to save progress, or 'taskforge done ${recovery.taskId}' when complete.`,
+      nextCommands: [
+        { command: "work", purpose: "Continue working in the worktree", when: "after resume", allowedFor: "all", priority: 1 },
+        { command: `taskforge checkpoint ${recovery.taskId}`, purpose: "Save progress", when: "after resume", allowedFor: "all", priority: 2 },
+        { command: `taskforge done ${recovery.taskId}`, purpose: "Complete the task", when: "after resume", allowedFor: "all", priority: 3 }
+      ]
+    }), options.json);
     return;
   }
   logHeader(`## Session Recovered: ${recovery.taskId}`);
@@ -5286,9 +4999,9 @@ var OpenCodeAgentFrameworkAdapter = class {
   fix(repoRoot) {
     const repairs = [];
     const config = loadConfig(repoRoot);
-    const policy = config.agentFramework?.policy ?? "managed";
-    const audit = config.agentFramework?.audit ?? true;
-    const guard2 = config.agentFramework?.guard ?? true;
+    const policy = config.opencode?.policy ?? "managed";
+    const audit = config.opencode?.audit ?? true;
+    const guard2 = config.opencode?.guard ?? true;
     const agentsMdPath = path12.join(repoRoot, "AGENTS.md");
     if (!fs14.existsSync(agentsMdPath)) {
       installAgentsMd(repoRoot, false);
@@ -5468,23 +5181,18 @@ async function cmdDoctor(options) {
     }
   }
   if (options?.json) {
-    console.log(JSON.stringify({
-      ok: issues.filter((i) => i.severity === "error").length === 0,
-      issues: issues.map((i) => ({ severity: i.severity, code: i.code, taskId: i.taskId, message: i.message })),
-      repairs: repairs.map((r) => ({ code: r.code, message: r.message })),
-      checks: ok,
-      counts: {
-        total: tasks.length,
-        inProgress: inProgressTasks.length,
-        ready: tasks.filter((t) => t.status === STATUS.READY).length,
-        done: tasks.filter((t) => t.status === STATUS.DONE).length,
-        worktrees: worktrees.length,
-        sweepable,
-        errors: issues.filter((i) => i.severity === "error").length,
-        warnings: issues.filter((i) => i.severity === "warn").length,
-        repairs: repairs.length
-      }
-    }, null, 2));
+    const errCount2 = issues.filter((i) => i.severity === "error").length;
+    const warnCount2 = issues.filter((i) => i.severity === "warn").length;
+    const hasErrors = errCount2 > 0;
+    writeResult(hasErrors ? failedResult({
+      command: "doctor",
+      error: `${errCount2} error(s) and ${warnCount2} warning(s) found.`,
+      code: "DOCTOR_ISSUES",
+      guidance: `TaskForge Doctor: ${tasks.length} tasks, ${errCount2} errors, ${warnCount2} warnings, ${sweepable} sweepable, ${repairs.length} repairs.`
+    }) : successResult({
+      command: "doctor",
+      guidance: `TaskForge Doctor: ${tasks.length} tasks, ${ok.length} checks passed, ${repairs.length} repairs.`
+    }), options.json);
     return;
   }
   logHeader("# TaskForge Doctor");
@@ -5519,7 +5227,12 @@ async function cmdConfigValidate(options) {
   } catch (err) {
     issues.push(`Failed to load config: ${err instanceof Error ? err.message : String(err)}`);
     if (options?.json) {
-      console.log(JSON.stringify({ ok: false, issues }, null, 2));
+      writeResult(failedResult({
+        command: "config-validate",
+        error: issues[0],
+        code: "CONFIG_INVALID",
+        guidance: `Config validation failed: ${issues[0]}`
+      }), options.json);
       return;
     }
     logWarn(`Config invalid: ${issues[0]}`);
@@ -5533,10 +5246,15 @@ async function cmdConfigValidate(options) {
     }
   }
   if (issues.length === 0) {
-    if (options?.json) console.log(JSON.stringify({ ok: true, issues: [] }, null, 2));
+    if (options?.json) writeResult(successResult({ command: "config-validate", guidance: "Config is valid." }), options.json);
     else logSuccess("Config is valid.");
   } else {
-    if (options?.json) console.log(JSON.stringify({ ok: false, issues }, null, 2));
+    if (options?.json) writeResult(failedResult({
+      command: "config-validate",
+      error: issues.join("; "),
+      code: "CONFIG_INVALID",
+      guidance: `Config validation failed: ${issues.join("; ")}`
+    }), options.json);
     else issues.forEach((i) => logWarn(i));
   }
 }
@@ -5546,24 +5264,22 @@ async function cmdRelease(taskId, options) {
   const repoRoot = getRepoRoot();
   const task = loadTaskById(taskId);
   if (!task) {
-    if (options?.json) printJson(jsonError(`Task ${taskId} not found`, "TASK_NOT_FOUND"));
-    else throw new TaskNotFoundError(taskId);
-    return;
+    if (options?.json) {
+      writeResult(failedResult({ command: "release", taskId, error: `Task ${taskId} not found`, code: "TASK_NOT_FOUND" }), true);
+      return;
+    }
+    throw new TaskNotFoundError(taskId);
   }
   if (!task.assignee) {
     if (options?.json) {
-      printJson(jsonOk({
-        task: buildJsonTask(task),
-        nextActions: ["claim", "start"],
-        guidance: `Task ${taskId} is not claimed. Run 'taskforge claim ${taskId}' to claim it, or 'taskforge start ${taskId}' to claim and create a worktree.`
-      }));
-    } else {
-      logInfo(`Task ${taskId} is not claimed \u2014 nothing to release.`);
-      logDivider();
-      logInfo("Next actions:");
-      logSub(`  taskforge claim ${taskId}   \u2014 Claim this task`);
-      logSub(`  taskforge start ${taskId}   \u2014 Claim and create worktree`);
+      writeResult(successResult({ command: "release", taskId, guidance: `Task ${taskId} is not claimed \u2014 nothing to release.` }), true);
+      return;
     }
+    logInfo(`Task ${taskId} is not claimed \u2014 nothing to release.`);
+    logDivider();
+    logInfo("Next actions:");
+    logSub(`  taskforge claim ${taskId}   \u2014 Claim this task`);
+    logSub(`  taskforge start ${taskId}   \u2014 Claim and create worktree`);
     return;
   }
   const previousAssignee = task.assignee;
@@ -5585,12 +5301,11 @@ async function cmdRelease(taskId, options) {
   }
   await commitAndPushTaskState(repoRoot, `chore: release ${taskId}`);
   if (options?.json) {
-    const updated = loadTaskById(taskId);
-    printJson(jsonOk({
-      task: updated ? buildJsonTask(updated) : buildJsonTask(task),
-      nextActions: ["next", "claim"],
-      guidance: `Task ${taskId} released by "${previousAssignee}"${wasInProgress ? " and reset to Ready" : ""}. Run 'taskforge next' to find the next task, or 'taskforge claim <id>' to claim a different task.`
-    }));
+    const nextCommands = [
+      { command: "taskforge next", purpose: "Find the next available task", when: "After release", allowedFor: "all", priority: 1 },
+      { command: "taskforge claim <id>", purpose: "Claim a different task", when: "After release", allowedFor: "all", priority: 2 }
+    ];
+    writeResult(successResult({ command: "release", taskId, guidance: `Task ${taskId} released by "${previousAssignee}"${wasInProgress ? " and reset to Ready" : ""}. Run 'taskforge next' to find the next task, or 'taskforge claim <id>' to claim a different task.`, nextCommands }), true);
     return;
   }
   logSuccess(`Task ${taskId} released.${wasInProgress ? " Status reset to Ready." : ""}`);
@@ -5605,21 +5320,22 @@ async function cmdReject(taskId, reason, options) {
   const repoRoot = getRepoRoot();
   const task = loadTaskById(taskId);
   if (!task) {
-    if (options?.json) printJson(jsonError(`Task ${taskId} not found`, "TASK_NOT_FOUND"));
-    else throw new TaskNotFoundError(taskId);
-    return;
+    if (options?.json) {
+      writeResult(failedResult({ command: "reject", taskId, error: `Task ${taskId} not found`, code: "TASK_NOT_FOUND" }), true);
+      return;
+    }
+    throw new TaskNotFoundError(taskId);
   }
   updateTaskStatus(task.filePath, STATUS.REJECTED);
   const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
   appendAgentNote(task.filePath, today, "System", [`Task rejected: ${reason}`]);
   await commitAndPushTaskState(repoRoot, `chore: reject ${taskId}`);
   if (options?.json) {
-    const updated = loadTaskById(taskId);
-    printJson(jsonOk({
-      task: updated ? buildJsonTask(updated) : buildJsonTask(task),
-      nextActions: ["new", "next"],
-      guidance: `Task ${taskId} rejected. Run 'taskforge new "<title>"' to create a replacement task, or 'taskforge next' to find the next available task.`
-    }));
+    const nextCommands = [
+      { command: 'taskforge new "<title>"', purpose: "Create a replacement task", when: "After rejection", allowedFor: "all", priority: 1 },
+      { command: "taskforge next", purpose: "Find the next available task", when: "After rejection", allowedFor: "all", priority: 2 }
+    ];
+    writeResult(successResult({ command: "reject", taskId, guidance: `Task ${taskId} rejected. Run 'taskforge new "<title>"' to create a replacement task, or 'taskforge next' to find the next available task.`, nextCommands }), true);
     return;
   }
   logSuccess(`Task ${taskId} rejected: ${reason}`);
@@ -5663,7 +5379,10 @@ async function cmdList(options = {}) {
       blocked_by: t.blocked_by,
       block_category: t.block_category
     }));
-    console.log(JSON.stringify(entries, null, 2));
+    writeResult(successResult({
+      command: "list",
+      guidance: `Found ${entries.length} task(s) matching criteria.`
+    }), options.json);
     return;
   }
   if (filtered.length === 0) {
@@ -6036,7 +5755,7 @@ async function syncTaskToProject(config, issueNumber, taskStatus, fieldName) {
 }
 
 // src/commands/sync.ts
-async function cmdSync() {
+async function cmdSync(json = false) {
   const repoRoot = getRepoRoot();
   const config = loadConfig(repoRoot);
   logInfo("# TaskForge Sync");
@@ -6092,11 +5811,12 @@ async function cmdSync() {
   logInfo("");
   logInfo("## Sync Status");
   logInfo("");
-  if (config.github.projectNumber) {
-    logSuccess(`All tasks synced to GitHub Issues and Project #${config.github.projectNumber}.`);
-  } else {
-    logSuccess("All tasks synced to GitHub Issues.");
-  }
+  const projectSuffix = config.github.projectNumber ? ` and Project #${config.github.projectNumber}` : "";
+  logSuccess(`All tasks synced to GitHub Issues${projectSuffix}.`);
+  writeResult(successResult({
+    command: "sync",
+    guidance: `All tasks synced to GitHub Issues${projectSuffix}.`
+  }), json);
 }
 async function syncToProjectBoard(githubConfig, config, syncedIssues) {
   const fieldName = config.github?.projects?.statusField ?? "Status";
@@ -6169,14 +5889,10 @@ async function cmdAgents(options) {
     const threshold = options.threshold ?? 15;
     const crashed2 = markStaleAgentsAsCrashed(threshold, repoRoot);
     if (options.json) {
-      printJson(jsonOk({
-        recovered: crashed2.map((a) => ({
-          sessionId: a.session_id,
-          agentId: a.agent_id,
-          currentTask: a.current_task
-        })),
-        count: crashed2.length
-      }));
+      writeResult(successResult({
+        command: "agents",
+        guidance: crashed2.length === 0 ? "No stale agents found." : `Marked ${crashed2.length} stale agent(s) as crashed.`
+      }), options.json);
     } else {
       if (crashed2.length === 0) {
         logSuccess("No stale agents found.");
@@ -6193,17 +5909,10 @@ async function cmdAgents(options) {
     const threshold = options.threshold ?? 15;
     const stale = findStaleAgents(threshold, repoRoot);
     if (options.json) {
-      printJson(jsonOk({
-        stale: stale.map((a) => ({
-          sessionId: a.session_id,
-          agentId: a.agent_id,
-          currentTask: a.current_task,
-          lastHeartbeat: a.last_heartbeat,
-          age: formatAge(a.last_heartbeat)
-        })),
-        count: stale.length,
-        thresholdMinutes: threshold
-      }));
+      writeResult(successResult({
+        command: "agents",
+        guidance: stale.length === 0 ? "No stale agents found." : `Found ${stale.length} stale agent(s) (threshold: ${threshold}m). Run 'taskforge agents --recover' to mark them as crashed.`
+      }), options.json);
     } else {
       if (stale.length === 0) {
         logSuccess("No stale agents found.");
@@ -6223,22 +5932,10 @@ async function cmdAgents(options) {
   const idle = registry.agents.filter((a) => a.status === "idle");
   const crashed = registry.agents.filter((a) => a.status === "crashed");
   if (options?.json) {
-    printJson(jsonOk({
-      registry: {
-        active: active.map(formatAgentEntry),
-        idle: idle.map(formatAgentEntry),
-        crashed: crashed.map(formatAgentEntry),
-        maxConcurrentAgents: registry.max_concurrent_agents,
-        agentHistoryCount: registry.agent_history.length,
-        lastUpdated: registry.last_updated
-      },
-      summary: {
-        total: registry.agents.length,
-        active: active.length,
-        idle: idle.length,
-        crashed: crashed.length
-      }
-    }));
+    writeResult(successResult({
+      command: "agents",
+      guidance: registry.agents.length === 0 ? "No agents registered yet. Agents are registered when they claim or start a task." : `Agent registry: ${registry.agents.length} total, ${active.length} active, ${idle.length} idle, ${crashed.length} crashed.`
+    }), options.json);
     return;
   }
   logHeader("## Agent Registry");
@@ -6271,18 +5968,6 @@ async function cmdAgents(options) {
     logSub("Agents are registered when they claim or start a task.");
   }
   logSuccess(`Total: ${registry.agents.length} agents (${active.length} active, ${idle.length} idle, ${crashed.length} crashed)`);
-}
-function formatAgentEntry(agent) {
-  return {
-    sessionId: agent.session_id,
-    agentId: agent.agent_id,
-    status: agent.status,
-    currentTask: agent.current_task,
-    worktreePath: agent.worktree_path,
-    registeredAt: agent.registered_at,
-    lastHeartbeat: agent.last_heartbeat,
-    age: formatAge(agent.last_heartbeat)
-  };
 }
 
 // src/commands/deps/audit.ts
@@ -7239,7 +6924,11 @@ function cmdAudit(taskId, opts) {
   const repoRoot = getRepoRoot();
   const events = readTaskAudit(repoRoot, taskId);
   if (opts.json) {
-    process.stdout.write(JSON.stringify(events, null, 2) + "\n");
+    writeResult(successResult({
+      command: "audit",
+      taskId,
+      guidance: `Audit for ${taskId}: ${events.length} event(s).`
+    }), opts.json);
     return;
   }
   logHeader(`Audit: ${taskId}`);
@@ -7256,7 +6945,11 @@ function cmdTranscript(taskId, opts) {
   const repoRoot = getRepoRoot();
   const events = readTaskAudit(repoRoot, taskId);
   if (opts.json) {
-    process.stdout.write(JSON.stringify(events, null, 2) + "\n");
+    writeResult(successResult({
+      command: "transcript",
+      taskId,
+      guidance: `Transcript for ${taskId}: ${events.length} event(s).`
+    }), opts.json);
     return;
   }
   logHeader(`Transcript: ${taskId}`);
@@ -7290,11 +6983,11 @@ function cmdTimeline(taskId, opts = {}) {
     (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
   );
   if (opts.json) {
-    process.stdout.write(JSON.stringify({
-      ...summary,
-      entries: allEntries,
-      cliInvocations: invocations
-    }, null, 2) + "\n");
+    writeResult(successResult({
+      command: "timeline",
+      taskId,
+      guidance: `Timeline for ${taskId}: ${allEntries.length} events, ${invocations.length} CLI invocations.`
+    }), opts.json);
     return;
   }
   logHeader(`Timeline: ${taskId}`);
@@ -7321,7 +7014,12 @@ function cmdAcCheck(taskId, options = {}) {
     const task = loadTaskById(taskId, repoRoot);
     if (!task) {
       if (options.json) {
-        printJson(jsonError(`Task ${taskId} not found`, "TASK_NOT_FOUND"));
+        writeResult(failedResult({
+          command: "ac-check",
+          taskId,
+          error: `Task ${taskId} not found`,
+          code: "TASK_NOT_FOUND"
+        }), options.json);
         return;
       }
       throw new Error(`Task ${taskId} not found`);
@@ -7334,11 +7032,11 @@ function cmdAcCheck(taskId, options = {}) {
     }
   }
   if (options.json) {
-    printJson(jsonOk({
-      issues,
-      total: issues.length,
-      scanned: taskId ? 1 : loadAllTasks(repoRoot).length
-    }));
+    writeResult(successResult({
+      command: "ac-check",
+      taskId,
+      guidance: issues.length === 0 ? "All acceptance criteria look good." : `Found ${issues.length} acceptance criteria issue(s) in ${taskId ? 1 : loadAllTasks(repoRoot).length} task(s).`
+    }), options.json);
     return;
   }
   if (issues.length === 0) {
@@ -7380,7 +7078,7 @@ function requireTask(taskId) {
   if (!task) throw new TaskNotFoundError(taskId);
   return task;
 }
-async function cmdDiff(taskId) {
+async function cmdDiff(taskId, json = false) {
   const repoRoot = getRepoRoot();
   const task = requireTask(taskId);
   assertTaskOwnership(task, repoRoot);
@@ -7390,8 +7088,13 @@ async function cmdDiff(taskId) {
   logHeader(`Diff: ${taskId}`);
   const result = await run("git", ["-C", task.worktree, "diff"], repoRoot);
   process.stdout.write(result.stdout);
+  writeResult(successResult({
+    command: "diff",
+    taskId,
+    guidance: `Diff shown for ${taskId}.`
+  }), json);
 }
-async function cmdCheckpoint(taskId, message) {
+async function cmdCheckpoint(taskId, message, json = false) {
   const repoRoot = getRepoRoot();
   const task = loadTaskById(taskId);
   if (!task) {
@@ -7453,6 +7156,11 @@ async function cmdCheckpoint(taskId, message) {
     });
     getDefaultGuidanceAdapter().pushGuidance(result2);
     logInfo(result2.guidance);
+    writeResult(noopResult({
+      command: "checkpoint",
+      taskId,
+      guidance: result2.guidance
+    }), json);
     return;
   }
   const fullMessage = [
@@ -7486,11 +7194,16 @@ async function cmdCheckpoint(taskId, message) {
   });
   getDefaultGuidanceAdapter().pushGuidance(result);
   logSuccess(result.guidance);
+  writeResult(successResult({
+    command: "checkpoint",
+    taskId,
+    guidance: result.guidance
+  }), json);
   appendTaskTranscript(repoRoot, taskId, createTaskEvent(taskId, "git.commit", {
     summary: message
   }));
 }
-async function cmdSubmit(taskId) {
+async function cmdSubmit(taskId, json = false) {
   const repoRoot = getRepoRoot();
   const task = loadTaskById(taskId);
   if (!task) {
@@ -7558,11 +7271,16 @@ async function cmdSubmit(taskId) {
   });
   getDefaultGuidanceAdapter().pushGuidance(result);
   logSuccess(result.guidance);
+  writeResult(successResult({
+    command: "submit",
+    taskId,
+    guidance: result.guidance
+  }), json);
   appendTaskTranscript(repoRoot, taskId, createTaskEvent(taskId, "git.push", {
     summary: `Pushed branch ${task.branch}`
   }));
 }
-async function cmdPr(taskId) {
+async function cmdPr(taskId, json = false) {
   const repoRoot = getRepoRoot();
   const task = loadTaskById(taskId);
   const config = loadConfig(repoRoot);
@@ -7609,6 +7327,11 @@ Auto-generated by TaskForge.`;
       });
       getDefaultGuidanceAdapter().pushGuidance(result);
       logSuccess(result.guidance);
+      writeResult(successResult({
+        command: "pr",
+        taskId,
+        guidance: result.guidance
+      }), json);
       appendTaskTranscript(repoRoot, taskId, createTaskEvent(taskId, "github.pr.created", {
         summary: `Created PR #${pr.number}`,
         metadata: { prNumber: pr.number, prUrl: pr.url }
@@ -7639,6 +7362,11 @@ Auto-generated by TaskForge.`;
     logInfo(`To create a PR manually:`);
     logInfo(`  gh pr create --title "${title}" --head ${task.branch} --base main --body "${body}"`);
     logInfo(`  Or visit: https://github.com/<owner>/<repo>/compare/main...${task.branch}`);
+    writeResult(successResult({
+      command: "pr",
+      taskId,
+      guidance: result.guidance
+    }), json);
     appendTaskTranscript(repoRoot, taskId, createTaskEvent(taskId, "github.pr.manual", {
       summary: "Manual PR creation required - GitHub not configured"
     }));
@@ -7675,12 +7403,18 @@ async function cmdGuardStatus(opts = {}) {
     doctorOverrideExists: false
   };
   if (opts.json) {
-    printJson(jsonOk({
-      ...status,
-      deniedCommands: DENIED_GIT_COMMANDS,
-      readOnlyCommands: READ_ONLY_GIT_COMMANDS,
-      warnings: warningsList.length > 0 ? warningsList : void 0
-    }));
+    const diagnostics = [];
+    diagnostics.push({ level: "info", message: `Denied commands (${DENIED_GIT_COMMANDS.length}): ${DENIED_GIT_COMMANDS.join(", ")}` });
+    diagnostics.push({ level: "info", message: `Read-only commands (${READ_ONLY_GIT_COMMANDS.length}): ${READ_ONLY_GIT_COMMANDS.join(", ")}` });
+    for (const w of warningsList) {
+      diagnostics.push({ level: "info", message: `\u26A0 ${w}` });
+    }
+    const result = successResult({
+      command: "guard:status",
+      guidance: `Mutation guard: ${status.managed ? "active" : "inactive"}`
+    });
+    result.diagnostics = diagnostics;
+    writeResult(result, opts.json);
     return;
   }
   logHeader("Mutation Boundary Status");
@@ -7712,11 +7446,11 @@ async function cmdGuardStatus(opts = {}) {
 async function cmdGuardOverride(taskId, command, reason, opts = {}) {
   const task = loadTaskById(taskId);
   if (!task) throw new TaskNotFoundError(taskId);
-  const actor = process.env.TASKFORGE_ACTOR;
+  const actor = process.env.TASKFORCE_ACTOR;
   if (actor !== "doctor") {
-    const msg = "Only doctor agents may issue mutation overrides. Set TASKFORGE_ACTOR=doctor.";
+    const msg = "Only doctor agents may issue mutation overrides. Set TASKFORCE_ACTOR=doctor.";
     if (opts.json) {
-      printJson(jsonError(msg, "UNAUTHORIZED"));
+      writeResult(failedResult({ command: "guard:override", taskId, error: msg, code: "UNAUTHORIZED" }), opts.json);
       return;
     }
     throw new Error(msg);
@@ -7725,7 +7459,7 @@ async function cmdGuardOverride(taskId, command, reason, opts = {}) {
   if (result.allowed) {
     const msg = `Command "${command}" is not denied \u2014 no override needed.`;
     if (opts.json) {
-      printJson(jsonOk({ message: msg, guidance: `Command "${command}" is not denied \u2014 no override needed.` }));
+      writeResult(successResult({ command: "guard:override", taskId, guidance: `Command "${command}" is not denied \u2014 no override needed.` }), opts.json);
       return;
     }
     logInfo(msg);
@@ -7749,15 +7483,176 @@ async function cmdGuardOverride(taskId, command, reason, opts = {}) {
   };
   recordOverride(override);
   if (opts.json) {
-    printJson(jsonOk({
-      message: `Override issued for command "${command}" (task ${taskId}). Valid for 5 minutes.`,
-      override
-    }));
+    writeResult(successResult({ command: "guard:override", taskId, guidance: `Override issued for command "${command}" (task ${taskId}). Valid for 5 minutes.` }), opts.json);
     return;
   }
   logSuccess(`Override issued for command "${command}" (task ${taskId}).`);
   logSub(`Reason: ${reason}`);
   logSub(`Valid for 5 minutes. Audit recorded at .override-audit.jsonl`);
+}
+
+// src/commands/mcp.ts
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { z as z3 } from "zod";
+import { Writable } from "stream";
+async function captureStdout(fn) {
+  const chunks = [];
+  const originalStdout = process.stdout;
+  const capture = new Writable({
+    write(chunk, _encoding, callback) {
+      chunks.push(chunk);
+      callback();
+    }
+  });
+  process.stdout = capture;
+  try {
+    await fn();
+  } finally {
+    process.stdout = originalStdout;
+  }
+  return Buffer.concat(chunks).toString("utf-8");
+}
+async function cmdMcp(opts) {
+  loadConfig(opts.config ?? getRepoRoot());
+  const repoRoot = getRepoRoot();
+  const server = new McpServer(
+    {
+      name: "taskforge",
+      version: "0.3.0"
+    },
+    {
+      capabilities: {
+        tools: {}
+      },
+      instructions: `TaskForge MCP server for repository: ${repoRoot}`
+    }
+  );
+  registerTools(server);
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+}
+function registerTools(server) {
+  server.tool(
+    "taskforge_status",
+    "Show the current status summary of all tasks in the project",
+    {
+      json: z3.boolean().optional().default(false)
+    },
+    async (args) => {
+      try {
+        const output = await captureStdout(() => cmdStatus(args.json ?? false));
+        return { content: [{ type: "text", text: output.trim() }] };
+      } catch (err) {
+        return {
+          content: [{ type: "text", text: `Error: ${err.message}` }],
+          isError: true
+        };
+      }
+    }
+  );
+  server.tool(
+    "taskforge_next",
+    "Return the highest-priority safe task to work on next",
+    {
+      json: z3.boolean().optional().default(false)
+    },
+    async (args) => {
+      try {
+        const output = await captureStdout(() => cmdNext({ json: args.json ?? false }));
+        return { content: [{ type: "text", text: output.trim() }] };
+      } catch (err) {
+        return {
+          content: [{ type: "text", text: `Error: ${err.message}` }],
+          isError: true
+        };
+      }
+    }
+  );
+  server.tool(
+    "taskforge_start",
+    "Create a worktree and branch for a task and begin working on it",
+    {
+      taskId: z3.string(),
+      force: z3.boolean().optional().default(false),
+      json: z3.boolean().optional().default(false)
+    },
+    async (args) => {
+      try {
+        const opts = { force: args.force ?? false, json: args.json ?? false };
+        const output = await captureStdout(() => cmdStart(args.taskId, opts));
+        return { content: [{ type: "text", text: output.trim() }] };
+      } catch (err) {
+        return {
+          content: [{ type: "text", text: `Error: ${err.message}` }],
+          isError: true
+        };
+      }
+    }
+  );
+  server.tool(
+    "taskforge_done",
+    "Mark a task as completed and optionally clean up its worktree",
+    {
+      taskId: z3.string(),
+      cleanup: z3.boolean().optional().default(false),
+      deleteBranch: z3.boolean().optional().default(false),
+      json: z3.boolean().optional().default(false)
+    },
+    async (args) => {
+      try {
+        const opts = {
+          cleanup: args.cleanup ?? false,
+          deleteBranch: args.deleteBranch ?? false,
+          json: args.json ?? false
+        };
+        const output = await captureStdout(() => cmdDone(args.taskId, opts));
+        return { content: [{ type: "text", text: output.trim() }] };
+      } catch (err) {
+        return {
+          content: [{ type: "text", text: `Error: ${err.message}` }],
+          isError: true
+        };
+      }
+    }
+  );
+  server.tool(
+    "taskforge_checkpoint",
+    "Create a commit on the current task branch with the given message",
+    {
+      taskId: z3.string(),
+      message: z3.string()
+    },
+    async (args) => {
+      try {
+        const output = await captureStdout(() => cmdCheckpoint(args.taskId, args.message));
+        return { content: [{ type: "text", text: output.trim() || `Checkpoint created for ${args.taskId}.` }] };
+      } catch (err) {
+        return {
+          content: [{ type: "text", text: `Error: ${err.message}` }],
+          isError: true
+        };
+      }
+    }
+  );
+  server.tool(
+    "taskforge_gates",
+    "Run all configured verification gates (typecheck, lint, build, test)",
+    {
+      json: z3.boolean().optional().default(false)
+    },
+    async (args) => {
+      try {
+        const success2 = await cmdGates({ json: args.json ?? false });
+        return { content: [{ type: "text", text: success2 ? "All gates passed." : "Some gates failed." }] };
+      } catch (err) {
+        return {
+          content: [{ type: "text", text: `Error: ${err.message}` }],
+          isError: true
+        };
+      }
+    }
+  );
 }
 
 // src/cli.ts
@@ -7926,7 +7821,7 @@ program.command("release <taskId>").description("Voluntarily release a task clai
 program.command("reject <taskId> <reason>").description("Mark a task as rejected (obsolete, won't implement)").option("--json", "Output in JSON format").action((taskId, reason, opts) => wrapWithAudit("reject", [taskId, reason], opts, () => cmdReject(taskId, reason, opts))());
 program.command("validate-state").description("Validate task-state for invariant violations").option("--json", "Output in JSON format").option("--strict", "Exit with non-zero status on any warnings or errors (for CI)").action(
   (opts) => wrapWithAudit("validate-state", [], opts, async () => {
-    const { cmdValidateState } = await import("./validate-state-O4EK56IY.js");
+    const { cmdValidateState } = await import("./validate-state-MI4DZKEZ.js");
     await cmdValidateState(opts);
   })()
 );
@@ -7968,6 +7863,11 @@ program.command("submit <taskId>").description("Push the task branch").action(
 program.command("pr <taskId>").description("Create a PR for the task").action(
   (taskId) => wrapWithAudit("pr", [taskId], {}, async () => {
     await cmdPr(taskId);
+  })()
+);
+program.command("mcp").description("Start a Model Context Protocol (MCP) server for TaskForge").option("--config <path>", "Path to config directory").option("--json", "Output in JSON format").action(
+  (opts) => wrapWithAudit("mcp", [], opts, async () => {
+    await cmdMcp({ config: opts.config, json: opts.json });
   })()
 );
 var guard = program.command("guard").description("Manage the mutation boundary");
