@@ -62,10 +62,19 @@ export async function cmdGuardStatus(opts: GuardStatusOptions = {}): Promise<voi
   };
 
   if (opts.json) {
-    writeResult(successResult({
+    const diagnostics: { level: "info"; message: string }[] = [];
+    diagnostics.push({ level: "info", message: `Denied commands (${DENIED_GIT_COMMANDS.length}): ${DENIED_GIT_COMMANDS.join(", ")}` });
+    diagnostics.push({ level: "info", message: `Read-only commands (${READ_ONLY_GIT_COMMANDS.length}): ${READ_ONLY_GIT_COMMANDS.join(", ")}` });
+    for (const w of warningsList) {
+      diagnostics.push({ level: "info", message: `⚠ ${w}` });
+    }
+
+    const result = successResult({
       command: "guard:status",
       guidance: `Mutation guard: ${status.managed ? "active" : "inactive"}`,
-    }), opts.json);
+    });
+    result.diagnostics = diagnostics;
+    writeResult(result, opts.json);
     return;
   }
 
@@ -111,9 +120,9 @@ export async function cmdGuardOverride(
   if (!task) throw new TaskNotFoundError(taskId);
 
   // Check that the caller is a doctor
-  const actor = process.env.TASKFORGE_ACTOR;
+  const actor = process.env.TASKFORCE_ACTOR;
   if (actor !== "doctor") {
-    const msg = "Only doctor agents may issue mutation overrides. Set TASKFORGE_ACTOR=doctor.";
+    const msg = "Only doctor agents may issue mutation overrides. Set TASKFORCE_ACTOR=doctor.";
     if (opts.json) {
       writeResult(failedResult({ command: "guard:override", taskId, error: msg, code: "UNAUTHORIZED" }), opts.json);
       return;
