@@ -6,8 +6,6 @@ priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 88cbb3df47
-claimed_at: '2026-06-10 03:58:47'
 
 branch: agent/TASK-275-fix-mcp-capturestdout-for-node-24-getter--88cbb3df47
 ---
