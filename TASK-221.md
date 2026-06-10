@@ -6,8 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: c6fcc30df3
-claimed_at: '2026-06-09 03:19:42'
 context_hash: c920478ff4788012
 ---
 
