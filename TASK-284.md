@@ -1,7 +1,7 @@
 ---
 id: TASK-284
 type: Feature
-status: Submitted
+status: Review
 priority: P1
 agentRole: Implementer
 riskLevel: Low
@@ -9,7 +9,6 @@ humanInterventionRequired: false
 assignee: e94f2aef13
 claimed_at: '2026-06-10 22:31:05'
 context_hash: 24c64b5cba799406
-spec_hash: 4e9a6a7949076781
 branch: agent/TASK-284-implement-structured-taskdocument-model--e94f2aef13
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-284
 ---
