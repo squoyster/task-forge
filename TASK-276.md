@@ -10,6 +10,7 @@ assignee: 6d2c4e6935
 claimed_at: '2026-06-10 12:49:22'
 context_hash: 58d6f9d818aa1c4f
 branch: agent/TASK-276-implement-taskforge-update-command-for-t--6d2c4e6935
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-276
 ---
 
 # TASK-276: Implement taskforge update command for task frontmatter field updates
@@ -25,6 +26,9 @@ Implement taskforge update <taskId> for setting arbitrary frontmatter fields (--
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-10T00:00:00Z System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-276
 
 ### 2026-06-10T00:00:00Z System
 - Task claimed via taskforge start TASK-276
