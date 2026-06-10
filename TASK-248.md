@@ -6,6 +6,7 @@ priority: P1
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
+spec_hash: 8db2649edadf5099
 branch: agent/TASK-248-fix-session-ownership-mismatch-after-swe--2012cb0590
 ---
 

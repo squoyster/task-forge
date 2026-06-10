@@ -6,6 +6,7 @@ priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: a38b6871832ad6df
 branch: agent/TASK-006-dependency-tracking
 worktree: ../worktrees/TASK-006
 ---

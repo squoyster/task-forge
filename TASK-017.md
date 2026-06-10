@@ -6,6 +6,7 @@ priority: P0
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
+spec_hash: d9c1d138f49a2158
 ---
 
 # TASK-017: Add Lifecycle JSON Contracts

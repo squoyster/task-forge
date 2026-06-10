@@ -9,6 +9,7 @@ humanInterventionRequired: false
 dependsOn:
   - TASK-152
 context_hash: 3a03a0322eb9729c
+spec_hash: 3b5eded354223ff7
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-153
 override_reason: >-
   AC satisfied: typecheck, build, and all 11 plugin tests pass; pre-existing

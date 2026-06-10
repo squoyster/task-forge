@@ -6,6 +6,7 @@ priority: P1
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
+spec_hash: 42416c3bf96bde55
 ---
 
 # TASK-011: Merge feature branches into main

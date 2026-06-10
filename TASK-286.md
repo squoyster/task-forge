@@ -6,6 +6,7 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: e2d5a194ff172030
 ---
 
 # TASK-286: Make checkpoint results atomic with audit log side effects

@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: 454d025409
 claimed_at: '2026-06-10 23:13:41'
 context_hash: 24c64b5cba799406
+spec_hash: 8a4f3864c8d37cb5
 branch: agent/TASK-288-normalize-malformed-task-files-created-b--454d025409
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-288
 ---

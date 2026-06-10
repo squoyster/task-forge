@@ -9,6 +9,7 @@ humanInterventionRequired: false
 dependsOn:
   - TASK-152
 context_hash: e9736a6f1ffcde5b
+spec_hash: a17da83edd3727c0
 ---
 # Add Recursive Secret Redaction for Audit Events
 

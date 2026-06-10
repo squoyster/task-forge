@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: 6427c04555b70d56
+spec_hash: 63e594ca128034a5
 ---
 
 # TASK-231: Implement distributed agent registry with heartbeat tracking and crash recovery

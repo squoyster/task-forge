@@ -9,6 +9,7 @@ humanInterventionRequired: false
 dependsOn:
   - TASK-152
 context_hash: 3a03a0322eb9729c
+spec_hash: cd53448511fd9816
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-154
 override_reason: >-
   AC already satisfied by existing code; added explicit test; pre-existing

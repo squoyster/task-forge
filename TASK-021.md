@@ -6,6 +6,7 @@ priority: P0
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
+spec_hash: f62f07f567b3af47
 ---
 
 # TASK-021: Harden Status Semantics — Centralize, Normalize, Keep Human-Readable Canonical Values

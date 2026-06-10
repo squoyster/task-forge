@@ -6,6 +6,7 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: 9461d261447d8757
 ---
 
 # TASK-287: Fix checkpoint and submit ownership resolution outside task worktrees

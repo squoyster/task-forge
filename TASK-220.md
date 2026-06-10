@@ -6,6 +6,7 @@ priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: 60417e49b77d6099
 ---
 
 # TASK-220: Implement validate-state --strict flag with non-zero exit on warnings

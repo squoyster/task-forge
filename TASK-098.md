@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: 8c607774d14d0be5
+spec_hash: f1b5e900c2187ec0
 ---
 
 # TASK-098: Fix taskforge checkpoint/submit/diff from within agent worktrees

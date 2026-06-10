@@ -6,6 +6,7 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: 655dcb7fce27dee5
 ---
 
 # TASK-289: Archive terminal audit history into task-state and ignore live audit logs

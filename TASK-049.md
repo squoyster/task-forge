@@ -9,6 +9,7 @@ humanInterventionRequired: true
 dependsOn:
   - TASK-046
 context_hash: 27705145f76d1ff7
+spec_hash: 2e5f7076c57e05b5
 ---
 
 # TASK-049: Branch Protection / Ruleset Guidance for `task-state`

@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: c920478ff4788012
+spec_hash: df1a8a49197e9b93
 branch: agent/TASK-241-result-schema-wiring--current
 ---
 

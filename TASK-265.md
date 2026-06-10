@@ -6,6 +6,7 @@ priority: P1
 agentRole: Planner
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: ad13fd7b7c245459
 ---
 
 # TASK-265: STANDARDIZE AGENT COMPLETION PROTOCOL AND STATUS LANGUAGE

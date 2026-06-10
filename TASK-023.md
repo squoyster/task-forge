@@ -6,6 +6,7 @@ priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: 4b0dee71207c6d26
 ---
 
 # TASK-023: Update README/tasks Docs to Mark task-state as Authoritative

@@ -11,6 +11,7 @@ dependsOn:
   - TASK-136
   - TASK-137
 context_hash: 2586a35be56df0c8
+spec_hash: a06f329f75095fce
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-138
 ---
 # Add Structured Override Metadata for Forced Completion

@@ -6,6 +6,7 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: 8a295a3bff60e1c4
 ---
 
 # TASK-223: Wire structured nextActions to all command JSON and human-readable outputs

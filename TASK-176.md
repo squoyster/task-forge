@@ -6,6 +6,7 @@ priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: 110fd470f238db28
 ---
 # Add Documentation for Command Next-Action Semantics
 

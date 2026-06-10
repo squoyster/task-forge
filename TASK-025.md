@@ -6,6 +6,7 @@ priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: 6a3e300dd76b7734
 ---
 
 # TASK-025: Add Structured Blocker Fields

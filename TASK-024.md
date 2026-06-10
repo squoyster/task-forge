@@ -6,6 +6,7 @@ priority: P2
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
+spec_hash: 034114b36abf68cf
 ---
 
 # TASK-024: Add `claim` Command — Separate Claim Primitive
