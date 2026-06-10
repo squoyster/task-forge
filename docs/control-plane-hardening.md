@@ -2,7 +2,7 @@
 
 ## Threat Model
 
-TaskForge CLI guardrails and `.doctor-lock` are **cooperative** — they rely on agents voluntarily using the CLI. An agent with raw filesystem or git access can bypass them. Hard enforcement requires repository permissions, branch protection, or a broker service.
+TaskForge CLI guardrails and `.doctor-lock` are **cooperative** — they rely on agents voluntarily using the CLI. An agent with raw filesystem or git access can bypass them. Hard enforcement requires repository permissions, branch protection, or a broker service. See `docs/workflow.md` for the normal and doctor-mode workflow.
 
 ### Attack Surface
 
@@ -10,7 +10,7 @@ TaskForge CLI guardrails and `.doctor-lock` are **cooperative** — they rely on
 |--------|------|------------|
 | Direct edit of `task-state/*.md` | High — bypasses all validation | Branch protection, CI validation |
 | Raw `git push` to `task-state` | High — bypasses ownership, gates | Restrict push access |
-| `rm .doctor-lock` | Medium — ignores recovery pause | Branch protection, verify in CI |
+| `rm .doctor-lock` | Medium — ignores recovery pause | Doctor/human only after strict validation; branch protection and CI validation |
 | `git push --force` to task-state | Critical — destroys history | Block force pushes |
 | Manual `git commit` with invalid state | Medium — corrupts invariants | `validate-state` in CI |
 
@@ -102,7 +102,7 @@ jobs:
 If branch protection blocks legitimate recovery:
 
 1. Human/admin temporarily disables push restriction on `task-state`
-2. Recovery bot creates `.doctor-lock`, fixes state, removes lock
+2. Recovery bot creates `.doctor-lock`, fixes state, verifies `taskforge validate-state --strict --json`, then removes lock or completes the recovery task
 3. Human/admin re-enables push restriction
 4. All agents pull and resume
 

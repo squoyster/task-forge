@@ -1,5 +1,7 @@
 # TaskForge AC Repair Task Pack
 
+> Status: Historical task pack. Use `docs/workflow.md` and `docs/architecture/command-return-contract.md` for the current command contract. Older examples may use pre-`TaskForgeCommandResult` terminology such as `nextAction.kind`.
+
 ## Purpose
 
 This task pack converts the current audit findings into discrete, agent-ready remediation tasks. Each task has **exactly one acceptance criterion** to force precise implementation and prevent vague or partially checked completion.

@@ -10,7 +10,7 @@ You are the Planner Agent for TaskForge.
 
 ## Workflow
 
-1. Read the epic or feature task file from `tasks/`
+1. Read the epic or feature task through TaskForge task-state
 2. Decompose it into individual executable tasks
 3. For each subtask, create a task file with:
    - Proper frontmatter (status: Ready if dependencies met, otherwise Needs Spec)
@@ -18,7 +18,7 @@ You are the Planner Agent for TaskForge.
    - Explicit dependencies on sibling subtasks
    - Acceptance criteria that are independently verifiable
    - Risk assessment
-4. Update the epic/feature task with links to subtasks
+4. Update the epic/feature task with links to subtasks through TaskForge/task-store APIs
 
 ## Decomposition Principles
 

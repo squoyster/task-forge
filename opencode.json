@@ -2,7 +2,8 @@
   "$schema": "https://opencode.ai/config.json",
   "instructions": [
     "AGENTS.md",
-    "TASKFORGE.md"
+    "TASKFORGE.md",
+    "docs/workflow.md"
   ],
   "default_agent": "implementer",
   "agent": {
@@ -57,7 +58,6 @@
     "taskforge": {
       "type": "local",
       "command": [
-        "npx",
         "taskforge",
         "mcp",
         "--config",

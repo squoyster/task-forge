@@ -2,6 +2,8 @@
 
 A repo-centered task management and execution system for agentic software development.
 
+> Status: Historical full specification snapshot. Use `docs/workflow.md` plus the live CLI for current workflow details.
+
 ## Core Mission
 
 TaskForge exists to manage software work for an agentic coding team. It combines:
@@ -475,7 +477,7 @@ Before `next`, `claim`, or `start`, the system enforces:
 
 ### Doctor Mode
 
-When `taskforge doctor --fix` detects critical inconsistencies, it creates a `.doctor-lock` file and recovery task. All normal agents pause. Only the recovery agent may work the recovery task. Completing it removes the lock.
+Doctor mode is explicit. `TASKFORGE_ACTOR=doctor taskforge doctor --lock --reason "..."` creates a `.doctor-lock` file. `TASKFORGE_ACTOR=doctor taskforge doctor --fix --json` applies automatic repairs where available, and `taskforge agents --recover --json` marks stale registry entries as crashed. All normal agents pause while the lock exists. Release the lock only after `taskforge validate-state --strict --json` passes; prefer completing the recovery task with `taskforge done TASK-ID` when one exists.
 
 ### Worktree Path Qualification
 

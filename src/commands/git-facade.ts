@@ -10,7 +10,7 @@ import type { GitHubConfig } from "../integrations/github/types.js";
 import type { Task } from "../core/task.js";
 import { logInfo, logHeader, logSuccess, logWarn, logError } from "../util/logging.js";
 import { writeResult } from "../util/write-command-result.js";
-import { successResult, noopResult } from "../core/result-builder.js";
+import { successResult, noopResult, failedResult } from "../core/result-builder.js";
 import { checkpointStateMachine, submitStateMachine } from "../core/command-states.js";
 import { getDefaultGuidanceAdapter } from "../core/guidance-adapter.js";
 
@@ -24,10 +24,25 @@ export async function cmdDiff(taskId: string, json = false): Promise<void> {
   const repoRoot = getRepoRoot();
   const task = requireTask(taskId);
 
-  assertTaskOwnership(task, repoRoot);
-
   if (!task.worktree) {
     throw new Error(`No worktree found for ${taskId}. Run 'taskforge start ${taskId}' first.`);
+  }
+
+  try {
+    await assertTaskOwnership(task, task.worktree);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    writeResult(failedResult({
+      command: "diff",
+      taskId,
+      error: message,
+      code: "OWNERSHIP_MISMATCH",
+      nextCommands: [
+        { command: `taskforge resume ${taskId}`, purpose: "Enter the owning task workspace", when: "Before reviewing the diff", allowedFor: "all", priority: 1 },
+        { command: `taskforge inspect ${taskId} --json`, purpose: "Inspect task ownership and workspace state", when: "If ownership is unclear", allowedFor: "all", priority: 2 },
+      ],
+    }), json);
+    return;
   }
 
   logHeader(`Diff: ${taskId}`);

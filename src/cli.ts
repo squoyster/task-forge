@@ -443,8 +443,13 @@ program
 program
   .command("doctor")
   .description("Run diagnostic checks on repo and task-state health")
+  .option("--check", "Run diagnostics only (alias for default behavior)")
+  .option("--fix", "Apply doctor-mode automatic repairs")
+  .option("--lock", "Acquire doctor lock for recovery")
+  .option("--reason <text>", "Reason for doctor lock")
+  .option("--ttl-hours <hours>", "Doctor lock TTL in hours", (value) => Number(value))
   .option("--json", "Output in JSON format")
-  .action((opts: { json?: boolean }) => wrapWithAudit("doctor", [], opts, () => cmdDoctor(opts))());
+  .action((opts: { json?: boolean; check?: boolean; fix?: boolean; lock?: boolean; reason?: string; ttlHours?: number }) => wrapWithAudit("doctor", [], opts, () => cmdDoctor(opts))());
 
 program
   .command("config-validate")
