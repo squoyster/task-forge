@@ -1,7 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_PATH="${BASH_SOURCE[0]}"
+while [ -L "$SCRIPT_PATH" ]; do
+  SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd -P)"
+  TARGET="$(readlink "$SCRIPT_PATH")"
+  case "$TARGET" in
+    /*) SCRIPT_PATH="$TARGET" ;;
+    *) SCRIPT_PATH="$SCRIPT_DIR/$TARGET" ;;
+  esac
+done
+SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd -P)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # Source-first launcher for local checkouts.
