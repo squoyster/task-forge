@@ -1,14 +1,11 @@
-import fs from "node:fs";
-import matter from "gray-matter";
 import { loadTaskById } from "../core/task-store.js";
 import { pullTaskState } from "../core/git.js";
 import { withTaskStateTransaction } from "../core/task-state-transaction.js";
 import { TaskNotFoundError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
-import { logSuccess, logWarn } from "../util/logging.js";
+import { logSuccess } from "../util/logging.js";
 import { writeResult } from "../util/write-command-result.js";
 import { successResult, failedResult } from "../core/result-builder.js";
-import type { ParsedTask } from "../core/task-store.js";
 
 /**
  * Fields that are managed by other TaskForge commands and must not be
@@ -185,7 +182,7 @@ export async function cmdUpdate(
           const rawValue = values[i];
           const coerced = coerceValue(rawValue);
 
-          (fresh as Record<string, unknown>)[field] = coerced;
+          (fresh as unknown as Record<string, unknown>)[field] = coerced;
         }
 
         tx.updateTask(fresh);
