@@ -19,7 +19,7 @@ export interface StateValidationResult {
   warnings: StateValidationIssue[];
 }
 
-export function validateTaskState(tasks: ParsedTask[]): StateValidationResult {
+export function validateTaskState(tasks: ParsedTask[], context?: ParsedTask[]): StateValidationResult {
   const errors: StateValidationIssue[] = [];
   const warnings: StateValidationIssue[] = [];
   const ids = new Set<string>();
@@ -77,8 +77,8 @@ export function validateTaskState(tasks: ParsedTask[]): StateValidationResult {
     }
   }
 
-  // Broken dependsOn references
-  const allIds = new Set(tasks.map((t) => t.id));
+  // Broken dependsOn references — use context (all tasks) for ID resolution when scoped
+  const allIds = new Set((context ?? tasks).map((t) => t.id));
   for (const t of tasks) {
     if (t.dependsOn) {
       for (const dep of t.dependsOn) {
@@ -89,11 +89,12 @@ export function validateTaskState(tasks: ParsedTask[]): StateValidationResult {
     }
   }
 
-  // Circular dependencies
+  // Circular dependencies — use context for full-task resolution when scoped
+  const allTasks = context ?? tasks;
   for (const t of tasks) {
     if (t.dependsOn) {
       for (const dep of t.dependsOn) {
-        const depTask = tasks.find((d) => d.id === dep);
+        const depTask = allTasks.find((d) => d.id === dep);
         if (depTask?.dependsOn?.includes(t.id)) {
           errors.push({ severity: "error", code: "CIRCULAR_DEPENDENCY", taskId: t.id, message: `Circular dependency with ${dep}` });
         }
