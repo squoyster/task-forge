@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: ae27a3ceef
 claimed_at: '2026-06-10 17:40:40'
 context_hash: d4278186682610d7
+spec_hash: 05514f31eab04de2
 branch: agent/TASK-280-align-agent-workflow-documentation-and-o--ae27a3ceef
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-280
 ---

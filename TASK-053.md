@@ -6,6 +6,7 @@ priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: cb37150591764028
 ---
 
 # TASK-053: Fix TASK-045 dependsOn null + remove committed analysis doc

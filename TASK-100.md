@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: 8c607774d14d0be5
+spec_hash: b880798b0d48cf23
 branch: agent/TASK-100-fix-start-command-not-persisting-branch--2d36eb6374
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-100
 ---

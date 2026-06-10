@@ -6,6 +6,7 @@ priority: P2
 agentRole: Planner
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: c1fb7304a870c063
 ---
 
 # TASK-266: RECORD ARCHITECTURE DECISION FOR AGENTIC REPOSITORY CONTROL

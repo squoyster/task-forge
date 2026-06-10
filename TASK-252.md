@@ -6,6 +6,7 @@ priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: 8141585f95242787
 branch: agent/TASK-252-normal-agents-cannot-clean-up-done-task--31be71bad1
 ---
 

@@ -6,6 +6,7 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: 2e7fc293318e91c3
 ---
 
 # TASK-239: Enforce worktree-only edits, auto-pull on advancement, and block on pending PRs

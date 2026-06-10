@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: 27705145f76d1ff7
+spec_hash: 4228dcdf9e9afecc
 ---
 
 # TASK-055: Fold Git Operations into TaskForge Commands

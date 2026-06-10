@@ -6,6 +6,7 @@ priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: 86d584c82b7437fb
 branch: agent/TASK-008-command-test-coverage
 worktree: ../worktrees/TASK-008
 ---

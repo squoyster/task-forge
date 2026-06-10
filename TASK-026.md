@@ -6,6 +6,7 @@ priority: P2
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
+spec_hash: ee2b80d15955fab4
 ---
 
 # TASK-026: Safe Sweep with Dry-Run and Worktree Classification

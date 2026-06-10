@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: 8c607774d14d0be5
+spec_hash: e01a6b0476281a24
 ---
 
 # TASK-095: Add cautionary qualifier to unlock --force message

@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
 context_hash: abc123def456
+spec_hash: b666920036614f74
 ---
 # Replace Direct gh Usage in PR Command
 
