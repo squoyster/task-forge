@@ -115,7 +115,7 @@ var opencodeAdapter = {
     installAgentsMd(ctx.projectRoot, ctx.dryRun);
     const { installOpenCodeConfig } = await import("./opencode-config-Q5FF63TP.js");
     installOpenCodeConfig(ctx.projectRoot, ctx.policy, ctx.audit, ctx.guard, ctx.dryRun);
-    const { installGitHooks } = await import("./hooks-OXD7KHEY.js");
+    const { installGitHooks } = await import("./hooks-CLCPX7ET.js");
     installGitHooks({
       projectRoot: ctx.projectRoot,
       dryRun: ctx.dryRun,
@@ -140,4 +140,4 @@ var opencodeAdapter = {
 export {
   opencodeAdapter
 };
-//# sourceMappingURL=chunk-K4MANGZW.js.map
+//# sourceMappingURL=chunk-SA6FBVJ4.js.map

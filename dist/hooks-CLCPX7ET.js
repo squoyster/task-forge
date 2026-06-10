@@ -2,7 +2,7 @@ import {
   checkHooks,
   installGitHooks,
   setHooksPath
-} from "./chunk-SNMMMNDR.js";
+} from "./chunk-VNMY6ETS.js";
 import "./chunk-5JWCMI7A.js";
 import "./chunk-OPCWHN3N.js";
 export {
@@ -10,4 +10,4 @@ export {
   installGitHooks,
   setHooksPath
 };
-//# sourceMappingURL=hooks-OXD7KHEY.js.map
+//# sourceMappingURL=hooks-CLCPX7ET.js.map

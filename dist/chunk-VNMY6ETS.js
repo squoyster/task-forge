@@ -138,8 +138,11 @@ while read -r local_ref local_sha remote_ref remote_sha; do
     exit 1
   fi
 
-  # Block force push
+  # Block force push. Deleting a branch and creating a new remote branch are
+  # allowed; non-fast-forward updates to existing branches are not.
   if [[ "$local_sha" == "0000000000000000000000000000000000000000" ]]; then
+    :
+  elif [[ "$remote_sha" == "0000000000000000000000000000000000000000" ]]; then
     :
   else
     base=$(git merge-base "$local_sha" "$remote_sha" 2>/dev/null || echo "")
@@ -183,4 +186,4 @@ export {
   setHooksPath,
   checkHooks
 };
-//# sourceMappingURL=chunk-SNMMMNDR.js.map
+//# sourceMappingURL=chunk-VNMY6ETS.js.map

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import {
   opencodeAdapter
-} from "./chunk-K4MANGZW.js";
+} from "./chunk-SA6FBVJ4.js";
 import {
   ACTIVE_STATUSES,
   ALL_STATUSES,
@@ -57,7 +57,7 @@ import {
 import {
   checkHooks,
   run
-} from "./chunk-SNMMMNDR.js";
+} from "./chunk-VNMY6ETS.js";
 import {
   DENIED_GIT_COMMANDS,
   READ_ONLY_GIT_COMMANDS,
@@ -476,7 +476,7 @@ Initializing agent framework: ${agentFramework} (policy: ${policy})`);
 async function initAgentFramework(repoRoot, options) {
   let frameworkId = options.agentFramework;
   if (frameworkId === "auto") {
-    const { opencodeAdapter: opencodeAdapter2 } = await import("./opencode-V53MEGGL.js");
+    const { opencodeAdapter: opencodeAdapter2 } = await import("./opencode-S5C5OHJS.js");
     const detection = await opencodeAdapter2.detect(repoRoot);
     frameworkId = detection.detected ? "opencode" : "generic";
     logInfo(`Auto-detected framework: ${frameworkId}`);
