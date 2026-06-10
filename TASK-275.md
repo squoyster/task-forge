@@ -1,7 +1,7 @@
 ---
 id: TASK-275
 type: Task
-status: Implementation Complete
+status: Verify
 priority: P2
 agentRole: Implementer
 riskLevel: Low
