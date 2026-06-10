@@ -6,8 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: e94f2aef13
-claimed_at: '2026-06-10 22:31:05'
 context_hash: 24c64b5cba799406
 branch: agent/TASK-284-implement-structured-taskdocument-model--e94f2aef13
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-284
@@ -56,6 +54,9 @@ Serialization changes can churn task markdown if they leak into ordinary lifecyc
 Auto-continue unless a stopping condition occurs.
 
 ## Agent Notes
+
+### 2026-06-10T00:00:00Z System
+- Task unlocked (authorized: doctor) — previous claim was held by session "e94f2aef13"
 
 ### 2026-06-10T00:00:00Z System
 - Task updated via taskforge update
