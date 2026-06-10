@@ -1,7 +1,7 @@
 ---
 id: TASK-276
 type: Feature
-status: Merge Ready
+status: Verify
 priority: P0
 agentRole: Implementer
 riskLevel: Low
