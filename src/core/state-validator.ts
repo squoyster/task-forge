@@ -1,4 +1,5 @@
 import type { ParsedTask } from "./task-store.js";
+import { findDuplicateStructuralSections } from "./task-store.js";
 import { STATUS } from "../util/status-constants.js";
 import { TaskForgeCommandResultSchema, STANDARD_PROHIBITED_ACTIONS } from "./command-result.js";
 import { NEXT_COMMAND_MAPS } from "./next-command-maps.js";
@@ -69,6 +70,17 @@ export function validateTaskState(tasks: ParsedTask[]): StateValidationResult {
     // Self-dependency
     if (t.dependsOn?.includes(t.id)) {
       errors.push({ severity: "error", code: "SELF_DEPENDENCY", taskId: t.id, message: "Task depends on itself" });
+    }
+
+    const duplicateSections = findDuplicateStructuralSections(t.body);
+    if (duplicateSections.length > 0) {
+      warnings.push({
+        severity: "warning",
+        code: "DUPLICATE_TASK_SECTIONS",
+        taskId: t.id,
+        message: `Duplicate structural sections: ${duplicateSections.join(", ")}`,
+        suggestedFix: "Normalize the task markdown so each structural section appears at most once",
+      });
     }
 
     // Branch pattern

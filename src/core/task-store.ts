@@ -9,6 +9,21 @@ export interface ParsedTask extends Task {
   filePath: string;
 }
 
+const STRUCTURAL_SECTION_HEADINGS = [
+  "Goal",
+  "Background",
+  "Scope",
+  "Acceptance Criteria",
+  "Test / Verification Command",
+  "Expected Output / Behavior",
+  "Dependencies",
+  "Risks",
+  "Continuation Policy",
+  "Agent Notes",
+  "Result",
+  "Links",
+];
+
 export function parseTaskFile(filePath: string): ParsedTask | null {
   if (!fs.existsSync(filePath)) return null;
 
@@ -240,6 +255,22 @@ export function hasUncheckedAcceptanceCriteria(body: string): boolean {
   if (!match) return false;
   const lines = match[1].split("\n");
   return lines.some((line) => /^\s*- \[ \]\s+\S/.test(line));
+}
+
+export function findDuplicateStructuralSections(body: string): string[] {
+  const counts = new Map<string, number>();
+  const headingSet = new Set(STRUCTURAL_SECTION_HEADINGS);
+
+  for (const match of body.matchAll(/^##\s+(.+?)\s*$/gm)) {
+    const heading = match[1].trim();
+    if (!headingSet.has(heading)) continue;
+    counts.set(heading, (counts.get(heading) ?? 0) + 1);
+  }
+
+  return [...counts.entries()]
+    .filter(([, count]) => count > 1)
+    .map(([heading]) => heading)
+    .sort();
 }
 
 export function getNextId(repoRoot?: string): string {
