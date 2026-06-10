@@ -39,6 +39,7 @@ import { cmdPromote, type PromoteOptions } from "./commands/promote.js";
 import { cmdDiff, cmdCheckpoint, cmdSubmit, cmdPr } from "./commands/git-facade.js";
 import { cmdGuardStatus, cmdGuardOverride } from "./commands/guard-cmd.js";
 import { cmdMcp } from "./commands/mcp.js";
+import { cmdUpdate, type UpdateOptions } from "./commands/update.js";
 import { TaskForgeError } from "./core/errors.js";
 import { logError } from "./util/logging.js";
 import { recordCliInvocation } from "./core/cli-audit.js";
@@ -304,6 +305,21 @@ program
     return wrapWithAudit("new", [title], opts, () => cmdNew(title, newOpts))();
   });
 
+program
+  .command("update <taskId>")
+  .description("Update task frontmatter field(s)")
+  .option("--field <name>", "Field name to update (repeatable, pairs with --value)", collectField, [])
+  .option("--value <value>", "Field value to set (repeatable, pairs with --field)", collectValue, [])
+  .option("--json", "Output in JSON format")
+  .action((taskId: string, opts: { field?: string[]; value?: string[]; json?: boolean }) => {
+    const updateOpts: UpdateOptions = {
+      field: opts.field,
+      value: opts.value,
+      json: opts.json ?? false,
+    };
+    return wrapWithAudit("update", [taskId], opts, () => cmdUpdate(taskId, updateOpts))();
+  });
+
 // Dependency Steward commands
 const deps = program.command("deps").description("Dependency health management");
 
@@ -348,6 +364,20 @@ deps
   .command("summary")
   .description("Produce a dependency health summary")
   .action(wrapWithAudit("deps summary", [], {}, cmdDepsSummary));
+
+/**
+ * Commander option parser: accumulate repeated --field options into an array.
+ */
+function collectField(value: string, previous: string[]): string[] {
+  return previous.concat([value]);
+}
+
+/**
+ * Commander option parser: accumulate repeated --value options into an array.
+ */
+function collectValue(value: string, previous: string[]): string[] {
+  return previous.concat([value]);
+}
 
 /**
  * Wrap a command action with CLI invocation audit capture.

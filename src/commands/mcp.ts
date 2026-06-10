@@ -7,6 +7,7 @@ import { cmdGates } from "./gates.js";
 import { cmdStart, type StartOptions } from "./start.js";
 import { cmdDone, type DoneOptions } from "./done.js";
 import { cmdCheckpoint } from "../commands/git-facade.js";
+import { cmdUpdate, type UpdateOptions } from "../commands/update.js";
 import { loadConfig } from "../core/config.js";
 import { getRepoRoot } from "../util/paths.js";
 import { Writable } from "node:stream";
@@ -197,6 +198,34 @@ function registerTools(server: McpServer): void {
       try {
         const success = await cmdGates({ json: args.json ?? false });
         return { content: [{ type: "text" as const, text: success ? "All gates passed." : "Some gates failed." }] };
+      } catch (err) {
+        return {
+          content: [{ type: "text" as const, text: `Error: ${(err as Error).message}` }],
+          isError: true,
+        };
+      }
+    },
+  );
+
+  // taskforge_update - Update task frontmatter fields
+  server.tool(
+    "taskforge_update",
+    "Update one or more task frontmatter fields (use --field and --value for each field pair)",
+    {
+      taskId: z.string(),
+      field: z.string().describe("Field name to update (repeatable, pairs with value)"),
+      value: z.string().describe("Field value to set (repeatable, pairs with field)"),
+      json: z.boolean().optional().default(false),
+    },
+    async (args: { taskId: string; field: string | string[]; value: string | string[]; json?: boolean }) => {
+      try {
+        const opts: UpdateOptions = {
+          field: args.field,
+          value: args.value,
+          json: args.json ?? false,
+        };
+        const output = await captureStdout(() => cmdUpdate(args.taskId, opts));
+        return { content: [{ type: "text" as const, text: output.trim() || `Task ${args.taskId} updated.` }] };
       } catch (err) {
         return {
           content: [{ type: "text" as const, text: `Error: ${(err as Error).message}` }],
