@@ -18,7 +18,9 @@ Describe the desired outcome.
 
 ## Acceptance Criteria
 
-- [ ]
+- [x]  starts without crashing
+- [x] MCP tool invocations (next, status, start, done, checkpoint, gates) return results instead of throwing
+- [x] All existing tests still pass (744 tests)
 
 ## Agent Notes
 
