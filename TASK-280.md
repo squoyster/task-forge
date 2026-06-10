@@ -1,7 +1,7 @@
 ---
 id: TASK-280
 type: Documentation
-status: Merge Ready
+status: Verify
 priority: P1
 agentRole: Implementer
 riskLevel: Low
