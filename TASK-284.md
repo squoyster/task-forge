@@ -11,6 +11,7 @@ claimed_at: '2026-06-10 22:31:05'
 context_hash: 24c64b5cba799406
 spec_hash: 0578a855e0dd931a
 branch: agent/TASK-284-implement-structured-taskdocument-model--e94f2aef13
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-284
 ---
 # TASK-284: Implement structured TaskDocument model and restore task update command
 ## Goal
@@ -56,6 +57,9 @@ Serialization changes can churn task markdown if they leak into ordinary lifecyc
 Auto-continue unless a stopping condition occurs.
 
 ## Agent Notes
+
+### 2026-06-10T00:00:00Z System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-284
 
 ### 2026-06-10T00:00:00Z System
 - Task claimed via taskforge start TASK-284
