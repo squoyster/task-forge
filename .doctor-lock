@@ -1,0 +1,5 @@
+{
+  "reason": "repair stale agents and inconsistent task/worktree state",
+  "created": "2026-06-10T15:10:56.869Z",
+  "ttl_hours": 1
+}

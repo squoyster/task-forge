@@ -6,8 +6,6 @@ priority: P0
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
-assignee: b2c542a4c1
-claimed_at: '2026-05-22 03:26:03'
 ---
 
 # TASK-016: Normalize Task Status Values (Replaced)
@@ -98,6 +96,9 @@ Medium — touches many files with a value-level change. Tests catch most issues
 Auto-continue unless a stopping condition occurs.
 
 ## Agent Notes
+
+### 2026-06-10T00:00:00Z System
+- Task unlocked (authorized: doctor) — previous claim was held by session "b2c542a4c1"
 
 ### 2026-05-22 System
 - Task rejected: Replaced by TASK-021 — snake_case migration rejected in favor of human-readable canonical values
