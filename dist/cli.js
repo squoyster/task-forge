@@ -4,6 +4,7 @@ import {
 } from "./chunk-ACDCJVXE.js";
 import {
   ACTIVE_STATUSES,
+  ALL_STATUSES,
   ForceRequiresHumanOrDoctorError,
   STATUS,
   appendAgentNote,
@@ -32,7 +33,7 @@ import {
   validateTaskState,
   writeResult,
   writeTaskFile
-} from "./chunk-GFCBVGVF.js";
+} from "./chunk-27EHRPTH.js";
 import {
   checkUncommittedWorktrees,
   commitAndPushTaskState,
@@ -7093,6 +7094,132 @@ function hasDuplicateAcSections(body) {
   return matches !== null && matches.length > 1;
 }
 
+// src/commands/promote.ts
+var DEFAULT_FORWARD_PATH = {
+  [STATUS.INBOX]: STATUS.NEEDS_SPEC,
+  [STATUS.NEEDS_SPEC]: STATUS.READY,
+  [STATUS.READY]: STATUS.IN_PROGRESS,
+  [STATUS.IN_PROGRESS]: STATUS.IMPLEMENTATION_COMPLETE,
+  [STATUS.IMPLEMENTATION_COMPLETE]: STATUS.SUBMITTED,
+  [STATUS.SUBMITTED]: STATUS.REVIEW,
+  [STATUS.REVIEW]: STATUS.MERGE_READY,
+  [STATUS.MERGE_READY]: STATUS.VERIFY,
+  [STATUS.VERIFY]: STATUS.DONE
+};
+function resolveTargetStatus(currentStatus, toFlag) {
+  if (toFlag) {
+    const normalized = normalizeStatus(toFlag);
+    if (!ALL_STATUSES.includes(normalized)) {
+      return { error: `Unknown status: "${toFlag}". Valid statuses: ${ALL_STATUSES.join(", ")}` };
+    }
+    return { target: normalized, isDefault: false };
+  }
+  const defaultNext = DEFAULT_FORWARD_PATH[currentStatus];
+  if (!defaultNext) {
+    const allowed = getAllowedTransitions(currentStatus);
+    if (allowed.length === 0) {
+      return { error: `Task is in terminal status "${currentStatus}" \u2014 no forward transitions available.` };
+    }
+    const forward = allowed.find(
+      (s) => s !== STATUS.BLOCKED && s !== STATUS.DEFERRED && s !== STATUS.IN_PROGRESS
+    );
+    if (forward) {
+      return { target: forward, isDefault: true };
+    }
+    return { error: `No forward transition available from "${currentStatus}". Allowed: ${allowed.join(", ")}` };
+  }
+  return { target: defaultNext, isDefault: true };
+}
+async function cmdPromote(taskId, options = {}) {
+  const repoRoot = getRepoRoot();
+  const task = loadTaskById(taskId);
+  if (!task) {
+    if (options.json) {
+      writeResult(failedResult({ command: "promote", taskId, error: `Task ${taskId} not found`, code: "TASK_NOT_FOUND" }), options.json);
+      return;
+    }
+    throw new TaskNotFoundError(taskId);
+  }
+  const resolved = resolveTargetStatus(task.status, options.to);
+  if ("error" in resolved) {
+    if (options.json) {
+      writeResult(failedResult({ command: "promote", taskId, error: resolved.error, code: "INVALID_STATUS" }), options.json);
+      return;
+    }
+    logError(resolved.error);
+    return;
+  }
+  const { target: targetStatus, isDefault } = resolved;
+  const transitionError = validateTransition(task.status, targetStatus);
+  if (transitionError) {
+    const allowed = getAllowedTransitions(task.status);
+    if (options.json) {
+      const nextCommands = allowed.map((s) => ({
+        command: `taskforge promote ${taskId} --to "${s}"`,
+        purpose: `Advance task to "${s}"`,
+        when: "after invalid transition attempt",
+        allowedFor: "all",
+        priority: 1
+      }));
+      writeResult(failedResult({
+        command: "promote",
+        taskId,
+        error: transitionError,
+        code: "INVALID_TRANSITION",
+        nextCommands
+      }), options.json);
+      return;
+    }
+    logError(transitionError);
+    logSub(`Allowed transitions from "${task.status}": ${allowed.join(", ")}`);
+    return;
+  }
+  const current = parseTaskFile(task.filePath);
+  if (!current) {
+    throw new TaskNotFoundError(taskId);
+  }
+  const fromStatus = current.status;
+  current.status = targetStatus;
+  writeTaskFile(current);
+  await commitAndPushTaskState(repoRoot, `chore: promote ${taskId} \u2014 ${fromStatus} \u2192 ${targetStatus}`);
+  const nextAllowed = getAllowedTransitions(targetStatus);
+  const guidance = isDefault ? `Task ${taskId} promoted from "${fromStatus}" to "${targetStatus}".` : `Task ${taskId} promoted from "${fromStatus}" to "${targetStatus}".`;
+  if (options.json) {
+    writeResult(successResult({
+      command: "promote",
+      taskId,
+      guidance,
+      nextCommands: nextAllowed.length > 0 ? [
+        {
+          command: `taskforge promote ${taskId}`,
+          purpose: `Advance to next status from "${targetStatus}"`,
+          when: "after promotion",
+          allowedFor: "all",
+          priority: 1
+        },
+        {
+          command: `taskforge promote ${taskId} --to "${nextAllowed[0]}"`,
+          purpose: `Advance to "${nextAllowed[0]}"`,
+          when: "after promotion",
+          allowedFor: "all",
+          priority: 2
+        }
+      ] : []
+    }), options.json);
+    return;
+  }
+  logSuccess(`Task ${taskId} promoted`);
+  logSub(`  From: "${fromStatus}"`);
+  logSub(`  To:   "${targetStatus}"`);
+  if (nextAllowed.length > 0) {
+    logDivider();
+    logSub("Next allowed transitions:");
+    for (const s of nextAllowed) {
+      logSub(`  taskforge promote ${taskId} --to "${s}"`);
+    }
+  }
+}
+
 // src/commands/git-facade.ts
 function requireTask(taskId) {
   const task = loadTaskById(taskId);
@@ -7516,6 +7643,165 @@ async function cmdGuardOverride(taskId, command, reason, opts = {}) {
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z as z3 } from "zod";
+
+// src/commands/update.ts
+var PROTECTED_FIELDS = /* @__PURE__ */ new Set([
+  "id",
+  "status",
+  "assignee",
+  "claimed_at",
+  "branch",
+  "worktree",
+  "blocked_reason",
+  "blocked_by",
+  "blocked_since",
+  "block_category",
+  "context_hash",
+  "submitted_sha",
+  "submitted_at",
+  "pr_merged",
+  "pr_head_sha",
+  "pr_base_branch",
+  "override_reason",
+  "override_actor",
+  "override_timestamp",
+  "override_failed_gates"
+]);
+function isProtectedField(field) {
+  return PROTECTED_FIELDS.has(field);
+}
+function coerceValue(value) {
+  if (value === "true") return true;
+  if (value === "false") return false;
+  if (value === "null") return null;
+  if (value === "undefined") return void 0;
+  const num = Number(value);
+  if (!Number.isNaN(num) && String(num) === value.trim()) {
+    return num;
+  }
+  if (value.startsWith("[") && value.endsWith("]")) {
+    try {
+      return JSON.parse(value);
+    } catch {
+    }
+  }
+  if (value.startsWith("{") && value.endsWith("}")) {
+    try {
+      return JSON.parse(value);
+    } catch {
+    }
+  }
+  return value;
+}
+async function cmdUpdate(taskId, options = {}) {
+  const repoRoot = getRepoRoot();
+  const json = options.json ?? false;
+  await pullTaskState(repoRoot);
+  const task = loadTaskById(taskId);
+  if (!task) {
+    if (json) {
+      writeResult(failedResult({
+        command: "update",
+        taskId,
+        error: `Task ${taskId} not found`,
+        code: "TASK_NOT_FOUND"
+      }), json);
+      return;
+    }
+    throw new TaskNotFoundError(taskId);
+  }
+  const fields = [];
+  const values = [];
+  if (options.field && options.value) {
+    const fieldArr = Array.isArray(options.field) ? options.field : [options.field];
+    const valueArr = Array.isArray(options.value) ? options.value : [options.value];
+    if (fieldArr.length !== valueArr.length) {
+      if (json) {
+        writeResult(failedResult({
+          command: "update",
+          taskId,
+          error: "Number of --field options must match number of --value options",
+          code: "FIELD_VALUE_MISMATCH"
+        }), json);
+        return;
+      }
+      throw new Error("Number of --field options must match number of --value options");
+    }
+    for (let i = 0; i < fieldArr.length; i++) {
+      fields.push(fieldArr[i]);
+      values.push(valueArr[i]);
+    }
+  }
+  if (fields.length === 0) {
+    if (json) {
+      writeResult(failedResult({
+        command: "update",
+        taskId,
+        error: "No fields provided. Use --field <name> --value <value> to set fields.",
+        code: "NO_FIELDS"
+      }), json);
+      return;
+    }
+    throw new Error("No fields provided. Use --field <name> --value <value> to set fields.");
+  }
+  for (const field of fields) {
+    if (isProtectedField(field)) {
+      if (json) {
+        writeResult(failedResult({
+          command: "update",
+          taskId,
+          error: `Field "${field}" is protected and cannot be modified via taskforge update. Use the dedicated command instead.`,
+          code: "PROTECTED_FIELD"
+        }), json);
+        return;
+      }
+      throw new Error(
+        `Field "${field}" is protected and cannot be modified via taskforge update. Use the dedicated command instead.`
+      );
+    }
+  }
+  try {
+    await withTaskStateTransaction(
+      { command: `update ${taskId}`, maxRetries: 3 },
+      async (tx) => {
+        const fresh = tx.loadTask(taskId);
+        if (!fresh) throw new Error(`Task ${taskId} not found during transaction`);
+        for (let i = 0; i < fields.length; i++) {
+          const field = fields[i];
+          const rawValue = values[i];
+          const coerced = coerceValue(rawValue);
+          fresh[field] = coerced;
+        }
+        tx.updateTask(fresh);
+        tx.appendNote(taskId, "System", [
+          `Field(s) updated via taskforge update: ${fields.join(", ")}`
+        ]);
+      }
+    );
+  } catch (err) {
+    if (json) {
+      writeResult(failedResult({
+        command: "update",
+        taskId,
+        error: err instanceof Error ? err.message : String(err),
+        code: "TRANSACTION_FAILED"
+      }), json);
+      return;
+    }
+    throw err;
+  }
+  if (json) {
+    writeResult(successResult({
+      command: "update",
+      taskId,
+      guidance: `Task ${taskId} updated: ${fields.join(", ")}`
+    }), json);
+    return;
+  }
+  logSuccess(`Task ${taskId} updated: ${fields.join(", ")}`);
+}
+
+// src/commands/mcp.ts
 import { Writable } from "stream";
 async function captureStdout(fn) {
   const chunks = [];
@@ -7681,6 +7967,32 @@ function registerTools(server) {
       }
     }
   );
+  server.tool(
+    "taskforge_update",
+    "Update one or more task frontmatter fields (use --field and --value for each field pair)",
+    {
+      taskId: z3.string(),
+      field: z3.string().describe("Field name to update (repeatable, pairs with value)"),
+      value: z3.string().describe("Field value to set (repeatable, pairs with field)"),
+      json: z3.boolean().optional().default(false)
+    },
+    async (args) => {
+      try {
+        const opts = {
+          field: args.field,
+          value: args.value,
+          json: args.json ?? false
+        };
+        const output = await captureStdout(() => cmdUpdate(args.taskId, opts));
+        return { content: [{ type: "text", text: output.trim() || `Task ${args.taskId} updated.` }] };
+      } catch (err) {
+        return {
+          content: [{ type: "text", text: `Error: ${err.message}` }],
+          isError: true
+        };
+      }
+    }
+  );
 }
 
 // src/cli.ts
@@ -7744,6 +8056,10 @@ program.command("list").description("List and filter tasks").option("--status <s
   };
   return wrapWithAudit("list", [], opts, () => cmdList(listOpts))();
 });
+program.command("promote <taskId>").description("Advance a task through the status state machine").option("--to <status>", "Target status to promote to").option("--json", "Output in JSON format").action((taskId, opts) => {
+  const promoteOpts = { to: opts.to, json: opts.json ?? false };
+  return wrapWithAudit("promote", [taskId], opts, () => cmdPromote(taskId, promoteOpts))();
+});
 program.command("unlock <taskId>").description("Manually unlock a task (requires --force)").option("--force", "Force unlock the task").option("--json", "Output in JSON format").action((taskId, opts) => {
   const unlockOpts = { force: opts.force ?? false, json: opts.json ?? false };
   return wrapWithAudit("unlock", [taskId], opts, () => cmdUnlock(taskId, unlockOpts))();
@@ -7798,6 +8114,14 @@ program.command("new <title>").description("Create a new task file with auto-inc
   };
   return wrapWithAudit("new", [title], opts, () => cmdNew(title, newOpts))();
 });
+program.command("update <taskId>").description("Update task frontmatter field(s)").option("--field <name>", "Field name to update (repeatable, pairs with --value)", collectField, []).option("--value <value>", "Field value to set (repeatable, pairs with --field)", collectValue, []).option("--json", "Output in JSON format").action((taskId, opts) => {
+  const updateOpts = {
+    field: opts.field,
+    value: opts.value,
+    json: opts.json ?? false
+  };
+  return wrapWithAudit("update", [taskId], opts, () => cmdUpdate(taskId, updateOpts))();
+});
 var deps = program.command("deps").description("Dependency health management");
 deps.command("scan").description("Run broad dependency health checks").action(wrapWithAudit("deps scan", [], {}, cmdDepsScan));
 deps.command("audit").description("Run package-manager-native audit").option("--severity <level>", "Filter by severity level (critical, high, medium, low, info)").option("--create-tasks", "Automatically create tasks for found vulnerabilities").action((opts) => wrapWithAudit("deps audit", [], opts, () => cmdDepsAudit(opts.severity, opts.createTasks ?? false))());
@@ -7807,6 +8131,12 @@ deps.command("plan").description("Produce a dependency remediation plan").action
 deps.command("create-tasks").description("Create TaskForge dependency tasks from findings").action(wrapWithAudit("deps create-tasks", [], {}, cmdDepsCreateTasks));
 deps.command("pr").description("Create focused dependency update PRs for low-risk cases").action(wrapWithAudit("deps pr", [], {}, cmdDepsPr));
 deps.command("summary").description("Produce a dependency health summary").action(wrapWithAudit("deps summary", [], {}, cmdDepsSummary));
+function collectField(value, previous) {
+  return previous.concat([value]);
+}
+function collectValue(value, previous) {
+  return previous.concat([value]);
+}
 function wrapWithAudit(commandName, args, flags, fn) {
   return async () => {
     const startTime = Date.now();
@@ -7849,7 +8179,7 @@ program.command("release <taskId>").description("Voluntarily release a task clai
 program.command("reject <taskId> <reason>").description("Mark a task as rejected (obsolete, won't implement)").option("--json", "Output in JSON format").action((taskId, reason, opts) => wrapWithAudit("reject", [taskId, reason], opts, () => cmdReject(taskId, reason, opts))());
 program.command("validate-state").description("Validate task-state for invariant violations").option("--json", "Output in JSON format").option("--strict", "Exit with non-zero status on any warnings or errors (for CI)").action(
   (opts) => wrapWithAudit("validate-state", [], opts, async () => {
-    const { cmdValidateState } = await import("./validate-state-MI4DZKEZ.js");
+    const { cmdValidateState } = await import("./validate-state-FVOL3KSO.js");
     await cmdValidateState(opts);
   })()
 );
