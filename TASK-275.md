@@ -10,7 +10,6 @@ assignee: 88cbb3df47
 claimed_at: '2026-06-10 03:58:47'
 
 branch: agent/TASK-275-fix-mcp-capturestdout-for-node-24-getter--88cbb3df47
-worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-275
 ---
 
 # TASK-275: Fix MCP captureStdout for Node 24 getter-only process.stdout
