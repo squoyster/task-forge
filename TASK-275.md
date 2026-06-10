@@ -8,7 +8,7 @@ riskLevel: Low
 humanInterventionRequired: false
 
 branch: agent/TASK-275-fix-mcp-capturestdout-for-node-24-getter--88cbb3df47
-pr: 275
+pr: 29
 ---
 
 
