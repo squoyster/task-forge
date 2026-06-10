@@ -33,6 +33,7 @@ class TransactionImpl implements TaskStateTransaction {
   private tasks: Map<string, ParsedTask> = new Map();
   private notesAppended: Map<string, string[]> = new Map();
   private modified = false;
+  private modifiedTaskIds: Set<string> = new Set();
   private actor: string;
   private command: string;
 
@@ -52,9 +53,24 @@ class TransactionImpl implements TaskStateTransaction {
     return [...this.tasks.values()];
   }
 
+  /** Return only the tasks that were modified during this transaction.
+   *  If no tasks were modified, returns all tasks (defensive fallback). */
+  getModifiedTasks(): ParsedTask[] {
+    if (this.modifiedTaskIds.size === 0) {
+      return [...this.tasks.values()];
+    }
+    const result: ParsedTask[] = [];
+    for (const id of this.modifiedTaskIds) {
+      const task = this.tasks.get(id);
+      if (task) result.push(task);
+    }
+    return result;
+  }
+
   updateTask(task: ParsedTask): void {
     this.tasks.set(task.id, task);
     this.modified = true;
+    this.modifiedTaskIds.add(task.id);
   }
 
   appendNote(taskId: string, role: string, notes: string[]): void {
@@ -82,6 +98,7 @@ class TransactionImpl implements TaskStateTransaction {
     task.claimed_at = new Date().toISOString().replace("T", " ").replace(/\.\d+Z$/, "");
     if (task.status === STATUS.READY) task.status = STATUS.IN_PROGRESS;
     this.modified = true;
+    this.modifiedTaskIds.add(taskId);
   }
 
   clearClaim(taskId: string): void {
@@ -90,6 +107,7 @@ class TransactionImpl implements TaskStateTransaction {
     task.assignee = undefined;
     task.claimed_at = undefined;
     this.modified = true;
+    this.modifiedTaskIds.add(taskId);
   }
 
   commit(stateDir: string, message: string): Promise<void> {
@@ -144,8 +162,13 @@ export async function withTaskStateTransaction<T>(
     // Apply mutation
     const result = await mutate(tx);
 
-    // Validate invariants before commit
-    const validation = validateTaskState(tx.loadAllTasks());
+    // Validate invariants before commit — only check tasks that were modified
+    // Pre-existing invariant violations on unrelated tasks must not block the
+    // transaction. The full task list is passed as context so cross-task checks
+    // (broken dependency references) can still resolve all task IDs.
+    const modifiedTasks = tx.getModifiedTasks();
+    const allTasks = tx.loadAllTasks();
+    const validation = validateTaskState(modifiedTasks, allTasks);
     if (!validation.ok) {
       const details = validation.errors.map((e) => `[${e.code}] ${e.message}${e.taskId ? ` (${e.taskId})` : ""}`).join("; ");
       throw new Error(`Transaction aborted: invalid task-state — ${details}`);
