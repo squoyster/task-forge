@@ -22,7 +22,7 @@ export interface McpOptions {
  */
 async function captureStdout(fn: () => Promise<void>): Promise<string> {
   const chunks: Buffer[] = [];
-  const originalStdout = process.stdout;
+  const originalDescriptor = Object.getOwnPropertyDescriptor(process, "stdout");
 
   const capture = new Writable({
     write(chunk: Buffer, _encoding: BufferEncoding, callback: (error?: Error | null) => void) {
@@ -31,12 +31,20 @@ async function captureStdout(fn: () => Promise<void>): Promise<string> {
     },
   });
 
-  (process as unknown as Record<string, unknown>).stdout = capture as unknown as typeof process.stdout;
+  // Use Object.defineProperty to override the getter-only stdout property (Node 24+)
+  Object.defineProperty(process, "stdout", {
+    value: capture,
+    writable: true,
+    configurable: true,
+    enumerable: true,
+  });
 
   try {
     await fn();
   } finally {
-    (process as unknown as Record<string, unknown>).stdout = originalStdout;
+    if (originalDescriptor) {
+      Object.defineProperty(process, "stdout", originalDescriptor);
+    }
   }
 
   return Buffer.concat(chunks).toString("utf-8");
