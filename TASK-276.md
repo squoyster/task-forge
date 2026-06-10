@@ -29,6 +29,9 @@ Implement taskforge update <taskId> for setting arbitrary frontmatter fields (--
 - Cleanup: worktree and branch removed
 
 ### 2026-06-10T00:00:00Z System
+- Cleanup: worktree and branch removed
+
+### 2026-06-10T00:00:00Z System
 - Field(s) updated via taskforge update: riskLevel
 
 ### 2026-06-10T00:00:00Z System
