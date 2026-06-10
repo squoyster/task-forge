@@ -9,7 +9,7 @@ humanInterventionRequired: false
 
 branch: agent/TASK-275-fix-mcp-capturestdout-for-node-24-getter--88cbb3df47
 ---
-pr_url: https://github.com/squoyster/task-forge/pull/275
+pr: 275
 
 
 # TASK-275: Fix MCP captureStdout for Node 24 getter-only process.stdout
