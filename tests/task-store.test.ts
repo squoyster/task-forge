@@ -8,6 +8,7 @@ import {
   updateTaskStatus,
   updateTaskIssue,
   appendAgentNote,
+  findDuplicateStructuralSections,
   listTaskFiles,
   loadAllTasks,
   loadTaskById,
@@ -210,6 +211,56 @@ describe("writeTaskFile", () => {
     const readBack = parseTaskFile(fp);
     expect(readBack).not.toBeNull();
     expect(readBack!.dependsOn).toEqual(["TASK-001", "TASK-002"]);
+  });
+});
+
+describe("findDuplicateStructuralSections", () => {
+  it("reports duplicate canonical section headings", () => {
+    const duplicates = findDuplicateStructuralSections([
+      "# TASK-001: Test",
+      "",
+      "## Goal",
+      "",
+      "First goal block.",
+      "",
+      "## Goal",
+      "",
+      "Second goal block.",
+      "",
+      "## Acceptance Criteria",
+      "",
+      "- [x] One",
+      "",
+      "## Acceptance Criteria",
+      "",
+      "- [ ]",
+      "",
+      "## Notes",
+      "",
+      "Non-structural heading should be ignored.",
+    ].join("\n"));
+
+    expect(duplicates).toEqual(["Acceptance Criteria", "Goal"]);
+  });
+
+  it("returns an empty list when structural headings are unique", () => {
+    const duplicates = findDuplicateStructuralSections([
+      "# TASK-001: Test",
+      "",
+      "## Goal",
+      "",
+      "Do something useful.",
+      "",
+      "## Acceptance Criteria",
+      "",
+      "- [x] Done",
+      "",
+      "## Agent Notes",
+      "",
+      "- Started work",
+    ].join("\n"));
+
+    expect(duplicates).toEqual([]);
   });
 });
 
