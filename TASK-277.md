@@ -10,6 +10,7 @@ assignee: 1a3efa0c7b
 claimed_at: '2026-06-10 13:26:21'
 context_hash: 58d6f9d818aa1c4f
 branch: agent/TASK-277-fix-transaction-invariant-validation-to--1a3efa0c7b
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-277
 ---
 
 # TASK-277: Fix transaction invariant validation to only check affected tasks
@@ -27,6 +28,9 @@ This is needed because taskforge update will also fail on a dirty state without 
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-10T00:00:00Z System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-277
 
 ### 2026-06-10T00:00:00Z System
 - Task claimed via taskforge start TASK-277
