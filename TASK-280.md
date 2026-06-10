@@ -10,6 +10,7 @@ assignee: ae27a3ceef
 claimed_at: '2026-06-10 17:40:40'
 context_hash: d4278186682610d7
 branch: agent/TASK-280-align-agent-workflow-documentation-and-o--ae27a3ceef
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-280
 ---
 
 # TASK-280: Align agent workflow documentation and OpenCode guidance
@@ -23,6 +24,9 @@ Normalize Markdown and non-task JSON documentation around the current TaskForge 
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-10T00:00:00Z System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-280
 
 ### 2026-06-10T00:00:00Z System
 - Task claimed via taskforge start TASK-280
