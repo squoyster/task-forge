@@ -1,12 +1,16 @@
 ---
 id: TASK-284
 type: Feature
-status: Ready
+status: In Progress
 priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: e94f2aef13
+claimed_at: '2026-06-10 22:31:05'
+context_hash: 24c64b5cba799406
 spec_hash: 0578a855e0dd931a
+branch: agent/TASK-284-implement-structured-taskdocument-model--e94f2aef13
 ---
 # TASK-284: Implement structured TaskDocument model and restore task update command
 ## Goal
@@ -52,6 +56,11 @@ Serialization changes can churn task markdown if they leak into ordinary lifecyc
 Auto-continue unless a stopping condition occurs.
 
 ## Agent Notes
+
+### 2026-06-10T00:00:00Z System
+- Task claimed via taskforge start TASK-284
+- Session: e94f2aef13
+- Branch: agent/TASK-284-implement-structured-taskdocument-model--e94f2aef13
 
 ### 2026-06-10T00:00:00Z System
 - Task updated via taskforge update
