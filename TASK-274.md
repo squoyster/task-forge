@@ -1,7 +1,7 @@
 ---
 id: TASK-274
 type: Feature
-status: Implementation Complete
+status: Review
 priority: P1
 agentRole: Implementer
 riskLevel: Low
