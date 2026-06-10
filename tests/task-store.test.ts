@@ -147,6 +147,7 @@ describe("writeTaskFile", () => {
     expect(readBack!.id).toBe("TASK-100");
     expect(readBack!.type).toBe("Bug");
     expect(readBack!.status).toBe("In Progress");
+    expect(readBack!.spec_hash).toMatch(/^[a-f0-9]{16}$/);
   });
 
   it("overrides body when provided", () => {
