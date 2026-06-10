@@ -9,6 +9,7 @@ humanInterventionRequired: false
 
 branch: agent/TASK-275-fix-mcp-capturestdout-for-node-24-getter--88cbb3df47
 pr: 29
+submitted_sha: 95adbca97da808957f72e9e2be322a37d8a2790b
 ---
 
 
