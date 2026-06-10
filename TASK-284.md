@@ -1,7 +1,7 @@
 ---
 id: TASK-284
 type: Feature
-status: Review
+status: Merge Ready
 priority: P1
 agentRole: Implementer
 riskLevel: Low
