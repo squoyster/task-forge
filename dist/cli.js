@@ -46,7 +46,7 @@ import {
   pullTaskState,
   removeBranch,
   removeWorktree
-} from "./chunk-4P6LV6YT.js";
+} from "./chunk-RYDMXDO2.js";
 import {
   installAgentsMd,
   loadConfig
@@ -416,7 +416,7 @@ async function cmdInit(options = {}) {
     }
   }
   if (hasNewStateFiles) {
-    const { commitAndPushTaskState: commitAndPushTaskState2 } = await import("./git-JJNIPTTS.js");
+    const { commitAndPushTaskState: commitAndPushTaskState2 } = await import("./git-P7MCGWA5.js");
     await commitAndPushTaskState2(repoRoot, "chore: initialize task state");
   }
   const tasksDir = path2.join(repoRoot, "tasks");
@@ -424,7 +424,7 @@ async function cmdInit(options = {}) {
     const migrated = migrateExistingTasks(tasksDir, stateDir);
     if (migrated > 0) {
       logSuccess(`Migrated ${migrated} task file(s) from tasks/ to task-state/`);
-      const { commitAndPushTaskState: commitAndPushTaskState2 } = await import("./git-JJNIPTTS.js");
+      const { commitAndPushTaskState: commitAndPushTaskState2 } = await import("./git-P7MCGWA5.js");
       await commitAndPushTaskState2(repoRoot, "chore: migrate task files from tasks/ to task-state branch");
     }
   }
