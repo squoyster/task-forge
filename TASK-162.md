@@ -7,7 +7,6 @@ agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
 context_hash: abc123def456
-spec_hash: 3cf2f6986219885a
 ---
 # Route Doctor Agent Diagnostics Through Agent Framework Adapter
 

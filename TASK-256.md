@@ -9,7 +9,6 @@ humanInterventionRequired: false
 assignee: 30f7d54c39
 claimed_at: '2026-06-08 14:25:50'
 context_hash: b516925ba8cef30c
-spec_hash: ebc7d5b2ad61b0f4
 branch: agent/TASK-256-make-submission-atomic-and-idempotent--30f7d54c39
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-256
 ---

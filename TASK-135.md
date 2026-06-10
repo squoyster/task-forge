@@ -7,7 +7,6 @@ agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
 context_hash: f3613895c8a77f2e
-spec_hash: 2d632ad48d02c6e6
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-135
 ---
 # Reject Done Transition When AC Section Is Missing

@@ -7,7 +7,6 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: 978729792ac0ac73
-spec_hash: 5a4cdb510a522e3b
 ---
 # Fix `runGates` Mock in Done Command Tests
 

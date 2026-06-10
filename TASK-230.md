@@ -7,7 +7,6 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: 2d29281e59408ea2
-spec_hash: 3db4b065def2f929
 ---
 
 # TASK-230: Implement quasi-persistent session ID storage for agent recovery

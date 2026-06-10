@@ -6,7 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-spec_hash: bf4bac5aa5f2cc3c
 ---
 
 # TASK-222: Refactor command-state-machine registry to spec shape with full command coverage

@@ -7,7 +7,6 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: c920478ff4788012
-spec_hash: f51e546325392a08
 ---
 
 # TASK-221: Implement authority model and restrict --force to human/doctor mode

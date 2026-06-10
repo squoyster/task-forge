@@ -6,7 +6,6 @@ priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-spec_hash: ba3db048494d2218
 branch: agent/TASK-005-cleanup-done-flag
 worktree: ../worktrees/TASK-005
 ---

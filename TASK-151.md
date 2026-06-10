@@ -9,7 +9,6 @@ humanInterventionRequired: false
 dependsOn:
   - TASK-147
 context_hash: a35e7bbd0e71ac8b
-spec_hash: 1f3de9df38f065a6
 override_reason: >-
   Pre-existing gate failures and task-state invariant violations from other
   tasks

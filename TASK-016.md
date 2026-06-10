@@ -6,7 +6,6 @@ priority: P0
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
-spec_hash: 80b118020103136c
 ---
 
 # TASK-016: Normalize Task Status Values (Replaced)

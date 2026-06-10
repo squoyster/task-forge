@@ -6,7 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-spec_hash: 3ebb59fa12fa9bdd
 pr: 1
 ---
 

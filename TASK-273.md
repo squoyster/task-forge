@@ -6,7 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-spec_hash: 750d9840917a2ab9
 ---
 
 # TASK-273: Streamline completion lifecycle: CLI transitions, cleanup command fixes, and task-store field preservation

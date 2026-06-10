@@ -11,7 +11,6 @@ dependsOn:
   - TASK-136
   - TASK-137
 context_hash: 8609dbc230669fef
-spec_hash: bf783f422a4792cb
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-139
 ---
 # Report Invalid Done Tasks in Doctor

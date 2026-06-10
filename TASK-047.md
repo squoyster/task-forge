@@ -9,7 +9,6 @@ humanInterventionRequired: false
 dependsOn:
   - TASK-045
 context_hash: 27705145f76d1ff7
-spec_hash: b507e3477c7ff243
 ---
 
 # TASK-047: Make `start` Two-Phase — Durable Claim Before Worktree Creation

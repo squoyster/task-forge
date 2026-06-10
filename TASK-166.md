@@ -9,7 +9,6 @@ humanInterventionRequired: false
 dependsOn:
   - TASK-165
 context_hash: abc123def456
-spec_hash: 54ad96c63129cb45
 ---
 # Emit Audit Event for PR Command
 

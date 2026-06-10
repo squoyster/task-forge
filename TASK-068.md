@@ -7,7 +7,6 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: 6eb8f67de42c153d
-spec_hash: 4d79cc9949088fb1
 ---
 
 # TASK-068: Add OpenCode audit plugin generation

@@ -7,7 +7,6 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: 9ee05952d2d2a685
-spec_hash: f3bbc1fd8e435091
 ---
 
 # TASK-219: Document command invariants and state machine in docs/architecture/

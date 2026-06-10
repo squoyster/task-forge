@@ -6,7 +6,6 @@ priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-spec_hash: 953500205f7fe144
 branch: agent/TASK-253-task-state-path-resolution-breaks-from-n--889fce87ef
 ---
 

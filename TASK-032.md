@@ -6,7 +6,6 @@ priority: P3
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-spec_hash: ec08b84d13acf4ed
 ---
 
 # TASK-032: Add `doctor` Command — Repo and Task-State Health Check

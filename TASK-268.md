@@ -7,7 +7,6 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: b516925ba8cef30c
-spec_hash: 84ca3614725fbbfb
 ---
 
 # TASK-268: Add TASK_FORGE_ACTIVE warning to guard:status

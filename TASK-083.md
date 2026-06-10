@@ -7,7 +7,6 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: 8c607774d14d0be5
-spec_hash: f3cf7fb2e24ed199
 ---
 
 # TASK-083: Add container-aware path mapping utilities

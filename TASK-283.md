@@ -6,7 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-spec_hash: ec68d6c918b6245d
 ---
 
 # TASK-283: Fix done command handling for control-file drift

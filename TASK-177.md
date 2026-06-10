@@ -6,7 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
-spec_hash: e1b97eb4353e7147
 ---
 # Disable `taskforge done --force`
 

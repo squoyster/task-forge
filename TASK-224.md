@@ -6,7 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-spec_hash: ee506bc4b20a63a9
 ---
 
 # TASK-224: Implement unhandled-state closure task generation

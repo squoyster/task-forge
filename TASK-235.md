@@ -6,7 +6,6 @@ priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-spec_hash: a79d0306bcb1166a
 ---
 
 # TASK-235: Add task-state validation for duplicate markdown sections

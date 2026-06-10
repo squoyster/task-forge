@@ -7,7 +7,6 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: abc123def456
-spec_hash: bd349c2a17139948
 ---
 # Validate Ownership in Diff Command
 

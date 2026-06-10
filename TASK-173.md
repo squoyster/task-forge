@@ -6,7 +6,6 @@ priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-spec_hash: 22a869d0d0aed70b
 ---
 # Remove Placeholder Install URL from Container Runtime Documentation
 

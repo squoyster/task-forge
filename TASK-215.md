@@ -7,7 +7,6 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: 59fb9e1c3f61b3b7
-spec_hash: 4271c035751dceb6
 branch: agent/TASK-215-comprehensive-error-handling-and-actiona--5c980e7f58
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-215
 ---

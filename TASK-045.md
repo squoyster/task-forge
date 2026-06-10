@@ -7,7 +7,6 @@ agentRole: Implementer
 riskLevel: High
 humanInterventionRequired: false
 context_hash: 27705145f76d1ff7
-spec_hash: 758b809eaec79552
 ---
 
 # TASK-045: Centralize Task-State Mutation Through Transactional Control Layer

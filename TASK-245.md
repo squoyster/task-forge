@@ -7,7 +7,6 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: b0cdabccffea1074
-spec_hash: f379d6e1e9d83573
 branch: agent/TASK-245-display-all-timestamps-with-utc-designat--14bee24522
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-245
 ---

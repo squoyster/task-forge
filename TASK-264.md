@@ -6,7 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-spec_hash: 70b2ad447c4f9847
 ---
 
 # TASK-264: ADD PREFLIGHT RECONCILIATION TO TASK SELECTION AND AGENT CONTINUATION

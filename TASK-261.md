@@ -9,7 +9,6 @@ humanInterventionRequired: false
 assignee: dd85c550bb
 claimed_at: '2026-06-08 14:34:41'
 context_hash: b516925ba8cef30c
-spec_hash: 454f17d014cd1c66
 branch: agent/TASK-261-replace-direct-task-state-editing-with-s--dd85c550bb
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-261
 ---

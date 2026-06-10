@@ -6,7 +6,6 @@ priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-spec_hash: 5f24e7afed2990da
 ---
 
 # TASK-226: Resolve doctor --fix CLI/doc mismatch and restrict to human/doctor authority

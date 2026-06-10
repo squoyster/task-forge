@@ -6,7 +6,6 @@ priority: P3
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-spec_hash: b51846a443dd3ddf
 ---
 
 # TASK-251: Update AGENTS.md workflow instructions to reference task-state branch not tasks/ dir

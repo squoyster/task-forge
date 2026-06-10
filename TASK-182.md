@@ -6,7 +6,6 @@ priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-spec_hash: 9dab1f36c0195b05
 ---
 
 # TASK-182: Timeline command has minimal information and dubious timestamps

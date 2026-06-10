@@ -9,7 +9,6 @@ humanInterventionRequired: false
 dependsOn:
   - TASK-146
 context_hash: 3a03a0322eb9729c
-spec_hash: b082e72b379d6bf4
 override_reason: Pre-existing gate failures from TASK-091
 override_actor: unknown
 override_timestamp: '2026-05-25T00:14:48.891Z'

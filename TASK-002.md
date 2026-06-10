@@ -6,7 +6,6 @@ priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-spec_hash: d44ec3d971adef10
 ---
 # TASK-002: Implement dependency audit command enhancement
 

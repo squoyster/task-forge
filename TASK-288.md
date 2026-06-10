@@ -1,11 +1,15 @@
 ---
 id: TASK-288
 type: Bug
-status: Ready
+status: In Progress
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 454d025409
+claimed_at: '2026-06-10 23:13:41'
+context_hash: 24c64b5cba799406
+branch: agent/TASK-288-normalize-malformed-task-files-created-b--454d025409
 ---
 
 # TASK-288: Normalize malformed task files created by legacy new template bug
@@ -53,6 +57,11 @@ Known risks.
 Auto-continue unless a stopping condition occurs.
 
 ## Agent Notes
+
+### 2026-06-10T00:00:00Z System
+- Task claimed via taskforge start TASK-288
+- Session: 454d025409
+- Branch: agent/TASK-288-normalize-malformed-task-files-created-b--454d025409
 
 ## Result
 
