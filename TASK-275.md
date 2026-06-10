@@ -7,7 +7,6 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 
-branch: agent/TASK-275-fix-mcp-capturestdout-for-node-24-getter--88cbb3df47
 pr: 29
 submitted_sha: 6eac2957c6a4565b730d35ff0a2ab604b5eaa381
 ---
