@@ -2,6 +2,9 @@
   "name": "taskforge",
   "version": "0.3.0",
   "type": "module",
+  "files": [
+    "dist"
+  ],
   "bin": {
     "taskforge": "./dist/cli.js",
     "task-forge": "./dist/cli.js"
@@ -9,6 +12,7 @@
   "scripts": {
     "dev": "tsx src/cli.ts",
     "build": "tsup src/cli.ts --dts --clean",
+    "prepack": "npm run build",
     "test": "vitest",
     "lint": "eslint .",
     "format": "prettier -w .",
