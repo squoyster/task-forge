@@ -326,15 +326,36 @@ var InitAuditLog = class {
 
 // src/commands/init.ts
 async function cmdInit(options = {}) {
+  const opts = typeof options === "boolean" ? { force: options } : options;
   const repoRoot = getRepoRoot();
   const auditLog = new InitAuditLog(repoRoot);
   const config = loadConfig(repoRoot);
-  const agentFramework = options.agentFramework ?? config.agentFramework.id ?? "auto";
-  const policy = options.policy ?? config.opencode.policy ?? "managed";
-  const installHooks = options.installHooks ?? config.agentFramework.installHooks ?? true;
-  const audit = options.audit ?? config.opencode.audit ?? true;
-  const guard2 = options.guard ?? config.opencode.guard ?? true;
-  const dryRun = options.dryRun ?? false;
+  if (opts.force) {
+    const authority = resolveAuthority();
+    try {
+      assertCanForce(authority);
+    } catch {
+      const nextCommands = getForceRejectionNextActions().map((a) => ({
+        command: a.command,
+        purpose: a.reason,
+        priority: a.preferred ? 1 : 2,
+        when: "needs:human",
+        allowedFor: a.safety === "safe" ? "all" : "human"
+      }));
+      if (opts.json) {
+        writeResult(failedResult({ command: "init", error: "Normal agents may not use --force.", code: "FORCE_REQUIRES_HUMAN_OR_DOCTOR", nextCommands }), opts.json);
+        return;
+      }
+      logError("Normal agents may not use --force. Use 'taskforge doctor --json' or block for human authorization.");
+      return;
+    }
+  }
+  const agentFramework = opts.agentFramework ?? config.agentFramework.id ?? "auto";
+  const policy = opts.policy ?? config.opencode.policy ?? "managed";
+  const installHooks = opts.installHooks ?? config.agentFramework.installHooks ?? true;
+  const audit = opts.audit ?? config.opencode.audit ?? true;
+  const guard2 = opts.guard ?? config.opencode.guard ?? true;
+  const dryRun = opts.dryRun ?? false;
   const taskforgeDir = getTaskforgeDir(repoRoot);
   auditLog.record("init.start", "info", `framework=${agentFramework} policy=${policy} dryRun=${dryRun}`);
   const dirs = [
@@ -449,7 +470,7 @@ Initializing agent framework: ${agentFramework} (policy: ${policy})`);
   writeResult(successResult({
     command: "init",
     guidance: "TaskForge initialized successfully. Run 'taskforge next' to find the next task to work on."
-  }), options.json ?? false);
+  }), opts.json ?? false);
 }
 async function initAgentFramework(repoRoot, options) {
   let frameworkId = options.agentFramework;
@@ -7498,18 +7519,25 @@ import { z as z3 } from "zod";
 import { Writable } from "stream";
 async function captureStdout(fn) {
   const chunks = [];
-  const originalStdout = process.stdout;
+  const originalDescriptor = Object.getOwnPropertyDescriptor(process, "stdout");
   const capture = new Writable({
     write(chunk, _encoding, callback) {
       chunks.push(chunk);
       callback();
     }
   });
-  process.stdout = capture;
+  Object.defineProperty(process, "stdout", {
+    value: capture,
+    writable: true,
+    configurable: true,
+    enumerable: true
+  });
   try {
     await fn();
   } finally {
-    process.stdout = originalStdout;
+    if (originalDescriptor) {
+      Object.defineProperty(process, "stdout", originalDescriptor);
+    }
   }
   return Buffer.concat(chunks).toString("utf-8");
 }
