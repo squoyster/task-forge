@@ -4,6 +4,7 @@ import {
 } from "./chunk-ACDCJVXE.js";
 import {
   ACTIVE_STATUSES,
+  ALL_STATUSES,
   ForceRequiresHumanOrDoctorError,
   STATUS,
   appendAgentNote,
@@ -32,7 +33,7 @@ import {
   validateTaskState,
   writeResult,
   writeTaskFile
-} from "./chunk-GFCBVGVF.js";
+} from "./chunk-NPG7OZYW.js";
 import {
   checkUncommittedWorktrees,
   commitAndPushTaskState,
@@ -710,6 +711,7 @@ var TransactionImpl = class {
   tasks = /* @__PURE__ */ new Map();
   notesAppended = /* @__PURE__ */ new Map();
   modified = false;
+  modifiedTaskIds = /* @__PURE__ */ new Set();
   actor;
   command;
   constructor(tasks, actor, command) {
@@ -725,9 +727,23 @@ var TransactionImpl = class {
   loadAllTasks() {
     return [...this.tasks.values()];
   }
+  /** Return only the tasks that were modified during this transaction.
+   *  If no tasks were modified, returns all tasks (defensive fallback). */
+  getModifiedTasks() {
+    if (this.modifiedTaskIds.size === 0) {
+      return [...this.tasks.values()];
+    }
+    const result = [];
+    for (const id of this.modifiedTaskIds) {
+      const task = this.tasks.get(id);
+      if (task) result.push(task);
+    }
+    return result;
+  }
   updateTask(task) {
     this.tasks.set(task.id, task);
     this.modified = true;
+    this.modifiedTaskIds.add(task.id);
   }
   appendNote(taskId, role, notes) {
     const existing = this.notesAppended.get(taskId) ?? [];
@@ -751,6 +767,7 @@ var TransactionImpl = class {
     task.claimed_at = (/* @__PURE__ */ new Date()).toISOString().replace("T", " ").replace(/\.\d+Z$/, "");
     if (task.status === STATUS.READY) task.status = STATUS.IN_PROGRESS;
     this.modified = true;
+    this.modifiedTaskIds.add(taskId);
   }
   clearClaim(taskId) {
     const task = this.tasks.get(taskId);
@@ -758,6 +775,7 @@ var TransactionImpl = class {
     task.assignee = void 0;
     task.claimed_at = void 0;
     this.modified = true;
+    this.modifiedTaskIds.add(taskId);
   }
   commit(stateDir, message) {
     return this.persistAndCommit(stateDir, message);
@@ -795,7 +813,9 @@ async function withTaskStateTransaction(options, mutate) {
     const actor = options.actor ?? "system";
     const tx = new TransactionImpl(tasks, actor, command);
     const result = await mutate(tx);
-    const validation = validateTaskState(tx.loadAllTasks());
+    const modifiedTasks = tx.getModifiedTasks();
+    const allTasks = tx.loadAllTasks();
+    const validation = validateTaskState(modifiedTasks, allTasks);
     if (!validation.ok) {
       const details = validation.errors.map((e) => `[${e.code}] ${e.message}${e.taskId ? ` (${e.taskId})` : ""}`).join("; ");
       throw new Error(`Transaction aborted: invalid task-state \u2014 ${details}`);
@@ -7093,6 +7113,132 @@ function hasDuplicateAcSections(body) {
   return matches !== null && matches.length > 1;
 }
 
+// src/commands/promote.ts
+var DEFAULT_FORWARD_PATH = {
+  [STATUS.INBOX]: STATUS.NEEDS_SPEC,
+  [STATUS.NEEDS_SPEC]: STATUS.READY,
+  [STATUS.READY]: STATUS.IN_PROGRESS,
+  [STATUS.IN_PROGRESS]: STATUS.IMPLEMENTATION_COMPLETE,
+  [STATUS.IMPLEMENTATION_COMPLETE]: STATUS.SUBMITTED,
+  [STATUS.SUBMITTED]: STATUS.REVIEW,
+  [STATUS.REVIEW]: STATUS.MERGE_READY,
+  [STATUS.MERGE_READY]: STATUS.VERIFY,
+  [STATUS.VERIFY]: STATUS.DONE
+};
+function resolveTargetStatus(currentStatus, toFlag) {
+  if (toFlag) {
+    const normalized = normalizeStatus(toFlag);
+    if (!ALL_STATUSES.includes(normalized)) {
+      return { error: `Unknown status: "${toFlag}". Valid statuses: ${ALL_STATUSES.join(", ")}` };
+    }
+    return { target: normalized, isDefault: false };
+  }
+  const defaultNext = DEFAULT_FORWARD_PATH[currentStatus];
+  if (!defaultNext) {
+    const allowed = getAllowedTransitions(currentStatus);
+    if (allowed.length === 0) {
+      return { error: `Task is in terminal status "${currentStatus}" \u2014 no forward transitions available.` };
+    }
+    const forward = allowed.find(
+      (s) => s !== STATUS.BLOCKED && s !== STATUS.DEFERRED && s !== STATUS.IN_PROGRESS
+    );
+    if (forward) {
+      return { target: forward, isDefault: true };
+    }
+    return { error: `No forward transition available from "${currentStatus}". Allowed: ${allowed.join(", ")}` };
+  }
+  return { target: defaultNext, isDefault: true };
+}
+async function cmdPromote(taskId, options = {}) {
+  const repoRoot = getRepoRoot();
+  const task = loadTaskById(taskId);
+  if (!task) {
+    if (options.json) {
+      writeResult(failedResult({ command: "promote", taskId, error: `Task ${taskId} not found`, code: "TASK_NOT_FOUND" }), options.json);
+      return;
+    }
+    throw new TaskNotFoundError(taskId);
+  }
+  const resolved = resolveTargetStatus(task.status, options.to);
+  if ("error" in resolved) {
+    if (options.json) {
+      writeResult(failedResult({ command: "promote", taskId, error: resolved.error, code: "INVALID_STATUS" }), options.json);
+      return;
+    }
+    logError(resolved.error);
+    return;
+  }
+  const { target: targetStatus, isDefault } = resolved;
+  const transitionError = validateTransition(task.status, targetStatus);
+  if (transitionError) {
+    const allowed = getAllowedTransitions(task.status);
+    if (options.json) {
+      const nextCommands = allowed.map((s) => ({
+        command: `taskforge promote ${taskId} --to "${s}"`,
+        purpose: `Advance task to "${s}"`,
+        when: "after invalid transition attempt",
+        allowedFor: "all",
+        priority: 1
+      }));
+      writeResult(failedResult({
+        command: "promote",
+        taskId,
+        error: transitionError,
+        code: "INVALID_TRANSITION",
+        nextCommands
+      }), options.json);
+      return;
+    }
+    logError(transitionError);
+    logSub(`Allowed transitions from "${task.status}": ${allowed.join(", ")}`);
+    return;
+  }
+  const current = parseTaskFile(task.filePath);
+  if (!current) {
+    throw new TaskNotFoundError(taskId);
+  }
+  const fromStatus = current.status;
+  current.status = targetStatus;
+  writeTaskFile(current);
+  await commitAndPushTaskState(repoRoot, `chore: promote ${taskId} \u2014 ${fromStatus} \u2192 ${targetStatus}`);
+  const nextAllowed = getAllowedTransitions(targetStatus);
+  const guidance = isDefault ? `Task ${taskId} promoted from "${fromStatus}" to "${targetStatus}".` : `Task ${taskId} promoted from "${fromStatus}" to "${targetStatus}".`;
+  if (options.json) {
+    writeResult(successResult({
+      command: "promote",
+      taskId,
+      guidance,
+      nextCommands: nextAllowed.length > 0 ? [
+        {
+          command: `taskforge promote ${taskId}`,
+          purpose: `Advance to next status from "${targetStatus}"`,
+          when: "after promotion",
+          allowedFor: "all",
+          priority: 1
+        },
+        {
+          command: `taskforge promote ${taskId} --to "${nextAllowed[0]}"`,
+          purpose: `Advance to "${nextAllowed[0]}"`,
+          when: "after promotion",
+          allowedFor: "all",
+          priority: 2
+        }
+      ] : []
+    }), options.json);
+    return;
+  }
+  logSuccess(`Task ${taskId} promoted`);
+  logSub(`  From: "${fromStatus}"`);
+  logSub(`  To:   "${targetStatus}"`);
+  if (nextAllowed.length > 0) {
+    logDivider();
+    logSub("Next allowed transitions:");
+    for (const s of nextAllowed) {
+      logSub(`  taskforge promote ${taskId} --to "${s}"`);
+    }
+  }
+}
+
 // src/commands/git-facade.ts
 function requireTask(taskId) {
   const task = loadTaskById(taskId);
@@ -7744,6 +7890,10 @@ program.command("list").description("List and filter tasks").option("--status <s
   };
   return wrapWithAudit("list", [], opts, () => cmdList(listOpts))();
 });
+program.command("promote <taskId>").description("Advance a task through the status state machine").option("--to <status>", "Target status to promote to").option("--json", "Output in JSON format").action((taskId, opts) => {
+  const promoteOpts = { to: opts.to, json: opts.json ?? false };
+  return wrapWithAudit("promote", [taskId], opts, () => cmdPromote(taskId, promoteOpts))();
+});
 program.command("unlock <taskId>").description("Manually unlock a task (requires --force)").option("--force", "Force unlock the task").option("--json", "Output in JSON format").action((taskId, opts) => {
   const unlockOpts = { force: opts.force ?? false, json: opts.json ?? false };
   return wrapWithAudit("unlock", [taskId], opts, () => cmdUnlock(taskId, unlockOpts))();
@@ -7849,7 +7999,7 @@ program.command("release <taskId>").description("Voluntarily release a task clai
 program.command("reject <taskId> <reason>").description("Mark a task as rejected (obsolete, won't implement)").option("--json", "Output in JSON format").action((taskId, reason, opts) => wrapWithAudit("reject", [taskId, reason], opts, () => cmdReject(taskId, reason, opts))());
 program.command("validate-state").description("Validate task-state for invariant violations").option("--json", "Output in JSON format").option("--strict", "Exit with non-zero status on any warnings or errors (for CI)").action(
   (opts) => wrapWithAudit("validate-state", [], opts, async () => {
-    const { cmdValidateState } = await import("./validate-state-MI4DZKEZ.js");
+    const { cmdValidateState } = await import("./validate-state-XGVOICQA.js");
     await cmdValidateState(opts);
   })()
 );
