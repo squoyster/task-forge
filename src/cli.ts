@@ -17,6 +17,7 @@ import { cmdReport, type ReportOptions } from "./commands/report.js";
 import { cmdCleanup, type CleanupOptions } from "./commands/cleanup-cmd.js";
 import { cmdPrompt } from "./commands/prompt.js";
 import { cmdNew, type NewOptions } from "./commands/new.js";
+import { cmdUpdate, type UpdateOptions } from "./commands/update.js";
 import { cmdResume } from "./commands/resume.js";
 import { cmdDoctor } from "./commands/doctor.js";
 import { cmdConfigValidate } from "./commands/config-validate.js";
@@ -39,7 +40,6 @@ import { cmdPromote, type PromoteOptions } from "./commands/promote.js";
 import { cmdDiff, cmdCheckpoint, cmdSubmit, cmdPr } from "./commands/git-facade.js";
 import { cmdGuardStatus, cmdGuardOverride } from "./commands/guard-cmd.js";
 import { cmdMcp } from "./commands/mcp.js";
-import { cmdUpdate, type UpdateOptions } from "./commands/update.js";
 import { TaskForgeError } from "./core/errors.js";
 import { logError } from "./util/logging.js";
 import { recordCliInvocation } from "./core/cli-audit.js";
@@ -285,36 +285,123 @@ program
   });
 
 program
-  .command("new <title>")
+  .command("new [title]")
   .description("Create a new task file with auto-incremented ID")
   .option("--type <type>", "Task type (Task, Feature, Bug, etc.)", "Task")
   .option("--priority <p>", "Priority (P0-P3)", "P2")
   .option("--agent-role <role>", "Agent role", "Implementer")
   .option("--status <status>", "Initial status (Ready, Inbox, etc.)", "Ready")
+  .option("--from-file <path>", "Create task from a markdown file")
   .option("--body <text>", "Additional body text")
+  .option("--goal <text>", "Goal section content")
+  .option("--background <text>", "Background section content")
+  .option("--scope <text>", "Scope section content")
+  .option("--acceptance-criteria <text>", "Acceptance Criteria section content")
+  .option("--test-command <text>", "Test / Verification Command section content")
+  .option("--expected-output <text>", "Expected Output / Behavior section content")
+  .option("--dependencies <text>", "Dependencies section content")
+  .option("--risks <text>", "Risks section content")
+  .option("--continuation-policy <text>", "Continuation Policy section content")
   .option("--json", "Output in JSON format")
-  .action((title: string, opts: { type?: string; priority?: string; agentRole?: string; status?: string; body?: string; json?: boolean }) => {
+  .action((title: string | undefined, opts: {
+    type?: string;
+    priority?: string;
+    agentRole?: string;
+    status?: string;
+    fromFile?: string;
+    body?: string;
+    goal?: string;
+    background?: string;
+    scope?: string;
+    acceptanceCriteria?: string;
+    testCommand?: string;
+    expectedOutput?: string;
+    dependencies?: string;
+    risks?: string;
+    continuationPolicy?: string;
+    json?: boolean;
+  }) => {
     const newOpts: NewOptions = {
       type: opts.type,
       priority: opts.priority,
       agentRole: opts.agentRole,
       status: opts.status,
+      fromFile: opts.fromFile,
       body: opts.body,
+      goal: opts.goal,
+      background: opts.background,
+      scope: opts.scope,
+      acceptanceCriteria: opts.acceptanceCriteria,
+      testCommand: opts.testCommand,
+      expectedOutput: opts.expectedOutput,
+      dependencies: opts.dependencies,
+      risks: opts.risks,
+      continuationPolicy: opts.continuationPolicy,
       json: opts.json ?? false,
     };
-    return wrapWithAudit("new", [title], opts, () => cmdNew(title, newOpts))();
+    return wrapWithAudit("new", title ? [title] : [], opts, () => cmdNew(title, newOpts))();
   });
 
 program
   .command("update <taskId>")
-  .description("Update task frontmatter field(s)")
-  .option("--field <name>", "Field name to update (repeatable, pairs with --value)", collectField, [])
-  .option("--value <value>", "Field value to set (repeatable, pairs with --field)", collectValue, [])
+  .description("Update editable task spec fields without mutating workflow-owned state")
+  .option("--from-file <path>", "Patch the task from a markdown file")
+  .option("--title <text>", "Update the task title")
+  .option("--type <type>", "Update task type")
+  .option("--priority <p>", "Update task priority")
+  .option("--agent-role <role>", "Update agent role")
+  .option("--risk-level <level>", "Update risk level")
+  .option("--human-intervention-required", "Set human intervention required to true")
+  .option("--no-human-intervention-required", "Set human intervention required to false")
+  .option("--depends-on <taskId>", "Add a dependency", collectRepeatedOptions, [])
+  .option("--goal <text>", "Update Goal section content")
+  .option("--background <text>", "Update Background section content")
+  .option("--scope <text>", "Update Scope section content")
+  .option("--acceptance-criteria <text>", "Update Acceptance Criteria section content")
+  .option("--test-command <text>", "Update Test / Verification Command section content")
+  .option("--expected-output <text>", "Update Expected Output / Behavior section content")
+  .option("--dependencies <text>", "Update Dependencies section content")
+  .option("--risks <text>", "Update Risks section content")
+  .option("--continuation-policy <text>", "Update Continuation Policy section content")
   .option("--json", "Output in JSON format")
-  .action((taskId: string, opts: { field?: string[]; value?: string[]; json?: boolean }) => {
+  .action((taskId: string, opts: {
+    fromFile?: string;
+    title?: string;
+    type?: string;
+    priority?: string;
+    agentRole?: string;
+    riskLevel?: string;
+    humanInterventionRequired?: boolean;
+    dependsOn?: string[];
+    goal?: string;
+    background?: string;
+    scope?: string;
+    acceptanceCriteria?: string;
+    testCommand?: string;
+    expectedOutput?: string;
+    dependencies?: string;
+    risks?: string;
+    continuationPolicy?: string;
+    json?: boolean;
+  }) => {
     const updateOpts: UpdateOptions = {
-      field: opts.field,
-      value: opts.value,
+      fromFile: opts.fromFile,
+      title: opts.title,
+      type: opts.type,
+      priority: opts.priority,
+      agentRole: opts.agentRole,
+      riskLevel: opts.riskLevel,
+      humanInterventionRequired: opts.humanInterventionRequired,
+      dependsOn: opts.dependsOn?.length ? opts.dependsOn : undefined,
+      goal: opts.goal,
+      background: opts.background,
+      scope: opts.scope,
+      acceptanceCriteria: opts.acceptanceCriteria,
+      testCommand: opts.testCommand,
+      expectedOutput: opts.expectedOutput,
+      dependencies: opts.dependencies,
+      risks: opts.risks,
+      continuationPolicy: opts.continuationPolicy,
       json: opts.json ?? false,
     };
     return wrapWithAudit("update", [taskId], opts, () => cmdUpdate(taskId, updateOpts))();
@@ -366,20 +453,6 @@ deps
   .action(wrapWithAudit("deps summary", [], {}, cmdDepsSummary));
 
 /**
- * Commander option parser: accumulate repeated --field options into an array.
- */
-function collectField(value: string, previous: string[]): string[] {
-  return previous.concat([value]);
-}
-
-/**
- * Commander option parser: accumulate repeated --value options into an array.
- */
-function collectValue(value: string, previous: string[]): string[] {
-  return previous.concat([value]);
-}
-
-/**
  * Wrap a command action with CLI invocation audit capture.
  * Records command name, args, flags, exit code, duration, and session ID.
  */
@@ -426,6 +499,11 @@ function wrapWithAudit(
       // Don't let audit failure prevent normal operation
     }
   };
+}
+
+function collectRepeatedOptions(value: string, previous: string[]): string[] {
+  previous.push(value);
+  return previous;
 }
 
 program

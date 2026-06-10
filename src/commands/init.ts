@@ -14,6 +14,7 @@ import { resolveAuthority, assertCanForce, getForceRejectionNextActions } from "
 import { getAdapter } from "../agent-frameworks/registry.js";
 import { loadConfig } from "../core/config.js";
 import { InitAuditLog } from "../core/init-audit.js";
+import { importTaskDocument, renderTaskDocument } from "../core/task-document.js";
 
 interface FileSpec {
   path: string;
@@ -256,15 +257,41 @@ function migrateExistingTasks(tasksDir: string, stateDir: string): number {
   if (!fs.existsSync(tasksDir)) return 0;
 
   let count = 0;
+  const archiveDir = path.join(stateDir, "legacy-main");
+  if (!fs.existsSync(archiveDir)) {
+    fs.mkdirSync(archiveDir, { recursive: true });
+  }
+
   for (const entry of fs.readdirSync(tasksDir)) {
     if (!entry.endsWith(".md")) continue;
     if (entry === "README.md" || entry === "TEMPLATE.md") continue;
 
     const src = path.join(tasksDir, entry);
     const dest = path.join(stateDir, entry);
+    const imported = importTaskDocument(fs.readFileSync(src, "utf-8"), { strictReadonly: false });
+    const canonical = renderTaskDocument(entry.replace(/\.md$/, ""), imported.document);
+
     if (!fs.existsSync(dest)) {
-      fs.copyFileSync(src, dest);
+      fs.writeFileSync(dest, fs.readFileSync(src, "utf-8"), "utf-8");
       count++;
+      continue;
+    }
+
+    const existing = fs.readFileSync(dest, "utf-8");
+    if (existing !== fs.readFileSync(src, "utf-8")) {
+      const archivePath = path.join(archiveDir, entry);
+      const archiveContent = [
+        "---",
+        `id: ${entry.replace(/\.md$/, "")}`,
+        "source: main/tasks",
+        "---",
+        "",
+        canonical,
+      ].join("\n");
+      if (!fs.existsSync(archivePath) || fs.readFileSync(archivePath, "utf-8") !== archiveContent) {
+        fs.writeFileSync(archivePath, archiveContent, "utf-8");
+        count++;
+      }
     }
   }
   return count;

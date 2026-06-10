@@ -1,221 +1,176 @@
 import fs from "node:fs";
-import matter from "gray-matter";
 import { loadTaskById } from "../core/task-store.js";
-import { pullTaskState } from "../core/git.js";
-import { withTaskStateTransaction } from "../core/task-state-transaction.js";
-import { TaskNotFoundError } from "../core/errors.js";
+import {
+  applyTaskDocumentPatch,
+  importTaskDocument,
+  parseTaskDocument,
+  renderTaskDocument,
+  type EditableTaskFields,
+  type TaskSectionKey,
+} from "../core/task-document.js";
 import { getRepoRoot } from "../util/paths.js";
-import { logSuccess, logWarn } from "../util/logging.js";
-import { writeResult } from "../util/write-command-result.js";
+import { withTaskStateTransaction } from "../core/task-state-transaction.js";
 import { successResult, failedResult } from "../core/result-builder.js";
-import type { ParsedTask } from "../core/task-store.js";
-
-/**
- * Fields that are managed by other TaskForge commands and must not be
- * directly modified via `taskforge update`.
- */
-const PROTECTED_FIELDS = new Set([
-  "id",
-  "status",
-  "assignee",
-  "claimed_at",
-  "branch",
-  "worktree",
-  "blocked_reason",
-  "blocked_by",
-  "blocked_since",
-  "block_category",
-  "context_hash",
-  "submitted_sha",
-  "submitted_at",
-  "pr_merged",
-  "pr_head_sha",
-  "pr_base_branch",
-  "override_reason",
-  "override_actor",
-  "override_timestamp",
-  "override_failed_gates",
-]);
+import { writeResult } from "../util/write-command-result.js";
+import { logInfo, logSuccess } from "../util/logging.js";
 
 export interface UpdateOptions {
+  fromFile?: string;
+  title?: string;
+  type?: string;
+  priority?: string;
+  agentRole?: string;
+  riskLevel?: string;
+  humanInterventionRequired?: boolean;
+  dependsOn?: string[];
+  goal?: string;
+  background?: string;
+  scope?: string;
+  acceptanceCriteria?: string;
+  testCommand?: string;
+  expectedOutput?: string;
+  dependencies?: string;
+  risks?: string;
+  continuationPolicy?: string;
   json?: boolean;
-  field?: string | string[];
-  value?: string | string[];
 }
 
-function isProtectedField(field: string): boolean {
-  return PROTECTED_FIELDS.has(field);
-}
-
-/**
- * Coerce a string value into the most appropriate JavaScript type.
- * Used when setting task frontmatter fields via CLI strings.
- */
-function coerceValue(value: string): unknown {
-  // Preserve exact strings that look like numbers/booleans but should remain strings
-  // We use heuristics: if the value is a number string, parse it as number.
-  // If "true"/"false", parse as boolean.
-  // Otherwise, keep as string.
-
-  if (value === "true") return true;
-  if (value === "false") return false;
-  if (value === "null") return null;
-  if (value === "undefined") return undefined;
-
-  // Try number
-  const num = Number(value);
-  if (!Number.isNaN(num) && String(num) === value.trim()) {
-    return num;
-  }
-
-  // Try array (JSON array string like "[1,2,3]")
-  if (value.startsWith("[") && value.endsWith("]")) {
-    try {
-      return JSON.parse(value);
-    } catch {
-      // Not valid JSON array, keep as string
-    }
-  }
-
-  // Try JSON object
-  if (value.startsWith("{") && value.endsWith("}")) {
-    try {
-      return JSON.parse(value);
-    } catch {
-      // Not valid JSON object, keep as string
-    }
-  }
-
-  return value;
-}
-
-export async function cmdUpdate(
-  taskId: string,
-  options: UpdateOptions = {},
-): Promise<void> {
+export async function cmdUpdate(taskId: string, options: UpdateOptions = {}): Promise<void> {
   const repoRoot = getRepoRoot();
-  const json = options.json ?? false;
-
-  await pullTaskState(repoRoot);
-
-  const task = loadTaskById(taskId);
-  if (!task) {
-    if (json) {
-      writeResult(failedResult({
-        command: "update",
-        taskId,
-        error: `Task ${taskId} not found`,
-        code: "TASK_NOT_FOUND",
-      }), json);
-      return;
-    }
-    throw new TaskNotFoundError(taskId);
-  }
-
-  // Collect fields and values into pairs
-  const fields: string[] = [];
-  const values: string[] = [];
-
-  if (options.field && options.value) {
-    const fieldArr = Array.isArray(options.field) ? options.field : [options.field];
-    const valueArr = Array.isArray(options.value) ? options.value : [options.value];
-
-    if (fieldArr.length !== valueArr.length) {
-      if (json) {
-        writeResult(failedResult({
-          command: "update",
-          taskId,
-          error: "Number of --field options must match number of --value options",
-          code: "FIELD_VALUE_MISMATCH",
-        }), json);
-        return;
-      }
-      throw new Error("Number of --field options must match number of --value options");
-    }
-
-    for (let i = 0; i < fieldArr.length; i++) {
-      fields.push(fieldArr[i]);
-      values.push(valueArr[i]);
-    }
-  }
-
-  if (fields.length === 0) {
-    if (json) {
-      writeResult(failedResult({
-        command: "update",
-        taskId,
-        error: "No fields provided. Use --field <name> --value <value> to set fields.",
-        code: "NO_FIELDS",
-      }), json);
-      return;
-    }
-    throw new Error("No fields provided. Use --field <name> --value <value> to set fields.");
-  }
-
-  // Validate all fields before touching anything
-  for (const field of fields) {
-    if (isProtectedField(field)) {
-      if (json) {
-        writeResult(failedResult({
-          command: "update",
-          taskId,
-          error: `Field "${field}" is protected and cannot be modified via taskforge update. Use the dedicated command instead.`,
-          code: "PROTECTED_FIELD",
-        }), json);
-        return;
-      }
-      throw new Error(
-        `Field "${field}" is protected and cannot be modified via taskforge update. ` +
-        `Use the dedicated command instead.`,
-      );
-    }
-  }
-
-  // Apply update within a transaction
-  try {
-    await withTaskStateTransaction(
-      { command: `update ${taskId}`, maxRetries: 3 },
-      async (tx) => {
-        const fresh = tx.loadTask(taskId);
-        if (!fresh) throw new Error(`Task ${taskId} not found during transaction`);
-
-        // Apply each field update
-        for (let i = 0; i < fields.length; i++) {
-          const field = fields[i];
-          const rawValue = values[i];
-          const coerced = coerceValue(rawValue);
-
-          (fresh as Record<string, unknown>)[field] = coerced;
-        }
-
-        tx.updateTask(fresh);
-
-        tx.appendNote(taskId, "System", [
-          `Field(s) updated via taskforge update: ${fields.join(", ")}`,
-        ]);
-      },
-    );
-  } catch (err) {
-    if (json) {
-      writeResult(failedResult({
-        command: "update",
-        taskId,
-        error: err instanceof Error ? err.message : String(err),
-        code: "TRANSACTION_FAILED",
-      }), json);
-      return;
-    }
-    throw err;
-  }
-
-  if (json) {
-    writeResult(successResult({
-      command: "update",
-      taskId,
-      guidance: `Task ${taskId} updated: ${fields.join(", ")}`,
-    }), json);
+  const existing = loadTaskById(taskId, repoRoot);
+  if (!existing) {
+    writeResult(failedResult({ command: "update", taskId, error: `Task ${taskId} not found`, code: "TASK_NOT_FOUND" }), options.json ?? false);
     return;
   }
 
-  logSuccess(`Task ${taskId} updated: ${fields.join(", ")}`);
+  const patch = buildPatch(options);
+  const diagnostics: string[] = [];
+
+  if (options.fromFile) {
+    try {
+      const content = fs.readFileSync(options.fromFile, "utf-8");
+      const imported = importTaskDocument(content, { strictReadonly: true });
+      mergePatch(patch, imported.fields);
+      if (imported.readonlyFields.length > 0) {
+        diagnostics.push(`Ignored read-only fields from input: ${imported.readonlyFields.join(", ")}`);
+      }
+    } catch (error) {
+      writeResult(failedResult({
+        command: "update",
+        taskId,
+        error: error instanceof Error ? error.message : String(error),
+        code: "INVALID_INPUT",
+      }), options.json ?? false);
+      return;
+    }
+  }
+
+  if (isEmptyPatch(patch)) {
+    writeResult(failedResult({
+      command: "update",
+      taskId,
+      error: "No editable task fields were provided.",
+      code: "NO_FIELDS",
+    }), options.json ?? false);
+    return;
+  }
+
+  await withTaskStateTransaction(
+    { command: `update ${taskId}` },
+    (tx) => {
+      const task = tx.loadTask(taskId);
+      if (!task) throw new Error(`Task ${taskId} not found during update`);
+
+      if (patch.type) task.type = patch.type as typeof task.type;
+      if (patch.priority) task.priority = patch.priority as typeof task.priority;
+      if (patch.agentRole !== undefined) task.agentRole = patch.agentRole;
+      if (patch.riskLevel) task.riskLevel = patch.riskLevel as typeof task.riskLevel;
+      if (patch.humanInterventionRequired !== undefined) task.humanInterventionRequired = patch.humanInterventionRequired;
+      if (patch.dependsOn !== undefined) task.dependsOn = patch.dependsOn;
+
+      const currentDoc = parseTaskDocument(task.body);
+      const nextDoc = applyTaskDocumentPatch(currentDoc, patch);
+      task.body = renderTaskDocument(task.id, nextDoc);
+      tx.updateTask(task);
+      tx.appendNote(taskId, "System", [
+        "Task updated via taskforge update",
+        ...describePatch(patch),
+      ]);
+    },
+  );
+
+  const result = successResult({
+    command: "update",
+    taskId,
+    guidance: `Task ${taskId} updated.`,
+  });
+  if (diagnostics.length > 0) {
+    result.diagnostics = diagnostics.map((message) => ({ level: "info" as const, message }));
+  }
+  writeResult(result, options.json ?? false);
+  if (!options.json) {
+    logSuccess(`Task ${taskId} updated.`);
+    for (const line of diagnostics) logInfo(line);
+  }
+}
+
+function buildPatch(options: UpdateOptions): EditableTaskFields {
+  const sections = buildSectionPatch(options);
+  return {
+    title: options.title,
+    type: options.type,
+    priority: options.priority,
+    agentRole: options.agentRole,
+    riskLevel: options.riskLevel,
+    humanInterventionRequired: options.humanInterventionRequired,
+    dependsOn: options.dependsOn,
+    sections: Object.keys(sections).length > 0 ? sections : undefined,
+  };
+}
+
+function buildSectionPatch(options: UpdateOptions): Partial<Record<TaskSectionKey, string>> {
+  const sections: Partial<Record<TaskSectionKey, string>> = {};
+  if (options.goal !== undefined) sections.goal = options.goal;
+  if (options.background !== undefined) sections.background = options.background;
+  if (options.scope !== undefined) sections.scope = options.scope;
+  if (options.acceptanceCriteria !== undefined) sections.acceptanceCriteria = options.acceptanceCriteria;
+  if (options.testCommand !== undefined) sections.testCommand = options.testCommand;
+  if (options.expectedOutput !== undefined) sections.expectedOutput = options.expectedOutput;
+  if (options.dependencies !== undefined) sections.dependencies = options.dependencies;
+  if (options.risks !== undefined) sections.risks = options.risks;
+  if (options.continuationPolicy !== undefined) sections.continuationPolicy = options.continuationPolicy;
+  return sections;
+}
+
+function mergePatch(target: EditableTaskFields, source: EditableTaskFields): void {
+  for (const [key, value] of Object.entries(source) as Array<[keyof EditableTaskFields, EditableTaskFields[keyof EditableTaskFields]]>) {
+    if (value === undefined) continue;
+    if (key === "sections") {
+      target.sections = { ...(target.sections ?? {}), ...(value as EditableTaskFields["sections"]) };
+    } else {
+      target[key] = value as never;
+    }
+  }
+}
+
+function isEmptyPatch(patch: EditableTaskFields): boolean {
+  return Object.entries(patch).every(([key, value]) => {
+    if (key === "sections") return !value || Object.keys(value as object).length === 0;
+    return value === undefined;
+  });
+}
+
+function describePatch(patch: EditableTaskFields): string[] {
+  const notes: string[] = [];
+  if (patch.title) notes.push(`title set to "${patch.title}"`);
+  if (patch.type) notes.push(`type set to "${patch.type}"`);
+  if (patch.priority) notes.push(`priority set to "${patch.priority}"`);
+  if (patch.agentRole) notes.push(`agentRole set to "${patch.agentRole}"`);
+  if (patch.riskLevel) notes.push(`riskLevel set to "${patch.riskLevel}"`);
+  if (patch.humanInterventionRequired !== undefined) notes.push(`humanInterventionRequired set to "${patch.humanInterventionRequired}"`);
+  if (patch.dependsOn) notes.push(`dependsOn set to [${patch.dependsOn.join(", ")}]`);
+  for (const [section, value] of Object.entries(patch.sections ?? {})) {
+    notes.push(`section ${section} updated (${value.length} chars)`);
+  }
+  return notes;
 }

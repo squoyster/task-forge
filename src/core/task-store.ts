@@ -3,6 +3,7 @@ import fs from "node:fs";
 import { TaskSchema, type Task, STATUS } from "./task.js";
 import { getTaskFilePath, getTaskStateDir, getRepoRoot } from "../util/paths.js";
 import { logWarn } from "../util/logging.js";
+import { parseTaskDocument, computeTaskSpecHash, type EditableTaskFields } from "./task-document.js";
 
 export interface ParsedTask extends Task {
   body: string;
@@ -44,6 +45,7 @@ export function parseTaskFile(filePath: string): ParsedTask | null {
     blocked_since: frontmatter.blocked_since as string | Date | undefined,
     block_category: frontmatter.block_category as string | undefined,
     context_hash: frontmatter.context_hash as string | undefined,
+    spec_hash: frontmatter.spec_hash as string | undefined,
     branch: frontmatter.branch,
     worktree: frontmatter.worktree,
     override_reason: frontmatter.override_reason as string | undefined,
@@ -95,6 +97,7 @@ export function writeTaskFile(
     blocked_since: task.blocked_since,
     block_category: task.block_category,
     context_hash: task.context_hash,
+    spec_hash: computeTaskSpecHash(parseTaskDocument(body ?? task.body), getEditableTaskFields(task)),
     branch: task.branch,
     worktree: task.worktree,
     override_reason: task.override_reason,
@@ -114,6 +117,19 @@ export function writeTaskFile(
 
   const content = matter.stringify(body ?? task.body, frontmatter);
   fs.writeFileSync(task.filePath, content, "utf-8");
+}
+
+export function getEditableTaskFields(task: ParsedTask): EditableTaskFields {
+  return {
+    title: parseTaskDocument(task.body).title,
+    type: task.type,
+    priority: task.priority,
+    agentRole: task.agentRole,
+    riskLevel: task.riskLevel,
+    humanInterventionRequired: task.humanInterventionRequired,
+    dependsOn: task.dependsOn,
+    sections: parseTaskDocument(task.body).sections,
+  };
 }
 
 export function updateTaskStatus(
