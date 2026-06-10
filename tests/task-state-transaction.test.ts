@@ -298,6 +298,45 @@ describe("withTaskStateTransaction", () => {
     ).resolves.not.toThrow();
   });
 
+  it("succeeds on unrelated task despite pre-existing violation elsewhere", async () => {
+    // Pre-existing violation: TASK-002 is Done but still has assignee
+    makeTaskFile("TASK-002", { status: "Done", assignee: "stale-session" });
+
+    // Our transaction only touches TASK-001 (different task, no invariant issues)
+    makeTaskFile("TASK-001", { status: "Ready" });
+
+    await expect(
+      withTaskStateTransaction(
+        { command: "test-unrelated", maxRetries: 0 },
+        (tx) => {
+          tx.claimTask("TASK-001", "session-new");
+          const task = tx.loadTask("TASK-001");
+          expect(task!.assignee).toBe("session-new");
+        },
+      ),
+    ).resolves.not.toThrow();
+  });
+
+  it("still aborts when the modified task itself violates invariants", async () => {
+    // Pre-existing violation: TASK-002 is Done but still has assignee
+    makeTaskFile("TASK-002", { status: "Done", assignee: "stale-session" });
+
+    // Our transaction creates a NEW violation on TASK-001
+    makeTaskFile("TASK-001", { status: "In Progress", assignee: "session-abc" });
+
+    await expect(
+      withTaskStateTransaction(
+        { command: "test-self-violation", maxRetries: 0 },
+        (tx) => {
+          const task = tx.loadTask("TASK-001");
+          task!.status = "Done";
+          // Intentionally leave assignee set — violates DONE_WITH_ASSIGNEE
+          tx.updateTask(task!);
+        },
+      ),
+    ).rejects.toThrow("DONE_WITH_ASSIGNEE");
+  });
+
   it("pushes task-state directly without PR", async () => {
     const { execa } = await import("execa");
     let pushCalled = false;
