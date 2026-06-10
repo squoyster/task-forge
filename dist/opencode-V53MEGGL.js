@@ -1,8 +1,8 @@
 import {
   opencodeAdapter
-} from "./chunk-ACDCJVXE.js";
+} from "./chunk-K4MANGZW.js";
 import "./chunk-5JWCMI7A.js";
 export {
   opencodeAdapter
 };
-//# sourceMappingURL=opencode-NBJAFWWW.js.map
+//# sourceMappingURL=opencode-V53MEGGL.js.map

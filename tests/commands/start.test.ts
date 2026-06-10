@@ -172,6 +172,29 @@ describe("cmdStart", () => {
     expect(createWorktree).toHaveBeenCalled();
   });
 
+  it("allows starting a Verify task selected for QA", async () => {
+    const mockTask = {
+      id: "TASK-001",
+      status: "Verify",
+      priority: "P2",
+      type: "Task",
+      agentRole: "QA",
+      riskLevel: "Low",
+      humanInterventionRequired: false,
+      filePath: path.join(stateDir, "TASK-001.md"),
+      body: "# TASK-001: Test\n\n## Goal\nTest",
+      assignee: undefined,
+      claimed_at: undefined,
+      branch: undefined,
+      worktree: undefined,
+    };
+
+    (loadTaskById as unknown as ReturnType<typeof vi.fn>).mockReturnValue(mockTask);
+
+    await expect(cmdStart("TASK-001")).resolves.not.toThrow();
+    expect(createWorktree).toHaveBeenCalled();
+  });
+
   it("rejects starting a task claimed by a different session", async () => {
     const mockTask = {
       id: "TASK-001",

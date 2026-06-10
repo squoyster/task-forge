@@ -224,7 +224,8 @@ var TaskForgeCommandResultSchema = z.object({
   audit: AuditReferenceSchema.optional(),
   guidance: z.string().optional(),
   error: z.string().optional(),
-  code: z.string().optional()
+  code: z.string().optional(),
+  data: z.unknown().optional()
 });
 var STANDARD_PROHIBITED_ACTIONS = [
   { action: "git commit", reason: "Use taskforge checkpoint instead" },
@@ -965,7 +966,7 @@ function getValidNextCommands(command, outcome) {
 }
 
 // src/core/state-validator.ts
-function validateTaskState(tasks) {
+function validateTaskState(tasks, context) {
   const errors = [];
   const warnings = [];
   const ids = /* @__PURE__ */ new Set();
@@ -1006,7 +1007,7 @@ function validateTaskState(tasks) {
       warnings.push({ severity: "warning", code: "BRANCH_PATTERN", taskId: t.id, message: `Branch "${t.branch}" does not match expected agent/ pattern` });
     }
   }
-  const allIds = new Set(tasks.map((t) => t.id));
+  const allIds = new Set((context ?? tasks).map((t) => t.id));
   for (const t of tasks) {
     if (t.dependsOn) {
       for (const dep of t.dependsOn) {
@@ -1016,10 +1017,11 @@ function validateTaskState(tasks) {
       }
     }
   }
+  const allTasks = context ?? tasks;
   for (const t of tasks) {
     if (t.dependsOn) {
       for (const dep of t.dependsOn) {
-        const depTask = tasks.find((d) => d.id === dep);
+        const depTask = allTasks.find((d) => d.id === dep);
         if (depTask?.dependsOn?.includes(t.id)) {
           errors.push({ severity: "error", code: "CIRCULAR_DEPENDENCY", taskId: t.id, message: `Circular dependency with ${dep}` });
         }
@@ -1119,6 +1121,7 @@ export {
   noopResult,
   doctorRequiredResult,
   STATUS,
+  ALL_STATUSES,
   ACTIVE_STATUSES,
   normalizeStatus,
   parseTaskFile,
@@ -1136,4 +1139,4 @@ export {
   getValidNextCommands,
   validateTaskState
 };
-//# sourceMappingURL=chunk-GFCBVGVF.js.map
+//# sourceMappingURL=chunk-EG2PFJX7.js.map

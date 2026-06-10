@@ -167,7 +167,7 @@ This repository is managed by TaskForge. All agents operating in this repository
 Doctor agents operate under elevated but constrained permissions:
 
 - Run \`taskforge doctor --check\` first for diagnostics
-- Acquire doctor lock: \`taskforge doctor --lock\`
+- Acquire doctor lock: \`TASKFORGE_ACTOR=doctor taskforge doctor --lock --reason "..."\`
 - Minimize direct task-state edits \u2014 prefer TaskForge commands
 - Release doctor lock after repair: \`taskforge done\` on recovery task
 - Never force push to main or task-state branches
@@ -206,4 +206,4 @@ export {
   loadConfig,
   installAgentsMd
 };
-//# sourceMappingURL=chunk-R243K2GI.js.map
+//# sourceMappingURL=chunk-QBLAIQUG.js.map

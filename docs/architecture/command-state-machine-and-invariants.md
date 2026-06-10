@@ -9,6 +9,7 @@ Agents must not use raw `git` to bypass TaskForge. All task-state mutations flow
 - **Forbidden**: `git commit`, `git push`, `git branch -D`, `git worktree remove`, manual edits to `../task-state/*.md`
 - **Required**: `taskforge checkpoint`, `taskforge submit`, `taskforge done --cleanup`, `taskforge done --delete-branch`
 - **Exception**: Doctor agents may use selected git commands under doctor protocol
+- **Workflow contract**: `docs/workflow.md` is the canonical operator guide for humans and agents.
 
 ## 2. Dedicated Task-State Source of Truth (G1)
 
@@ -99,17 +100,18 @@ The `doneStateMachine` in `command-states.ts` enforces these checks in order:
 8. `ac_blank` — no blank criteria items
 9. `ac_unchecked` — all criteria must be checked
 
-**Note**: `done --force` to bypass gate failures is referenced in guidance but **not implemented** in `done.ts` or the CLI.
+**Note**: `done --force` is not implemented in `done.ts` or the CLI and must not appear in normal-agent recovery guidance.
 
 ## 8. Doctor Lock Semantics (G8)
 
-`taskforge doctor --fix` creates a `.doctor-lock` file that pauses all agents during system recovery.
+`TASKFORGE_ACTOR=doctor taskforge doctor --lock --reason "..."` creates a `.doctor-lock` file that pauses all agents during system recovery.
 
 - All normal agents pause (doctor-lock blocks `next`, `claim`, `start`)
 - Doctor agent works the recovery task
-- Done auto-removes the lock; agents pull and resume
-
-**Known mismatch**: The control plane closure spec (§1.2) references `doctor --fix` as a repair command, but the CLI (`src/cli.ts`) only registers `doctor --json`. The implementation function (`cmdDoctor`) accepts a `fix` option, but it is not exposed on the CLI. This is tracked in **TASK-226** (Ready).
+- `taskforge doctor --fix --json` applies automatic repairs where available
+- `taskforge agents --recover --json` marks stale registry entries as crashed
+- Release `.doctor-lock` only after `taskforge validate-state --strict --json` passes
+- If a recovery task exists, `taskforge done TASK-ID` removes the lock; otherwise a doctor or human may remove the lock as an audited recovery action
 
 ## 9. Force Is Human/Doctor-Only (Gap B)
 
@@ -135,14 +137,14 @@ The `doneStateMachine` in `command-states.ts` enforces these checks in order:
 | Command | Option | Notes |
 |---------|--------|-------|
 | `init --force` | Recreate missing files | No authority check — safe idempotent operation |
-| `done --force` | Bypass gate failures | **Not implemented** — referenced in guidance but no CLI option or authority check exists |
+| `done --force` | Bypass gate failures | Not implemented; do not recommend to normal agents |
 
 ## 10. Every Command Emits `nextActions` (G9)
 
-Every CLI command returns structured `nextActions` in JSON output and human-readable guidance.
+Every CLI command returns structured `validNextCommands` in JSON output and human-readable guidance.
 
-- `nextActions` is an array of `{ command, reason, safety, preferred }` objects
-- Safety levels: `safe`, `requires_human`, `doctor_only`, `blocked`
+- `validNextCommands` is an array of `{ command, purpose, when, allowedFor, priority }` objects
+- `allowedFor` values are `all`, `agent`, `human`, and `doctor`
 - Commands use state machines (`command-states.ts`) to determine next actions
 
 ## 11. Unknown States Create Closure Tasks (G10)
@@ -196,11 +198,11 @@ Error codes emitted by state machines in `command-states.ts` and commands:
 | `NO_ACTIONABLE_TASKS` | `nextStateMachine` | Request human input to prioritize work |
 | `NO_CHANGES` | `checkpointStateMachine`, `submitStateMachine` | Continue working, then retry |
 | `COMMIT_FAILED` | `checkpointStateMachine` | Request human input |
-| `NOT_IN_WORKTREE` | `checkpointStateMachine` | Run `taskforge start` to create worktree |
+| `NOT_IN_WORKTREE` | `checkpointStateMachine` | Run `taskforge resume TASK-ID` for existing tasks or `taskforge start TASK-ID` for Ready tasks |
 | `GATE_FAILURE` | `gatesStateMachine` | Fix issues, re-run `taskforge gates` |
 | `PR_FAILED` | `submitStateMachine` | Request human input |
 | `INVALID_TRANSITION` | `doneStateMachine` | Request human input to correct status |
-| `GATES_FAILED` | `doneStateMachine` | Fix issues, re-run gates (note: `done --force` not implemented) |
+| `GATES_FAILED` | `doneStateMachine` | Fix issues and re-run gates; do not use `done --force` |
 | `OWNERSHIP_MISMATCH` | `doneStateMachine` | Request human input |
 | `CONTROL_FILE_CHANGED` / `CONTEXT_CHANGED` | `doneStateMachine` | Re-read control files, verify compliance |
 | `WORKTREE_DIRTY` | `doneStateMachine` | `taskforge checkpoint`, then retry |
@@ -233,7 +235,7 @@ Every `--force` path gated by `assertCanForce()` and its required authority:
 
 **Normal agents may never use `--force`.** Any attempt results in `FORCE_REQUIRES_HUMAN_OR_DOCTOR` error, which directs the agent to `taskforge doctor --json` or `taskforge block` with category `unsafe_operation`.
 
-**Note**: `done --force` is referenced in error guidance but is **not implemented** — there is no `--force` CLI option on `done` and no `assertCanForce()` call in `done.ts`. This is a known gap.
+**Note**: `done --force` is not implemented. Documentation and command guidance must not present it as a normal recovery path.
 
 ## CLI Command Registry
 
@@ -251,9 +253,11 @@ All commands registered in `src/cli.ts`:
 | `done <taskId>` | Mark a task as done |
 | `sync` | Sync with external issue tracker |
 | `list` | List and filter tasks |
+| `promote <taskId>` | Advance a task through the status state machine |
 | `unlock <taskId>` | Manually unlock a task (requires --force) |
 | `sweep` | Sweeper Protocol: recover stale in-progress tasks |
 | `heartbeat <taskId>` | Extend the lease on an In Progress task |
+| `agents` | List and recover distributed agent registry entries |
 | `inspect <taskId>` | Inspect task worktree and branch state |
 | `claim <taskId>` | Claim a task without creating a worktree |
 | `report <taskId>` | Generate a structured completion report |
@@ -274,6 +278,8 @@ All commands registered in `src/cli.ts`:
 | `checkpoint <taskId>` | Create a commit on the task branch |
 | `submit <taskId>` | Push the task branch |
 | `pr <taskId>` | Create a PR for the task |
+| `mcp` | Start a Model Context Protocol server |
+| `guard` | Manage mutation-boundary overrides |
 | `deps scan` | Run broad dependency health checks |
 | `deps audit` | Run package-manager-native audit |
 | `deps outdated` | Report outdated direct dependencies |
@@ -288,5 +294,5 @@ All commands registered in `src/cli.ts`:
 - **TASK-216**: Define and implement command state machines for agentic workflow (Ready)
 - **TASK-222**: Refactor command-state-machine registry to spec shape with full command coverage (Ready)
 - **TASK-224**: Implement unhandled-state closure task generation (Ready)
-- **TASK-226**: Resolve doctor --fix CLI/doc mismatch and restrict to human/doctor authority (Ready)
-- **TASK-228**: Register done --force in CLI and implement gate bypass with authority check (Ready)
+- **TASK-226**: Resolve doctor --fix CLI/doc mismatch and restrict to human/doctor authority (implemented; keep docs aligned)
+- **TASK-228**: Historical proposal for done force handling; current workflow does not implement or recommend `done --force`

@@ -42,7 +42,7 @@ The following restrictions are enforced:
 - **Allowed**: \`git status\`, \`git diff\`, \`git log\`, \`git show\`, \`git branch\`,
   \`git rev-parse\`, \`git fetch\`, \`git ls-remote\`, and other read-only commands.
 - **Override**: A Human or Doctor may authorise specific mutations via
-  \`taskforge doctor --override\` with a structured reason. Overrides are
+  \`taskforge guard override TASK-ID COMMAND "reason"\` with a structured reason. Overrides are
   audited and time-limited.
 
 If a command is blocked, use the suggested TaskForge replacement:
@@ -95,7 +95,7 @@ If a command is blocked, use the suggested TaskForge replacement:
 ## Diagnostic Protocol
 
 1. Run \`taskforge doctor --check\` first for diagnostics
-2. If critical issues found, acquire doctor lock: \`taskforge doctor --lock\`
+2. If critical issues found, acquire doctor lock: \`TASKFORGE_ACTOR=doctor taskforge doctor --lock --reason "..."\`
 3. Work the recovery task assigned by the doctor
 4. Minimize direct task-state edits — prefer TaskForge commands
 5. After repair, complete the recovery task: \`taskforge done TASK-ID\`

@@ -2,6 +2,8 @@
 
 TaskForge integrates with coding agent frameworks (like OpenCode) through a pluggable adapter system. This document describes the architecture, components, and extension workflow.
 
+For operational workflow, generated agents should follow `docs/workflow.md`.
+
 ## Architecture Overview
 
 TaskForge's agent framework integration consists of:
@@ -173,6 +175,7 @@ Installed in `.opencode/agents/`:
 - `reviewer.md` — Code review agent
 - `qa.md` — Quality assurance agent
 - `doctor.md` — System recovery agent
+- `intake.md`, `planner.md`, `deps.md` — Task intake, planning, and dependency stewardship helpers
 
 ### Plugins
 
@@ -202,8 +205,11 @@ Doctor also validates:
 - Task-state invariants (Done tasks without assignee, etc.)
 - Orphan worktrees
 - Stale claims
+- Stale distributed agent registry entries
 - Broken dependsOn references
 - Corrupted JSONL audit files
+
+Doctor lock creation is explicit: `TASKFORGE_ACTOR=doctor taskforge doctor --lock --reason "..."`. Automatic repairs are run with `TASKFORGE_ACTOR=doctor taskforge doctor --fix --json`; stale agent registry entries are recovered with `taskforge agents --recover --json`.
 
 ## Extension Methodology Checklist
 

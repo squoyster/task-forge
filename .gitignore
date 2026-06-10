@@ -1,2 +1,4 @@
 node_modules
 logs/
+.taskforge-session.json
+.taskforge/agent-registry.json

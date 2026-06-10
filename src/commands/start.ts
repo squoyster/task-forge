@@ -77,7 +77,8 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
   }
 
   // Validate status
-  if (task.status !== STATUS.READY && task.status !== STATUS.IN_PROGRESS) {
+  const startableStatuses: string[] = [STATUS.READY, STATUS.IN_PROGRESS, STATUS.REVIEW, STATUS.VERIFY];
+  if (!startableStatuses.includes(task.status)) {
     const result = startStateMachine({
       taskFound: true,
       taskStatus: task.status,
@@ -95,7 +96,7 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
     throw new InvalidStatusTransitionError(
       task.status,
       STATUS.IN_PROGRESS,
-      [STATUS.READY, STATUS.IN_PROGRESS],
+      [STATUS.READY, STATUS.IN_PROGRESS, STATUS.REVIEW, STATUS.VERIFY],
     );
   }
 

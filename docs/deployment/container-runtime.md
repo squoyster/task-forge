@@ -4,6 +4,8 @@
 
 TaskForge uses a **container-first** deployment model. The documented reliable path runs TaskForge inside a container with known tools and versions. Native execution is supported as a secondary path.
 
+This deployment guide is secondary to the live CLI and `docs/workflow.md` for command workflow.
+
 ## Architecture
 
 ```
@@ -44,7 +46,7 @@ chmod +x /usr/local/bin/taskforge
 ### Verify
 
 ```bash
-taskforge doctor system
+taskforge doctor --check
 ```
 
 ## Per-Project Setup
@@ -58,7 +60,7 @@ taskforge init \
   --install-hooks \
   --audit
 
-taskforge doctor project
+taskforge doctor --check
 ```
 
 ## Agent Workflow
@@ -67,10 +69,13 @@ taskforge doctor project
 taskforge next
 taskforge start TASK-123
 # agent works in generated worktree
+taskforge gates --json
 taskforge checkpoint TASK-123 --message "Implement scoped change"
 taskforge submit TASK-123
 taskforge done TASK-123
 ```
+
+For `In Progress`, `Review`, or `Verify` tasks returned by `taskforge next --json`, use `taskforge resume TASK-123` instead of `taskforge start TASK-123`.
 
 ## Native Execution (Alternative)
 

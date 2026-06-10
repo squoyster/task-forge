@@ -111,7 +111,7 @@ var opencodeAdapter = {
   },
   async apply(ctx) {
     if (ctx.dryRun) return;
-    const { installAgentsMd } = await import("./agents-md-A3PFT5FN.js");
+    const { installAgentsMd } = await import("./agents-md-PCRQGT3A.js");
     installAgentsMd(ctx.projectRoot, ctx.dryRun);
     const { installOpenCodeConfig } = await import("./opencode-config-Q5FF63TP.js");
     installOpenCodeConfig(ctx.projectRoot, ctx.policy, ctx.audit, ctx.guard, ctx.dryRun);
@@ -121,7 +121,7 @@ var opencodeAdapter = {
       dryRun: ctx.dryRun,
       installHooks: ctx.installHooks
     });
-    const { installAgentFiles } = await import("./agent-files-XPIYCK4G.js");
+    const { installAgentFiles } = await import("./agent-files-VNXGYKZX.js");
     installAgentFiles(ctx.projectRoot, ctx.dryRun);
     if (ctx.audit) {
       const { installAuditPlugin } = await import("./audit-plugin-TS6NRRLX.js");
@@ -140,4 +140,4 @@ var opencodeAdapter = {
 export {
   opencodeAdapter
 };
-//# sourceMappingURL=chunk-ACDCJVXE.js.map
+//# sourceMappingURL=chunk-K4MANGZW.js.map

@@ -77,7 +77,7 @@ async function getWorktreeDirtyFiles(worktreePath) {
 async function getBranchCommitsAhead(repoRoot, branch) {
   try {
     const remoteBranch = `origin/${branch.replace(/^refs\/heads\//, "")}`;
-    const result = await execa("git", ["rev-list", "--count", `${remoteBranch}..HEAD`], { cwd: repoRoot });
+    const result = await execa("git", ["rev-list", "--count", `${remoteBranch}..refs/heads/${branch}`], { cwd: repoRoot });
     return parseInt(result.stdout.trim(), 10) || 0;
   } catch {
     return 0;
@@ -326,4 +326,4 @@ export {
   pullTaskState,
   jitteredPush
 };
-//# sourceMappingURL=chunk-4P6LV6YT.js.map
+//# sourceMappingURL=chunk-RYDMXDO2.js.map

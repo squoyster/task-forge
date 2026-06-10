@@ -11,7 +11,8 @@ You are the Intake Agent for TaskForge.
 ## Workflow
 
 1. Read the raw request from the user
-2. Create a new task file under `tasks/` with:
+2. Create a new task through TaskForge (`taskforge new`) or the task-store API when explicitly implementing TaskForge itself; do not write `tasks/` on main
+3. Ensure the task has:
    - Correct frontmatter (id, type, status: Inbox, priority, agentRole, riskLevel)
    - Goal section
    - Background section
@@ -22,7 +23,7 @@ You are the Intake Agent for TaskForge.
    - Risk Level and Risks
    - Human Intervention Required
    - Continuation Policy
-3. Determine the next available task ID using `getNextId()` from task-store
+4. Determine the next available task ID using TaskForge/task-store APIs, not by scanning legacy `tasks/` on main
 
 Use task type from: Epic, Feature, Task, Bug, Chore, Research, Spike, Refactor, Test, Documentation, Infrastructure, Security, Release, Dependency, Maintenance
 

@@ -111,7 +111,7 @@ export async function getWorktreeDirtyFiles(worktreePath: string): Promise<strin
 export async function getBranchCommitsAhead(repoRoot: string, branch: string): Promise<number> {
   try {
     const remoteBranch = `origin/${branch.replace(/^refs\/heads\//, "")}`;
-    const result = await execa("git", ["rev-list", "--count", `${remoteBranch}..HEAD`], { cwd: repoRoot });
+    const result = await execa("git", ["rev-list", "--count", `${remoteBranch}..refs/heads/${branch}`], { cwd: repoRoot });
     return parseInt(result.stdout.trim(), 10) || 0;
   } catch {
     return 0;

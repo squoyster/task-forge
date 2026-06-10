@@ -92,10 +92,12 @@ export async function cmdSummary(json?: boolean): Promise<void> {
 
   if (json) {
     const output = buildJson(tasks);
-    writeResult(successResult({
+    const result = successResult({
       command: "summary",
       guidance: `TaskForge Summary: ${output.total} total tasks. Next: ${output.nextAction}`,
-    }), json);
+    });
+    result.data = output;
+    writeResult(result, json);
     return;
   }
 
