@@ -6,8 +6,6 @@ priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 6d2c4e6935
-claimed_at: '2026-06-10 12:49:22'
 context_hash: 58d6f9d818aa1c4f
 ---
 
@@ -24,6 +22,9 @@ Implement taskforge update <taskId> for setting arbitrary frontmatter fields (--
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-10T00:00:00Z System
+- Task unlocked (authorized: human) — previous claim was held by session "6d2c4e6935"
 
 ### 2026-06-10T00:00:00Z System
 - Cleanup: worktree and branch removed
