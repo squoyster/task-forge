@@ -1,11 +1,15 @@
 ---
 id: TASK-287
 type: Bug
-status: Ready
+status: In Progress
 priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 8dbbfcb3f2
+claimed_at: '2026-06-11 11:37:54'
+context_hash: 24c64b5cba799406
+branch: agent/TASK-287-fix-checkpoint-and-submit-ownership-reso--8dbbfcb3f2
 ---
 # TASK-287: Fix checkpoint and submit ownership resolution outside task worktrees
 ## Goal
@@ -49,6 +53,11 @@ Context resolution changes can break task ownership checks if branch and worktre
 Auto-continue unless a stopping condition occurs.
 
 ## Agent Notes
+
+### 2026-06-11T00:00:00Z System
+- Task claimed via taskforge start TASK-287
+- Session: 8dbbfcb3f2
+- Branch: agent/TASK-287-fix-checkpoint-and-submit-ownership-reso--8dbbfcb3f2
 
 ### 2026-06-10T00:00:00Z System
 - Task updated via taskforge update
