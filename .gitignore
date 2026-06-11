@@ -2,3 +2,5 @@ node_modules
 logs/
 .taskforge/runtime/
 .taskforge-session.json
+.taskforge/agent-registry.json
+dist/

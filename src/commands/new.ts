@@ -8,6 +8,12 @@ import { writeResult } from "../util/write-command-result.js";
 import { successResult, failedResult } from "../core/result-builder.js";
 import { newStateMachine } from "../core/command-states.js";
 import { getDefaultGuidanceAdapter } from "../core/guidance-adapter.js";
+import {
+  importTaskDocument,
+  renderTaskDocument,
+  createTaskDocument,
+  type TaskSectionKey,
+} from "../core/task-document.js";
 
 export interface NewOptions {
   type?: string;
@@ -15,19 +21,63 @@ export interface NewOptions {
   agentRole?: string;
   status?: string;
   body?: string;
+  fromFile?: string;
+  goal?: string;
+  background?: string;
+  scope?: string;
+  acceptanceCriteria?: string;
+  testCommand?: string;
+  expectedOutput?: string;
+  dependencies?: string;
+  risks?: string;
+  continuationPolicy?: string;
   json?: boolean;
 }
 
-export async function cmdNew(title: string, options?: NewOptions): Promise<void> {
+export async function cmdNew(title: string | undefined, options?: NewOptions): Promise<void> {
   const repoRoot = getRepoRoot();
-  const taskType = options?.type ?? "Task";
-  const priority = options?.priority ?? "P2";
-  const agentRole = options?.agentRole ?? "Implementer";
+  let taskType = options?.type ?? "Task";
+  let priority = options?.priority ?? "P2";
+  let agentRole = options?.agentRole ?? "Implementer";
   const status = options?.status ?? "Ready";
-  const bodyExtra = options?.body ?? "";
   const json = options?.json ?? false;
 
   const nextId = getNextId(repoRoot);
+
+  let taskTitle = title?.trim() ?? "";
+  const sectionPatch = buildSectionPatch(options);
+  let document = createTaskDocument(taskTitle || nextId, sectionPatch);
+
+  if (options?.fromFile) {
+    try {
+      const imported = importTaskDocument(fs.readFileSync(options.fromFile, "utf-8"), { strictReadonly: true });
+      taskType = imported.fields.type ?? taskType;
+      priority = imported.fields.priority ?? priority;
+      agentRole = imported.fields.agentRole ?? agentRole;
+      taskTitle = imported.fields.title ?? taskTitle;
+      document = {
+        ...imported.document,
+        title: imported.fields.title ?? imported.document.title,
+      };
+    } catch (err) {
+      writeResult(failedResult({
+        command: "new",
+        error: err instanceof Error ? err.message : String(err),
+        code: "INVALID_INPUT",
+      }), json);
+      return;
+    }
+  }
+
+  if (options?.body) {
+    document.sections.goal = options.body;
+  }
+  if (!taskTitle) {
+    taskTitle = document.title || nextId;
+  }
+  if (Object.keys(sectionPatch).length > 0) {
+    document.sections = { ...document.sections, ...sectionPatch };
+  }
 
   const frontmatter = [
     "---",
@@ -41,20 +91,14 @@ export async function cmdNew(title: string, options?: NewOptions): Promise<void>
     "---",
   ].join("\n");
 
-  const body = [
-    `# ${nextId}: ${title}`,
-    "",
-    "## Goal",
-    "",
-    bodyExtra || "Describe the desired outcome.",
-    "",
-    "## Acceptance Criteria",
-    "",
-    "- [ ]",
-    "",
-    "## Agent Notes",
-    "",
-  ].join("\n");
+  const body = renderTaskDocument(nextId, {
+    ...document,
+    title: taskTitle,
+    sections: {
+      goal: document.sections.goal ?? options?.body ?? "Describe the desired outcome.",
+      ...document.sections,
+    },
+  });
 
   const content = `${frontmatter}\n\n${body}`;
 
@@ -143,4 +187,19 @@ export async function cmdNew(title: string, options?: NewOptions): Promise<void>
   logSub(`  taskforge start ${nextId}   — Begin working on this task (creates worktree)`);
   logSub(`  taskforge claim ${nextId}   — Claim this task without creating a worktree`);
   logSub("  taskforge next            — Find the next available task");
+}
+
+function buildSectionPatch(options?: NewOptions): Partial<Record<TaskSectionKey, string>> {
+  const sections: Partial<Record<TaskSectionKey, string>> = {};
+  if (!options) return sections;
+  if (options.goal !== undefined) sections.goal = options.goal;
+  if (options.background !== undefined) sections.background = options.background;
+  if (options.scope !== undefined) sections.scope = options.scope;
+  if (options.acceptanceCriteria !== undefined) sections.acceptanceCriteria = options.acceptanceCriteria;
+  if (options.testCommand !== undefined) sections.testCommand = options.testCommand;
+  if (options.expectedOutput !== undefined) sections.expectedOutput = options.expectedOutput;
+  if (options.dependencies !== undefined) sections.dependencies = options.dependencies;
+  if (options.risks !== undefined) sections.risks = options.risks;
+  if (options.continuationPolicy !== undefined) sections.continuationPolicy = options.continuationPolicy;
+  return sections;
 }

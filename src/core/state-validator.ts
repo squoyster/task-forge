@@ -1,4 +1,5 @@
 import type { ParsedTask } from "./task-store.js";
+import { findDuplicateStructuralSections } from "./task-store.js";
 import { STATUS } from "../util/status-constants.js";
 import { TaskForgeCommandResultSchema, STANDARD_PROHIBITED_ACTIONS } from "./command-result.js";
 import { NEXT_COMMAND_MAPS } from "./next-command-maps.js";
@@ -19,7 +20,7 @@ export interface StateValidationResult {
   warnings: StateValidationIssue[];
 }
 
-export function validateTaskState(tasks: ParsedTask[]): StateValidationResult {
+export function validateTaskState(tasks: ParsedTask[], context?: ParsedTask[]): StateValidationResult {
   const errors: StateValidationIssue[] = [];
   const warnings: StateValidationIssue[] = [];
   const ids = new Set<string>();
@@ -71,14 +72,25 @@ export function validateTaskState(tasks: ParsedTask[]): StateValidationResult {
       errors.push({ severity: "error", code: "SELF_DEPENDENCY", taskId: t.id, message: "Task depends on itself" });
     }
 
+    const duplicateSections = findDuplicateStructuralSections(t.body);
+    if (duplicateSections.length > 0) {
+      warnings.push({
+        severity: "warning",
+        code: "DUPLICATE_TASK_SECTIONS",
+        taskId: t.id,
+        message: `Duplicate structural sections: ${duplicateSections.join(", ")}`,
+        suggestedFix: "Normalize the task markdown so each structural section appears at most once",
+      });
+    }
+
     // Branch pattern
     if (t.branch && !/^agent\//.test(t.branch)) {
       warnings.push({ severity: "warning", code: "BRANCH_PATTERN", taskId: t.id, message: `Branch "${t.branch}" does not match expected agent/ pattern` });
     }
   }
 
-  // Broken dependsOn references
-  const allIds = new Set(tasks.map((t) => t.id));
+  // Broken dependsOn references — use context (all tasks) for ID resolution when scoped
+  const allIds = new Set((context ?? tasks).map((t) => t.id));
   for (const t of tasks) {
     if (t.dependsOn) {
       for (const dep of t.dependsOn) {
@@ -89,11 +101,12 @@ export function validateTaskState(tasks: ParsedTask[]): StateValidationResult {
     }
   }
 
-  // Circular dependencies
+  // Circular dependencies — use context for full-task resolution when scoped
+  const allTasks = context ?? tasks;
   for (const t of tasks) {
     if (t.dependsOn) {
       for (const dep of t.dependsOn) {
-        const depTask = tasks.find((d) => d.id === dep);
+        const depTask = allTasks.find((d) => d.id === dep);
         if (depTask?.dependsOn?.includes(t.id)) {
           errors.push({ severity: "error", code: "CIRCULAR_DEPENDENCY", taskId: t.id, message: `Circular dependency with ${dep}` });
         }

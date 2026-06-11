@@ -1,5 +1,7 @@
 # TaskForge Implementation Task Set — Agent Framework Policy + OpenCode Integration
 
+> Status: Historical implementation task set. Use `docs/workflow.md`, `AGENTS.md`, and `.opencode/agents/*.md` for the current operating contract.
+
 ## Numbering note
 
 The highest TaskForge task number observed from the repository metadata available here is `TASK-045`, from the branch `agent/TASK-045-centralize-task-state-mutation-through-t--6336b86a8c`. This task set therefore starts at `TASK-046`.
@@ -183,13 +185,16 @@ Include allowed commands:
 ```bash
 taskforge next
 taskforge start TASK-ID
+taskforge resume TASK-ID
 taskforge heartbeat TASK-ID
 taskforge inspect TASK-ID
 taskforge diff TASK-ID
+taskforge gates --json
 taskforge checkpoint TASK-ID --message "..."
 taskforge submit TASK-ID
 taskforge done TASK-ID
 taskforge block TASK-ID "reason"
+taskforge release TASK-ID
 taskforge doctor --check
 ```
 
@@ -394,7 +399,7 @@ Each file should be generated as a managed file or contain a managed block.
 
 Must instruct the agent to:
 
-- Start work with `taskforge start TASK-ID`.
+- Start Ready work with `taskforge start TASK-ID`; resume existing work with `taskforge resume TASK-ID`.
 - Work only in the assigned worktree.
 - Use `taskforge checkpoint` instead of direct git commits.
 - Use `taskforge submit` instead of direct git push.
@@ -426,7 +431,7 @@ Must instruct the agent to:
 - Acquire doctor lock before repair.
 - Avoid force push.
 - Minimize direct task-state edits.
-- Release doctor lock after repair.
+- Release doctor lock only after `taskforge validate-state --strict --json` passes and stale agents are recovered.
 
 ## Acceptance Criteria
 

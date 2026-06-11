@@ -24,6 +24,19 @@ function formatAge(heartbeat: string): string {
   return `${Math.floor(diffHours / 24)}d ago`;
 }
 
+function serializeAgent(agent: ReturnType<typeof readAgentRegistry>["agents"][number]) {
+  return {
+    session_id: agent.session_id,
+    agent_id: agent.agent_id,
+    last_heartbeat: agent.last_heartbeat,
+    last_heartbeat_age: formatAge(agent.last_heartbeat),
+    current_task: agent.current_task,
+    status: agent.status,
+    worktree_path: agent.worktree_path,
+    registered_at: agent.registered_at,
+  };
+}
+
 export async function cmdAgents(options?: AgentsOptions): Promise<void> {
   const repoRoot = getRepoRoot();
 
@@ -31,12 +44,17 @@ export async function cmdAgents(options?: AgentsOptions): Promise<void> {
     const threshold = options.threshold ?? 15;
     const crashed = markStaleAgentsAsCrashed(threshold, repoRoot);
     if (options.json) {
-      writeResult(successResult({
+      const result = successResult({
         command: "agents",
         guidance: crashed.length === 0
           ? "No stale agents found."
           : `Marked ${crashed.length} stale agent(s) as crashed.`,
-      }), options.json);
+      });
+      result.data = {
+        recovered: crashed.map(serializeAgent),
+        thresholdMinutes: threshold,
+      };
+      writeResult(result, options.json);
     } else {
       if (crashed.length === 0) {
         logSuccess("No stale agents found.");
@@ -54,12 +72,17 @@ export async function cmdAgents(options?: AgentsOptions): Promise<void> {
     const threshold = options.threshold ?? 15;
     const stale = findStaleAgents(threshold, repoRoot);
     if (options.json) {
-      writeResult(successResult({
+      const result = successResult({
         command: "agents",
         guidance: stale.length === 0
           ? "No stale agents found."
           : `Found ${stale.length} stale agent(s) (threshold: ${threshold}m). Run 'taskforge agents --recover' to mark them as crashed.`,
-      }), options.json);
+      });
+      result.data = {
+        stale: stale.map(serializeAgent),
+        thresholdMinutes: threshold,
+      };
+      writeResult(result, options.json);
     } else {
       if (stale.length === 0) {
         logSuccess("No stale agents found.");
@@ -81,12 +104,24 @@ export async function cmdAgents(options?: AgentsOptions): Promise<void> {
   const crashed = registry.agents.filter((a) => a.status === "crashed");
 
   if (options?.json) {
-    writeResult(successResult({
+    const result = successResult({
       command: "agents",
       guidance: registry.agents.length === 0
         ? "No agents registered yet. Agents are registered when they claim or start a task."
         : `Agent registry: ${registry.agents.length} total, ${active.length} active, ${idle.length} idle, ${crashed.length} crashed.`,
-    }), options.json);
+    });
+    result.data = {
+      max_concurrent_agents: registry.max_concurrent_agents,
+      last_updated: registry.last_updated,
+      counts: {
+        total: registry.agents.length,
+        active: active.length,
+        idle: idle.length,
+        crashed: crashed.length,
+      },
+      agents: registry.agents.map(serializeAgent),
+    };
+    writeResult(result, options.json);
     return;
   }
 

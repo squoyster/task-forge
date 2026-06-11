@@ -70,6 +70,10 @@ describe("cmdSummary", () => {
     expect(parsed.ok).toBe(true);
     expect(parsed.status).toBe("success");
     expect(parsed.guidance).toContain("2 total tasks");
+    expect(parsed.data.total).toBe(2);
+    expect(parsed.data.byStatus.Ready).toBe(1);
+    expect(parsed.data.byStatus.Done).toBe(1);
+    expect(parsed.data.tasks).toHaveLength(2);
     logSpy.mockRestore();
   });
 
@@ -97,6 +101,8 @@ describe("cmdSummary", () => {
     expect(parsed.ok).toBe(true);
     expect(parsed.status).toBe("success");
     expect(parsed.guidance).toContain("0 total tasks");
+    expect(parsed.data.total).toBe(0);
+    expect(parsed.data.tasks).toEqual([]);
     logSpy.mockRestore();
   });
 

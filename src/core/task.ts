@@ -66,6 +66,7 @@ export const TaskSchema = z.object({
   blocked_since: z.union([z.string(), z.date()]).optional(),
   block_category: BlockCategory.optional(),
   context_hash: z.string().optional(),
+  spec_hash: z.string().optional(),
   override_reason: z.string().optional(),
   override_actor: z.string().optional(),
   override_timestamp: z.string().optional(),
