@@ -9,7 +9,6 @@ humanInterventionRequired: false
 assignee: 5aca6db53f
 claimed_at: '2026-06-11 01:09:09'
 context_hash: 24c64b5cba799406
-spec_hash: a733e261d02e1e7a
 branch: agent/TASK-281-fix-taskforge-submit-to-report-real-push--5aca6db53f
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-281
 ---
