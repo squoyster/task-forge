@@ -29,7 +29,7 @@ describe("AgentFrameworkAdapter", () => {
       repoRoot = fs.mkdtempSync("/tmp/taskforge-doctor-");
       agentsMdPath = path.join(repoRoot, "AGENTS.md");
       openCodeJsonPath = path.join(repoRoot, "opencode.json");
-      auditDir = path.join(repoRoot, "logs", "taskforge", "audit");
+      auditDir = path.join(repoRoot, ".taskforge", "runtime", "logs", "taskforge", "audit");
     });
 
     afterEach(() => {

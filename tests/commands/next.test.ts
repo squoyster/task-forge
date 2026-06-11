@@ -151,6 +151,23 @@ describe("cmdNext", () => {
     logSpy.mockRestore();
   });
 
+  it("returns verification next commands for Verify task in JSON", async () => {
+    makeTaskFile("TASK-001", { status: "Ready" });
+    makeTaskFile("TASK-002", { status: "Verify" });
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const writeSpy = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
+
+    await cmdNext({ json: true });
+
+    logSpy.mockRestore();
+    const parsed = JSON.parse(String(writeSpy.mock.calls[0][0]));
+    writeSpy.mockRestore();
+    expect(parsed.task.id).toBe("TASK-002");
+    expect(parsed.guidance).toContain("do not run start");
+    expect(parsed.validNextCommands[0].command).toBe("taskforge resume TASK-002");
+    expect(parsed.validNextCommands.map((cmd: { command: string }) => cmd.command)).not.toContain("taskforge start <TASK-ID>");
+  });
+
   it("selects Review over Ready", async () => {
     makeTaskFile("TASK-001", { status: "Ready" });
     makeTaskFile("TASK-002", { status: "Review" });

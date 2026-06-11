@@ -11,10 +11,12 @@ import { validateJsonlFiles } from "../core/audit.js";
 import { getAgentFrameworkAdapter, type DoctorIssue, type DoctorRepair } from "../core/agent-framework-adapter.js";
 import { successResult, failedResult } from "../core/result-builder.js";
 import { writeResult } from "../util/write-command-result.js";
+import { createDoctorLock } from "../core/doctor-lock.js";
+import { resolveAuthority, assertCanForce, ForceRequiresHumanOrDoctorError } from "../core/authority.js";
 import path from "node:path";
 import fs from "node:fs";
 
-export async function cmdDoctor(options?: { json?: boolean; fix?: boolean }): Promise<void> {
+export async function cmdDoctor(options?: { json?: boolean; check?: boolean; fix?: boolean; lock?: boolean; reason?: string; ttlHours?: number }): Promise<void> {
   const repoRoot = getRepoRoot();
   const config = loadConfig(repoRoot);
   const tasks = loadAllTasks(repoRoot);
@@ -133,10 +135,54 @@ export async function cmdDoctor(options?: { json?: boolean; fix?: boolean }): Pr
   // 9b. Agent framework fix (if --fix)
   const repairs: DoctorRepair[] = [];
   if (options?.fix) {
+    try {
+      assertCanForce(resolveAuthority());
+    } catch (err) {
+      if (err instanceof ForceRequiresHumanOrDoctorError) {
+        const result = failedResult({
+          command: "doctor",
+          error: "Normal agents may not run doctor --fix.",
+          code: "FORCE_REQUIRES_HUMAN_OR_DOCTOR",
+          nextCommands: [
+            { command: "taskforge doctor --check --json", purpose: "Run diagnostics without mutation", when: "Before requesting recovery", allowedFor: "all", priority: 1 },
+            { command: "taskforge block <TASK-ID> \"Doctor fix requires human or doctor authority\"", purpose: "Escalate unsafe recovery", when: "If repairs are required", allowedFor: "all", priority: 2 },
+          ],
+        });
+        if (options?.json) writeResult(result, options.json);
+        else logWarn(result.error ?? "Normal agents may not run doctor --fix.");
+        return;
+      }
+      throw err;
+    }
     const adapterRepairs = adapter.fix(repoRoot);
     repairs.push(...adapterRepairs);
     for (const repair of adapterRepairs) {
       ok.push(`Repaired: ${repair.message}`);
+    }
+  }
+
+  if (options?.lock) {
+    try {
+      assertCanForce(resolveAuthority());
+      const reason = options.reason ?? "Doctor recovery in progress";
+      createDoctorLock(reason, { ttlHours: options.ttlHours, repoRoot });
+      repairs.push({ code: "DOCTOR_LOCK", message: `Doctor lock acquired: ${reason}` });
+      ok.push(`Doctor lock acquired: ${reason}`);
+    } catch (err) {
+      if (err instanceof ForceRequiresHumanOrDoctorError) {
+        const result = failedResult({
+          command: "doctor",
+          error: "Normal agents may not acquire doctor lock.",
+          code: "FORCE_REQUIRES_HUMAN_OR_DOCTOR",
+          nextCommands: [
+            { command: "taskforge doctor --check --json", purpose: "Run diagnostics without mutation", when: "Before requesting recovery", allowedFor: "all", priority: 1 },
+          ],
+        });
+        if (options?.json) writeResult(result, options.json);
+        else logWarn(result.error ?? "Normal agents may not acquire doctor lock.");
+        return;
+      }
+      throw err;
     }
   }
 
@@ -175,7 +221,7 @@ export async function cmdDoctor(options?: { json?: boolean; fix?: boolean }): Pr
     const errCount = issues.filter((i) => i.severity === "error").length;
     const warnCount = issues.filter((i) => i.severity === "warn").length;
     const hasErrors = errCount > 0;
-    writeResult(hasErrors ? failedResult({
+    const result = hasErrors ? failedResult({
       command: "doctor",
       error: `${errCount} error(s) and ${warnCount} warning(s) found.`,
       code: "DOCTOR_ISSUES",
@@ -183,7 +229,16 @@ export async function cmdDoctor(options?: { json?: boolean; fix?: boolean }): Pr
     }) : successResult({
       command: "doctor",
       guidance: `TaskForge Doctor: ${tasks.length} tasks, ${ok.length} checks passed, ${repairs.length} repairs.`,
-    }), options.json);
+    });
+    result.data = {
+      tasks: tasks.length,
+      checksPassed: ok,
+      issues,
+      issueCounts: { errors: errCount, warnings: warnCount },
+      sweepable,
+      repairs,
+    };
+    writeResult(result, options.json);
     return;
   }
 

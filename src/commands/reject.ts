@@ -4,8 +4,10 @@ import { STATUS } from "../util/status-constants.js";
 import { logSuccess, logInfo, logDivider, logSub } from "../util/logging.js";
 import { TaskNotFoundError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
+import { appendTaskTranscript, createTaskEvent } from "../core/audit.js";
 import { successResult, failedResult } from "../core/result-builder.js";
 import { writeResult } from "../util/write-command-result.js";
+import { buildTerminalAuditNotes } from "../core/terminal-audit.js";
 
 export async function cmdReject(taskId: string, reason: string, options?: { json?: boolean }): Promise<void> {
   const repoRoot = getRepoRoot();
@@ -22,7 +24,14 @@ export async function cmdReject(taskId: string, reason: string, options?: { json
   updateTaskStatus(task.filePath, STATUS.REJECTED);
 
   const today = new Date().toISOString().split("T")[0];
-  appendAgentNote(task.filePath, today, "System", [`Task rejected: ${reason}`]);
+  appendTaskTranscript(repoRoot, taskId, createTaskEvent(taskId, "task.command.completed", {
+    summary: `Task ${taskId} rejected`,
+    metadata: { reason },
+  }));
+  appendAgentNote(task.filePath, today, "System", [
+    `Task rejected: ${reason}`,
+    ...buildTerminalAuditNotes(repoRoot, taskId, "Rejected"),
+  ]);
 
   await commitAndPushTaskState(repoRoot, `chore: reject ${taskId}`);
 

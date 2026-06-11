@@ -67,4 +67,48 @@ describe("cmdInit", () => {
     await cmdInit();
     expect(fs.existsSync(taskforgePath)).toBe(true);
   });
+
+  it("archives divergent legacy tasks into task-state", async () => {
+    const repoDir = path.join(uniqueDir, "repo");
+    const tasksDir = path.join(repoDir, "tasks");
+    fs.mkdirSync(tasksDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(tasksDir, "TASK-001.md"),
+      `---
+id: TASK-001
+type: Feature
+status: claimed
+priority: P1
+---
+
+# TASK-001: Legacy Task
+
+## Goal
+Legacy goal.
+`,
+      "utf-8",
+    );
+    fs.writeFileSync(
+      path.join(stateDir, "TASK-001.md"),
+      `---
+id: TASK-001
+type: Task
+status: Done
+priority: P1
+---
+
+# TASK-001: Current Task
+
+## Goal
+Current goal.
+`,
+      "utf-8",
+    );
+
+    await cmdInit();
+    const archivePath = path.join(stateDir, "legacy-main", "TASK-001.md");
+    expect(fs.existsSync(archivePath)).toBe(true);
+    expect(fs.readFileSync(archivePath, "utf-8")).toContain("source: main/tasks");
+    expect(fs.readFileSync(archivePath, "utf-8")).toContain("# TASK-001: Legacy Task");
+  });
 });

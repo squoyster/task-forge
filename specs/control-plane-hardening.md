@@ -1,4 +1,6 @@
-Never reuse tokens across tiers.  Store secrets in GitHub Actions secrets and rotate them regularly.
+> Status: Historical hardening draft. Use `docs/control-plane-hardening.md`, `docs/github-task-state-protection.md`, and `docs/workflow.md` for current operational guidance.
+
+Never reuse tokens across tiers. Store secrets in GitHub Actions secrets and rotate them regularly.
 
 Defence in depth
 
@@ -12,7 +14,7 @@ Create a workflow (e.g. .github/workflows/task‑state‑validate.yml) that runs
 
 1. Check out both the main repository and the task‑state branch.  Be careful with paths: by default, the CLI expects the state directory at ../task‑state.  Use actions/checkout with path: task‑state so that the state directory ends up at ../task‑state relative to the root of the main checkout.
 2. Run npm ci or npm install to install dependencies.
-3. Execute npx taskforge validate‑state --strict --json.  When the CLI exits non‑zero, the job fails.
+3. Execute `taskforge validate-state --strict --json`. When the CLI exits non-zero, the job fails.
 4. Optionally, upload a report artifact for visibility.
 
 3. Protect the branch on GitHub

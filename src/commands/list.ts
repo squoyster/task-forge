@@ -70,10 +70,21 @@ export async function cmdList(options: ListOptions = {}): Promise<void> {
       blocked_by: t.blocked_by,
       block_category: t.block_category,
     }));
-    writeResult(successResult({
+    const result = successResult({
       command: "list",
       guidance: `Found ${entries.length} task(s) matching criteria.`,
-    }), options.json);
+    });
+    result.data = {
+      total: entries.length,
+      filters: {
+        status: options.status ? normalizeStatus(options.status) : undefined,
+        priority: options.priority,
+        type: options.type,
+        search: options.search,
+      },
+      tasks: entries,
+    };
+    writeResult(result, options.json);
     return;
   }
 

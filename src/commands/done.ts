@@ -20,6 +20,7 @@ import { markAgentIdle } from "../core/agent-registry.js";
 import { checkCompletionEligibility } from "../core/completion-policy.js";
 import { GitHubPullRequestVerifier } from "../core/pr-verifier.js";
 import { loadConfig } from "../core/config.js";
+import { buildTerminalAuditNotes } from "../core/terminal-audit.js";
 import type { ParsedTask } from "../core/task-store.js";
 
 export interface DoneOptions {
@@ -445,6 +446,7 @@ export async function cmdDone(
     await performCleanup(repoRoot, task, deleteBranch, today, notes);
   }
 
+  notes.push(...buildTerminalAuditNotes(repoRoot, taskId, "Done"));
   appendAgentNote(task.filePath, today, "System", notes);
 
   // Push state changes through transaction

@@ -23,6 +23,7 @@ The `TaskForgeCommandResult` interface is defined in `src/core/command-result.ts
 | `prohibitedActions` | `ProhibitedAction[]` | Actions the agent must not take |
 | `recovery` | `RecoveryInstruction` | Recovery guidance for error states |
 | `diagnostics` | `DiagnosticItem[]` | Diagnostic messages |
+| `data` | `unknown` | Optional structured command-specific payload for agents and integrations |
 
 ### Optional Fields
 
@@ -85,7 +86,7 @@ The `renderResultMarkdown()` function in `src/core/result-renderer.ts` produces 
 
 ## JSON Output
 
-The `renderResultJson()` function outputs the full `TaskForgeCommandResult` as JSON. JSON is authoritative; Markdown must render the same semantics.
+The `renderResultJson()` function outputs the full `TaskForgeCommandResult` as JSON. JSON is authoritative; Markdown must render the same semantics. Agents must prefer `validNextCommands` and structured `data` over parsing prose guidance.
 
 ## Invariant Enforcement
 

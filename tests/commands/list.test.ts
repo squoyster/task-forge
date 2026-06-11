@@ -184,6 +184,8 @@ describe("cmdList", () => {
     const parsed = JSON.parse(jsonArg);
     expect(parsed.ok).toBe(true);
     expect(parsed.status).toBe("success");
+    expect(parsed.data.total).toBe(2);
+    expect(parsed.data.tasks.map((t: { id: string }) => t.id)).toEqual(["TASK-001", "TASK-002"]);
     logSpy.mockRestore();
   });
 
@@ -193,6 +195,8 @@ describe("cmdList", () => {
     const parsed = JSON.parse(logSpy.mock.calls[0][0]);
     expect(parsed.ok).toBe(true);
     expect(parsed.status).toBe("success");
+    expect(parsed.data.total).toBe(0);
+    expect(parsed.data.tasks).toEqual([]);
     logSpy.mockRestore();
   });
 
