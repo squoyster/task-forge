@@ -361,6 +361,32 @@ describe("cmdDone", () => {
     expect(output.error).toContain("taskforge checkpoint");
   });
 
+  it("allows done when gates are the only source of dirtiness", async () => {
+    vi.mocked(getWorktreeDirtyFiles)
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce(["dist/cli.js", "dist/cli.js.map"]);
+
+    makeTaskFile("TASK-005", {
+      worktree: "../worktrees/TASK-005",
+      branch: "agent/TASK-005-test",
+    });
+
+    await expect(cmdDone("TASK-005")).resolves.toBeUndefined();
+  });
+
+  it("still rejects done when pre-existing dirt remains after gates", async () => {
+    vi.mocked(getWorktreeDirtyFiles)
+      .mockResolvedValueOnce(["src/foo.ts"])
+      .mockResolvedValueOnce(["dist/cli.js", "src/foo.ts"]);
+
+    makeTaskFile("TASK-005", {
+      worktree: "../worktrees/TASK-005",
+      branch: "agent/TASK-005-test",
+    });
+
+    await expect(cmdDone("TASK-005")).rejects.toThrow(/src\/foo\.ts/);
+  });
+
   it("rejects done when branch has unpushed commits", async () => {
     vi.mocked(getWorktreeDirtyFiles).mockResolvedValue([]);
     vi.mocked(getBranchCommitsAhead).mockResolvedValue(3);

@@ -29,6 +29,15 @@ export interface DoneOptions {
   json?: boolean;
 }
 
+function normalizeDirtyFiles(files: string[]): string[] {
+  return [...new Set(files)].sort();
+}
+
+function getBlockingDirtyFiles(beforeGates: string[], afterGates: string[]): string[] {
+  const before = new Set(normalizeDirtyFiles(beforeGates));
+  return normalizeDirtyFiles(afterGates).filter((file) => before.has(file));
+}
+
 function mapNextAction(action: string): { command: string; purpose: string; when: string; allowedFor: "all" | "human" | "doctor" | "agent"; priority: number } {
   switch (action) {
     case "request_human_input":
@@ -58,6 +67,9 @@ export async function cmdDone(
   const { cleanup = false, deleteBranch = false, json = false } = options;
   const repoRoot = getRepoRoot();
   const task = loadTaskById(taskId);
+  const dirtyFilesBeforeGates = task?.worktree
+    ? await getWorktreeDirtyFiles(task.worktree)
+    : [];
 
   if (!task) {
     const result = doneStateMachine({
@@ -180,7 +192,8 @@ export async function cmdDone(
   // Worktree dirty check
   if (task.worktree) {
     const dirtyFiles = await getWorktreeDirtyFiles(task.worktree);
-    if (dirtyFiles.length > 0) {
+    const blockingDirtyFiles = getBlockingDirtyFiles(dirtyFilesBeforeGates, dirtyFiles);
+    if (blockingDirtyFiles.length > 0) {
       const result = doneStateMachine({
         validTransition: true,
         gatesPassed: true,
@@ -191,7 +204,7 @@ export async function cmdDone(
         hasAcSection: true,
         hasBlankAc: false,
         hasUncheckedAc: false,
-        dirtyFiles,
+        dirtyFiles: blockingDirtyFiles,
         taskId,
         currentStatus: task.status,
       });
@@ -201,6 +214,13 @@ export async function cmdDone(
         return;
       }
       throw new Error(result.guidance);
+    }
+    const gateGeneratedDirtyFiles = normalizeDirtyFiles(dirtyFiles).filter((file) => !blockingDirtyFiles.includes(file));
+    if (!json && gateGeneratedDirtyFiles.length > 0) {
+      logWarn(
+        `Ignoring ${gateGeneratedDirtyFiles.length} gate-generated file(s) while completing ${taskId}: ` +
+        `${gateGeneratedDirtyFiles.slice(0, 5).join(", ")}${gateGeneratedDirtyFiles.length > 5 ? ", ..." : ""}`,
+      );
     }
   }
 
