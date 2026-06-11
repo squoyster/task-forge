@@ -10,6 +10,7 @@ assignee: 5aca6db53f
 claimed_at: '2026-06-11 01:09:09'
 context_hash: 24c64b5cba799406
 branch: agent/TASK-281-fix-taskforge-submit-to-report-real-push--5aca6db53f
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-281
 ---
 # TASK-281: Fix taskforge submit to report real push state
 ## Goal
@@ -52,6 +53,9 @@ Incorrect remote-state inference can still misreport branch status.
 Auto-continue unless a stopping condition occurs.
 
 ## Agent Notes
+
+### 2026-06-11T00:00:00Z System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-281
 
 ### 2026-06-11T00:00:00Z System
 - Task claimed via taskforge start TASK-281
