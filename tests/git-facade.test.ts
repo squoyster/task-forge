@@ -30,10 +30,6 @@ vi.mock("../src/integrations/github/service.js", () => ({
   createPullRequest: vi.fn(),
 }));
 
-vi.mock("../src/core/git.js", () => ({
-  getBranchCommitsAhead: vi.fn(),
-}));
-
 vi.mock("../src/util/logging.js", () => ({
   logInfo: vi.fn(),
   logHeader: vi.fn(),
@@ -46,7 +42,6 @@ import { cmdCheckpoint, cmdPr, cmdSubmit } from "../src/commands/git-facade.js";
 import { loadTaskById } from "../src/core/task-store.js";
 import { run } from "../src/util/exec.js";
 import { appendTaskTranscript } from "../src/core/audit.js";
-import { getBranchCommitsAhead } from "../src/core/git.js";
 
 const task = {
   id: "TASK-281",
@@ -85,8 +80,11 @@ describe("git facade commands", () => {
 
   it("returns noop when branch is already up to date on origin", async () => {
     vi.mocked(loadTaskById).mockReturnValue(task);
-    vi.mocked(run).mockResolvedValueOnce({ stdout: "abc\trefs/heads/agent/TASK-281-test\n", stderr: "", exitCode: 0 });
-    vi.mocked(getBranchCommitsAhead).mockResolvedValue(0);
+    vi.mocked(run).mockResolvedValueOnce({
+      stdout: "= refs/heads/agent/TASK-281-test:refs/heads/agent/TASK-281-test [up to date]\n",
+      stderr: "",
+      exitCode: 0,
+    });
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
     await cmdSubmit("TASK-281", true);
@@ -95,9 +93,9 @@ describe("git facade commands", () => {
     expect(output.status).toBe("noop");
     expect(output.guidance).toContain("already up to date on origin");
     expect(run).toHaveBeenCalledTimes(1);
-    expect(run).not.toHaveBeenCalledWith(
+    expect(run).toHaveBeenCalledWith(
       "git",
-      ["-C", task.worktree, "push", "origin", task.branch],
+      ["-C", task.worktree, "push", "--porcelain", "origin", task.branch],
       "/tmp/taskforge-repo",
     );
     expect(appendTaskTranscript).not.toHaveBeenCalled();
@@ -107,10 +105,11 @@ describe("git facade commands", () => {
 
   it("returns success when branch push actually occurs for an existing remote branch", async () => {
     vi.mocked(loadTaskById).mockReturnValue(task);
-    vi.mocked(run)
-      .mockResolvedValueOnce({ stdout: "abc\trefs/heads/agent/TASK-281-test\n", stderr: "", exitCode: 0 })
-      .mockResolvedValueOnce({ stdout: "", stderr: "", exitCode: 0 });
-    vi.mocked(getBranchCommitsAhead).mockResolvedValue(2);
+    vi.mocked(run).mockResolvedValueOnce({
+      stdout: "  refs/heads/agent/TASK-281-test:refs/heads/agent/TASK-281-test abc123..def456\n",
+      stderr: "",
+      exitCode: 0,
+    });
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
     await cmdSubmit("TASK-281", true);
@@ -122,7 +121,7 @@ describe("git facade commands", () => {
     expect(output.guidance).not.toContain("No changes to submit");
     expect(run).toHaveBeenCalledWith(
       "git",
-      ["-C", task.worktree, "push", "origin", task.branch],
+      ["-C", task.worktree, "push", "--porcelain", "origin", task.branch],
       "/tmp/taskforge-repo",
     );
     expect(appendTaskTranscript).toHaveBeenCalled();
@@ -132,9 +131,11 @@ describe("git facade commands", () => {
 
   it("pushes a new branch when no remote branch exists yet", async () => {
     vi.mocked(loadTaskById).mockReturnValue(task);
-    vi.mocked(run)
-      .mockResolvedValueOnce({ stdout: "", stderr: "", exitCode: 0 })
-      .mockResolvedValueOnce({ stdout: "", stderr: "", exitCode: 0 });
+    vi.mocked(run).mockResolvedValueOnce({
+      stdout: "* refs/heads/agent/TASK-281-test:refs/heads/agent/TASK-281-test [new branch]\n",
+      stderr: "",
+      exitCode: 0,
+    });
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
     await cmdSubmit("TASK-281", true);
@@ -142,10 +143,9 @@ describe("git facade commands", () => {
     const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
     expect(output.status).toBe("success");
     expect(output.guidance).toContain(`Pushed branch ${task.branch} to origin`);
-    expect(getBranchCommitsAhead).not.toHaveBeenCalled();
     expect(run).toHaveBeenCalledWith(
       "git",
-      ["-C", task.worktree, "push", "origin", task.branch],
+      ["-C", task.worktree, "push", "--porcelain", "origin", task.branch],
       "/tmp/taskforge-repo",
     );
 

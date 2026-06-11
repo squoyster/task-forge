@@ -8,7 +8,6 @@ import { loadConfig } from "../core/config.js";
 import { createPullRequest } from "../integrations/github/service.js";
 import type { GitHubConfig } from "../integrations/github/types.js";
 import type { Task } from "../core/task.js";
-import { getBranchCommitsAhead } from "../core/git.js";
 import { logInfo, logHeader, logSuccess, logWarn, logError } from "../util/logging.js";
 import { writeResult } from "../util/write-command-result.js";
 import { successResult, noopResult } from "../core/result-builder.js";
@@ -217,17 +216,21 @@ export async function cmdSubmit(taskId: string, json = false): Promise<void> {
     throw new Error(result.guidance);
   }
 
-  const remoteBranchResult = await run(
+  const pushResult = await run(
     "git",
-    ["-C", task.worktree, "ls-remote", "--heads", "origin", task.branch],
+    ["-C", task.worktree, "push", "--porcelain", "origin", task.branch],
     repoRoot,
   );
-  const remoteBranchExists = remoteBranchResult.stdout.trim().length > 0;
-  const commitsAhead = remoteBranchExists
-    ? await getBranchCommitsAhead(task.worktree, task.branch)
-    : 0;
+  const pushOutput = [pushResult.stdout, pushResult.stderr]
+    .filter((part) => part.trim().length > 0)
+    .join("\n");
 
-  if (remoteBranchExists && commitsAhead <= 0) {
+  if (pushResult.exitCode !== 0) {
+    logError(`Failed to push branch ${task.branch}: ${pushOutput || "git push failed"}`);
+    throw new Error(`Failed to push branch ${task.branch}: ${pushOutput || "git push failed"}`);
+  }
+
+  if (/\[up to date\]/i.test(pushOutput) || /^=\s/m.test(pushOutput)) {
     const guidance = `Branch ${task.branch} is already up to date on origin. No changes to submit for ${taskId}.`;
     logInfo(guidance);
     writeResult(noopResult({
@@ -239,14 +242,6 @@ export async function cmdSubmit(taskId: string, json = false): Promise<void> {
       reason: "Branch is already up to date on origin.",
     }), json);
     return;
-  }
-
-  try {
-    await run("git", ["-C", task.worktree, "push", "origin", task.branch], repoRoot);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    logError(`Failed to push branch ${task.branch}: ${message}`);
-    throw new Error(`Failed to push branch ${task.branch}: ${message}`);
   }
 
   const guidance =
@@ -265,7 +260,7 @@ export async function cmdSubmit(taskId: string, json = false): Promise<void> {
 
   appendTaskTranscript(repoRoot, taskId, createTaskEvent(taskId, "git.push", {
     summary: `Pushed branch ${task.branch}`,
-    metadata: { commitsAhead, remoteBranchExists },
+    metadata: { pushOutput },
   }));
 }
 
