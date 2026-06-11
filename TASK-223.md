@@ -11,6 +11,7 @@ claimed_at: '2026-06-11 23:42:28'
 context_hash: 6cd5541d1cdfd05c
 spec_hash: 8a295a3bff60e1c4
 branch: agent/TASK-223-wire-structured-nextactions-to-all-comma--47c37df308
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-223
 ---
 
 # TASK-223: Wire structured nextActions to all command JSON and human-readable outputs
@@ -111,6 +112,9 @@ This task overlaps with TASK-215 and TASK-218. Those should be rejected or merge
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-11T00:00:00Z System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-223
 
 ### 2026-06-11T00:00:00Z System
 - Task claimed via taskforge start TASK-223
