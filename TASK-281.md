@@ -1,7 +1,7 @@
 ---
 id: TASK-281
 type: Bug
-status: Submitted
+status: Review
 priority: P1
 agentRole: Implementer
 riskLevel: Low
