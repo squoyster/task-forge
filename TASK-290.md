@@ -9,7 +9,6 @@ humanInterventionRequired: false
 assignee: 717dcfc105
 claimed_at: '2026-06-11 02:28:59'
 context_hash: 24c64b5cba799406
-spec_hash: b439075742f4fc49
 branch: agent/TASK-290-clear-terminal-state-ownership-metadata--717dcfc105
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-290
 ---
