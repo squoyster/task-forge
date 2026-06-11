@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: 454d025409
 claimed_at: '2026-06-10 23:13:41'
 context_hash: 24c64b5cba799406
+spec_hash: 2849a164b1008b01
 branch: agent/TASK-288-normalize-malformed-task-files-created-b--454d025409
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-288
 ---
@@ -29,16 +30,17 @@ Disallowed files/directories:
 - unrelated lifecycle changes
 
 ## Acceptance Criteria
-- [ ] Detect task files with duplicated structural sections such as repeated `## Goal` or `## Acceptance Criteria` blocks caused by the pre-TASK-284 template bug.
-- [ ] Normalize affected task files into the canonical task markdown layout without losing task intent or workflow metadata.
-- [ ] Add a regression or validation check that prevents newly created malformed task files of this shape from going unnoticed.
-- [ ] Document or emit repair guidance for already-existing malformed task files.
-- [ ] Typecheck and focused task-store and validate-state tests pass.
+- [x] Detect task files with duplicated structural sections such as repeated `## Goal` or `## Acceptance Criteria` blocks caused by the pre-TASK-284 template bug.
+- [x] Normalize affected task files into the canonical task markdown layout without losing task intent or workflow metadata.
+- [x] Add a regression or validation check that prevents newly created malformed task files of this shape from going unnoticed.
+- [x] Document or emit repair guidance for already-existing malformed task files.
+- [x] Typecheck and focused task-store and validate-state tests pass.
 
 ## Test / Verification Command
 ```bash
 npm run typecheck
 npm test -- --run tests/task-store.test.ts tests/validate-state.test.ts tests/ac-check.test.ts
+node --import tsx src/cli.ts validate-state --strict --json
 ```
 
 ## Expected Output / Behavior
@@ -56,13 +58,6 @@ Auto-continue unless a stopping condition occurs.
 ## Agent Notes
 
 ### 2026-06-11T00:00:00Z System
-- Report generated — task moved to Implementation Complete
-- Changed files: none
-- Commits: none
-- AC section: present
-- AC has unchecked items
-
-### 2026-06-10T00:00:00Z System
 - Task updated via taskforge update
 - title set to "Normalize malformed task files created by legacy new template bug"
 - type set to "Bug"
@@ -74,7 +69,7 @@ Auto-continue unless a stopping condition occurs.
 - section background updated (168 chars)
 - section scope updated (199 chars)
 - section acceptanceCriteria updated (567 chars)
-- section testCommand updated (124 chars)
+- section testCommand updated (184 chars)
 - section expectedOutput updated (95 chars)
 - section dependencies updated (4 chars)
 - section risks updated (104 chars)
