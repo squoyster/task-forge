@@ -10,6 +10,7 @@ assignee: 37059d1b67
 claimed_at: '2026-06-11 12:14:19'
 context_hash: 6cd5541d1cdfd05c
 branch: agent/TASK-282-fix-symlinked-taskforge-launcher-path-re--37059d1b67
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-282
 ---
 # TASK-282: Fix symlinked taskforge launcher path resolution
 ## Goal
@@ -52,6 +53,9 @@ Path resolution changes can break local and global invocation modes if not cover
 Auto-continue unless a stopping condition occurs.
 
 ## Agent Notes
+
+### 2026-06-11T00:00:00Z System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-282
 
 ### 2026-06-11T00:00:00Z System
 - Task claimed via taskforge start TASK-282
