@@ -10,6 +10,7 @@ assignee: 162808a4e2
 claimed_at: '2026-06-11 12:29:02'
 context_hash: 6cd5541d1cdfd05c
 branch: agent/TASK-279-handle-gate-dirtied-worktrees-in-done-co--162808a4e2
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-279
 ---
 
 # TASK-279: Handle gate-dirtied worktrees in done command
@@ -31,6 +32,9 @@ Solutions:
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-11T00:00:00Z System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-279
 
 ### 2026-06-11T00:00:00Z System
 - Task claimed via taskforge start TASK-279
