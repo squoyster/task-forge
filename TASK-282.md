@@ -1,11 +1,15 @@
 ---
 id: TASK-282
 type: Bug
-status: Ready
+status: In Progress
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 37059d1b67
+claimed_at: '2026-06-11 12:14:19'
+context_hash: 6cd5541d1cdfd05c
+branch: agent/TASK-282-fix-symlinked-taskforge-launcher-path-re--37059d1b67
 ---
 # TASK-282: Fix symlinked taskforge launcher path resolution
 ## Goal
@@ -48,6 +52,11 @@ Path resolution changes can break local and global invocation modes if not cover
 Auto-continue unless a stopping condition occurs.
 
 ## Agent Notes
+
+### 2026-06-11T00:00:00Z System
+- Task claimed via taskforge start TASK-282
+- Session: 37059d1b67
+- Branch: agent/TASK-282-fix-symlinked-taskforge-launcher-path-re--37059d1b67
 
 ### 2026-06-10T00:00:00Z System
 - Task updated via taskforge update
