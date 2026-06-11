@@ -1,7 +1,7 @@
 ---
 id: TASK-281
 type: Bug
-status: Merge Ready
+status: Verify
 priority: P1
 agentRole: Implementer
 riskLevel: Low
