@@ -1,7 +1,7 @@
 ---
 id: TASK-288
 type: Bug
-status: Merge Ready
+status: Verify
 priority: P2
 agentRole: Implementer
 riskLevel: Low
