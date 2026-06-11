@@ -10,6 +10,7 @@ assignee: 717dcfc105
 claimed_at: '2026-06-11 02:28:59'
 context_hash: 24c64b5cba799406
 branch: agent/TASK-290-clear-terminal-state-ownership-metadata--717dcfc105
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-290
 ---
 
 # TASK-290: Clear terminal-state ownership metadata
@@ -50,6 +51,9 @@ Continuation Policy: Auto-continue unless a stopping condition occurs.
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-11T00:00:00Z System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-290
 
 ### 2026-06-11T00:00:00Z System
 - Task claimed via taskforge start TASK-290
