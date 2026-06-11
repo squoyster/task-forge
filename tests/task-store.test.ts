@@ -223,6 +223,30 @@ describe("updateTaskStatus", () => {
     expect(reread!.status).toBe("In Progress");
   });
 
+  it("clears ownership metadata when moving to a terminal status", () => {
+    const fp = makeTaskFile("TASK-201", {
+      status: "Verify",
+      assignee: "session-123",
+      claimed_at: "2026-06-11 02:00:00",
+      worktree: "/tmp/worktree",
+      branch: "agent/TASK-201",
+    });
+
+    const updated = updateTaskStatus(fp, "Done");
+    expect(updated).not.toBeNull();
+    expect(updated!.status).toBe("Done");
+    expect(updated!.assignee).toBeUndefined();
+    expect(updated!.claimed_at).toBeUndefined();
+    expect(updated!.worktree).toBe("/tmp/worktree");
+    expect(updated!.branch).toBe("agent/TASK-201");
+
+    const reread = parseTaskFile(fp);
+    expect(reread!.assignee).toBeUndefined();
+    expect(reread!.claimed_at).toBeUndefined();
+    expect(reread!.worktree).toBe("/tmp/worktree");
+    expect(reread!.branch).toBe("agent/TASK-201");
+  });
+
   it("returns null if file does not exist", () => {
     expect(updateTaskStatus("/nope.md", "Done")).toBeNull();
   });

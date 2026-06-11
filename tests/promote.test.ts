@@ -87,11 +87,34 @@ describe("cmdPromote", () => {
   });
 
   it("promotes Verify → Done", async () => {
-    const fp = makeTaskFile("TASK-001", { status: "Verify" });
+    const fp = makeTaskFile("TASK-001", {
+      status: "Verify",
+      assignee: "session-123",
+      claimed_at: "2026-06-11 02:00:00",
+      worktree: "/tmp/worktree/TASK-001",
+      branch: "agent/TASK-001",
+    });
     await cmdPromote("TASK-001");
 
     const content = fs.readFileSync(fp, "utf-8");
     expect(content).toContain("status: Done");
+    expect(content).not.toContain("assignee:");
+    expect(content).not.toContain("claimed_at:");
+  });
+
+  it("promotes Inbox → Rejected with --to and clears ownership metadata", async () => {
+    const fp = makeTaskFile("TASK-001", {
+      status: "Inbox",
+      assignee: "session-123",
+      claimed_at: "2026-06-11 02:00:00",
+      worktree: "/tmp/worktree/TASK-001",
+    });
+    await cmdPromote("TASK-001", { to: "Rejected" });
+
+    const content = fs.readFileSync(fp, "utf-8");
+    expect(content).toContain("status: Rejected");
+    expect(content).not.toContain("assignee:");
+    expect(content).not.toContain("claimed_at:");
   });
 
   it("promotes Inbox → Needs Spec", async () => {

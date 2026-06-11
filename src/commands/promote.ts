@@ -8,15 +8,17 @@
  *   promote TASK-ID            — Advance one step forward along the default path
  *   promote TASK-ID --to <s>   — Advance to a specific allowed status
  */
-import { loadTaskById, parseTaskFile, writeTaskFile } from "../core/task-store.js";
+import { loadTaskById, parseTaskFile, writeTaskFile, applyStatusTransitionSideEffects } from "../core/task-store.js";
 import { validateTransition, getAllowedTransitions } from "../core/status-transition.js";
 import { commitAndPushTaskState } from "../core/git.js";
-import { STATUS, normalizeStatus, ALL_STATUSES } from "../util/status-constants.js";
+import { STATUS, normalizeStatus, ALL_STATUSES, TERMINAL_STATUSES } from "../util/status-constants.js";
 import { logSuccess, logSub, logError, logDivider } from "../util/logging.js";
 import { writeResult } from "../util/write-command-result.js";
 import { successResult, failedResult } from "../core/result-builder.js";
 import { TaskNotFoundError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
+import { removeSessionState } from "../core/session-state.js";
+import { markAgentIdle } from "../core/agent-registry.js";
 
 export interface PromoteOptions {
   to?: string;
@@ -39,6 +41,10 @@ const DEFAULT_FORWARD_PATH: Record<string, string> = {
   [STATUS.MERGE_READY]: STATUS.VERIFY,
   [STATUS.VERIFY]: STATUS.DONE,
 };
+
+function isTerminalTarget(status: string): status is typeof TERMINAL_STATUSES[number] {
+  return TERMINAL_STATUSES.includes(status as typeof TERMINAL_STATUSES[number]);
+}
 
 /**
  * Resolve the target status for promotion.
@@ -138,8 +144,18 @@ export async function cmdPromote(
   }
 
   const fromStatus = current.status;
+  const previousAssignee = current.assignee;
   current.status = targetStatus as typeof current.status;
+  applyStatusTransitionSideEffects(current, targetStatus);
   writeTaskFile(current);
+
+  if (isTerminalTarget(targetStatus) && current.worktree) {
+    removeSessionState(current.worktree);
+  }
+
+  if (isTerminalTarget(targetStatus) && previousAssignee) {
+    markAgentIdle(previousAssignee, repoRoot);
+  }
 
   // Push state changes to shared task-state branch
   await commitAndPushTaskState(repoRoot, `chore: promote ${taskId} — ${fromStatus} → ${targetStatus}`);

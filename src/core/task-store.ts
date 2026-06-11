@@ -1,6 +1,6 @@
 import matter from "gray-matter";
 import fs from "node:fs";
-import { TaskSchema, type Task, STATUS } from "./task.js";
+import { TaskSchema, type Task, STATUS, TERMINAL_STATUSES } from "./task.js";
 import { getTaskFilePath, getTaskStateDir, getRepoRoot } from "../util/paths.js";
 import { logWarn } from "../util/logging.js";
 
@@ -116,6 +116,24 @@ export function writeTaskFile(
   fs.writeFileSync(task.filePath, content, "utf-8");
 }
 
+export function clearTaskOwnershipMetadata(task: ParsedTask): void {
+  task.assignee = undefined;
+  task.claimed_at = undefined;
+}
+
+function isTerminalStatus(status: string): status is typeof TERMINAL_STATUSES[number] {
+  return TERMINAL_STATUSES.includes(status as typeof TERMINAL_STATUSES[number]);
+}
+
+export function applyStatusTransitionSideEffects(
+  task: ParsedTask,
+  newStatus: string,
+): void {
+  if (isTerminalStatus(newStatus)) {
+    clearTaskOwnershipMetadata(task);
+  }
+}
+
 export function updateTaskStatus(
   filePath: string,
   newStatus: string,
@@ -124,6 +142,7 @@ export function updateTaskStatus(
   if (!task) return null;
 
   task.status = newStatus as Task["status"];
+  applyStatusTransitionSideEffects(task, newStatus);
   writeTaskFile(task);
   return task;
 }
@@ -161,8 +180,7 @@ export function clearTaskLock(
   const task = parseTaskFile(filePath);
   if (!task) return null;
 
-  task.assignee = undefined;
-  task.claimed_at = undefined;
+  clearTaskOwnershipMetadata(task);
   writeTaskFile(task);
   return task;
 }

@@ -4,6 +4,8 @@ import { STATUS } from "../util/status-constants.js";
 import { logSuccess, logInfo, logDivider, logSub } from "../util/logging.js";
 import { TaskNotFoundError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
+import { removeSessionState } from "../core/session-state.js";
+import { markAgentIdle } from "../core/agent-registry.js";
 import { successResult, failedResult } from "../core/result-builder.js";
 import { writeResult } from "../util/write-command-result.js";
 
@@ -19,10 +21,19 @@ export async function cmdReject(taskId: string, reason: string, options?: { json
     throw new TaskNotFoundError(taskId);
   }
 
+  const previousAssignee = task.assignee;
   updateTaskStatus(task.filePath, STATUS.REJECTED);
 
   const today = new Date().toISOString().split("T")[0];
   appendAgentNote(task.filePath, today, "System", [`Task rejected: ${reason}`]);
+
+  if (task.worktree) {
+    removeSessionState(task.worktree);
+  }
+
+  if (previousAssignee) {
+    markAgentIdle(previousAssignee, repoRoot);
+  }
 
   await commitAndPushTaskState(repoRoot, `chore: reject ${taskId}`);
 
