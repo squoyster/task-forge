@@ -6,7 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-spec_hash: 720e20b24cd14e8b
 ---
 
 # TASK-229: Record worktree path in task-state during claim/start

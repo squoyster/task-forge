@@ -8,7 +8,6 @@ riskLevel: Low
 humanInterventionRequired: false
 dependsOn: []
 context_hash: 38eaf0df3c5d54e2
-spec_hash: 0a1cb40805b9b853
 ---
 
 # TASK-233: Record all taskforge CLI invocations with parameters and return values in per-task audit log

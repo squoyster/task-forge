@@ -9,7 +9,6 @@ humanInterventionRequired: false
 assignee: aa5153ce41
 claimed_at: '2026-06-08 13:21:11'
 context_hash: 98789b0cbdd97405
-spec_hash: 246999d3ec9eeb65
 branch: agent/TASK-258-enforce-the-taskforge-mutation-boundary--aa5153ce41
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-258
 ---

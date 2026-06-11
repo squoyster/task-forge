@@ -6,7 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: High
 humanInterventionRequired: false
-spec_hash: 525e5bbd6f7eaeb3
 ---
 
 # TASK-013: Shared task-state branch for ground-truth task storage

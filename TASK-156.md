@@ -9,7 +9,6 @@ humanInterventionRequired: false
 dependsOn:
   - TASK-152
 context_hash: 4979b030536a2fbf
-spec_hash: 5200fb764eb39db7
 ---
 # Capture Permission Events in OpenCode Audit Plugin
 

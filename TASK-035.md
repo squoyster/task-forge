@@ -6,7 +6,6 @@ priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-spec_hash: 0b54b6d401f29c68
 ---
 
 # TASK-035: Add `new` Command — Create Arbitrary Task Files

@@ -6,7 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-spec_hash: bbabd2f1fea8e17f
 ---
 # TASK-285: Add mergeability preflight to submit against origin/main
 ## Goal

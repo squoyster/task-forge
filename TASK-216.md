@@ -6,7 +6,6 @@ priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-spec_hash: eca617d2e6d5b3e4
 ---
 
 # TASK-216: Define and implement command state machines for agentic workflow

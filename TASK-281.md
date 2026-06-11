@@ -6,7 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-spec_hash: a733e261d02e1e7a
 ---
 # TASK-281: Fix taskforge submit to report real push state
 ## Goal

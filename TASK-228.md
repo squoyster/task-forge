@@ -6,7 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-spec_hash: b10668fe7d0a9af3
 ---
 
 # TASK-228: Register done --force in CLI and implement gate bypass with authority check

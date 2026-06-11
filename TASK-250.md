@@ -6,7 +6,6 @@ priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-spec_hash: 848a7858fdda5d58
 ---
 
 # TASK-250: Add CLI command to append agent notes to task files

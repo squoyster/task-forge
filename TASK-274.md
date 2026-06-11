@@ -8,7 +8,6 @@ riskLevel: Low
 humanInterventionRequired: false
 dependsOn:
   - TASK-221
-spec_hash: 4041284c6497e702
 ---
 
 # TASK-274: Implement `taskforge promote` command for status transitions

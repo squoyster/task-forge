@@ -6,7 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
-spec_hash: 8880dcedfee8946c
 ---
 
 # TASK-036: Fix Ownership Assertion in `done` and `block` — Respect `--force`

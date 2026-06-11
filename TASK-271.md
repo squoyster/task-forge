@@ -6,7 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-spec_hash: c7c7f06f96e7b4a8
 branch: agent/TASK-271-add-mcp-command
 ---
 

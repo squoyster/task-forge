@@ -7,7 +7,6 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: c920478ff4788012
-spec_hash: 3e75b5224b0d1946
 ---
 
 # TASK-257: ADD LIFECYCLE RECONCILIATION AND INVALID-STATE DETECTION

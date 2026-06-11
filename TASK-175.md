@@ -6,7 +6,6 @@ priority: P2
 agentRole: QA
 riskLevel: Low
 humanInterventionRequired: false
-spec_hash: 5abeb274e5cd30de
 ---
 # Add Repair Report for Existing Forced-Done Tasks
 

@@ -6,7 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-spec_hash: f60681797210b288
 ---
 
 # TASK-278: Add orphaned worktree cleanup capability

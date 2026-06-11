@@ -7,7 +7,6 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: 6eb8f67de42c153d
-spec_hash: 8a09f31b694eda8f
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-067
 ---
 

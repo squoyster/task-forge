@@ -6,7 +6,6 @@ priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-spec_hash: 36d4b258d87cd020
 ---
 
 # TASK-101: Add audit log to taskforge init command

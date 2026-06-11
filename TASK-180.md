@@ -7,7 +7,6 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: 56975070d7558a37
-spec_hash: 034e49d0bca2cc15
 ---
 # Fix Pre-existing Sweep and Claim Test Failures (TASK-091)
 

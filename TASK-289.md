@@ -1,12 +1,15 @@
 ---
 id: TASK-289
 type: Feature
-status: Ready
+status: In Progress
 priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-spec_hash: 18fa5c459febd832
+assignee: 3f169d55ff
+claimed_at: '2026-06-11 00:11:40'
+context_hash: 24c64b5cba799406
+branch: agent/TASK-289-archive-terminal-audit-history-into-task--3f169d55ff
 ---
 # TASK-289: Archive terminal audit history into task-state and ignore live audit logs
 ## Goal
@@ -53,6 +56,11 @@ Moving audit persistence to terminal transitions can lose context if summary ext
 Auto-continue unless a stopping condition occurs.
 
 ## Agent Notes
+
+### 2026-06-11T00:00:00Z System
+- Task claimed via taskforge start TASK-289
+- Session: 3f169d55ff
+- Branch: agent/TASK-289-archive-terminal-audit-history-into-task--3f169d55ff
 
 ### 2026-06-10T00:00:00Z System
 - Task updated via taskforge update

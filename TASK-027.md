@@ -6,7 +6,6 @@ priority: P2
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
-spec_hash: 5c1c2f9d4fc6bd30
 ---
 
 # TASK-027: Add `report` / `finish` Command — Structured Completion Report

@@ -6,7 +6,6 @@ priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-spec_hash: fbef85ccf95d5fca
 ---
 # TASK-282: Fix symlinked taskforge launcher path resolution
 ## Goal

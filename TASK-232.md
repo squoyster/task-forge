@@ -8,7 +8,6 @@ riskLevel: Low
 humanInterventionRequired: false
 dependsOn: []
 context_hash: 46d0f0d5576af484
-spec_hash: f5b5bbbeaf43d416
 ---
 
 # TASK-232: Require clean worktree and pushed branch in done command before marking task Done

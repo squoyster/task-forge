@@ -6,7 +6,6 @@ priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-spec_hash: 98c9ecf27c1083f8
 ---
 
 # TASK-225: Add CLI/documentation consistency tests

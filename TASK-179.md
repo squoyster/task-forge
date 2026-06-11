@@ -6,7 +6,6 @@ priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-spec_hash: c5764d3fd8a1ea25
 ---
 # Update Done Tests After `--force` Removal
 

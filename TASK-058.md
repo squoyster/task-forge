@@ -7,7 +7,6 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: 0cd53b090047347c
-spec_hash: 778e44d80d6462ff
 ---
 
 # TASK-058: Update architectural docs to match implementation
