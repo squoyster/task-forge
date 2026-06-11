@@ -3,7 +3,7 @@ import { loadTaskById } from "../core/task-store.js";
 import { assertTaskOwnership } from "../core/session.js";
 import { run } from "../util/exec.js";
 import { createTaskEvent, appendTaskTranscript } from "../core/audit.js";
-import { TaskNotFoundError } from "../core/errors.js";
+import { TaskForgeError, TaskNotFoundError } from "../core/errors.js";
 import { loadConfig } from "../core/config.js";
 import { createPullRequest } from "../integrations/github/service.js";
 import type { GitHubConfig } from "../integrations/github/types.js";
@@ -76,7 +76,6 @@ function isPushNoop(pushOutput: string): boolean {
 export async function cmdDiff(taskId: string, json = false): Promise<void> {
   const repoRoot = getRepoRoot();
   const task = requireTask(taskId);
-
   if (!task.worktree) {
     throw new Error(`No worktree found for ${taskId}. Run 'taskforge start ${taskId}' first.`);
   }
@@ -138,17 +137,18 @@ export async function cmdCheckpoint(taskId: string, message: string, json = fals
   }
 
   try {
-    assertTaskOwnership(task, repoRoot);
-  } catch {
+    await assertTaskOwnership(task, repoRoot);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Ownership verification failed";
     const result = checkpointStateMachine({
       hasChanges: false,
       commitSucceeded: false,
       inWorktree: true,
       taskId,
-      errorMessage: "Ownership verification failed",
+      errorMessage,
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
-    throw new Error(result.guidance);
+    throw error instanceof TaskForgeError ? error : new Error(result.guidance);
   }
 
   const branchResult = await run("git", ["-C", task.worktree, "rev-parse", "--abbrev-ref", "HEAD"], repoRoot);
@@ -281,6 +281,23 @@ export async function cmdSubmit(taskId: string, json = false): Promise<void> {
     getDefaultGuidanceAdapter().pushGuidance(result);
     logError(result.guidance);
     throw new Error(result.guidance);
+  }
+
+  const config = loadConfig(repoRoot);
+  const githubConfigured = !!(config.github?.enabled && config.github.owner && config.github.repo);
+
+  try {
+    await assertTaskOwnership(task, repoRoot);
+  } catch (error) {
+    const result = submitStateMachine({
+      prCreated: false,
+      githubConfigured,
+      taskId,
+      errorMessage: error instanceof Error ? error.message : "Ownership verification failed",
+    });
+    getDefaultGuidanceAdapter().pushGuidance(result);
+    logError(result.guidance);
+    throw error instanceof TaskForgeError ? error : new Error(result.guidance);
   }
 
   const mergeability = await checkMergeabilityAgainstMain(repoRoot, task.worktree);

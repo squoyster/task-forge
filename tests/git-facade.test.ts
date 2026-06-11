@@ -39,9 +39,11 @@ vi.mock("../src/util/logging.js", () => ({
 }));
 
 import { cmdCheckpoint, cmdPr, cmdSubmit } from "../src/commands/git-facade.js";
+import { appendTaskTranscript } from "../src/core/audit.js";
+import { TaskForgeError } from "../src/core/errors.js";
+import { assertTaskOwnership } from "../src/core/session.js";
 import { loadTaskById } from "../src/core/task-store.js";
 import { run } from "../src/util/exec.js";
-import { appendTaskTranscript } from "../src/core/audit.js";
 
 const task = {
   id: "TASK-285",
@@ -80,6 +82,7 @@ describe("git facade commands", () => {
 
   it("returns failed when branch is not mergeable with origin/main", async () => {
     vi.mocked(loadTaskById).mockReturnValue(task);
+    vi.mocked(assertTaskOwnership).mockResolvedValue(undefined);
     vi.mocked(run)
       .mockResolvedValueOnce({ stdout: "", stderr: "", exitCode: 0 })
       .mockResolvedValueOnce({
@@ -105,6 +108,7 @@ describe("git facade commands", () => {
 
   it("returns noop when branch is already submitted and mergeable", async () => {
     vi.mocked(loadTaskById).mockReturnValue(task);
+    vi.mocked(assertTaskOwnership).mockResolvedValue(undefined);
     vi.mocked(run)
       .mockResolvedValueOnce({ stdout: "", stderr: "", exitCode: 0 })
       .mockResolvedValueOnce({ stdout: "deadbeef\n", stderr: "", exitCode: 0 })
@@ -127,6 +131,7 @@ describe("git facade commands", () => {
 
   it("returns success when branch push occurs and branch is mergeable", async () => {
     vi.mocked(loadTaskById).mockReturnValue(task);
+    vi.mocked(assertTaskOwnership).mockResolvedValue(undefined);
     vi.mocked(run)
       .mockResolvedValueOnce({ stdout: "", stderr: "", exitCode: 0 })
       .mockResolvedValueOnce({ stdout: "deadbeef\n", stderr: "", exitCode: 0 })
@@ -151,6 +156,7 @@ describe("git facade commands", () => {
 
   it("returns failed when mergeability preflight cannot be verified", async () => {
     vi.mocked(loadTaskById).mockReturnValue(task);
+    vi.mocked(assertTaskOwnership).mockResolvedValue(undefined);
     vi.mocked(run).mockResolvedValueOnce({
       stdout: "",
       stderr: "fatal: could not read from remote repository",
@@ -180,5 +186,51 @@ describe("git facade commands", () => {
     expect(fullMessage).toContain("Task: TASK-001");
     expect(fullMessage).toContain("TaskForge-Managed: true");
     expect(fullMessage).toContain("feat: add feature");
+  });
+
+  it("cmdCheckpoint uses target task context even when invoked outside the task worktree", async () => {
+    vi.mocked(loadTaskById).mockReturnValue({
+      id: "TASK-001",
+      assignee: "a1b2c3d4f5",
+      branch: "agent/TASK-001-fix--a1b2c3d4f5",
+      worktree: "/tmp/worktrees/TASK-001",
+    });
+    vi.mocked(assertTaskOwnership).mockResolvedValue(undefined);
+    vi.mocked(run)
+      .mockResolvedValueOnce({ stdout: "agent/TASK-001-fix--a1b2c3d4f5\n" })
+      .mockResolvedValueOnce({ stdout: " M src/core/session.ts\n" })
+      .mockResolvedValueOnce({ stdout: "" })
+      .mockResolvedValueOnce({ stdout: "" });
+
+    await expect(cmdCheckpoint("TASK-001", "fix ownership")).resolves.toBeUndefined();
+
+    expect(assertTaskOwnership).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "TASK-001", worktree: "/tmp/worktrees/TASK-001" }),
+      expect.any(String),
+    );
+    expect(run).toHaveBeenCalledWith(
+      "git",
+      ["-C", "/tmp/worktrees/TASK-001", "rev-parse", "--abbrev-ref", "HEAD"],
+      expect.any(String),
+    );
+  });
+
+  it("cmdSubmit enforces ownership against the target task context", async () => {
+    vi.mocked(loadTaskById).mockReturnValue({
+      id: "TASK-001",
+      assignee: "a1b2c3d4f5",
+      branch: "agent/TASK-001-fix--a1b2c3d4f5",
+      worktree: "/tmp/worktrees/TASK-001",
+    });
+    vi.mocked(assertTaskOwnership).mockRejectedValue(
+      new TaskForgeError("target task context mismatch", "OWNERSHIP_MISMATCH"),
+    );
+
+    await expect(cmdSubmit("TASK-001")).rejects.toThrow("target task context mismatch");
+    expect(run).not.toHaveBeenCalledWith(
+      "git",
+      ["-C", "/tmp/worktrees/TASK-001", "push", "origin", "agent/TASK-001-fix--a1b2c3d4f5"],
+      expect.any(String),
+    );
   });
 });
