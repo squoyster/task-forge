@@ -82,9 +82,8 @@ describe("git facade commands", () => {
     vi.mocked(loadTaskById).mockReturnValue(task);
     vi.mocked(run)
       .mockResolvedValueOnce({ stdout: "", stderr: "", exitCode: 0 })
-      .mockResolvedValueOnce({ stdout: "abc123\n", stderr: "", exitCode: 0 })
       .mockResolvedValueOnce({
-        stdout: "CONFLICT (add/add): Merge conflict in src/commands/update.ts\n",
+        stdout: "Auto-merging src/commands/update.ts\nCONFLICT (add/add): Merge conflict in src/commands/update.ts\n",
         stderr: "",
         exitCode: 1,
       });
@@ -98,7 +97,7 @@ describe("git facade commands", () => {
     expect(output.code).toBe("NOT_MERGEABLE");
     expect(output.error).toContain("does not merge cleanly with origin/main");
     expect(output.error).toContain("src/commands/update.ts");
-    expect(run).toHaveBeenCalledTimes(3);
+    expect(run).toHaveBeenCalledTimes(2);
     expect(appendTaskTranscript).not.toHaveBeenCalled();
 
     logSpy.mockRestore();
@@ -108,7 +107,6 @@ describe("git facade commands", () => {
     vi.mocked(loadTaskById).mockReturnValue(task);
     vi.mocked(run)
       .mockResolvedValueOnce({ stdout: "", stderr: "", exitCode: 0 })
-      .mockResolvedValueOnce({ stdout: "abc123\n", stderr: "", exitCode: 0 })
       .mockResolvedValueOnce({ stdout: "deadbeef\n", stderr: "", exitCode: 0 })
       .mockResolvedValueOnce({
         stdout: "= refs/heads/agent/TASK-285-test:refs/heads/agent/TASK-285-test [up to date]\n",
@@ -131,7 +129,6 @@ describe("git facade commands", () => {
     vi.mocked(loadTaskById).mockReturnValue(task);
     vi.mocked(run)
       .mockResolvedValueOnce({ stdout: "", stderr: "", exitCode: 0 })
-      .mockResolvedValueOnce({ stdout: "abc123\n", stderr: "", exitCode: 0 })
       .mockResolvedValueOnce({ stdout: "deadbeef\n", stderr: "", exitCode: 0 })
       .mockResolvedValueOnce({
         stdout: "  refs/heads/agent/TASK-285-test:refs/heads/agent/TASK-285-test abc123..def456\n",

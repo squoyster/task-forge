@@ -48,27 +48,9 @@ async function checkMergeabilityAgainstMain(
     };
   }
 
-  const mergeBaseResult = await run("git", ["-C", worktree, "merge-base", "HEAD", "origin/main"], repoRoot);
-  if (mergeBaseResult.exitCode !== 0) {
-    return {
-      ok: false,
-      mergeable: false,
-      detail: mergeBaseResult.stderr.trim() || mergeBaseResult.stdout.trim() || "git merge-base failed",
-    };
-  }
-
-  const mergeBase = mergeBaseResult.stdout.trim();
-  if (!mergeBase) {
-    return {
-      ok: false,
-      mergeable: false,
-      detail: "git merge-base returned no merge base for HEAD and origin/main",
-    };
-  }
-
   const mergeTreeResult = await run(
     "git",
-    ["-C", worktree, "merge-tree", "--write-tree", mergeBase, "HEAD", "origin/main"],
+    ["-C", worktree, "merge-tree", "--write-tree", "--messages", "HEAD", "origin/main"],
     repoRoot,
   );
 
