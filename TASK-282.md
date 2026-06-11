@@ -1,7 +1,7 @@
 ---
 id: TASK-282
 type: Bug
-status: Implementation Complete
+status: Submitted
 priority: P2
 agentRole: Implementer
 riskLevel: Low
