@@ -85,18 +85,6 @@ export function recordCliInvocation(
   const sessionId = getCurrentSessionId(repoRoot);
   const taskId = extractTaskId(command, args);
 
-  const record: CliInvocationRecord = {
-    timestamp: new Date().toISOString(),
-    command,
-    args,
-    flags,
-    exitCode,
-    sessionId,
-    taskId,
-    duration,
-    error,
-  };
-
   // Determine event type based on exit code
   const eventType = exitCode === 0
     ? "task.command.completed"
