@@ -9,7 +9,6 @@ humanInterventionRequired: false
 assignee: 3f169d55ff
 claimed_at: '2026-06-11 00:11:40'
 context_hash: 24c64b5cba799406
-spec_hash: 18fa5c459febd832
 branch: agent/TASK-289-archive-terminal-audit-history-into-task--3f169d55ff
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-289
 ---
