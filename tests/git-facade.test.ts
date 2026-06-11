@@ -233,4 +233,36 @@ describe("git facade commands", () => {
       expect.any(String),
     );
   });
+
+  it("returns failed when audit transcript write fails after a successful commit", async () => {
+    vi.mocked(loadTaskById).mockReturnValue({
+      id: "TASK-001",
+      assignee: "a1b2c3d4f5",
+      branch: "agent/TASK-001-fix--a1b2c3d4f5",
+      worktree: "/tmp/worktrees/TASK-001",
+    });
+    vi.mocked(assertTaskOwnership).mockResolvedValue(undefined);
+    vi.mocked(run)
+      .mockResolvedValueOnce({ stdout: "agent/TASK-001-fix--a1b2c3d4f5\n" })
+      .mockResolvedValueOnce({ stdout: " M src/core/session.ts\n" })
+      .mockResolvedValueOnce({ stdout: "" })
+      .mockResolvedValueOnce({ stdout: "" });
+    vi.mocked(appendTaskTranscript).mockImplementation(() => {
+      throw new Error("EACCES: transcript append denied");
+    });
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    await cmdCheckpoint("TASK-001", "fix ownership", true);
+
+    expect(logSpy).toHaveBeenCalledTimes(1);
+    const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
+    expect(output.ok).toBe(false);
+    expect(output.status).toBe("failed");
+    expect(output.code).toBe("CHECKPOINT_AUDIT_WRITE_FAILED");
+    expect(output.error).toContain("Commit succeeded for TASK-001");
+    expect(output.error).toContain("EACCES: transcript append denied");
+    expect(output.recovery.required).toBe(true);
+
+    logSpy.mockRestore();
+  });
 });

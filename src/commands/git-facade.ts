@@ -219,6 +219,39 @@ export async function cmdCheckpoint(taskId: string, message: string, json = fals
   });
   getDefaultGuidanceAdapter().pushGuidance(result);
 
+  try {
+    appendTaskTranscript(repoRoot, taskId, createTaskEvent(taskId, "git.commit", {
+      summary: message,
+    }));
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    const guidance =
+      `Commit succeeded for ${taskId}, but TaskForge could not record the checkpoint audit event. ` +
+      `The branch contains the commit and the worktree should be clean. ` +
+      `Inspect the task state before continuing. Audit failure: ${detail}`;
+    logError(guidance);
+    writeResult(failedResult({
+      command: "checkpoint",
+      taskId,
+      worktree: task.worktree,
+      branch,
+      guidance,
+      error: guidance,
+      code: "CHECKPOINT_AUDIT_WRITE_FAILED",
+      recoverySteps: [
+        `Inspect task state: taskforge inspect ${taskId} --json`,
+        "Repair the audit/log path or permissions issue that blocked transcript writing",
+        `Continue from the existing commit after recovery; do not recommit unchanged work`,
+      ],
+      nextCommands: [
+        { command: `taskforge inspect ${taskId} --json`, purpose: "Inspect the partial checkpoint state", when: "Immediately after the audit failure", allowedFor: "all", priority: 1 },
+        { command: "taskforge doctor --check", purpose: "Diagnose audit/log path issues", when: "If the audit failure cause is unclear", allowedFor: "all", priority: 2 },
+        { command: `taskforge submit ${taskId}`, purpose: "Continue from the existing commit once the state is understood", when: "After recovery confirms the branch is correct", allowedFor: "all", priority: 3 },
+      ],
+    }), json);
+    return;
+  }
+
   logSuccess(result.guidance);
 
   writeResult(successResult({
@@ -226,10 +259,6 @@ export async function cmdCheckpoint(taskId: string, message: string, json = fals
     taskId,
     guidance: result.guidance,
   }), json);
-
-  appendTaskTranscript(repoRoot, taskId, createTaskEvent(taskId, "git.commit", {
-    summary: message,
-  }));
 }
 
 export async function cmdSubmit(taskId: string, json = false): Promise<void> {
