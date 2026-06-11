@@ -10,6 +10,7 @@ assignee: b6b4e89a30
 claimed_at: '2026-06-11 11:22:16'
 context_hash: 24c64b5cba799406
 branch: agent/TASK-291-fix-false-force-push-rejection-on-task-b--b6b4e89a30
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-291
 ---
 
 # TASK-291: Fix false force-push rejection on task branch submit
@@ -50,6 +51,9 @@ Continuation Policy: Auto-continue unless a stopping condition occurs.
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-11T00:00:00Z System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-291
 
 ### 2026-06-11T00:00:00Z System
 - Task claimed via taskforge start TASK-291
