@@ -2,7 +2,9 @@
 
 ## Overview
 
-TaskForge uses a **container-first** deployment model. The documented reliable path runs TaskForge inside a container with known tools and versions. Native execution is supported as a secondary path.
+TaskForge uses a **container-first** deployment model for packaged/runtime deployments. For local worktrees, the documented launcher is source-first and runs directly from `src/` unless you explicitly opt into a built `dist/` bundle. Published packages build `dist/` during `npm pack`/publish via `prepack`.
+
+This deployment guide is secondary to the live CLI and `docs/workflow.md` for command workflow.
 
 ## Architecture
 
@@ -34,17 +36,18 @@ The launcher mounts the project parent directory so TaskForge can manage sibling
 
 ### Install the Launcher
 
-The install script is not yet published. Install manually:
+Use the repo-local launcher for source-first worktree execution:
 
 ```bash
-sudo cp scripts/taskforge-container /usr/local/bin/taskforge
-chmod +x /usr/local/bin/taskforge
+./scripts/taskforge doctor --check
 ```
+
+To force a built bundle instead of source, set `TASKFORGE_RUNTIME=dist`.
 
 ### Verify
 
 ```bash
-taskforge doctor system
+taskforge doctor --check
 ```
 
 ## Per-Project Setup
@@ -58,7 +61,7 @@ taskforge init \
   --install-hooks \
   --audit
 
-taskforge doctor project
+taskforge doctor --check
 ```
 
 ## Agent Workflow
@@ -67,21 +70,23 @@ taskforge doctor project
 taskforge next
 taskforge start TASK-123
 # agent works in generated worktree
+taskforge gates --json
 taskforge checkpoint TASK-123 --message "Implement scoped change"
 taskforge submit TASK-123
 taskforge done TASK-123
 ```
 
+For `In Progress`, `Review`, or `Verify` tasks returned by `taskforge next --json`, use `taskforge resume TASK-123` instead of `taskforge start TASK-123`.
+
 ## Native Execution (Alternative)
 
-For development or environments where containers are impractical:
+For development or environments where containers are impractical, run the repo-local launcher directly from the checkout:
 
 ```bash
-npm install -g taskforge
-taskforge init
+./scripts/taskforge init
 ```
 
-Native execution skips the container wrapper. All features work identically.
+This uses `tsx src/cli.ts` by default and does not depend on committed `dist/` files.
 
 ## Credential Configuration
 

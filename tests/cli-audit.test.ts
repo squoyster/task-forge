@@ -19,11 +19,11 @@ describe("cli-audit", () => {
     it("records a successful invocation to global log", () => {
       recordCliInvocation(tmpDir, "start", ["TASK-001"], { json: true }, 0, 100, null);
 
-      const globalPath = path.join(tmpDir, "logs", "taskforge", "audit", "invocations.jsonl");
-      expect(fs.existsSync(globalPath)).toBe(true);
-
-      const content = fs.readFileSync(globalPath, "utf-8");
-      const record = JSON.parse(content.trim());
+      const globalInvocations = readGlobalInvocations(tmpDir);
+      expect(globalInvocations).toHaveLength(1);
+      const record = globalInvocations[0];
+      const eventsPath = path.join(tmpDir, ".taskforge", "runtime", "logs", "taskforge", "audit", "events.jsonl");
+      expect(fs.existsSync(eventsPath)).toBe(true);
       expect(record.command).toBe("start");
       expect(record.args).toEqual(["TASK-001"]);
       expect(record.exitCode).toBe(0);
@@ -34,9 +34,9 @@ describe("cli-audit", () => {
     it("records a failed invocation", () => {
       recordCliInvocation(tmpDir, "done", ["TASK-002"], {}, 1, 50, "gates failed");
 
-      const globalPath = path.join(tmpDir, "logs", "taskforge", "audit", "invocations.jsonl");
-      const content = fs.readFileSync(globalPath, "utf-8");
-      const record = JSON.parse(content.trim());
+      const globalInvocations = readGlobalInvocations(tmpDir);
+      expect(globalInvocations).toHaveLength(1);
+      const record = globalInvocations[0];
       expect(record.command).toBe("done");
       expect(record.exitCode).toBe(1);
       expect(record.error).toBe("gates failed");
@@ -45,7 +45,7 @@ describe("cli-audit", () => {
     it("records invocation to per-task transcript for task commands", () => {
       recordCliInvocation(tmpDir, "start", ["TASK-001"], {}, 0, 100, null);
 
-      const transcriptPath = path.join(tmpDir, "logs", "taskforge", "tasks", "TASK-001", "transcript.jsonl");
+      const transcriptPath = path.join(tmpDir, ".taskforge", "runtime", "logs", "taskforge", "tasks", "TASK-001", "transcript.jsonl");
       expect(fs.existsSync(transcriptPath)).toBe(true);
 
       const content = fs.readFileSync(transcriptPath, "utf-8");
@@ -58,7 +58,7 @@ describe("cli-audit", () => {
       recordCliInvocation(tmpDir, "next", [], { json: true }, 0, 50, null);
 
       // No task-specific transcript should be created
-      const taskDir = path.join(tmpDir, "logs", "taskforge", "tasks");
+      const taskDir = path.join(tmpDir, ".taskforge", "runtime", "logs", "taskforge", "tasks");
       if (fs.existsSync(taskDir)) {
         const tasks = fs.readdirSync(taskDir);
         expect(tasks).toHaveLength(0);

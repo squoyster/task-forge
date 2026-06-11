@@ -139,11 +139,16 @@ while read -r local_ref local_sha remote_ref remote_sha; do
     exit 1
   fi
 
-  # Block force push
+  # Block force push. Deleting a branch and creating a new remote branch are
+  # allowed; non-fast-forward updates to existing branches are not.
   if [[ "\$local_sha" == "0000000000000000000000000000000000000000" ]]; then
     :
+  elif [[ "\$remote_sha" == "0000000000000000000000000000000000000000" ]]; then
+    :
+  elif [[ -z "\$remote_sha" ]]; then
+    :
   else
-    base=\$(git merge-base "\$local_sha" "\$remote_sha" 2>/dev/null || echo "")
+    base=\$(git merge-base "\$local_sha" "\$remote_sha" 2>/dev/null || true)
     if [[ "\$base" != "\$remote_sha" ]]; then
       echo "ERROR: Force push is forbidden."
       exit 1
@@ -168,7 +173,7 @@ author=\$(git log -1 --format='%an')
 timestamp=\$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 message=\$(git log -1 --format='%s')
 
-audit_dir="logs/taskforge/audit"
+audit_dir=".taskforge/runtime/logs/taskforge/audit"
 mkdir -p "\$audit_dir"
 
 cat >> "\$audit_dir/git.jsonl" <<EOF

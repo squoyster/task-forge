@@ -66,6 +66,19 @@ describe("assertTaskOwnership", () => {
     // No throw = pass
   });
 
+  it("uses the target task branch before the caller checkout branch", async () => {
+    (getCurrentBranch as ReturnType<typeof vi.fn>).mockResolvedValue("main");
+
+    await assertTaskOwnership(
+      {
+        id: "TASK-001",
+        assignee: "a1b2c3d4f5",
+        branch: "agent/TASK-001-test--a1b2c3d4f5",
+      } as Parameters<typeof assertTaskOwnership>[0],
+      "/tmp/repo",
+    );
+  });
+
   it("does not throw when task has no assignee", async () => {
     (getCurrentBranch as ReturnType<typeof vi.fn>).mockResolvedValue("agent/TASK-001-test--a1b2c3d4f5");
 
@@ -100,6 +113,39 @@ describe("assertTaskOwnership", () => {
       expect(message).toContain("taskforge inspect");
       expect(message).toContain("taskforge doctor");
       expect(message).toContain("taskforge block");
+    }
+  });
+
+  it("explains target task context when ownership cannot be resolved", async () => {
+    (getCurrentBranch as ReturnType<typeof vi.fn>).mockResolvedValue("main");
+
+    await expect(
+      assertTaskOwnership(
+        {
+          id: "TASK-001",
+          assignee: "a1b2c3d4f5",
+          branch: "agent/TASK-001-missing-session",
+          worktree: "/tmp/worktrees/TASK-001",
+        } as Parameters<typeof assertTaskOwnership>[0],
+        "/tmp/repo",
+      ),
+    ).rejects.toThrow(TaskForgeError);
+
+    try {
+      await assertTaskOwnership(
+        {
+          id: "TASK-001",
+          assignee: "a1b2c3d4f5",
+          branch: "agent/TASK-001-missing-session",
+          worktree: "/tmp/worktrees/TASK-001",
+        } as Parameters<typeof assertTaskOwnership>[0],
+        "/tmp/repo",
+      );
+    } catch (err) {
+      const message = (err as Error).message;
+      expect(message).toContain("task.branch");
+      expect(message).toContain("branch=agent/TASK-001-missing-session");
+      expect(message).toContain("worktree=/tmp/worktrees/TASK-001");
     }
   });
 });

@@ -12,14 +12,14 @@ You are the Dependency Steward Agent for TaskForge.
 
 Use the TaskForge CLI dependency commands:
 
-- `npm run dev -- deps scan` — Broad dependency health checks
-- `npm run dev -- deps audit` — Vulnerability audit (supports --severity and --create-tasks)
-- `npm run dev -- deps outdated` — Check outdated direct dependencies
-- `npm run dev -- deps deprecated` — Check for deprecated packages
-- `npm run dev -- deps plan` — Generate a dependency remediation plan
-- `npm run dev -- deps create-tasks` — Create TaskForge dependency tasks
-- `npm run dev -- deps pr` — Create focused dependency update PRs
-- `npm run dev -- deps summary` — Produce a dependency health summary
+- `taskforge deps scan` — Broad dependency health checks
+- `taskforge deps audit` — Vulnerability audit (supports --severity and --create-tasks)
+- `taskforge deps outdated` — Check outdated direct dependencies
+- `taskforge deps deprecated` — Check for deprecated packages
+- `taskforge deps plan` — Generate a dependency remediation plan
+- `taskforge deps create-tasks` — Create TaskForge dependency tasks
+- `taskforge deps pr` — Create focused dependency update PRs
+- `taskforge deps summary` — Produce a dependency health summary
 
 ## Workflow
 

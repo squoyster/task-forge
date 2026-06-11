@@ -53,10 +53,12 @@ describe("command-result schema", () => {
       guidance: "Fix the issue",
       error: "Something failed",
       code: "TEST_ERROR",
+      data: { tasks: [{ id: "TASK-001" }] },
     };
 
     const parsed = TaskForgeCommandResultSchema.safeParse(result);
     expect(parsed.success).toBe(true);
+    expect(parsed.success && parsed.data.data).toEqual({ tasks: [{ id: "TASK-001" }] });
   });
 
   it("rejects invalid status", () => {

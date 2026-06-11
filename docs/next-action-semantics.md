@@ -1,6 +1,6 @@
 # Command Next-Action Semantics
 
-TaskForge commands return a `nextAction` field that tells agents what to do next. This document enumerates all supported values, their meanings, continuation rules, and expected follow-up commands.
+TaskForge commands return structured next-command guidance that tells agents what to do next. This document enumerates summary-level `nextAction` values, their meanings, continuation rules, and expected follow-up commands. For the canonical command loop, see `docs/workflow.md`.
 
 ## Source
 
@@ -11,8 +11,8 @@ Next-action values are computed by `buildJson()` in `src/commands/summary.ts`. T
 | Priority | Condition | nextAction | Agent May Continue? | Follow-up Command |
 |----------|-----------|------------|---------------------|-------------------|
 | 1 | `In Progress` tasks exist | `Continue existing in-progress work.` | Yes — continue current task | `taskforge heartbeat <taskId>`, then work |
-| 2 | `Verify` tasks exist | `Run QA/verification on tasks in Verify status.` | Yes — switch to QA role | `taskforge start <taskId>` for a Verify task |
-| 3 | `Review` tasks exist | `Review tasks in Review status.` | Yes — switch to reviewer role | `taskforge start <taskId>` for a Review task |
+| 2 | `Verify` tasks exist | `Run QA/verification on tasks in Verify status.` | Yes — switch to QA role | `taskforge resume <taskId>`, then `taskforge gates --json` |
+| 3 | `Review` tasks exist | `Review tasks in Review status.` | Yes — switch to reviewer role | `taskforge diff <taskId>`, then `taskforge resume <taskId>` if edits are required |
 | 4 | Scheduler selects a task | `Start the highest-priority task: <TASK-ID>` | Yes — claim and start | `taskforge start <taskId>` |
 | 5 | `Needs Spec` tasks exist | `Create specs for tasks in Needs Spec.` | Yes — write specifications | `taskforge start <taskId>`, add ACs, `taskforge done <taskId>` |
 | 6 | `Inbox` tasks exist | `Process inbox items into structured tasks.` | Yes — triage inbox | `taskforge next` to see recommendations, then `taskforge start <taskId>` |
@@ -33,8 +33,8 @@ Nothing          → wait for human
 ## Agent Continuation Rules
 
 - **In Progress**: The owning agent continues work. Other agents should not interrupt unless the task is stale (>4h without heartbeat), in which case the sweeper reclaims it.
-- **Verify**: Any agent may pick up a Verify task. Use the QA agent role.
-- **Review**: Any agent may pick up a Review task. Use the reviewer agent role.
+- **Verify**: Any agent may pick up a Verify task. Use the QA agent role and resume the existing worktree; do not start a new task.
+- **Review**: Any agent may pick up a Review task. Use the reviewer agent role and inspect the existing worktree; do not start a new task.
 - **Scheduler pick**: The highest-scored Ready task is recommended. Use `taskforge start` to claim it.
 - **Needs Spec**: Write clear, verifiable acceptance criteria. Mark Done when ACs are complete.
 - **Inbox**: Convert raw inbox items into structured tasks with goal, ACs, and priority.
@@ -54,7 +54,7 @@ When `--json` is passed to `taskforge summary`, the response includes:
 }
 ```
 
-The `nextAction` field is a human-readable string. Agents should parse it to determine the recommended action.
+The `nextAction` field is human-readable. Agents should prefer the structured `validNextCommands` returned by `taskforge next --json` and only use `nextAction` as board-level context.
 
 ## Integration with `taskforge next`
 
@@ -63,4 +63,4 @@ The `nextAction` field is a human-readable string. Agents should parse it to det
 | Command | Returns | Use Case |
 |---------|---------|----------|
 | `taskforge summary` | Board state + nextAction string | Agent orientation, continuation decision |
-| `taskforge next` | Single task ID + metadata | Agent picks up specific work |
+| `taskforge next` | Single task ID + metadata + `validNextCommands` | Agent picks up specific work |

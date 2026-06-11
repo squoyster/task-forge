@@ -14,6 +14,8 @@ TaskForge exists to manage software work for an agentic coding team. It combines
 - Explicit human-intervention gates
 - Project status summaries
 
+The canonical operator and agent workflow is documented in [docs/workflow.md](docs/workflow.md). If this overview conflicts with the CLI or that workflow contract, the CLI and workflow contract win.
+
 ## Operating Model
 
 Three layers:
@@ -36,7 +38,9 @@ Inbox → Needs Spec → Ready → In Progress → Review → Verify → Done
 |---|---|
 | `taskforge init` | Initialize TaskForge in this repo |
 | `taskforge next` | Return highest-priority safe task |
-| `taskforge start TASK-123` | Set up worktree, branch, begin task |
+| `taskforge start TASK-123` | Set up worktree, branch, and begin a Ready task |
+| `taskforge resume TASK-123` | Re-enter an existing task workspace |
+| `taskforge gates` | Run verification gates |
 | `taskforge status` | Show project status summary |
 | `taskforge summary` | Show full project summary |
 | `taskforge block TASK-123 "reason"` | Mark task as blocked |

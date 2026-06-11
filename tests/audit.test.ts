@@ -81,7 +81,7 @@ describe("audit service", () => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "tf-audit-"));
     appendTaskTranscript(tmp, "TASK-001", createAuditEvent("task.command.started", { summary: "ok" }));
 
-    const dir = path.join(tmp, "logs", "taskforge", "tasks", "TASK-001");
+    const dir = path.join(tmp, ".taskforge", "runtime", "logs", "taskforge", "tasks", "TASK-001");
     fs.appendFileSync(path.join(dir, "transcript.jsonl"), "not valid json\n", "utf-8");
 
     const events = readTaskAudit(tmp, "TASK-001");
@@ -113,7 +113,7 @@ describe("validateJsonlFiles", () => {
 
   it("reports parse errors for invalid JSON", () => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "tf-audit-"));
-    const dir = path.join(tmp, "logs", "taskforge", "audit");
+    const dir = path.join(tmp, ".taskforge", "runtime", "logs", "taskforge", "audit");
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(dir, "events.jsonl"), "not valid json\n", "utf-8");
 
@@ -127,7 +127,7 @@ describe("validateJsonlFiles", () => {
 
   it("reports schema errors for invalid event structure", () => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "tf-audit-"));
-    const dir = path.join(tmp, "logs", "taskforge", "audit");
+    const dir = path.join(tmp, ".taskforge", "runtime", "logs", "taskforge", "audit");
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(dir, "events.jsonl"), '{"foo": "bar"}\n', "utf-8");
 
@@ -140,7 +140,7 @@ describe("validateJsonlFiles", () => {
 
   it("reports correct line numbers for multiple errors", () => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "tf-audit-"));
-    const dir = path.join(tmp, "logs", "taskforge", "audit");
+    const dir = path.join(tmp, ".taskforge", "runtime", "logs", "taskforge", "audit");
     fs.mkdirSync(dir, { recursive: true });
     const validEvent = JSON.stringify(createAuditEvent("task.command.started"));
     fs.writeFileSync(path.join(dir, "events.jsonl"), `${validEvent}\nbad line\n${validEvent}\nalso bad\n`, "utf-8");
@@ -162,7 +162,7 @@ describe("validateJsonlFiles", () => {
   it("finds JSONL files in nested task directories", () => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "tf-audit-"));
     appendTaskTranscript(tmp, "TASK-001", createAuditEvent("task.command.started"));
-    const taskDir = path.join(tmp, "logs", "taskforge", "tasks", "TASK-001");
+    const taskDir = path.join(tmp, ".taskforge", "runtime", "logs", "taskforge", "tasks", "TASK-001");
     fs.appendFileSync(path.join(taskDir, "transcript.jsonl"), "corrupt\n", "utf-8");
 
     const issues = validateJsonlFiles(tmp);

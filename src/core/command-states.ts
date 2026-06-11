@@ -466,13 +466,18 @@ export function startStateMachine(
     );
   }
 
-  if (conditions.taskStatus !== "Ready" && conditions.taskStatus !== "In Progress") {
+  if (
+    conditions.taskStatus !== "Ready" &&
+    conditions.taskStatus !== "In Progress" &&
+    conditions.taskStatus !== "Review" &&
+    conditions.taskStatus !== "Verify"
+  ) {
     return error(
       StartStates.INVALID_STATUS,
       "INVALID_STATUS",
       "request_human_input",
       `Cannot start task with status "${conditions.taskStatus}". ` +
-      `Must be "Ready" or "In Progress". ` +
+      `Must be "Ready", "In Progress", "Review", or "Verify". ` +
       `Request human input to correct the task status.`,
       { taskId: conditions.taskId, status: conditions.taskStatus },
     );
@@ -795,8 +800,10 @@ export function doneStateMachine(
       "CONTROL_FILE_CHANGED",
       "request_human_input",
       `Control files (AGENTS.md, TASKFORGE.md, etc.) have changed since task start. ` +
-      `Re-read the updated files and verify your work still complies. ` +
-      `Request human input if unsure.`,
+      `Re-read the updated control files, verify the completed work still complies, and then retry ` +
+      `'taskforge done ${conditions.taskId}'. No recommit is required if the worktree is already clean ` +
+      `and the branch is already pushed. Block for human review only if the updated control files change ` +
+      `the expected outcome or you cannot verify compliance.`,
       { taskId: conditions.taskId },
     );
   }

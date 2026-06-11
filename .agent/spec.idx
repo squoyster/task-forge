@@ -35,3 +35,7 @@ SPEC state-machine:
 SPEC return-contract:
   path=docs/architecture/command-return-contract.md
   use=command-return-api
+
+SPEC workflow:
+  path=docs/workflow.md
+  use=current-agent-workflow,operator-contract,doctor-recovery

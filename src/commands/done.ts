@@ -20,12 +20,22 @@ import { markAgentIdle } from "../core/agent-registry.js";
 import { checkCompletionEligibility } from "../core/completion-policy.js";
 import { GitHubPullRequestVerifier } from "../core/pr-verifier.js";
 import { loadConfig } from "../core/config.js";
+import { buildTerminalAuditNotes } from "../core/terminal-audit.js";
 import type { ParsedTask } from "../core/task-store.js";
 
 export interface DoneOptions {
   cleanup?: boolean;
   deleteBranch?: boolean;
   json?: boolean;
+}
+
+function normalizeDirtyFiles(files: string[]): string[] {
+  return [...new Set(files)].sort();
+}
+
+function getBlockingDirtyFiles(beforeGates: string[], afterGates: string[]): string[] {
+  const before = new Set(normalizeDirtyFiles(beforeGates));
+  return normalizeDirtyFiles(afterGates).filter((file) => before.has(file));
 }
 
 function mapNextAction(action: string): { command: string; purpose: string; when: string; allowedFor: "all" | "human" | "doctor" | "agent"; priority: number } {
@@ -40,6 +50,16 @@ function mapNextAction(action: string): { command: string; purpose: string; when
   }
 }
 
+function buildControlFileDriftGuidance(taskId: string, recordedHash: string, currentHash: string): string {
+  return [
+    `Control files changed since ${taskId} started.`,
+    `Recorded hash: ${recordedHash}. Current hash: ${currentHash}.`,
+    "Re-read the updated control files, confirm the completed work still complies, and then retry `taskforge done`.",
+    "No recommit or resubmit is required if the worktree is clean and the branch is already pushed.",
+    "Block for human review only if the updated control files change the expected outcome or compliance is unclear.",
+  ].join(" ");
+}
+
 export async function cmdDone(
   taskId: string,
   options: DoneOptions = {},
@@ -47,6 +67,9 @@ export async function cmdDone(
   const { cleanup = false, deleteBranch = false, json = false } = options;
   const repoRoot = getRepoRoot();
   const task = loadTaskById(taskId);
+  const dirtyFilesBeforeGates = task?.worktree
+    ? await getWorktreeDirtyFiles(task.worktree)
+    : [];
 
   if (!task) {
     const result = doneStateMachine({
@@ -169,7 +192,8 @@ export async function cmdDone(
   // Worktree dirty check
   if (task.worktree) {
     const dirtyFiles = await getWorktreeDirtyFiles(task.worktree);
-    if (dirtyFiles.length > 0) {
+    const blockingDirtyFiles = getBlockingDirtyFiles(dirtyFilesBeforeGates, dirtyFiles);
+    if (blockingDirtyFiles.length > 0) {
       const result = doneStateMachine({
         validTransition: true,
         gatesPassed: true,
@@ -180,7 +204,7 @@ export async function cmdDone(
         hasAcSection: true,
         hasBlankAc: false,
         hasUncheckedAc: false,
-        dirtyFiles,
+        dirtyFiles: blockingDirtyFiles,
         taskId,
         currentStatus: task.status,
       });
@@ -190,6 +214,13 @@ export async function cmdDone(
         return;
       }
       throw new Error(result.guidance);
+    }
+    const gateGeneratedDirtyFiles = normalizeDirtyFiles(dirtyFiles).filter((file) => !blockingDirtyFiles.includes(file));
+    if (!json && gateGeneratedDirtyFiles.length > 0) {
+      logWarn(
+        `Ignoring ${gateGeneratedDirtyFiles.length} gate-generated file(s) while completing ${taskId}: ` +
+        `${gateGeneratedDirtyFiles.slice(0, 5).join(", ")}${gateGeneratedDirtyFiles.length > 5 ? ", ..." : ""}`,
+      );
     }
   }
 
@@ -238,11 +269,30 @@ export async function cmdDone(
         currentStatus: task.status,
       });
       getDefaultGuidanceAdapter().pushGuidance(result);
+      const guidance = buildControlFileDriftGuidance(taskId, task.context_hash, currentHash);
       if (json) {
-        writeResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "CONTEXT_CHANGED", nextCommands: [mapNextAction(result.nextAction)] }), json);
+        writeResult(failedResult({
+          command: "done",
+          taskId,
+          worktree: task.worktree,
+          branch: task.branch,
+          guidance,
+          error: guidance,
+          code: result.errorCode ?? "CONTROL_FILE_CHANGED",
+          recoverySteps: [
+            "Re-read AGENTS.md, TASKFORGE.md, and any configured control files that changed",
+            `Run 'taskforge done ${taskId}' again after confirming the completed work still complies`,
+            `Block for human review if the updated control files change the expected outcome`,
+          ],
+          nextCommands: [
+            { command: `taskforge inspect ${taskId} --json`, purpose: "Inspect task ownership and completion state", when: "Before retrying done", allowedFor: "all", priority: 1 },
+            { command: `taskforge done ${taskId}`, purpose: "Retry completion after re-reading control files", when: "After confirming compliance", allowedFor: "all", priority: 2 },
+            { command: `taskforge block ${taskId} "Control-file drift requires review" --blocked-by human`, purpose: "Escalate if compliance is unclear", when: "If the updated control files change the expected outcome", allowedFor: "all", priority: 3 },
+          ],
+        }), json);
         return;
       }
-      throw new Error(result.guidance);
+      throw new Error(guidance);
     }
   }
 
@@ -445,6 +495,7 @@ export async function cmdDone(
     await performCleanup(repoRoot, task, deleteBranch, today, notes);
   }
 
+  notes.push(...buildTerminalAuditNotes(repoRoot, taskId, "Done"));
   appendAgentNote(task.filePath, today, "System", notes);
 
   // Push state changes through transaction

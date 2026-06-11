@@ -93,6 +93,40 @@ describe("cmdValidateState", () => {
     logSpy.mockRestore();
   });
 
+  it("returns ok: true with duplicate-section warnings when not in strict mode", async () => {
+    const filePath = makeTaskFile("TASK-001");
+    fs.writeFileSync(filePath, [
+      "---",
+      "id: TASK-001",
+      "type: Task",
+      "status: Ready",
+      "priority: P2",
+      "---",
+      "",
+      "# TASK-001: Test task",
+      "",
+      "## Goal",
+      "",
+      "Primary goal.",
+      "",
+      "## Goal",
+      "",
+      "Duplicate goal block.",
+      "",
+      "## Acceptance Criteria",
+      "",
+      "- [x] Done",
+    ].join("\n"), "utf-8");
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    await cmdValidateState({ json: true });
+
+    const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
+    expect(output.ok).toBe(true);
+    expect(output.status).toBe("success");
+    logSpy.mockRestore();
+  });
+
   it("returns ok: false with warnings when in strict mode", async () => {
     // Create an In Progress task without assignee — this is a warning
     makeTaskFile("TASK-001", { status: "In Progress" });

@@ -4,6 +4,12 @@ import path from "node:path";
 import os from "node:os";
 import { cmdDone } from "../src/commands/done.js";
 import { setRepoRoot } from "../src/util/paths.js";
+import { recordCliInvocation } from "../src/core/cli-audit.js";
+import { appendTaskTranscript, createTaskEvent } from "../src/core/audit.js";
+
+vi.mock("../src/core/control-files.js", () => ({
+  hashControlFiles: vi.fn().mockReturnValue("stablehash123456"),
+}));
 
 // Mock the git module so we don't need real git operations
 vi.mock("../src/core/git.js", () => ({
@@ -50,6 +56,7 @@ vi.mock("../src/core/task-state-transaction.js", () => ({
 }));
 
 import { removeWorktree, removeBranch, getWorktreeDirtyFiles, getBranchCommitsAhead } from "../src/core/git.js";
+import { hashControlFiles } from "../src/core/control-files.js";
 
 let uniqueDir: string;
 let stateDir: string;
@@ -62,6 +69,7 @@ beforeEach(() => {
   setRepoRoot(repoDir);
 
   vi.clearAllMocks();
+  vi.mocked(hashControlFiles).mockReturnValue("stablehash123456");
 });
 
 afterEach(() => {
@@ -353,6 +361,32 @@ describe("cmdDone", () => {
     expect(output.error).toContain("taskforge checkpoint");
   });
 
+  it("allows done when gates are the only source of dirtiness", async () => {
+    vi.mocked(getWorktreeDirtyFiles)
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce(["dist/cli.js", "dist/cli.js.map"]);
+
+    makeTaskFile("TASK-005", {
+      worktree: "../worktrees/TASK-005",
+      branch: "agent/TASK-005-test",
+    });
+
+    await expect(cmdDone("TASK-005")).resolves.toBeUndefined();
+  });
+
+  it("still rejects done when pre-existing dirt remains after gates", async () => {
+    vi.mocked(getWorktreeDirtyFiles)
+      .mockResolvedValueOnce(["src/foo.ts"])
+      .mockResolvedValueOnce(["dist/cli.js", "src/foo.ts"]);
+
+    makeTaskFile("TASK-005", {
+      worktree: "../worktrees/TASK-005",
+      branch: "agent/TASK-005-test",
+    });
+
+    await expect(cmdDone("TASK-005")).rejects.toThrow(/src\/foo\.ts/);
+  });
+
   it("rejects done when branch has unpushed commits", async () => {
     vi.mocked(getWorktreeDirtyFiles).mockResolvedValue([]);
     vi.mocked(getBranchCommitsAhead).mockResolvedValue(3);
@@ -388,6 +422,46 @@ describe("cmdDone", () => {
     expect(output.error).toContain("taskforge submit");
   });
 
+  it("returns actionable control-file drift guidance without asking for a recommit", async () => {
+    makeTaskFile("TASK-005", {
+      worktree: "../worktrees/TASK-005",
+      branch: "agent/TASK-005-test",
+      context_hash: "originalhash0000",
+    });
+    vi.mocked(getBranchCommitsAhead).mockResolvedValue(0);
+    vi.mocked(hashControlFiles).mockReturnValue("drifthash999999");
+
+    await expect(cmdDone("TASK-005")).rejects.toThrow(/Control files changed since TASK-005 started/);
+    await expect(cmdDone("TASK-005")).rejects.toThrow(/No recommit or resubmit is required/i);
+  });
+
+  it("returns JSON error with explicit recovery steps for control-file drift", async () => {
+    makeTaskFile("TASK-005", {
+      worktree: "../worktrees/TASK-005",
+      branch: "agent/TASK-005-test",
+      context_hash: "originalhash0000",
+    });
+    vi.mocked(getBranchCommitsAhead).mockResolvedValue(0);
+    vi.mocked(hashControlFiles).mockReturnValue("drifthash999999");
+
+    const logs: string[] = [];
+    const consoleSpy = vi.spyOn(console, "log").mockImplementation((...args: unknown[]) => {
+      logs.push(args.map(String).join(" "));
+    });
+    await cmdDone("TASK-005", { json: true });
+    consoleSpy.mockRestore();
+
+    expect(logs.length).toBeGreaterThan(0);
+    const output = JSON.parse(logs[0]);
+    expect(output.ok).toBe(false);
+    expect(output.code).toBe("CONTROL_FILE_CHANGED");
+    expect(output.error).toContain("Recorded hash: originalhash0000. Current hash: drifthash999999.");
+    expect(output.error).toContain("No recommit or resubmit is required");
+    expect(output.recovery.required).toBe(true);
+    expect(output.validNextCommands[0].command).toContain("taskforge inspect TASK-005 --json");
+    expect(output.validNextCommands[1].command).toContain("taskforge done TASK-005");
+  });
+
   it("allows done when worktree is clean and branch is pushed", async () => {
     vi.mocked(getWorktreeDirtyFiles).mockResolvedValue([]);
     vi.mocked(getBranchCommitsAhead).mockResolvedValue(0);
@@ -400,6 +474,23 @@ describe("cmdDone", () => {
 
     const task = readTaskFile(fp);
     expect(task.frontmatter.status).toBe("Done");
+  });
+
+  it("archives terminal audit summary into agent notes", async () => {
+    const fp = makeTaskFile("TASK-005");
+    const repoRoot = path.join(uniqueDir, "repo");
+
+    appendTaskTranscript(repoRoot, "TASK-005", createTaskEvent("TASK-005", "task.command.started", {
+      summary: "Started work",
+    }));
+    recordCliInvocation(repoRoot, "checkpoint", ["TASK-005"], { message: "test" }, 0, 125, null);
+
+    await cmdDone("TASK-005");
+
+    const task = readTaskFile(fp);
+    expect(task.body).toContain("Terminal audit archived for Done.");
+    expect(task.body).toContain("Audit events:");
+    expect(task.body).toContain("Commands observed: checkpoint.");
   });
 
 });
