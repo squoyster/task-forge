@@ -10,7 +10,7 @@ import type { GitHubConfig } from "../integrations/github/types.js";
 import type { Task } from "../core/task.js";
 import { logInfo, logHeader, logSuccess, logWarn, logError } from "../util/logging.js";
 import { writeResult } from "../util/write-command-result.js";
-import { successResult, noopResult } from "../core/result-builder.js";
+import { successResult, noopResult, failedResult } from "../core/result-builder.js";
 import { checkpointStateMachine, submitStateMachine } from "../core/command-states.js";
 import { getDefaultGuidanceAdapter } from "../core/guidance-adapter.js";
 
@@ -18,6 +18,77 @@ function requireTask(taskId: string): Task {
   const task = loadTaskById(taskId);
   if (!task) throw new TaskNotFoundError(taskId);
   return task;
+}
+
+interface MergeabilityResult {
+  ok: boolean;
+  mergeable: boolean;
+  detail?: string;
+}
+
+function summarizeMergeConflict(output: string): string | undefined {
+  const lines = output
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+
+  return lines.find((line) => /conflict|CONFLICT|add\/add|modify\/delete/i.test(line)) ?? lines[0];
+}
+
+async function checkMergeabilityAgainstMain(
+  repoRoot: string,
+  worktree: string,
+): Promise<MergeabilityResult> {
+  const fetchResult = await run("git", ["-C", worktree, "fetch", "origin", "main"], repoRoot);
+  if (fetchResult.exitCode !== 0) {
+    return {
+      ok: false,
+      mergeable: false,
+      detail: fetchResult.stderr.trim() || fetchResult.stdout.trim() || "git fetch origin main failed",
+    };
+  }
+
+  const mergeBaseResult = await run("git", ["-C", worktree, "merge-base", "HEAD", "origin/main"], repoRoot);
+  if (mergeBaseResult.exitCode !== 0) {
+    return {
+      ok: false,
+      mergeable: false,
+      detail: mergeBaseResult.stderr.trim() || mergeBaseResult.stdout.trim() || "git merge-base failed",
+    };
+  }
+
+  const mergeBase = mergeBaseResult.stdout.trim();
+  if (!mergeBase) {
+    return {
+      ok: false,
+      mergeable: false,
+      detail: "git merge-base returned no merge base for HEAD and origin/main",
+    };
+  }
+
+  const mergeTreeResult = await run(
+    "git",
+    ["-C", worktree, "merge-tree", "--write-tree", mergeBase, "HEAD", "origin/main"],
+    repoRoot,
+  );
+
+  const mergeOutput = [mergeTreeResult.stdout, mergeTreeResult.stderr]
+    .filter((part) => part.trim().length > 0)
+    .join("\n");
+
+  if (mergeTreeResult.exitCode !== 0) {
+    return {
+      ok: true,
+      mergeable: false,
+      detail: summarizeMergeConflict(mergeOutput),
+    };
+  }
+
+  return { ok: true, mergeable: true };
+}
+
+function isPushNoop(pushOutput: string): boolean {
+  return /\[up to date\]/i.test(pushOutput) || /^=\s/m.test(pushOutput);
 }
 
 export async function cmdDiff(taskId: string, json = false): Promise<void> {
@@ -216,40 +287,87 @@ export async function cmdSubmit(taskId: string, json = false): Promise<void> {
     throw new Error(result.guidance);
   }
 
-  const config = loadConfig(repoRoot);
-  const githubConfigured = !!(config.github?.enabled && config.github.owner && config.github.repo);
-
-  try {
-    await run("git", ["-C", task.worktree, "push", "origin", task.branch], repoRoot);
-  } catch (err) {
-    const result = submitStateMachine({
-      prCreated: false,
-      githubConfigured,
+  const mergeability = await checkMergeabilityAgainstMain(repoRoot, task.worktree);
+  if (!mergeability.ok) {
+    const guidance =
+      `Could not verify whether ${task.branch} merges cleanly with origin/main. ` +
+      `Resolve the repository state and retry submit. ${mergeability.detail ?? ""}`.trim();
+    logError(guidance);
+    writeResult(failedResult({
+      command: "submit",
       taskId,
-      errorMessage: err instanceof Error ? err.message : String(err),
-    });
-    getDefaultGuidanceAdapter().pushGuidance(result);
-    logError(result.guidance);
-    throw new Error(result.guidance);
+      branch: task.branch,
+      worktree: task.worktree,
+      error: guidance,
+      code: "MERGEABILITY_CHECK_FAILED",
+    }), json);
+    return;
   }
 
-  const result = submitStateMachine({
-    prCreated: true,
-    githubConfigured,
-    taskId,
-  });
-  getDefaultGuidanceAdapter().pushGuidance(result);
+  if (!mergeability.mergeable) {
+    const detail = mergeability.detail ? ` Conflict detail: ${mergeability.detail}` : "";
+    const guidance =
+      `Branch ${task.branch} does not merge cleanly with origin/main. ` +
+      `Rebase or merge main into the task branch, resolve conflicts, checkpoint, and submit again.${detail}`;
+    logError(guidance);
+    writeResult(failedResult({
+      command: "submit",
+      taskId,
+      branch: task.branch,
+      worktree: task.worktree,
+      error: guidance,
+      code: "NOT_MERGEABLE",
+    }), json);
+    return;
+  }
 
-  logSuccess(result.guidance);
+  const pushResult = await run(
+    "git",
+    ["-C", task.worktree, "push", "--porcelain", "origin", task.branch],
+    repoRoot,
+  );
+  const pushOutput = [pushResult.stdout, pushResult.stderr]
+    .filter((part) => part.trim().length > 0)
+    .join("\n");
+
+  if (pushResult.exitCode !== 0) {
+    const guidance = `Failed to push branch ${task.branch}: ${pushOutput || "git push failed"}`;
+    logError(guidance);
+    throw new Error(guidance);
+  }
+
+  if (isPushNoop(pushOutput)) {
+    const guidance =
+      `Branch ${task.branch} is already submitted and merges cleanly with origin/main. ` +
+      `No changes to submit for ${taskId}.`;
+    logInfo(guidance);
+    writeResult(noopResult({
+      command: "submit",
+      taskId,
+      branch: task.branch,
+      worktree: task.worktree,
+      guidance,
+      reason: "Branch is already submitted and mergeable.",
+    }), json);
+    return;
+  }
+
+  const guidance =
+    `Pushed branch ${task.branch} to origin. ` +
+    `Branch merges cleanly with origin/main. Run 'taskforge pr ${taskId}' to create or update a pull request.`;
+  logSuccess(guidance);
 
   writeResult(successResult({
     command: "submit",
     taskId,
-    guidance: result.guidance,
+    branch: task.branch,
+    worktree: task.worktree,
+    guidance,
   }), json);
 
   appendTaskTranscript(repoRoot, taskId, createTaskEvent(taskId, "git.push", {
     summary: `Pushed branch ${task.branch}`,
+    metadata: { mergeableAgainst: "origin/main", pushOutput },
   }));
 }
 
