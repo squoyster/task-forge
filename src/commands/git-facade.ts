@@ -231,40 +231,51 @@ export async function cmdSubmit(taskId: string, json = false): Promise<void> {
     throw new Error(result.guidance);
   }
 
-  const config = loadConfig(repoRoot);
-  const githubConfigured = !!(config.github?.enabled && config.github.owner && config.github.repo);
+  const pushResult = await run(
+    "git",
+    ["-C", task.worktree, "push", "--porcelain", "origin", task.branch],
+    repoRoot,
+  );
+  const pushOutput = [pushResult.stdout, pushResult.stderr]
+    .filter((part) => part.trim().length > 0)
+    .join("\n");
 
-  try {
-    await run("git", ["-C", task.worktree, "push", "origin", task.branch], repoRoot);
-  } catch (err) {
-    const result = submitStateMachine({
-      prCreated: false,
-      githubConfigured,
-      taskId,
-      errorMessage: err instanceof Error ? err.message : String(err),
-    });
-    getDefaultGuidanceAdapter().pushGuidance(result);
-    logError(result.guidance);
-    throw new Error(result.guidance);
+  if (pushResult.exitCode !== 0) {
+    logError(`Failed to push branch ${task.branch}: ${pushOutput || "git push failed"}`);
+    throw new Error(`Failed to push branch ${task.branch}: ${pushOutput || "git push failed"}`);
   }
 
-  const result = submitStateMachine({
-    prCreated: true,
-    githubConfigured,
-    taskId,
-  });
-  getDefaultGuidanceAdapter().pushGuidance(result);
+  if (/\[up to date\]/i.test(pushOutput) || /^=\s/m.test(pushOutput)) {
+    const guidance = `Branch ${task.branch} is already up to date on origin. No changes to submit for ${taskId}.`;
+    logInfo(guidance);
+    writeResult(noopResult({
+      command: "submit",
+      taskId,
+      branch: task.branch,
+      worktree: task.worktree,
+      guidance,
+      reason: "Branch is already up to date on origin.",
+    }), json);
+    return;
+  }
 
-  logSuccess(result.guidance);
+  const guidance =
+    `Pushed branch ${task.branch} to origin. ` +
+    `Run 'taskforge pr ${taskId}' to create or update a pull request.`;
+
+  logSuccess(guidance);
 
   writeResult(successResult({
     command: "submit",
     taskId,
-    guidance: result.guidance,
+    branch: task.branch,
+    worktree: task.worktree,
+    guidance,
   }), json);
 
   appendTaskTranscript(repoRoot, taskId, createTaskEvent(taskId, "git.push", {
     summary: `Pushed branch ${task.branch}`,
+    metadata: { pushOutput },
   }));
 }
 
