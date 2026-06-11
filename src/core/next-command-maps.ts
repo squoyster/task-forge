@@ -123,6 +123,24 @@ export const NEXT_COMMAND_MAPS: NextCommandMap = {
       { command: "taskforge done <TASK-ID>", purpose: "Mark task complete", when: "After report generation", allowedFor: "all", priority: 1 },
     ],
   },
+  promote: {
+    success: [
+      { command: "taskforge promote <TASK-ID>", purpose: "Advance to the next valid workflow state", when: "After promotion", allowedFor: "all", priority: 1 },
+      { command: "taskforge inspect <TASK-ID> --json", purpose: "Inspect current task state", when: "If the next state is unclear", allowedFor: "all", priority: 2 },
+    ],
+    failed: [
+      { command: "taskforge inspect <TASK-ID> --json", purpose: "Inspect allowed task transitions", when: "On promotion failure", allowedFor: "all", priority: 1 },
+    ],
+  },
+  update: {
+    success: [
+      { command: "taskforge inspect <TASK-ID> --json", purpose: "Verify the updated task document", when: "After updating task fields", allowedFor: "all", priority: 1 },
+      { command: "taskforge next", purpose: "Return to task selection", when: "After verifying the update", allowedFor: "all", priority: 2 },
+    ],
+    failed: [
+      { command: "taskforge inspect <TASK-ID> --json", purpose: "Reload current task state before retrying", when: "On update failure", allowedFor: "all", priority: 1 },
+    ],
+  },
   cleanup: {
     success: [
       { command: "taskforge next", purpose: "Find the next task", when: "After cleanup", allowedFor: "all", priority: 1 },
@@ -198,6 +216,24 @@ export const NEXT_COMMAND_MAPS: NextCommandMap = {
   prompt: {
     success: [
       { command: "taskforge start <TASK-ID>", purpose: "Begin working with prompt", when: "After generating prompt", allowedFor: "all", priority: 1 },
+    ],
+  },
+  mcp: {
+    success: [
+      { command: "taskforge next", purpose: "Continue the TaskForge workflow", when: "After MCP server use", allowedFor: "all", priority: 1 },
+    ],
+  },
+  "guard status": {
+    success: [
+      { command: "taskforge next", purpose: "Continue after reviewing guard state", when: "After guard status", allowedFor: "all", priority: 1 },
+    ],
+  },
+  "guard override": {
+    success: [
+      { command: "taskforge doctor --check", purpose: "Verify repository health after a guard override", when: "After override", allowedFor: "doctor", priority: 1 },
+    ],
+    failed: [
+      { command: "taskforge doctor --check", purpose: "Diagnose guard override failure", when: "On override failure", allowedFor: "doctor", priority: 1 },
     ],
   },
   agents: {
