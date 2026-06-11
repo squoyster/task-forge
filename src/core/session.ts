@@ -43,6 +43,38 @@ export function parseSessionIdFromBranch(branch: string): string | null {
   return match ? match[1] : null;
 }
 
+interface OwnershipContext {
+  sessionId: string | null;
+  branch: string | null;
+  source: "task.branch" | "task.worktree" | "current.branch";
+}
+
+async function resolveOwnershipContext(task: Task, repoRoot: string): Promise<OwnershipContext> {
+  if (task.branch) {
+    return {
+      sessionId: parseSessionIdFromBranch(task.branch),
+      branch: task.branch,
+      source: "task.branch",
+    };
+  }
+
+  if (task.worktree) {
+    const branch = await getCurrentBranch(task.worktree);
+    return {
+      sessionId: parseSessionIdFromBranch(branch),
+      branch,
+      source: "task.worktree",
+    };
+  }
+
+  const branch = await getCurrentBranch(repoRoot);
+  return {
+    sessionId: parseSessionIdFromBranch(branch),
+    branch,
+    source: "current.branch",
+  };
+}
+
 /**
  * Assert that the current worktree's branch session owns the task.
  * Throws if the session doesn't match assignee.
@@ -53,13 +85,15 @@ export async function assertTaskOwnership(
 ): Promise<void> {
   if (!task.assignee) return; // No assignee — ownership not required
 
-  const branch = await getCurrentBranch(repoRoot);
-  const agentSession = parseSessionIdFromBranch(branch);
+  const context = await resolveOwnershipContext(task, repoRoot);
+  const agentSession = context.sessionId;
 
   if (!agentSession) {
+    const branchDetail = context.branch ? `"${context.branch}"` : "an unknown branch";
     throw new TaskForgeError(
-      `Cannot determine session ID from branch "${branch}". ` +
-      `Expected format: agent/TASK-NNN-<session-id>`,
+      `Cannot determine session ID for ${task.id} from ${context.source} ${branchDetail}. ` +
+      `Task context: branch=${task.branch ?? "unset"}, worktree=${task.worktree ?? "unset"}. ` +
+      `Expected branch format: agent/TASK-NNN-<slug>--<10-char-session-id>.`,
       "OWNERSHIP_UNKNOWN",
     );
   }
@@ -67,7 +101,7 @@ export async function assertTaskOwnership(
   if (agentSession !== task.assignee) {
     throw new TaskForgeError(
       `Task ${task.id} is assigned to session "${task.assignee}", ` +
-      `but this worktree's branch "${branch}" identifies as "${agentSession}". ` +
+      `but ${context.source} branch "${context.branch}" identifies as "${agentSession}". ` +
       `Normal agents must not use force unlock. ` +
       `Valid next commands: taskforge inspect ${task.id} --json, taskforge doctor --json, ` +
       `or taskforge block ${task.id} "Ownership mismatch requires human or doctor recovery" --category unsafe_operation --blocked-by human.`,
