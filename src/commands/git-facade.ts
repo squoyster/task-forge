@@ -217,9 +217,17 @@ export async function cmdSubmit(taskId: string, json = false): Promise<void> {
     throw new Error(result.guidance);
   }
 
-  const commitsAhead = await getBranchCommitsAhead(task.worktree, task.branch);
+  const remoteBranchResult = await run(
+    "git",
+    ["-C", task.worktree, "ls-remote", "--heads", "origin", task.branch],
+    repoRoot,
+  );
+  const remoteBranchExists = remoteBranchResult.stdout.trim().length > 0;
+  const commitsAhead = remoteBranchExists
+    ? await getBranchCommitsAhead(task.worktree, task.branch)
+    : 0;
 
-  if (commitsAhead <= 0) {
+  if (remoteBranchExists && commitsAhead <= 0) {
     const guidance = `Branch ${task.branch} is already up to date on origin. No changes to submit for ${taskId}.`;
     logInfo(guidance);
     writeResult(noopResult({
@@ -242,7 +250,7 @@ export async function cmdSubmit(taskId: string, json = false): Promise<void> {
   }
 
   const guidance =
-    `Pushed ${commitsAhead} commit(s) from ${task.branch} to origin. ` +
+    `Pushed branch ${task.branch} to origin. ` +
     `Run 'taskforge pr ${taskId}' to create or update a pull request.`;
 
   logSuccess(guidance);
@@ -257,7 +265,7 @@ export async function cmdSubmit(taskId: string, json = false): Promise<void> {
 
   appendTaskTranscript(repoRoot, taskId, createTaskEvent(taskId, "git.push", {
     summary: `Pushed branch ${task.branch}`,
-    metadata: { commitsAhead },
+    metadata: { commitsAhead, remoteBranchExists },
   }));
 }
 

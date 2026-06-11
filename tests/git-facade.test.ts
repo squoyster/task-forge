@@ -85,6 +85,7 @@ describe("git facade commands", () => {
 
   it("returns noop when branch is already up to date on origin", async () => {
     vi.mocked(loadTaskById).mockReturnValue(task);
+    vi.mocked(run).mockResolvedValueOnce({ stdout: "abc\trefs/heads/agent/TASK-281-test\n", stderr: "", exitCode: 0 });
     vi.mocked(getBranchCommitsAhead).mockResolvedValue(0);
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
@@ -93,16 +94,23 @@ describe("git facade commands", () => {
     const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
     expect(output.status).toBe("noop");
     expect(output.guidance).toContain("already up to date on origin");
-    expect(run).not.toHaveBeenCalled();
+    expect(run).toHaveBeenCalledTimes(1);
+    expect(run).not.toHaveBeenCalledWith(
+      "git",
+      ["-C", task.worktree, "push", "origin", task.branch],
+      "/tmp/taskforge-repo",
+    );
     expect(appendTaskTranscript).not.toHaveBeenCalled();
 
     logSpy.mockRestore();
   });
 
-  it("returns success when branch push actually occurs", async () => {
+  it("returns success when branch push actually occurs for an existing remote branch", async () => {
     vi.mocked(loadTaskById).mockReturnValue(task);
+    vi.mocked(run)
+      .mockResolvedValueOnce({ stdout: "abc\trefs/heads/agent/TASK-281-test\n", stderr: "", exitCode: 0 })
+      .mockResolvedValueOnce({ stdout: "", stderr: "", exitCode: 0 });
     vi.mocked(getBranchCommitsAhead).mockResolvedValue(2);
-    vi.mocked(run).mockResolvedValue({ stdout: "", stderr: "", exitCode: 0 });
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
     await cmdSubmit("TASK-281", true);
@@ -110,7 +118,7 @@ describe("git facade commands", () => {
     const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
     expect(output.ok).toBe(true);
     expect(output.status).toBe("success");
-    expect(output.guidance).toContain("Pushed 2 commit(s)");
+    expect(output.guidance).toContain(`Pushed branch ${task.branch} to origin`);
     expect(output.guidance).not.toContain("No changes to submit");
     expect(run).toHaveBeenCalledWith(
       "git",
@@ -118,6 +126,28 @@ describe("git facade commands", () => {
       "/tmp/taskforge-repo",
     );
     expect(appendTaskTranscript).toHaveBeenCalled();
+
+    logSpy.mockRestore();
+  });
+
+  it("pushes a new branch when no remote branch exists yet", async () => {
+    vi.mocked(loadTaskById).mockReturnValue(task);
+    vi.mocked(run)
+      .mockResolvedValueOnce({ stdout: "", stderr: "", exitCode: 0 })
+      .mockResolvedValueOnce({ stdout: "", stderr: "", exitCode: 0 });
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    await cmdSubmit("TASK-281", true);
+
+    const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
+    expect(output.status).toBe("success");
+    expect(output.guidance).toContain(`Pushed branch ${task.branch} to origin`);
+    expect(getBranchCommitsAhead).not.toHaveBeenCalled();
+    expect(run).toHaveBeenCalledWith(
+      "git",
+      ["-C", task.worktree, "push", "origin", task.branch],
+      "/tmp/taskforge-repo",
+    );
 
     logSpy.mockRestore();
   });
