@@ -139,11 +139,15 @@ while read -r local_ref local_sha remote_ref remote_sha; do
     exit 1
   fi
 
-  # Block force push
-  if [[ "\$local_sha" == "0000000000000000000000000000000000000000" ]]; then
+  # Allow new remote branches and deletions; only block history rewrites.
+  if [[ "\$remote_sha" == "0000000000000000000000000000000000000000" ]]; then
+    :
+  elif [[ "\$local_sha" == "0000000000000000000000000000000000000000" ]]; then
+    :
+  elif [[ -z "\$remote_sha" ]]; then
     :
   else
-    base=\$(git merge-base "\$local_sha" "\$remote_sha" 2>/dev/null || echo "")
+    base=\$(git merge-base "\$local_sha" "\$remote_sha" 2>/dev/null || true)
     if [[ "\$base" != "\$remote_sha" ]]; then
       echo "ERROR: Force push is forbidden."
       exit 1

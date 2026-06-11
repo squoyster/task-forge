@@ -21,7 +21,11 @@ describe("installGitHooks", () => {
 
     const prePush = fs.readFileSync(path.join(hooksDir, "pre-push"), "utf-8");
     expect(prePush).toContain("TaskForge managed pre-push hook");
-    expect(prePush).toContain("force push");
+    expect(prePush).toContain("Force push is forbidden.");
+    expect(prePush).toContain(
+      'if [[ "$remote_sha" == "0000000000000000000000000000000000000000" ]]; then',
+    );
+    expect(prePush).toContain('elif [[ "$local_sha" == "0000000000000000000000000000000000000000" ]]; then');
 
     const postCommit = fs.readFileSync(path.join(hooksDir, "post-commit"), "utf-8");
     expect(postCommit).toContain("git.jsonl");
