@@ -1,5 +1,7 @@
 # TaskForge Prescriptive Command Output Task Pack
 
+> Status: Historical task pack. The current command envelope is `TaskForgeCommandResult` with `validNextCommands` and optional structured `data`; see `docs/architecture/command-return-contract.md` and `docs/workflow.md`. Examples using `nextAction.kind`, `done --force`, or raw force cleanup are retained as historical planning material, not current agent instructions.
+
 ## Purpose
 
 TaskForge command output must become the process authority for agentic development.

@@ -2,14 +2,15 @@ FILEIDX.v=1
 ROOT:/Volumes/Transcend/devel/task-forge
 AVOID:.git,node_modules,.opencode/node_modules,Volumes,docs/archive,session-ses_*.md,specs/session-ses_*.md
 
-F:.opencode/agent/deps.md; kind=src; owns=.opencode,agent,deps; bytes=1442; est_tok=306; read=when-relevant
-F:.opencode/agent/implementer.md; kind=src; owns=.opencode,agent,implementer; bytes=1108; est_tok=236; read=when-relevant
-F:.opencode/agent/intake.md; kind=src; owns=.opencode,agent,intake; bytes=1063; est_tok=200; read=when-relevant
-F:.opencode/agent/planner.md; kind=src; owns=.opencode,agent,planner; bytes=1034; est_tok=204; read=when-relevant
-F:.opencode/agent/reviewer.md; kind=src; owns=.opencode,agent,reviewer; bytes=1177; est_tok=236; read=when-relevant
+F:.opencode/agents/deps.md; kind=src; owns=.opencode,agents,deps; bytes=1442; est_tok=306; read=when-relevant
+F:.opencode/agents/doctor.md; kind=src; owns=.opencode,agents,doctor; bytes=1132; est_tok=217; read=when-relevant
+F:.opencode/agents/implementer.md; kind=src; owns=.opencode,agents,implementer; bytes=1108; est_tok=236; read=when-relevant
+F:.opencode/agents/intake.md; kind=src; owns=.opencode,agents,intake; bytes=1063; est_tok=200; read=when-relevant
+F:.opencode/agents/planner.md; kind=src; owns=.opencode,agents,planner; bytes=1034; est_tok=204; read=when-relevant
+F:.opencode/agents/qa.md; kind=src; owns=.opencode,agents,qa; bytes=376; est_tok=86; read=when-relevant
+F:.opencode/agents/reviewer.md; kind=src; owns=.opencode,agents,reviewer; bytes=1177; est_tok=236; read=when-relevant
 F:.opencode/package-lock.json; kind=config; owns=.opencode,package-lock; bytes=13849; est_tok=885; read=when-relevant
 F:.opencode/package.json; kind=config; owns=.opencode,package; bytes=64; est_tok=9; read=when-relevant
-F:.taskforge/agent-registry.json; kind=config; owns=.taskforge,agent-registry; bytes=2726; est_tok=174; read=when-relevant
 F:.taskforge/config.json; kind=config; owns=.taskforge,config; bytes=759; est_tok=93; read=when-relevant
 F:AGENTS.md; kind=src; owns=agents; bytes=660; est_tok=113; read=when-relevant
 F:dist/agent-files-7IS6I26X.js; kind=src; owns=dist,agent-files-7is6i26x; bytes=3605; est_tok=672; read=when-relevant
@@ -40,6 +41,7 @@ F:docs/deployment/container-runtime.md; kind=doc; owns=deployment,container-runt
 F:docs/github-task-state-protection.md; kind=doc; owns=github-task-state-protection; bytes=6671; est_tok=1274; read=when-relevant
 F:docs/next-action-semantics.md; kind=doc; owns=next-action-semantics; bytes=3566; est_tok=754; read=when-relevant
 F:docs/task-template.md; kind=doc; owns=task-template; bytes=303; est_tok=25; read=when-relevant
+F:docs/workflow.md; kind=doc; owns=workflow; bytes=3602; est_tok=650; read=when-relevant
 F:eslint.config.js; kind=src; owns=eslint.config; bytes=603; est_tok=68; read=when-relevant
 F:opencode.json; kind=config; owns=opencode; bytes=838; est_tok=116; read=when-relevant
 F:package-lock.json; kind=config; owns=package-lock; bytes=158282; est_tok=11142; read=when-relevant

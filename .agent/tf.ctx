@@ -20,11 +20,15 @@ ENT:
   Event={id,type,actor,target,time,payload}
 
 STATE.Task:
-  new -> claimed -> started -> blocked|done|failed|abandoned
-  claimed -> expired -> new
-  started -> heartbeat_missing -> recoverable|failed
-  done=terminal
-  failed=terminal unless retry_policy
+  Inbox -> Needs Spec|Rejected
+  Needs Spec -> Ready|Deferred
+  Ready -> In Progress|Blocked|Deferred
+  In Progress -> Review|Verify|Blocked|Deferred
+  Review -> In Progress|Verify|Done
+  Verify -> In Progress|Review|Done
+  Blocked -> Ready|In Progress
+  Done=terminal unless explicit recovery
+  Rejected=terminal
 
 INV:
   Agent.id stable across restart
@@ -35,13 +39,14 @@ INV:
   Duplicate command must be idempotent
   External tool calls must emit Event
   State changes must be auditable
+  Review/Verify tasks resume existing worktrees; do not start a new task
 
 REVIEW:
   check=state-transition,lease-race,idempotency,restart-path,api-contract,error-shape
   reject=implicit-session-state,hidden-global-state,non-idempotent-retry,unbounded-context,large-md-load
 
 CTX:
-  prefer=.agent/tf.ctx,.agent/spec.idx,changed-files,nearby-tests
+  prefer=.agent/tf.ctx,.agent/spec.idx,docs/workflow.md,changed-files,nearby-tests
   avoid=session-ses_*.md,specs/session-ses_*.md,docs/archive,.opencode/node_modules,Volumes,node_modules
 
 CTX_BUDGET:

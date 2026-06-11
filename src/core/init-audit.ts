@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { RUNTIME_AUDIT_BASE } from "./audit.js";
 import os from "node:os";
 
 export interface InitAuditEntry {
@@ -27,7 +28,7 @@ function elide(text: string): string {
 }
 
 function getAuditDir(repoRoot: string): string {
-  return path.join(repoRoot, "logs", "taskforge", "audit");
+  return path.join(repoRoot, RUNTIME_AUDIT_BASE, "audit");
 }
 
 function getAuditPath(repoRoot: string): string {

@@ -106,6 +106,7 @@ export const TaskForgeCommandResultSchema = z.object({
   guidance: z.string().optional(),
   error: z.string().optional(),
   code: z.string().optional(),
+  data: z.unknown().optional(),
 });
 
 export type TaskForgeCommandResult = z.infer<typeof TaskForgeCommandResultSchema>;

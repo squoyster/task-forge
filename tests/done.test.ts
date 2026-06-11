@@ -4,6 +4,8 @@ import path from "node:path";
 import os from "node:os";
 import { cmdDone } from "../src/commands/done.js";
 import { setRepoRoot } from "../src/util/paths.js";
+import { recordCliInvocation } from "../src/core/cli-audit.js";
+import { appendTaskTranscript, createTaskEvent } from "../src/core/audit.js";
 
 // Mock the git module so we don't need real git operations
 vi.mock("../src/core/git.js", () => ({
@@ -400,6 +402,23 @@ describe("cmdDone", () => {
 
     const task = readTaskFile(fp);
     expect(task.frontmatter.status).toBe("Done");
+  });
+
+  it("archives terminal audit summary into agent notes", async () => {
+    const fp = makeTaskFile("TASK-005");
+    const repoRoot = path.join(uniqueDir, "repo");
+
+    appendTaskTranscript(repoRoot, "TASK-005", createTaskEvent("TASK-005", "task.command.started", {
+      summary: "Started work",
+    }));
+    recordCliInvocation(repoRoot, "checkpoint", ["TASK-005"], { message: "test" }, 0, 125, null);
+
+    await cmdDone("TASK-005");
+
+    const task = readTaskFile(fp);
+    expect(task.body).toContain("Terminal audit archived for Done.");
+    expect(task.body).toContain("Audit events:");
+    expect(task.body).toContain("Commands observed: checkpoint.");
   });
 
 });

@@ -2,12 +2,13 @@
 
 ## TaskForge Workflow
 
-1. Start work with `taskforge start TASK-ID`
+1. Start Ready work with `taskforge start TASK-ID`; resume existing work with `taskforge resume TASK-ID`
 2. Work only in the assigned worktree (do not work on main)
 3. Use `taskforge checkpoint TASK-ID --message "..."` instead of direct git commits
 4. Use `taskforge submit TASK-ID` instead of direct git push
 5. Use `taskforge done TASK-ID` only after all verification gates pass
 6. Run `taskforge doctor --check` and stop immediately if doctor lock exists
+7. Follow `docs/workflow.md` when command examples disagree
 
 ## Verification Gates
 
@@ -22,6 +23,7 @@ Before marking a task Done, all must pass:
 - Never work directly on main — use worktrees/branches
 - Never edit files under ../task-state/ directly — use TaskForge CLI
 - Never run git directly — use taskforge facade commands
+- Never substitute `taskforge start` when `taskforge next --json` returns `taskforge resume`
 
 ## Mutation Boundary
 
@@ -34,7 +36,7 @@ The following restrictions are enforced:
 - **Allowed**: `git status`, `git diff`, `git log`, `git show`, `git branch`,
   `git rev-parse`, `git fetch`, `git ls-remote`, and other read-only commands.
 - **Override**: A Human or Doctor may authorise specific mutations via
-  `taskforge doctor --override` with a structured reason. Overrides are
+  `taskforge guard override TASK-ID COMMAND "reason"` with a structured reason. Overrides are
   audited and time-limited.
 
 If a command is blocked, use the suggested TaskForge replacement:
