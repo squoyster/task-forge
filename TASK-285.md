@@ -10,6 +10,7 @@ assignee: 32511141ee
 claimed_at: '2026-06-11 11:06:00'
 context_hash: 24c64b5cba799406
 branch: agent/TASK-285-add-mergeability-preflight-to-submit-aga--32511141ee
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-285
 ---
 # TASK-285: Add mergeability preflight to submit against origin/main
 ## Goal
@@ -53,6 +54,9 @@ Remote comparison logic can be slow or flaky if fetch and merge-base handling ar
 Auto-continue unless a stopping condition occurs.
 
 ## Agent Notes
+
+### 2026-06-11T00:00:00Z System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-285
 
 ### 2026-06-11T00:00:00Z System
 - Task claimed via taskforge start TASK-285
