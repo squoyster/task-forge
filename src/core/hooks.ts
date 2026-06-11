@@ -171,7 +171,7 @@ author=\$(git log -1 --format='%an')
 timestamp=\$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 message=\$(git log -1 --format='%s')
 
-audit_dir="logs/taskforge/audit"
+audit_dir=".taskforge/runtime/logs/taskforge/audit"
 mkdir -p "\$audit_dir"
 
 cat >> "\$audit_dir/git.jsonl" <<EOF

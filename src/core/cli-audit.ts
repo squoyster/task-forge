@@ -1,11 +1,8 @@
 import { execSync } from "node:child_process";
-import fs from "node:fs";
-import path from "node:path";
-import { createTaskEvent, appendTaskTranscript, appendAuditEvent } from "./audit.js";
+import { readAudit, readTaskAudit, createTaskEvent, appendTaskTranscript, appendAuditEvent } from "./audit.js";
 import { parseSessionIdFromBranch } from "./session.js";
 import { getRepoRoot } from "../util/paths.js";
 
-const GLOBAL_AUDIT_FILE = "invocations.jsonl";
 
 export interface CliInvocationRecord {
   timestamp: string;
@@ -58,7 +55,7 @@ function getCurrentBranchSync(repoRoot: string): string | null {
 function extractTaskId(command: string, args: string[]): string | null {
   const taskCommands = [
     "start", "done", "claim", "release", "heartbeat", "inspect",
-    "block", "unlock", "checkpoint", "submit", "diff", "report",
+    "block", "unlock", "checkpoint", "submit", "diff", "report", "reject",
     "prompt", "resume", "ac-check", "audit", "transcript", "timeline",
     "cleanup", "gates", "pr",
   ];
@@ -88,18 +85,6 @@ export function recordCliInvocation(
   const sessionId = getCurrentSessionId(repoRoot);
   const taskId = extractTaskId(command, args);
 
-  const record: CliInvocationRecord = {
-    timestamp: new Date().toISOString(),
-    command,
-    args,
-    flags,
-    exitCode,
-    sessionId,
-    taskId,
-    duration,
-    error,
-  };
-
   // Determine event type based on exit code
   const eventType = exitCode === 0
     ? "task.command.completed"
@@ -125,11 +110,6 @@ export function recordCliInvocation(
     appendTaskTranscript(repoRoot, taskId, event);
   }
 
-  // Always write to global audit log
-  const globalPath = path.join(repoRoot, "logs", "taskforge", "audit", GLOBAL_AUDIT_FILE);
-  const globalDir = path.dirname(globalPath);
-  fs.mkdirSync(globalDir, { recursive: true });
-  fs.appendFileSync(globalPath, JSON.stringify(record) + "\n", "utf-8");
 
   // Also write to main audit events
   appendAuditEvent(repoRoot, event);
@@ -139,31 +119,26 @@ export function recordCliInvocation(
  * Read all CLI invocations for a task from its transcript.
  */
 export function readTaskInvocations(repoRoot: string, taskId: string): CliInvocationRecord[] {
-  const transcriptPath = path.join(repoRoot, "logs", "taskforge", "tasks", taskId, "transcript.jsonl");
-  if (!fs.existsSync(transcriptPath)) return [];
-
-  const content = fs.readFileSync(transcriptPath, "utf-8");
   const invocations: CliInvocationRecord[] = [];
 
-  for (const line of content.trim().split("\n")) {
-    if (!line.trim()) continue;
-    try {
-      const parsed = JSON.parse(line);
-      if (parsed.metadata?.type === "cli.invocation") {
-        invocations.push({
-          timestamp: parsed.timestamp,
-          command: parsed.metadata.command,
-          args: parsed.metadata.args ?? [],
-          flags: parsed.metadata.flags ?? {},
-          exitCode: parsed.metadata.exitCode ?? 0,
-          sessionId: parsed.metadata.agentSession ?? null,
-          taskId: parsed.taskId ?? null,
-          duration: parsed.metadata.duration ?? 0,
-          error: parsed.metadata.error ?? null,
-        });
-      }
-    } catch {
-      // Skip invalid lines
+  for (const parsed of readTaskAudit(repoRoot, taskId)) {
+    if (parsed.metadata?.type === "cli.invocation") {
+      invocations.push({
+        timestamp: parsed.timestamp,
+        command: typeof parsed.metadata.command === "string" ? parsed.metadata.command : "unknown",
+        args: Array.isArray(parsed.metadata.args)
+          ? parsed.metadata.args.filter((value): value is string => typeof value === "string")
+          : [],
+        flags:
+          typeof parsed.metadata.flags === "object" && parsed.metadata.flags !== null
+            ? parsed.metadata.flags as Record<string, unknown>
+            : {},
+        exitCode: typeof parsed.metadata.exitCode === "number" ? parsed.metadata.exitCode : 0,
+        sessionId: typeof parsed.metadata.agentSession === "string" ? parsed.metadata.agentSession : null,
+        taskId: parsed.taskId ?? null,
+        duration: typeof parsed.metadata.duration === "number" ? parsed.metadata.duration : 0,
+        error: typeof parsed.metadata.error === "string" ? parsed.metadata.error : null,
+      });
     }
   }
 
@@ -174,20 +149,40 @@ export function readTaskInvocations(repoRoot: string, taskId: string): CliInvoca
  * Read all CLI invocations from the global audit log.
  */
 export function readGlobalInvocations(repoRoot: string): CliInvocationRecord[] {
-  const globalPath = path.join(repoRoot, "logs", "taskforge", "audit", GLOBAL_AUDIT_FILE);
-  if (!fs.existsSync(globalPath)) return [];
-
-  const content = fs.readFileSync(globalPath, "utf-8");
   const invocations: CliInvocationRecord[] = [];
 
-  for (const line of content.trim().split("\n")) {
-    if (!line.trim()) continue;
-    try {
-      invocations.push(JSON.parse(line) as CliInvocationRecord);
-    } catch {
-      // Skip invalid lines
-    }
+  for (const event of readAudit(repoRoot)) {
+    if (event.metadata?.type !== "cli.invocation") continue;
+    invocations.push({
+      timestamp: event.timestamp,
+      command: typeof event.metadata.command === "string" ? event.metadata.command : "unknown",
+      args: Array.isArray(event.metadata.args)
+        ? event.metadata.args.filter((value): value is string => typeof value === "string")
+        : [],
+      flags:
+        typeof event.metadata.flags === "object" && event.metadata.flags !== null
+          ? event.metadata.flags as Record<string, unknown>
+          : {},
+      exitCode: typeof event.metadata.exitCode === "number" ? event.metadata.exitCode : 0,
+      sessionId: typeof event.metadata.agentSession === "string" ? event.metadata.agentSession : null,
+      taskId: typeof event.taskId === "string" ? event.taskId : null,
+      duration: typeof event.metadata.duration === "number" ? event.metadata.duration : 0,
+      error: typeof event.metadata.error === "string" ? event.metadata.error : null,
+    });
   }
 
   return invocations;
+}
+
+export interface TaskInvocationSummary {
+  totalInvocations: number;
+  uniqueCommands: string[];
+}
+
+export function summarizeTaskInvocations(repoRoot: string, taskId: string): TaskInvocationSummary {
+  const invocations = readTaskInvocations(repoRoot, taskId);
+  return {
+    totalInvocations: invocations.length,
+    uniqueCommands: [...new Set(invocations.map((invocation) => invocation.command))],
+  };
 }

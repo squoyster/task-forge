@@ -26,6 +26,7 @@ describe("installGitHooks", () => {
 
     const postCommit = fs.readFileSync(path.join(hooksDir, "post-commit"), "utf-8");
     expect(postCommit).toContain("git.jsonl");
+    expect(postCommit).toContain(".taskforge/runtime/logs/taskforge/audit");
 
     fs.rmSync(tmp, { recursive: true, force: true });
   });

@@ -2,6 +2,7 @@ import path from "node:path";
 import fs from "node:fs";
 import { hasManagedBlock } from "./templates.js";
 import { installAgentsMd } from "./agents-md.js";
+import { RUNTIME_AUDIT_BASE } from "./audit.js";
 import { installOpenCodeConfig } from "./opencode-config.js";
 import { loadConfig } from "./config.js";
 
@@ -62,7 +63,7 @@ export class OpenCodeAgentFrameworkAdapter implements AgentFrameworkAdapter {
     }
 
     // Audit directory check
-    const auditDir = path.join(repoRoot, "logs", "taskforge", "audit");
+    const auditDir = path.join(repoRoot, RUNTIME_AUDIT_BASE, "audit");
     if (fs.existsSync(auditDir)) {
       issues.push({ severity: "info", code: "OPENCODE_AUDIT_DIR", message: "Audit directory exists" });
     } else {
@@ -114,7 +115,7 @@ export class OpenCodeAgentFrameworkAdapter implements AgentFrameworkAdapter {
     }
 
     // Create audit directory
-    const auditDir = path.join(repoRoot, "logs", "taskforge", "audit");
+    const auditDir = path.join(repoRoot, RUNTIME_AUDIT_BASE, "audit");
     if (!fs.existsSync(auditDir)) {
       fs.mkdirSync(auditDir, { recursive: true });
       repairs.push({ code: "OPENCODE_AUDIT_DIR", message: "Created audit directory" });
