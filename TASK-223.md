@@ -1,7 +1,7 @@
 ---
 id: TASK-223
 type: Feature
-status: In Progress
+status: Implementation Complete
 priority: P1
 agentRole: Implementer
 riskLevel: Low
@@ -9,7 +9,6 @@ humanInterventionRequired: false
 assignee: 47c37df308
 claimed_at: '2026-06-11 23:42:28'
 context_hash: 6cd5541d1cdfd05c
-spec_hash: 8a295a3bff60e1c4
 branch: agent/TASK-223-wire-structured-nextactions-to-all-comma--47c37df308
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-223
 ---
@@ -112,6 +111,13 @@ This task overlaps with TASK-215 and TASK-218. Those should be rejected or merge
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-11T00:00:00Z System
+- Report generated — task moved to Implementation Complete
+- Changed files: none
+- Commits: none
+- AC section: present
+- AC has unchecked items
 
 ### 2026-06-11T00:00:00Z System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-223
