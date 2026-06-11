@@ -77,10 +77,25 @@ export async function cmdDiff(taskId: string, json = false): Promise<void> {
   const repoRoot = getRepoRoot();
   const task = requireTask(taskId);
 
-  assertTaskOwnership(task, repoRoot);
-
   if (!task.worktree) {
     throw new Error(`No worktree found for ${taskId}. Run 'taskforge start ${taskId}' first.`);
+  }
+
+  try {
+    await assertTaskOwnership(task, task.worktree);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    writeResult(failedResult({
+      command: "diff",
+      taskId,
+      error: message,
+      code: "OWNERSHIP_MISMATCH",
+      nextCommands: [
+        { command: `taskforge resume ${taskId}`, purpose: "Enter the owning task workspace", when: "Before reviewing the diff", allowedFor: "all", priority: 1 },
+        { command: `taskforge inspect ${taskId} --json`, purpose: "Inspect task ownership and workspace state", when: "If ownership is unclear", allowedFor: "all", priority: 2 },
+      ],
+    }), json);
+    return;
   }
 
   logHeader(`Diff: ${taskId}`);
@@ -151,7 +166,6 @@ export async function cmdCheckpoint(taskId: string, message: string, json = fals
     throw new Error(result.guidance);
   }
 
-  // Check for changes
   const statusResult = await run("git", ["-C", task.worktree, "status", "--porcelain"], repoRoot);
   const hasChanges = statusResult.stdout.trim().length > 0;
 
@@ -444,7 +458,7 @@ export async function cmdPr(taskId: string, json = false): Promise<void> {
     getDefaultGuidanceAdapter().pushGuidance(result);
 
     logWarn(result.guidance);
-    logInfo(`To create a PR manually:`);
+    logInfo("To create a PR manually:");
     logInfo(`  gh pr create --title "${title}" --head ${task.branch} --base main --body "${body}"`);
     logInfo(`  Or visit: https://github.com/<owner>/<repo>/compare/main...${task.branch}`);
 

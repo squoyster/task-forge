@@ -2,6 +2,8 @@
 
 TaskForge Autonomous Coding Board — a repo-centered task management and execution system for agentic software development.
 
+The canonical current workflow for agents and humans is [docs/workflow.md](../docs/workflow.md). Historical specs in this directory may describe gaps, task packs, or planned behavior; prefer the live CLI and workflow contract for operation.
+
 ## Overview
 
 TaskForge combines:
@@ -84,6 +86,7 @@ See [TASKFORGE.md](TASKFORGE.md) for the full specification, including the Sweep
 | `taskforge claim TASK-N` | Claim a task (set assignee) without creating worktree |
 | `taskforge start TASK-N` | Set up worktree, branch, begin task |
 | `taskforge resume TASK-N` | Re-enter an existing task workspace |
+| `taskforge gates` | Run verification gates |
 | `taskforge status` | Show project status summary |
 | `taskforge summary` | Show full project summary |
 | `taskforge list` | List and filter tasks (--status, --priority, --search) |
@@ -93,6 +96,7 @@ See [TASKFORGE.md](TASKFORGE.md) for the full specification, including the Sweep
 | `taskforge block TASK-N "reason"` | Mark task as blocked |
 | `taskforge done TASK-N` | Mark task as done (--cleanup, --delete-branch) |
 | `taskforge release TASK-N` | Voluntarily release a claim |
+| `taskforge agents --recover` | Mark stale registry entries as crashed |
 | `taskforge reject TASK-N "reason"` | Mark a task as rejected (obsolete, won't implement) |
 | `taskforge sweep` | Sweeper Protocol — recover stale in-progress tasks |
 | `taskforge validate-state` | Validate task-state for invariant violations |

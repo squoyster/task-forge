@@ -77,7 +77,7 @@ function redactSecrets(value: unknown): unknown {
 function writeAuditEvent(event: Record<string, unknown>): void {
   try {
     const taskId = resolveTaskId();
-    const dir = \`logs/taskforge/tasks/\${taskId}\`;
+    const dir = \`.taskforge/runtime/logs/taskforge/tasks/\${taskId}\`;
     require("fs").mkdirSync(dir, { recursive: true });
     const redacted = redactSecrets(event) as Record<string, unknown>;
     const line = JSON.stringify(redacted) + "\\n";

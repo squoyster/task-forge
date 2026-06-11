@@ -6,6 +6,8 @@ TaskForge CLI guardrails and `.doctor-lock` are **cooperative** — they rely on
 
 Branch protection provides **hard enforcement** — GitHub refuses pushes that violate the rules regardless of what the agent's CLI tries to do.
 
+Normal and doctor-mode workflow is defined in `docs/workflow.md`.
+
 ## Prerequisites
 
 - GitHub repository admin access
@@ -53,7 +55,7 @@ Add only these entities to the push allowlist:
 
 | Who | Why |
 |-----|-----|
-| **Recovery bot GitHub App** or PAT | Runs `taskforge doctor --fix`, sweep recovery |
+| **Recovery bot GitHub App** or PAT | Runs `doctor --lock`, `doctor --fix`, stale-agent recovery, and sweep recovery |
 | **Repository admins** | Emergency recovery when bot is unavailable |
 
 **Do NOT add** implementer agents, CI system accounts, or team-wide access.
@@ -118,7 +120,7 @@ See `docs/control-plane-hardening.md` for the full threat model. In summary:
 If the `task-state` branch is corrupted and needs manual repair:
 
 1. Admin temporarily disables the push restriction on `task-state`
-2. Recovery bot or admin pushes the fix (creates `.doctor-lock`, repairs state, removes lock)
+2. Recovery bot or admin pushes the fix (creates `.doctor-lock`, repairs state, verifies `taskforge validate-state --strict --json`, then removes lock or completes the recovery task)
 3. Admin re-enables the push restriction
 4. All agents `git pull` in `../task-state/` to get the repaired state
 
@@ -153,6 +155,7 @@ If this check fails, the push is rejected — even for users in the push restric
 
 - `docs/control-plane-hardening.md` — Threat model, attack surface, trust boundaries
 - `TASKFORGE.md` § Control-Plane Architecture — Transaction layer, session guardrails
+- `docs/workflow.md` — Current agent and doctor workflow
 - `AGENTS.md` § Agent Discipline — No direct git manipulation on task-state
 
 ## Automation

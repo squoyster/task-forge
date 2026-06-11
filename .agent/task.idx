@@ -1,4 +1,4 @@
 TASKIDX.v=1
 ROOT:/Volumes/Transcend/devel/task-forge
 AVOID:.git,node_modules,.opencode/node_modules,Volumes,docs/archive,session-ses_*.md,specs/session-ses_*.md
-USE: npx taskforge help to find available commands for next steps
+USE: taskforge help to find available commands for next steps

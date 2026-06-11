@@ -7,12 +7,95 @@ import { isDoctorLocked } from "../core/doctor-lock.js";
 import { logInfo, logHeader, logSub, logDivider } from "../util/logging.js";
 import { buildJsonTask } from "../util/json-result.js";
 import { getRepoRoot } from "../util/paths.js";
+import { STATUS } from "../util/status-constants.js";
 import { doctorRequiredResult, blockedResult, successResult, noopResult } from "../core/result-builder.js";
 import { getValidNextCommands } from "../core/next-command-maps.js";
 import { renderResultMarkdown, renderResultJson } from "../core/result-renderer.js";
+import type { ValidNextCommand } from "../core/command-result.js";
 
 export interface NextOptions {
   json?: boolean;
+}
+
+function getNextTaskCommands(task: { id: string; status: string; worktree?: string }): ValidNextCommand[] {
+  if (task.status === STATUS.VERIFY) {
+    return [
+      {
+        command: `taskforge resume ${task.id}`,
+        purpose: "Enter the verification workspace",
+        when: "Before running QA or acceptance checks",
+        allowedFor: "all",
+        priority: 1,
+      },
+      {
+        command: "taskforge gates --json",
+        purpose: "Run verification gates",
+        when: "After entering the task worktree",
+        allowedFor: "all",
+        priority: 2,
+      },
+      {
+        command: `taskforge done ${task.id}`,
+        purpose: "Mark task done after verification passes",
+        when: "Only after gates and acceptance criteria pass",
+        allowedFor: "all",
+        priority: 3,
+      },
+    ];
+  }
+
+  if (task.status === STATUS.REVIEW) {
+    return [
+      {
+        command: `taskforge diff ${task.id}`,
+        purpose: "Review the task changes",
+        when: "Before approving or returning work",
+        allowedFor: "all",
+        priority: 1,
+      },
+      {
+        command: `taskforge resume ${task.id}`,
+        purpose: "Enter the review workspace if deeper inspection is needed",
+        when: "After reviewing task metadata",
+        allowedFor: "all",
+        priority: 2,
+      },
+    ];
+  }
+
+  if (task.status === STATUS.IN_PROGRESS || task.worktree) {
+    return [
+      {
+        command: `taskforge resume ${task.id}`,
+        purpose: "Continue the existing task workspace",
+        when: "After selecting already-started work",
+        allowedFor: "all",
+        priority: 1,
+      },
+      {
+        command: `taskforge heartbeat ${task.id}`,
+        purpose: "Refresh the task lease",
+        when: "Before continuing active work",
+        allowedFor: "all",
+        priority: 2,
+      },
+    ];
+  }
+
+  return getValidNextCommands("next", "success");
+}
+
+function getNextTaskGuidance(task: { id: string; status: string }): string {
+  if (task.status === STATUS.VERIFY) {
+    return `Next task: ${task.id} is in Verify. Run 'taskforge resume ${task.id}' and verify it; do not run start.`;
+  }
+  if (task.status === STATUS.REVIEW) {
+    return `Next task: ${task.id} is in Review. Run 'taskforge diff ${task.id}' or 'taskforge resume ${task.id}' to review it.`;
+  }
+  if (task.status === STATUS.IN_PROGRESS) {
+    return `Next task: ${task.id} is already In Progress. Run 'taskforge resume ${task.id}' to continue.`;
+  }
+  return `Next task: ${task.id}. Run 'taskforge start ${task.id}' to begin.`;
 }
 
 export async function cmdNext(options?: NextOptions): Promise<void> {
@@ -121,8 +204,8 @@ export async function cmdNext(options?: NextOptions): Promise<void> {
   const result = successResult({
     command: "next",
     taskId: next.id,
-    guidance: `Next task: ${next.id}. Run 'taskforge start ${next.id}' to begin.`,
-    nextCommands: getValidNextCommands("next", "success"),
+    guidance: getNextTaskGuidance(next),
+    nextCommands: getNextTaskCommands(next),
     duration: Date.now() - startTime,
   });
 

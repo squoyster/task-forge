@@ -3,11 +3,27 @@ import fs from "node:fs";
 import { TaskSchema, type Task, STATUS } from "./task.js";
 import { getTaskFilePath, getTaskStateDir, getRepoRoot } from "../util/paths.js";
 import { logWarn } from "../util/logging.js";
+import { parseTaskDocument, computeTaskSpecHash, type EditableTaskFields } from "./task-document.js";
 
 export interface ParsedTask extends Task {
   body: string;
   filePath: string;
 }
+
+const STRUCTURAL_SECTION_HEADINGS = [
+  "Goal",
+  "Background",
+  "Scope",
+  "Acceptance Criteria",
+  "Test / Verification Command",
+  "Expected Output / Behavior",
+  "Dependencies",
+  "Risks",
+  "Continuation Policy",
+  "Agent Notes",
+  "Result",
+  "Links",
+];
 
 export function parseTaskFile(filePath: string): ParsedTask | null {
   if (!fs.existsSync(filePath)) return null;
@@ -44,6 +60,7 @@ export function parseTaskFile(filePath: string): ParsedTask | null {
     blocked_since: frontmatter.blocked_since as string | Date | undefined,
     block_category: frontmatter.block_category as string | undefined,
     context_hash: frontmatter.context_hash as string | undefined,
+    spec_hash: frontmatter.spec_hash as string | undefined,
     branch: frontmatter.branch,
     worktree: frontmatter.worktree,
     override_reason: frontmatter.override_reason as string | undefined,
@@ -95,6 +112,7 @@ export function writeTaskFile(
     blocked_since: task.blocked_since,
     block_category: task.block_category,
     context_hash: task.context_hash,
+    spec_hash: computeTaskSpecHash(parseTaskDocument(body ?? task.body), getEditableTaskFields(task)),
     branch: task.branch,
     worktree: task.worktree,
     override_reason: task.override_reason,
@@ -114,6 +132,19 @@ export function writeTaskFile(
 
   const content = matter.stringify(body ?? task.body, frontmatter);
   fs.writeFileSync(task.filePath, content, "utf-8");
+}
+
+export function getEditableTaskFields(task: ParsedTask): EditableTaskFields {
+  return {
+    title: parseTaskDocument(task.body).title,
+    type: task.type,
+    priority: task.priority,
+    agentRole: task.agentRole,
+    riskLevel: task.riskLevel,
+    humanInterventionRequired: task.humanInterventionRequired,
+    dependsOn: task.dependsOn,
+    sections: parseTaskDocument(task.body).sections,
+  };
 }
 
 export function updateTaskStatus(
@@ -240,6 +271,22 @@ export function hasUncheckedAcceptanceCriteria(body: string): boolean {
   if (!match) return false;
   const lines = match[1].split("\n");
   return lines.some((line) => /^\s*- \[ \]\s+\S/.test(line));
+}
+
+export function findDuplicateStructuralSections(body: string): string[] {
+  const counts = new Map<string, number>();
+  const headingSet = new Set(STRUCTURAL_SECTION_HEADINGS);
+
+  for (const match of body.matchAll(/^##\s+(.+?)\s*$/gm)) {
+    const heading = match[1].trim();
+    if (!headingSet.has(heading)) continue;
+    counts.set(heading, (counts.get(heading) ?? 0) + 1);
+  }
+
+  return [...counts.entries()]
+    .filter(([, count]) => count > 1)
+    .map(([heading]) => heading)
+    .sort();
 }
 
 export function getNextId(repoRoot?: string): string {

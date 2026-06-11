@@ -6,6 +6,7 @@
 - Do not invent steps.
 - After each TaskForge command, pick exactly one returned `validNextCommands`.
 - If no valid agent action exists: stop, follow recovery.
+- `docs/workflow.md` is the canonical workflow contract.
 
 ## Startup
 
@@ -36,6 +37,7 @@ Never:
 
 ```bash
 taskforge start <TASK-ID>
+taskforge resume <TASK-ID>
 taskforge diff <TASK-ID>
 taskforge gates
 taskforge checkpoint <TASK-ID> -m "..."
@@ -46,6 +48,8 @@ taskforge done <TASK-ID>
 ```
 
 If gates fail: fix, rerun gates, checkpoint.
+
+Use `taskforge start` only for Ready tasks. For `In Progress`, `Review`, and `Verify`, use `taskforge resume`; `taskforge next --json` will return the correct command.
 
 ## Forbidden Workflow Git
 
@@ -126,9 +130,8 @@ Use indexes before broad search:
 1. `.agent/tf.ctx`
 2. `.agent/file.idx`
 3. `.agent/symbol.idx`
-4. `.agent/flow.idx`
-5. `.agent/doc.idx`
-6. `.agent/task.idx`
+4. `.agent/spec.idx`
+5. `.agent/task.idx`
 
 Avoid by default:
 - `session-ses_*.md`

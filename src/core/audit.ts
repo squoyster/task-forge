@@ -3,40 +3,68 @@ import path from "node:path";
 import { AuditEventSchema, type AuditEvent, type AuditEventType } from "./audit-schema.js";
 import { logWarn } from "../util/logging.js";
 
-const AUDIT_BASE = "logs/taskforge";
+export const RUNTIME_AUDIT_BASE = path.join(".taskforge", "runtime", "logs", "taskforge");
+export const LEGACY_AUDIT_BASE = path.join("logs", "taskforge");
 
-function auditDir(root: string): string {
-  const dir = path.join(root, AUDIT_BASE, "audit");
+function runtimeAuditDir(root: string): string {
+  const dir = path.join(root, RUNTIME_AUDIT_BASE, "audit");
   fs.mkdirSync(dir, { recursive: true });
   return dir;
 }
 
-function taskAuditDir(root: string, taskId: string): string {
-  const dir = path.join(root, AUDIT_BASE, "tasks", taskId);
+function runtimeTaskAuditDir(root: string, taskId: string): string {
+  const dir = path.join(root, RUNTIME_AUDIT_BASE, "tasks", taskId);
   fs.mkdirSync(dir, { recursive: true });
   return dir;
+}
+
+function legacyAuditDir(root: string): string {
+  return path.join(root, LEGACY_AUDIT_BASE, "audit");
+}
+
+function legacyTaskAuditDir(root: string, taskId: string): string {
+  return path.join(root, LEGACY_AUDIT_BASE, "tasks", taskId);
+}
+
+function uniquePaths(paths: string[]): string[] {
+  return [...new Set(paths)];
+}
+
+function readJsonlFiles(filePaths: string[]): AuditEvent[] {
+  return uniquePaths(filePaths).flatMap((filePath) => readJsonl(filePath));
+}
+
+function existingAuditBases(root: string): string[] {
+  return uniquePaths([
+    path.join(root, RUNTIME_AUDIT_BASE),
+    path.join(root, LEGACY_AUDIT_BASE),
+  ]).filter((dir) => fs.existsSync(dir));
 }
 
 export function appendAuditEvent(repoRoot: string, event: AuditEvent): void {
-  const dir = auditDir(repoRoot);
+  const dir = runtimeAuditDir(repoRoot);
   const filePath = path.join(dir, "events.jsonl");
   writeJsonl(filePath, event);
 }
 
 export function appendTaskTranscript(repoRoot: string, taskId: string, event: AuditEvent): void {
-  const dir = taskAuditDir(repoRoot, taskId);
+  const dir = runtimeTaskAuditDir(repoRoot, taskId);
   const filePath = path.join(dir, "transcript.jsonl");
   writeJsonl(filePath, event);
 }
 
 export function readAudit(repoRoot: string): AuditEvent[] {
-  const filePath = path.join(auditDir(repoRoot), "events.jsonl");
-  return readJsonl(filePath);
+  return readJsonlFiles([
+    path.join(runtimeAuditDir(repoRoot), "events.jsonl"),
+    path.join(legacyAuditDir(repoRoot), "events.jsonl"),
+  ]);
 }
 
 export function readTaskAudit(repoRoot: string, taskId: string): AuditEvent[] {
-  const filePath = path.join(taskAuditDir(repoRoot, taskId), "transcript.jsonl");
-  return readJsonl(filePath);
+  return readJsonlFiles([
+    path.join(runtimeTaskAuditDir(repoRoot, taskId), "transcript.jsonl"),
+    path.join(legacyTaskAuditDir(repoRoot, taskId), "transcript.jsonl"),
+  ]);
 }
 
 export function summarizeTaskAudit(repoRoot: string, taskId: string): TaskAuditSummary {
@@ -115,11 +143,11 @@ export interface JsonlValidationIssue {
 
 export function validateJsonlFiles(repoRoot: string): JsonlValidationIssue[] {
   const issues: JsonlValidationIssue[] = [];
-  const baseDir = path.join(repoRoot, AUDIT_BASE);
+  const baseDirs = existingAuditBases(repoRoot);
 
-  if (!fs.existsSync(baseDir)) return issues;
+  if (baseDirs.length === 0) return issues;
 
-  const jsonlFiles = findJsonlFiles(baseDir);
+  const jsonlFiles = uniquePaths(baseDirs.flatMap((baseDir) => findJsonlFiles(baseDir)));
   for (const filePath of jsonlFiles) {
     const content = fs.readFileSync(filePath, "utf-8");
     const lines = content.split("\n");

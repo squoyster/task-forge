@@ -4,9 +4,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-# If dist exists (built), use it; otherwise use tsx for dev
-if [ -f "$REPO_ROOT/dist/cli.js" ]; then
+# Source-first launcher for local checkouts.
+# Set TASKFORGE_RUNTIME=dist to force a built CLI when one exists.
+if [ "${TASKFORGE_RUNTIME:-source}" = "dist" ] && [ -f "$REPO_ROOT/dist/cli.js" ]; then
   exec node "$REPO_ROOT/dist/cli.js" "$@"
 else
-  exec npx tsx "$REPO_ROOT/src/cli.ts" "$@"
+  exec node --import tsx "$REPO_ROOT/src/cli.ts" "$@"
 fi

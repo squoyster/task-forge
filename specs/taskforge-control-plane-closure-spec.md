@@ -3,6 +3,8 @@
 **Audience:** TaskForge implementation agents, reviewer agents, QA agents, and human product owner  
 **Purpose:** Make TaskForge the mandatory control plane for agentic development so agents cannot drift into raw `git`, ad-hoc task concepts, or bypass workflows.
 
+**Status:** Historical closure specification. Use the live CLI, `docs/workflow.md`, and `docs/architecture/command-state-machine-and-invariants.md` as current operational authority. Items marked as gaps below may already be implemented.
+
 ---
 
 ## 1. Current-State Evaluation
@@ -67,12 +69,12 @@ Implementation requirement:
 
 #### Gap C — Doctor docs and CLI mismatch
 
-Documentation references `doctor --fix`, but the CLI registration exposes only `doctor --json`. The implementation function accepts `fix?: boolean`, but the option is not registered.
+Resolved in the current CLI: `doctor --check`, `doctor --lock`, `doctor --fix`, `--reason`, `--ttl-hours`, and `--json` are registered. Doctor mutations require human/doctor authority.
 
 Required correction:
 
-- Either add `.option("--fix", ...)` to CLI registration or remove `--fix` from docs.
-- Preferred: implement `doctor --fix` as doctor-mode-only repair path.
+- Keep docs aligned with the explicit lock flow in `docs/workflow.md`.
+- Keep `doctor --fix` doctor/human-only for mutating repairs.
 - Doctor mode must be the only automated path that can perform recovery operations equivalent to force.
 
 #### Gap D — Error handling is insufficiently directive

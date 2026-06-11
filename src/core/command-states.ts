@@ -466,13 +466,18 @@ export function startStateMachine(
     );
   }
 
-  if (conditions.taskStatus !== "Ready" && conditions.taskStatus !== "In Progress") {
+  if (
+    conditions.taskStatus !== "Ready" &&
+    conditions.taskStatus !== "In Progress" &&
+    conditions.taskStatus !== "Review" &&
+    conditions.taskStatus !== "Verify"
+  ) {
     return error(
       StartStates.INVALID_STATUS,
       "INVALID_STATUS",
       "request_human_input",
       `Cannot start task with status "${conditions.taskStatus}". ` +
-      `Must be "Ready" or "In Progress". ` +
+      `Must be "Ready", "In Progress", "Review", or "Verify". ` +
       `Request human input to correct the task status.`,
       { taskId: conditions.taskId, status: conditions.taskStatus },
     );
