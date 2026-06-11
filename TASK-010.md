@@ -6,6 +6,7 @@ priority: P3
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: f4c56fe4e116f97f
 branch: agent/TASK-010-search-filter-list
 worktree: ../worktrees/TASK-010
 ---

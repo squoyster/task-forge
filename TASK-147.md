@@ -9,6 +9,7 @@ humanInterventionRequired: false
 dependsOn:
   - TASK-146
 context_hash: 3a03a0322eb9729c
+spec_hash: da1708dcfc37ac56
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-147
 override_reason: >-
   AC satisfied: typecheck, build, and tests pass; pre-existing test timeout from

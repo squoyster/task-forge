@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: 6eb8f67de42c153d
+spec_hash: '527638e046393200'
 ---
 
 # TASK-071: Add doctor diagnostics for agent policy

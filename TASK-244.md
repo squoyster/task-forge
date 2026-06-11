@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: 87da9585c90be1d7
+spec_hash: 308ee2d330e91340
 branch: agent/TASK-244-wire-all-35-cli-commands-to-taskforgecom--62ef43fef2
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-244
 ---

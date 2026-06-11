@@ -6,6 +6,7 @@ priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: 5c6db4b8f1c01b2f
 ---
 
 # TASK-052: Fix TASK-045 dependsOn null value

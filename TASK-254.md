@@ -6,6 +6,7 @@ priority: P1
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
+spec_hash: 287708855a9d2d6d
 branch: agent/TASK-254-session-id-churn-breaks-the-distributed--e2a31df025
 ---
 

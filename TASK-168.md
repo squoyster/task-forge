@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
 context_hash: abc123def456
+spec_hash: 13a10fc50ace0572
 ---
 # Fail Clearly on Invalid Config Instead of Returning Defaults
 

@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: 91cc2a34aa
 claimed_at: '2026-06-08 12:58:38'
 context_hash: 98789b0cbdd97405
+spec_hash: 268fb385a4c2fd7c
 branch: agent/TASK-255-enforce-pr-backed-terminal-task-state--91cc2a34aa
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-255
 ---

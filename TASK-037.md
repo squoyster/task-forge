@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: 27705145f76d1ff7
+spec_hash: f989d4e015b774c2
 ---
 
 # TASK-037: Add `release` Command — Voluntarily Unclaim a Task

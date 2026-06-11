@@ -9,6 +9,7 @@ humanInterventionRequired: false
 dependsOn:
   - TASK-135
 context_hash: 3bbf09c32badaf02
+spec_hash: 10f788f6f8c86c6d
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-136
 ---
 # Reject Done Transition When AC Items Are Blank

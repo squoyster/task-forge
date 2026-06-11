@@ -6,6 +6,7 @@ priority: P1
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
+spec_hash: 1f2a3aa055d3f5f5
 ---
 
 # TASK-012: Session-based task locking to prevent agent conflicts

@@ -6,6 +6,7 @@ priority: P1
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
+spec_hash: d12b5b939ff23673
 ---
 
 # TASK-014: Sweeper Protocol — Deadlock Recovery for Stale Agent Locks

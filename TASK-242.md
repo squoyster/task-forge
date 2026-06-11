@@ -6,6 +6,7 @@ priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: 9a843bb42f77c29e
 ---
 
 # TASK-242: Add timestamps to AgentNotes for audit duration tracking

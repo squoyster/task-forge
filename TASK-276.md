@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: 58d6f9d818aa1c4f
+spec_hash: d2570b392db2a5c5
 ---
 
 # TASK-276: Implement taskforge update command for task frontmatter field updates

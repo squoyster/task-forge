@@ -9,6 +9,7 @@ humanInterventionRequired: false
 dependsOn:
   - TASK-141
 context_hash: 3a03a0322eb9729c
+spec_hash: d578cb85ca94fd11
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-144
 override_reason: >-
   AC satisfied: typecheck, build, and tests pass; pre-existing failures from

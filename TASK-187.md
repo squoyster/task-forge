@@ -6,6 +6,7 @@ priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: bd54a962858e94da
 ---
 
 # TASK-187: Fix taskforge new to use transactional push and add uncommitted-worktree detection

@@ -6,6 +6,7 @@ priority: P3
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: 0fa24c59bc023bb6
 ---
 
 # TASK-028: Add Per-Task Event Log (NDJSON)

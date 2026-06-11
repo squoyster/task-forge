@@ -1,11 +1,16 @@
 ---
 id: TASK-222
 type: Feature
-status: Ready
+status: In Progress
 priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: d3b07f8a4b
+claimed_at: '2026-06-11 23:14:01'
+context_hash: 6cd5541d1cdfd05c
+spec_hash: bf4bac5aa5f2cc3c
+branch: agent/TASK-222-refactor-command-state-machine-registry--d3b07f8a4b
 ---
 
 # TASK-222: Refactor command-state-machine registry to spec shape with full command coverage
@@ -103,3 +108,8 @@ This task overlaps with TASK-216. TASK-216 should be rejected or merged into thi
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-11T00:00:00Z System
+- Task claimed via taskforge start TASK-222
+- Session: d3b07f8a4b
+- Branch: agent/TASK-222-refactor-command-state-machine-registry--d3b07f8a4b

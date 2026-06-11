@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: 2d40ee019028e7ff
+spec_hash: 6c7e608750cd74da
 ---
 
 # TASK-072: Integration tests for init-generated OpenCode policy
