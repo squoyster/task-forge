@@ -2,9 +2,11 @@ import type {
   TaskForgeCommandResult,
   ValidNextCommand,
   CommandStatus,
+  NextAction,
 } from "./command-result.js";
 import { STANDARD_PROHIBITED_ACTIONS } from "./command-result.js";
 import { resolveAuthority } from "./authority.js";
+import { getValidNextCommands } from "./next-command-maps.js";
 
 interface BuilderOptions {
   command: string;
@@ -16,9 +18,39 @@ interface BuilderOptions {
   duration?: number;
 }
 
+function safetyForAllowedActor(allowedFor: ValidNextCommand["allowedFor"]): NextAction["safety"] {
+  switch (allowedFor) {
+    case "human":
+      return "requires_human";
+    case "doctor":
+      return "doctor_only";
+    default:
+      return "safe";
+  }
+}
+
+function actionFromNextCommand(command: ValidNextCommand, taskId?: string): NextAction {
+  return {
+    command: taskId ? command.command.replaceAll("<TASK-ID>", taskId) : command.command,
+    reason: command.purpose,
+    safety: safetyForAllowedActor(command.allowedFor),
+    preferred: command.priority === 1,
+  };
+}
+
+function actionFromRecoveryStep(step: string): NextAction {
+  return {
+    command: step,
+    reason: "Follow recovery guidance for this command result.",
+    safety: "safe",
+    preferred: false,
+  };
+}
+
 function baseResult(status: CommandStatus, ok: boolean, opts: BuilderOptions): TaskForgeCommandResult {
   const authority = resolveAuthority();
   const isNormalAgent = authority === "agent" || !authority;
+  const defaultNextCommands = getValidNextCommands(opts.command, status);
 
   return {
     ok,
@@ -37,7 +69,8 @@ function baseResult(status: CommandStatus, ok: boolean, opts: BuilderOptions): T
     agentPrompt: {
       role: "implementer",
     },
-    validNextCommands: [],
+    validNextCommands: defaultNextCommands,
+    nextActions: defaultNextCommands.map((command) => actionFromNextCommand(command, opts.taskId)),
     todoMerge: { required: false, items: [] },
     contextCleanup: { required: false, actions: [] },
     prohibitedActions: isNormalAgent ? [...STANDARD_PROHIBITED_ACTIONS] : [],
@@ -47,8 +80,16 @@ function baseResult(status: CommandStatus, ok: boolean, opts: BuilderOptions): T
   };
 }
 
-function withNextCommands(result: TaskForgeCommandResult, commands: ValidNextCommand[]): TaskForgeCommandResult {
+function withNextCommands(result: TaskForgeCommandResult, commands: ValidNextCommand[], taskId?: string): TaskForgeCommandResult {
   result.validNextCommands = commands;
+  result.nextActions = commands.map((command) => actionFromNextCommand(command, taskId));
+  return result;
+}
+
+function withNextActions(result: TaskForgeCommandResult, actions?: NextAction[]): TaskForgeCommandResult {
+  if (actions) {
+    result.nextActions = actions;
+  }
   return result;
 }
 
@@ -59,6 +100,9 @@ function withContextCleanup(result: TaskForgeCommandResult, required: boolean, r
 
 function withRecovery(result: TaskForgeCommandResult, required: boolean, steps: string[] = [], createTaskBody?: string): TaskForgeCommandResult {
   result.recovery = { required, steps, createTaskBody };
+  if (result.nextActions.length === 0) {
+    result.nextActions = steps.map(actionFromRecoveryStep);
+  }
   return result;
 }
 
@@ -70,101 +114,113 @@ function withDiagnostics(result: TaskForgeCommandResult, diagnostics: Array<{ le
 function withError(result: TaskForgeCommandResult, error: string, code?: string): TaskForgeCommandResult {
   result.error = error;
   result.code = code;
+  result.commandError = {
+    code: code ?? "FAILED",
+    message: error,
+    handled: result.nextActions.length > 0 || result.recovery.required,
+  };
   return result;
 }
 
 /**
  * Build a success result.
  */
-export function successResult(opts: BuilderOptions & { nextCommands?: ValidNextCommand[] }): TaskForgeCommandResult {
+export function successResult(opts: BuilderOptions & { nextCommands?: ValidNextCommand[]; nextActions?: NextAction[] }): TaskForgeCommandResult {
   const result = baseResult("success", true, opts);
   if (opts.nextCommands) {
-    withNextCommands(result, opts.nextCommands);
+    withNextCommands(result, opts.nextCommands, opts.taskId);
   }
+  withNextActions(result, opts.nextActions);
   return result;
 }
 
 /**
  * Build a blocked result.
  */
-export function blockedResult(opts: BuilderOptions & { reason: string; nextCommands?: ValidNextCommand[] }): TaskForgeCommandResult {
+export function blockedResult(opts: BuilderOptions & { reason: string; nextCommands?: ValidNextCommand[]; nextActions?: NextAction[] }): TaskForgeCommandResult {
   const result = baseResult("blocked", false, opts);
-  withError(result, opts.reason, "BLOCKED");
   if (opts.nextCommands) {
-    withNextCommands(result, opts.nextCommands);
+    withNextCommands(result, opts.nextCommands, opts.taskId);
   }
+  withNextActions(result, opts.nextActions);
+  withError(result, opts.reason, "BLOCKED");
   return result;
 }
 
 /**
  * Build a failed result.
  */
-export function failedResult(opts: BuilderOptions & { error: string; code?: string; recoverySteps?: string[]; nextCommands?: ValidNextCommand[] }): TaskForgeCommandResult {
+export function failedResult(opts: BuilderOptions & { error: string; code?: string; recoverySteps?: string[]; nextCommands?: ValidNextCommand[]; nextActions?: NextAction[] }): TaskForgeCommandResult {
   const result = baseResult("failed", false, opts);
-  withError(result, opts.error, opts.code ?? "FAILED");
   if (opts.recoverySteps && opts.recoverySteps.length > 0) {
     withRecovery(result, true, opts.recoverySteps);
   }
   if (opts.nextCommands) {
-    withNextCommands(result, opts.nextCommands);
+    withNextCommands(result, opts.nextCommands, opts.taskId);
   }
+  withNextActions(result, opts.nextActions);
+  withError(result, opts.error, opts.code ?? "FAILED");
   return result;
 }
 
 /**
  * Build a noop result (no action taken).
  */
-export function noopResult(opts: BuilderOptions & { reason?: string; nextCommands?: ValidNextCommand[] }): TaskForgeCommandResult {
+export function noopResult(opts: BuilderOptions & { reason?: string; nextCommands?: ValidNextCommand[]; nextActions?: NextAction[] }): TaskForgeCommandResult {
   const result = baseResult("noop", true, opts);
   if (opts.reason) {
     withDiagnostics(result, [{ level: "info", message: opts.reason }]);
   }
   if (opts.nextCommands) {
-    withNextCommands(result, opts.nextCommands);
+    withNextCommands(result, opts.nextCommands, opts.taskId);
   }
+  withNextActions(result, opts.nextActions);
   return result;
 }
 
 /**
  * Build a human-required result.
  */
-export function humanRequiredResult(opts: BuilderOptions & { reason: string; nextCommands?: ValidNextCommand[] }): TaskForgeCommandResult {
+export function humanRequiredResult(opts: BuilderOptions & { reason: string; nextCommands?: ValidNextCommand[]; nextActions?: NextAction[] }): TaskForgeCommandResult {
   const result = baseResult("human_required", false, opts);
-  withError(result, opts.reason, "HUMAN_REQUIRED");
   withRecovery(result, true, [
     "Block the task for human intervention: taskforge block <TASK-ID> \"reason\" --blocked-by human",
     "Or run taskforge doctor for system recovery",
   ]);
   if (opts.nextCommands) {
-    withNextCommands(result, opts.nextCommands);
+    withNextCommands(result, opts.nextCommands, opts.taskId);
   }
+  withNextActions(result, opts.nextActions);
+  withError(result, opts.reason, "HUMAN_REQUIRED");
   return result;
 }
 
 /**
  * Build a doctor-required result.
  */
-export function doctorRequiredResult(opts: BuilderOptions & { reason: string; nextCommands?: ValidNextCommand[] }): TaskForgeCommandResult {
+export function doctorRequiredResult(opts: BuilderOptions & { reason: string; nextCommands?: ValidNextCommand[]; nextActions?: NextAction[] }): TaskForgeCommandResult {
   const result = baseResult("doctor_required", false, opts);
-  withError(result, opts.reason, "DOCTOR_REQUIRED");
   withRecovery(result, true, [
     "Run taskforge doctor to diagnose the issue",
     "If doctor cannot resolve, block for human: taskforge block <TASK-ID> \"reason\" --blocked-by human",
   ]);
   if (opts.nextCommands) {
-    withNextCommands(result, opts.nextCommands);
+    withNextCommands(result, opts.nextCommands, opts.taskId);
   }
+  withNextActions(result, opts.nextActions);
+  withError(result, opts.reason, "DOCTOR_REQUIRED");
   return result;
 }
 
 /**
  * Build a context cleanup result for task-switching commands.
  */
-export function contextCleanupResult(opts: BuilderOptions & { reason: string; actions: string[]; nextCommands?: ValidNextCommand[] }): TaskForgeCommandResult {
+export function contextCleanupResult(opts: BuilderOptions & { reason: string; actions: string[]; nextCommands?: ValidNextCommand[]; nextActions?: NextAction[] }): TaskForgeCommandResult {
   const result = baseResult("success", true, opts);
   withContextCleanup(result, true, opts.reason, opts.actions);
   if (opts.nextCommands) {
-    withNextCommands(result, opts.nextCommands);
+    withNextCommands(result, opts.nextCommands, opts.taskId);
   }
+  withNextActions(result, opts.nextActions);
   return result;
 }

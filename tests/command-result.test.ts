@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import fs from "node:fs";
 import {
   TaskForgeCommandResultSchema,
   STANDARD_PROHIBITED_ACTIONS,
@@ -16,6 +17,33 @@ import {
 import { renderResultMarkdown, renderResultJson } from "../src/core/result-renderer.js";
 import { getValidNextCommands, getAllValidNextCommands } from "../src/core/next-command-maps.js";
 
+function commandName(spec: string): string {
+  return spec.split(/\s+/)[0]!;
+}
+
+function registeredCliCommands(): string[] {
+  const source = fs.readFileSync(new URL("../src/cli.ts", import.meta.url), "utf-8");
+  const commands = new Set<string>();
+  const groupVars = new Map<string, string>();
+
+  for (const match of source.matchAll(/const\s+(\w+)\s*=\s*program\.command\("([^"]+)"/g)) {
+    groupVars.set(match[1]!, commandName(match[2]!));
+  }
+
+  for (const match of source.matchAll(/program\s*\n\s*\.command\("([^"]+)"/g)) {
+    commands.add(commandName(match[1]!));
+  }
+
+  for (const [variable, prefix] of groupVars) {
+    const childPattern = new RegExp(`${variable}\\s*\\n\\s*\\.command\\("([^"]+)"`, "g");
+    for (const match of source.matchAll(childPattern)) {
+      commands.add(`${prefix} ${commandName(match[1]!)}`);
+    }
+  }
+
+  return [...commands].sort();
+}
+
 describe("command-result schema", () => {
   it("validates a minimal success result", () => {
     const result: TaskForgeCommandResult = {
@@ -25,6 +53,7 @@ describe("command-result schema", () => {
       context: {},
       agentPrompt: { role: "implementer" },
       validNextCommands: [],
+      nextActions: [],
       todoMerge: { required: false, items: [] },
       contextCleanup: { required: false, actions: [] },
       prohibitedActions: [],
@@ -44,6 +73,12 @@ describe("command-result schema", () => {
       context: { taskId: "TASK-001", worktree: "/tmp/wt", branch: "agent/TASK-001" },
       agentPrompt: { role: "implementer", instruction: "Fix the bug" },
       validNextCommands: [{ command: "taskforge start", purpose: "Retry", when: "After fix", allowedFor: "all", priority: 1 }],
+      nextActions: [{
+        command: "taskforge start TASK-001",
+        reason: "Retry",
+        safety: "safe",
+        preferred: true,
+      }],
       todoMerge: { required: true, items: [{ taskId: "TASK-001", action: "update", content: "Fix bug" }] },
       contextCleanup: { required: true, reason: "Task switching", actions: ["Commit changes"] },
       prohibitedActions: [{ action: "git commit", reason: "Use checkpoint" }],
@@ -51,6 +86,7 @@ describe("command-result schema", () => {
       diagnostics: [{ level: "error", message: "Test error" }],
       audit: { taskId: "TASK-001", transcriptPath: "/tmp/transcript.jsonl", eventId: "evt-1" },
       guidance: "Fix the issue",
+      commandError: { code: "TEST_ERROR", message: "Something failed", handled: true },
       error: "Something failed",
       code: "TEST_ERROR",
     };
@@ -81,11 +117,21 @@ describe("command-result schema", () => {
 
 describe("result builders", () => {
   it("successResult produces valid result", () => {
-    const result = successResult({ command: "test", taskId: "TASK-001" });
+    const result = successResult({
+      command: "test",
+      taskId: "TASK-001",
+      nextCommands: [{ command: "taskforge inspect <TASK-ID>", purpose: "Inspect task", when: "after success", allowedFor: "all", priority: 1 }],
+    });
     const parsed = TaskForgeCommandResultSchema.safeParse(result);
     expect(parsed.success).toBe(true);
     expect(result.ok).toBe(true);
     expect(result.status).toBe("success");
+    expect(result.nextActions[0]).toMatchObject({
+      command: "taskforge inspect TASK-001",
+      reason: "Inspect task",
+      safety: "safe",
+      preferred: true,
+    });
   });
 
   it("blockedResult produces valid result", () => {
@@ -95,6 +141,11 @@ describe("result builders", () => {
     expect(result.ok).toBe(false);
     expect(result.status).toBe("blocked");
     expect(result.error).toBe("Blocked by human");
+    expect(result.commandError).toMatchObject({
+      code: "BLOCKED",
+      message: "Blocked by human",
+      handled: false,
+    });
   });
 
   it("failedResult produces valid result with recovery", () => {
@@ -180,6 +231,21 @@ describe("result renderer", () => {
     expect(markdown).toContain("Prohibited Actions");
   });
 
+  it("renders structured next actions to markdown as the final section", () => {
+    const result = successResult({
+      command: "test",
+      taskId: "TASK-001",
+      nextCommands: [{ command: "taskforge inspect <TASK-ID>", purpose: "Inspect task", when: "after success", allowedFor: "all", priority: 1 }],
+    });
+    const markdown = renderResultMarkdown(result);
+
+    expect(markdown).toContain("## Valid next actions:");
+    expect(markdown).toContain("1. `taskforge inspect TASK-001`");
+    expect(markdown).toContain("Reason: Inspect task");
+    expect(markdown).toContain("Safety: safe");
+    expect(markdown.trim().endsWith("Safety: safe")).toBe(true);
+  });
+
   it("renders error result to markdown", () => {
     const result = failedResult({
       command: "test",
@@ -225,6 +291,12 @@ describe("next command maps", () => {
       expect(commands.length).toBeGreaterThan(0);
     }
   });
+
+  it("has a next-action map for every registered CLI command", () => {
+    const missing = registeredCliCommands().filter((cmd) => getAllValidNextCommands(cmd).length === 0);
+
+    expect(missing).toEqual([]);
+  });
 });
 
 describe("invariant tests", () => {
@@ -250,6 +322,7 @@ describe("invariant tests", () => {
     expect(result).toHaveProperty("ok");
     expect(result).toHaveProperty("status");
     expect(result).toHaveProperty("validNextCommands");
+    expect(result).toHaveProperty("nextActions");
     expect(result).toHaveProperty("todoMerge");
     expect(result).toHaveProperty("contextCleanup");
     expect(result).toHaveProperty("prohibitedActions");

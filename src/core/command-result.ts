@@ -11,6 +11,29 @@ export const ValidNextCommandSchema = z.object({
 });
 export type ValidNextCommand = z.infer<typeof ValidNextCommandSchema>;
 
+export const SafetySchema = z.enum(["safe", "requires_human", "doctor_only", "blocked"]);
+export type Safety = z.infer<typeof SafetySchema>;
+
+export const NextActionSchema = z.object({
+  command: z.string(),
+  reason: z.string(),
+  safety: SafetySchema,
+  preferred: z.boolean(),
+  stateTransition: z.object({
+    from: z.string(),
+    to: z.string(),
+  }).optional(),
+});
+export type NextAction = z.infer<typeof NextActionSchema>;
+
+export const CommandErrorSchema = z.object({
+  code: z.string(),
+  message: z.string(),
+  handled: z.boolean(),
+  createTaskCommand: z.string().optional(),
+});
+export type CommandError = z.infer<typeof CommandErrorSchema>;
+
 export const TodoMergeItemSchema = z.object({
   taskId: z.string(),
   action: z.enum(["add", "remove", "update"]),
@@ -97,6 +120,7 @@ export const TaskForgeCommandResultSchema = z.object({
   context: CommandContextSchema,
   agentPrompt: AgentPromptEnvelopeSchema,
   validNextCommands: z.array(ValidNextCommandSchema).default([]),
+  nextActions: z.array(NextActionSchema).default([]),
   todoMerge: TodoMergeInstructionSchema.default({ required: false, items: [] }),
   contextCleanup: ContextCleanupInstructionSchema.default({ required: false, actions: [] }),
   prohibitedActions: z.array(ProhibitedActionSchema).default([]),
@@ -104,6 +128,7 @@ export const TaskForgeCommandResultSchema = z.object({
   diagnostics: z.array(DiagnosticItemSchema).default([]),
   audit: AuditReferenceSchema.optional(),
   guidance: z.string().optional(),
+  commandError: CommandErrorSchema.optional(),
   error: z.string().optional(),
   code: z.string().optional(),
 });
