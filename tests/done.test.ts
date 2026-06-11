@@ -7,6 +7,10 @@ import { setRepoRoot } from "../src/util/paths.js";
 import { recordCliInvocation } from "../src/core/cli-audit.js";
 import { appendTaskTranscript, createTaskEvent } from "../src/core/audit.js";
 
+vi.mock("../src/core/control-files.js", () => ({
+  hashControlFiles: vi.fn().mockReturnValue("stablehash123456"),
+}));
+
 // Mock the git module so we don't need real git operations
 vi.mock("../src/core/git.js", () => ({
   removeWorktree: vi.fn(),
@@ -52,6 +56,7 @@ vi.mock("../src/core/task-state-transaction.js", () => ({
 }));
 
 import { removeWorktree, removeBranch, getWorktreeDirtyFiles, getBranchCommitsAhead } from "../src/core/git.js";
+import { hashControlFiles } from "../src/core/control-files.js";
 
 let uniqueDir: string;
 let stateDir: string;
@@ -64,6 +69,7 @@ beforeEach(() => {
   setRepoRoot(repoDir);
 
   vi.clearAllMocks();
+  vi.mocked(hashControlFiles).mockReturnValue("stablehash123456");
 });
 
 afterEach(() => {
@@ -388,6 +394,46 @@ describe("cmdDone", () => {
     expect(output.code).toBe("BRANCH_UNPUSHED");
     expect(output.error).toContain("unpushed");
     expect(output.error).toContain("taskforge submit");
+  });
+
+  it("returns actionable control-file drift guidance without asking for a recommit", async () => {
+    makeTaskFile("TASK-005", {
+      worktree: "../worktrees/TASK-005",
+      branch: "agent/TASK-005-test",
+      context_hash: "originalhash0000",
+    });
+    vi.mocked(getBranchCommitsAhead).mockResolvedValue(0);
+    vi.mocked(hashControlFiles).mockReturnValue("drifthash999999");
+
+    await expect(cmdDone("TASK-005")).rejects.toThrow(/Control files changed since TASK-005 started/);
+    await expect(cmdDone("TASK-005")).rejects.toThrow(/No recommit or resubmit is required/i);
+  });
+
+  it("returns JSON error with explicit recovery steps for control-file drift", async () => {
+    makeTaskFile("TASK-005", {
+      worktree: "../worktrees/TASK-005",
+      branch: "agent/TASK-005-test",
+      context_hash: "originalhash0000",
+    });
+    vi.mocked(getBranchCommitsAhead).mockResolvedValue(0);
+    vi.mocked(hashControlFiles).mockReturnValue("drifthash999999");
+
+    const logs: string[] = [];
+    const consoleSpy = vi.spyOn(console, "log").mockImplementation((...args: unknown[]) => {
+      logs.push(args.map(String).join(" "));
+    });
+    await cmdDone("TASK-005", { json: true });
+    consoleSpy.mockRestore();
+
+    expect(logs.length).toBeGreaterThan(0);
+    const output = JSON.parse(logs[0]);
+    expect(output.ok).toBe(false);
+    expect(output.code).toBe("CONTROL_FILE_CHANGED");
+    expect(output.error).toContain("Recorded hash: originalhash0000. Current hash: drifthash999999.");
+    expect(output.error).toContain("No recommit or resubmit is required");
+    expect(output.recovery.required).toBe(true);
+    expect(output.validNextCommands[0].command).toContain("taskforge inspect TASK-005 --json");
+    expect(output.validNextCommands[1].command).toContain("taskforge done TASK-005");
   });
 
   it("allows done when worktree is clean and branch is pushed", async () => {

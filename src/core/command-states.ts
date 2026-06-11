@@ -800,8 +800,10 @@ export function doneStateMachine(
       "CONTROL_FILE_CHANGED",
       "request_human_input",
       `Control files (AGENTS.md, TASKFORGE.md, etc.) have changed since task start. ` +
-      `Re-read the updated files and verify your work still complies. ` +
-      `Request human input if unsure.`,
+      `Re-read the updated control files, verify the completed work still complies, and then retry ` +
+      `'taskforge done ${conditions.taskId}'. No recommit is required if the worktree is already clean ` +
+      `and the branch is already pushed. Block for human review only if the updated control files change ` +
+      `the expected outcome or you cannot verify compliance.`,
       { taskId: conditions.taskId },
     );
   }
