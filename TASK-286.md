@@ -1,11 +1,15 @@
 ---
 id: TASK-286
 type: Bug
-status: Ready
+status: In Progress
 priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 436da08871
+claimed_at: '2026-06-11 11:52:38'
+context_hash: 6cd5541d1cdfd05c
+branch: agent/TASK-286-make-checkpoint-results-atomic-with-audi--436da08871
 ---
 # TASK-286: Make checkpoint results atomic with audit log side effects
 ## Goal
@@ -49,6 +53,11 @@ Partial commit/report sequencing is easy to regress if the transaction boundary 
 Auto-continue unless a stopping condition occurs.
 
 ## Agent Notes
+
+### 2026-06-11T00:00:00Z System
+- Task claimed via taskforge start TASK-286
+- Session: 436da08871
+- Branch: agent/TASK-286-make-checkpoint-results-atomic-with-audi--436da08871
 
 ### 2026-06-10T00:00:00Z System
 - Task updated via taskforge update
