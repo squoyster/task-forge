@@ -10,6 +10,7 @@ assignee: 436da08871
 claimed_at: '2026-06-11 11:52:38'
 context_hash: 6cd5541d1cdfd05c
 branch: agent/TASK-286-make-checkpoint-results-atomic-with-audi--436da08871
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-286
 ---
 # TASK-286: Make checkpoint results atomic with audit log side effects
 ## Goal
@@ -53,6 +54,9 @@ Partial commit/report sequencing is easy to regress if the transaction boundary 
 Auto-continue unless a stopping condition occurs.
 
 ## Agent Notes
+
+### 2026-06-11T00:00:00Z System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-286
 
 ### 2026-06-11T00:00:00Z System
 - Task claimed via taskforge start TASK-286
