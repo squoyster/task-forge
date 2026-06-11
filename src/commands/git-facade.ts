@@ -8,6 +8,7 @@ import { loadConfig } from "../core/config.js";
 import { createPullRequest } from "../integrations/github/service.js";
 import type { GitHubConfig } from "../integrations/github/types.js";
 import type { Task } from "../core/task.js";
+import { getBranchCommitsAhead } from "../core/git.js";
 import { logInfo, logHeader, logSuccess, logWarn, logError } from "../util/logging.js";
 import { writeResult } from "../util/write-command-result.js";
 import { successResult, noopResult } from "../core/result-builder.js";
@@ -216,40 +217,47 @@ export async function cmdSubmit(taskId: string, json = false): Promise<void> {
     throw new Error(result.guidance);
   }
 
-  const config = loadConfig(repoRoot);
-  const githubConfigured = !!(config.github?.enabled && config.github.owner && config.github.repo);
+  const commitsAhead = await getBranchCommitsAhead(task.worktree, task.branch);
+
+  if (commitsAhead <= 0) {
+    const guidance = `Branch ${task.branch} is already up to date on origin. No changes to submit for ${taskId}.`;
+    logInfo(guidance);
+    writeResult(noopResult({
+      command: "submit",
+      taskId,
+      branch: task.branch,
+      worktree: task.worktree,
+      guidance,
+      reason: "Branch is already up to date on origin.",
+    }), json);
+    return;
+  }
 
   try {
     await run("git", ["-C", task.worktree, "push", "origin", task.branch], repoRoot);
   } catch (err) {
-    const result = submitStateMachine({
-      prCreated: false,
-      githubConfigured,
-      taskId,
-      errorMessage: err instanceof Error ? err.message : String(err),
-    });
-    getDefaultGuidanceAdapter().pushGuidance(result);
-    logError(result.guidance);
-    throw new Error(result.guidance);
+    const message = err instanceof Error ? err.message : String(err);
+    logError(`Failed to push branch ${task.branch}: ${message}`);
+    throw new Error(`Failed to push branch ${task.branch}: ${message}`);
   }
 
-  const result = submitStateMachine({
-    prCreated: true,
-    githubConfigured,
-    taskId,
-  });
-  getDefaultGuidanceAdapter().pushGuidance(result);
+  const guidance =
+    `Pushed ${commitsAhead} commit(s) from ${task.branch} to origin. ` +
+    `Run 'taskforge pr ${taskId}' to create or update a pull request.`;
 
-  logSuccess(result.guidance);
+  logSuccess(guidance);
 
   writeResult(successResult({
     command: "submit",
     taskId,
-    guidance: result.guidance,
+    branch: task.branch,
+    worktree: task.worktree,
+    guidance,
   }), json);
 
   appendTaskTranscript(repoRoot, taskId, createTaskEvent(taskId, "git.push", {
     summary: `Pushed branch ${task.branch}`,
+    metadata: { commitsAhead },
   }));
 }
 
