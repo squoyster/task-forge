@@ -10,6 +10,7 @@ assignee: 815c3f8444
 claimed_at: '2026-06-11 12:01:51'
 context_hash: 6cd5541d1cdfd05c
 branch: agent/TASK-283-fix-done-command-handling-for-control-fi--815c3f8444
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-283
 ---
 # TASK-283: Fix done command handling for control-file drift
 ## Goal
@@ -52,6 +53,9 @@ Completion gating can become more confusing if drift paths are not modeled clear
 Auto-continue unless a stopping condition occurs.
 
 ## Agent Notes
+
+### 2026-06-11T00:00:00Z System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-283
 
 ### 2026-06-11T00:00:00Z System
 - Task claimed via taskforge start TASK-283
