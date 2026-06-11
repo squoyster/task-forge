@@ -10,6 +10,7 @@ assignee: 3f169d55ff
 claimed_at: '2026-06-11 00:11:40'
 context_hash: 24c64b5cba799406
 branch: agent/TASK-289-archive-terminal-audit-history-into-task--3f169d55ff
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-289
 ---
 # TASK-289: Archive terminal audit history into task-state and ignore live audit logs
 ## Goal
@@ -56,6 +57,9 @@ Moving audit persistence to terminal transitions can lose context if summary ext
 Auto-continue unless a stopping condition occurs.
 
 ## Agent Notes
+
+### 2026-06-11T00:00:00Z System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-289
 
 ### 2026-06-11T00:00:00Z System
 - Task claimed via taskforge start TASK-289
