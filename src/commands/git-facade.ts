@@ -20,6 +20,59 @@ function requireTask(taskId: string): Task {
   return task;
 }
 
+interface MergeabilityResult {
+  ok: boolean;
+  mergeable: boolean;
+  detail?: string;
+}
+
+function summarizeMergeConflict(output: string): string | undefined {
+  const lines = output
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+
+  return lines.find((line) => /conflict|CONFLICT|add\/add|modify\/delete/i.test(line)) ?? lines[0];
+}
+
+async function checkMergeabilityAgainstMain(
+  repoRoot: string,
+  worktree: string,
+): Promise<MergeabilityResult> {
+  const fetchResult = await run("git", ["-C", worktree, "fetch", "origin", "main"], repoRoot);
+  if (fetchResult.exitCode !== 0) {
+    return {
+      ok: false,
+      mergeable: false,
+      detail: fetchResult.stderr.trim() || fetchResult.stdout.trim() || "git fetch origin main failed",
+    };
+  }
+
+  const mergeTreeResult = await run(
+    "git",
+    ["-C", worktree, "merge-tree", "--write-tree", "--messages", "HEAD", "origin/main"],
+    repoRoot,
+  );
+
+  const mergeOutput = [mergeTreeResult.stdout, mergeTreeResult.stderr]
+    .filter((part) => part.trim().length > 0)
+    .join("\n");
+
+  if (mergeTreeResult.exitCode !== 0) {
+    return {
+      ok: true,
+      mergeable: false,
+      detail: summarizeMergeConflict(mergeOutput),
+    };
+  }
+
+  return { ok: true, mergeable: true };
+}
+
+function isPushNoop(pushOutput: string): boolean {
+  return /\[up to date\]/i.test(pushOutput) || /^=\s/m.test(pushOutput);
+}
+
 export async function cmdDiff(taskId: string, json = false): Promise<void> {
   const repoRoot = getRepoRoot();
   const task = requireTask(taskId);
@@ -113,7 +166,6 @@ export async function cmdCheckpoint(taskId: string, message: string, json = fals
     throw new Error(result.guidance);
   }
 
-  // Check for changes
   const statusResult = await run("git", ["-C", task.worktree, "status", "--porcelain"], repoRoot);
   const hasChanges = statusResult.stdout.trim().length > 0;
 
@@ -231,6 +283,40 @@ export async function cmdSubmit(taskId: string, json = false): Promise<void> {
     throw new Error(result.guidance);
   }
 
+  const mergeability = await checkMergeabilityAgainstMain(repoRoot, task.worktree);
+  if (!mergeability.ok) {
+    const guidance =
+      `Could not verify whether ${task.branch} merges cleanly with origin/main. ` +
+      `Resolve the repository state and retry submit. ${mergeability.detail ?? ""}`.trim();
+    logError(guidance);
+    writeResult(failedResult({
+      command: "submit",
+      taskId,
+      branch: task.branch,
+      worktree: task.worktree,
+      error: guidance,
+      code: "MERGEABILITY_CHECK_FAILED",
+    }), json);
+    return;
+  }
+
+  if (!mergeability.mergeable) {
+    const detail = mergeability.detail ? ` Conflict detail: ${mergeability.detail}` : "";
+    const guidance =
+      `Branch ${task.branch} does not merge cleanly with origin/main. ` +
+      `Rebase or merge main into the task branch, resolve conflicts, checkpoint, and submit again.${detail}`;
+    logError(guidance);
+    writeResult(failedResult({
+      command: "submit",
+      taskId,
+      branch: task.branch,
+      worktree: task.worktree,
+      error: guidance,
+      code: "NOT_MERGEABLE",
+    }), json);
+    return;
+  }
+
   const pushResult = await run(
     "git",
     ["-C", task.worktree, "push", "--porcelain", "origin", task.branch],
@@ -241,12 +327,15 @@ export async function cmdSubmit(taskId: string, json = false): Promise<void> {
     .join("\n");
 
   if (pushResult.exitCode !== 0) {
-    logError(`Failed to push branch ${task.branch}: ${pushOutput || "git push failed"}`);
-    throw new Error(`Failed to push branch ${task.branch}: ${pushOutput || "git push failed"}`);
+    const guidance = `Failed to push branch ${task.branch}: ${pushOutput || "git push failed"}`;
+    logError(guidance);
+    throw new Error(guidance);
   }
 
-  if (/\[up to date\]/i.test(pushOutput) || /^=\s/m.test(pushOutput)) {
-    const guidance = `Branch ${task.branch} is already up to date on origin. No changes to submit for ${taskId}.`;
+  if (isPushNoop(pushOutput)) {
+    const guidance =
+      `Branch ${task.branch} is already submitted and merges cleanly with origin/main. ` +
+      `No changes to submit for ${taskId}.`;
     logInfo(guidance);
     writeResult(noopResult({
       command: "submit",
@@ -254,15 +343,14 @@ export async function cmdSubmit(taskId: string, json = false): Promise<void> {
       branch: task.branch,
       worktree: task.worktree,
       guidance,
-      reason: "Branch is already up to date on origin.",
+      reason: "Branch is already submitted and mergeable.",
     }), json);
     return;
   }
 
   const guidance =
     `Pushed branch ${task.branch} to origin. ` +
-    `Run 'taskforge pr ${taskId}' to create or update a pull request.`;
-
+    `Branch merges cleanly with origin/main. Run 'taskforge pr ${taskId}' to create or update a pull request.`;
   logSuccess(guidance);
 
   writeResult(successResult({
@@ -275,7 +363,7 @@ export async function cmdSubmit(taskId: string, json = false): Promise<void> {
 
   appendTaskTranscript(repoRoot, taskId, createTaskEvent(taskId, "git.push", {
     summary: `Pushed branch ${task.branch}`,
-    metadata: { pushOutput },
+    metadata: { mergeableAgainst: "origin/main", pushOutput },
   }));
 }
 
@@ -370,7 +458,7 @@ export async function cmdPr(taskId: string, json = false): Promise<void> {
     getDefaultGuidanceAdapter().pushGuidance(result);
 
     logWarn(result.guidance);
-    logInfo(`To create a PR manually:`);
+    logInfo("To create a PR manually:");
     logInfo(`  gh pr create --title "${title}" --head ${task.branch} --base main --body "${body}"`);
     logInfo(`  Or visit: https://github.com/<owner>/<repo>/compare/main...${task.branch}`);
 

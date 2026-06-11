@@ -44,17 +44,17 @@ import { run } from "../src/util/exec.js";
 import { appendTaskTranscript } from "../src/core/audit.js";
 
 const task = {
-  id: "TASK-281",
+  id: "TASK-285",
   status: "In Progress",
-  priority: "P2",
-  type: "Task",
+  priority: "P1",
+  type: "Bug",
   agentRole: "Implementer",
-  riskLevel: "Medium",
+  riskLevel: "Low",
   humanInterventionRequired: false,
-  filePath: "/tmp/TASK-281.md",
-  body: "# TASK-281\n",
-  branch: "agent/TASK-281-test",
-  worktree: "/tmp/taskforge/TASK-281",
+  filePath: "/tmp/TASK-285.md",
+  body: "# TASK-285\n",
+  branch: "agent/TASK-285-test",
+  worktree: "/tmp/taskforge/TASK-285",
 };
 
 describe("git facade commands", () => {
@@ -78,76 +78,93 @@ describe("git facade commands", () => {
     await expect(cmdPr("TASK-999")).rejects.toThrow();
   });
 
-  it("returns noop when branch is already up to date on origin", async () => {
+  it("returns failed when branch is not mergeable with origin/main", async () => {
     vi.mocked(loadTaskById).mockReturnValue(task);
-    vi.mocked(run).mockResolvedValueOnce({
-      stdout: "= refs/heads/agent/TASK-281-test:refs/heads/agent/TASK-281-test [up to date]\n",
-      stderr: "",
-      exitCode: 0,
-    });
+    vi.mocked(run)
+      .mockResolvedValueOnce({ stdout: "", stderr: "", exitCode: 0 })
+      .mockResolvedValueOnce({
+        stdout: "Auto-merging src/commands/update.ts\nCONFLICT (add/add): Merge conflict in src/commands/update.ts\n",
+        stderr: "",
+        exitCode: 1,
+      });
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
-    await cmdSubmit("TASK-281", true);
+    await cmdSubmit("TASK-285", true);
 
     const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
-    expect(output.status).toBe("noop");
-    expect(output.guidance).toContain("already up to date on origin");
-    expect(run).toHaveBeenCalledTimes(1);
-    expect(run).toHaveBeenCalledWith(
-      "git",
-      ["-C", task.worktree, "push", "--porcelain", "origin", task.branch],
-      "/tmp/taskforge-repo",
-    );
+    expect(output.ok).toBe(false);
+    expect(output.status).toBe("failed");
+    expect(output.code).toBe("NOT_MERGEABLE");
+    expect(output.error).toContain("does not merge cleanly with origin/main");
+    expect(output.error).toContain("src/commands/update.ts");
+    expect(run).toHaveBeenCalledTimes(2);
     expect(appendTaskTranscript).not.toHaveBeenCalled();
 
     logSpy.mockRestore();
   });
 
-  it("returns success when branch push actually occurs for an existing remote branch", async () => {
+  it("returns noop when branch is already submitted and mergeable", async () => {
     vi.mocked(loadTaskById).mockReturnValue(task);
-    vi.mocked(run).mockResolvedValueOnce({
-      stdout: "  refs/heads/agent/TASK-281-test:refs/heads/agent/TASK-281-test abc123..def456\n",
-      stderr: "",
-      exitCode: 0,
-    });
+    vi.mocked(run)
+      .mockResolvedValueOnce({ stdout: "", stderr: "", exitCode: 0 })
+      .mockResolvedValueOnce({ stdout: "deadbeef\n", stderr: "", exitCode: 0 })
+      .mockResolvedValueOnce({
+        stdout: "= refs/heads/agent/TASK-285-test:refs/heads/agent/TASK-285-test [up to date]\n",
+        stderr: "",
+        exitCode: 0,
+      });
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
-    await cmdSubmit("TASK-281", true);
+    await cmdSubmit("TASK-285", true);
+
+    const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
+    expect(output.status).toBe("noop");
+    expect(output.guidance).toContain("already submitted and merges cleanly with origin/main");
+    expect(appendTaskTranscript).not.toHaveBeenCalled();
+
+    logSpy.mockRestore();
+  });
+
+  it("returns success when branch push occurs and branch is mergeable", async () => {
+    vi.mocked(loadTaskById).mockReturnValue(task);
+    vi.mocked(run)
+      .mockResolvedValueOnce({ stdout: "", stderr: "", exitCode: 0 })
+      .mockResolvedValueOnce({ stdout: "deadbeef\n", stderr: "", exitCode: 0 })
+      .mockResolvedValueOnce({
+        stdout: "  refs/heads/agent/TASK-285-test:refs/heads/agent/TASK-285-test abc123..def456\n",
+        stderr: "",
+        exitCode: 0,
+      });
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    await cmdSubmit("TASK-285", true);
 
     const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
     expect(output.ok).toBe(true);
     expect(output.status).toBe("success");
-    expect(output.guidance).toContain(`Pushed branch ${task.branch} to origin`);
-    expect(output.guidance).not.toContain("No changes to submit");
-    expect(run).toHaveBeenCalledWith(
-      "git",
-      ["-C", task.worktree, "push", "--porcelain", "origin", task.branch],
-      "/tmp/taskforge-repo",
-    );
+    expect(output.guidance).toContain("Pushed branch agent/TASK-285-test to origin");
+    expect(output.guidance).toContain("merges cleanly with origin/main");
     expect(appendTaskTranscript).toHaveBeenCalled();
 
     logSpy.mockRestore();
   });
 
-  it("pushes a new branch when no remote branch exists yet", async () => {
+  it("returns failed when mergeability preflight cannot be verified", async () => {
     vi.mocked(loadTaskById).mockReturnValue(task);
     vi.mocked(run).mockResolvedValueOnce({
-      stdout: "* refs/heads/agent/TASK-281-test:refs/heads/agent/TASK-281-test [new branch]\n",
-      stderr: "",
-      exitCode: 0,
+      stdout: "",
+      stderr: "fatal: could not read from remote repository",
+      exitCode: 128,
     });
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
-    await cmdSubmit("TASK-281", true);
+    await cmdSubmit("TASK-285", true);
 
     const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
-    expect(output.status).toBe("success");
-    expect(output.guidance).toContain(`Pushed branch ${task.branch} to origin`);
-    expect(run).toHaveBeenCalledWith(
-      "git",
-      ["-C", task.worktree, "push", "--porcelain", "origin", task.branch],
-      "/tmp/taskforge-repo",
-    );
+    expect(output.ok).toBe(false);
+    expect(output.code).toBe("MERGEABILITY_CHECK_FAILED");
+    expect(output.error).toContain("Could not verify whether");
+    expect(output.error).toContain("fatal: could not read from remote repository");
 
     logSpy.mockRestore();
   });
