@@ -9,7 +9,6 @@ humanInterventionRequired: false
 assignee: 8dbbfcb3f2
 claimed_at: '2026-06-11 11:37:54'
 context_hash: 24c64b5cba799406
-spec_hash: 43763c043cee2c10
 branch: agent/TASK-287-fix-checkpoint-and-submit-ownership-reso--8dbbfcb3f2
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-287
 ---

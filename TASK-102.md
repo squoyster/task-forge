@@ -6,7 +6,6 @@ priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-spec_hash: 0363e19ebe43558b
 ---
 
 # TASK-102: Add branch protection automation script for init workflow

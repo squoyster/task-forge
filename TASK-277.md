@@ -9,7 +9,6 @@ humanInterventionRequired: false
 assignee: 1a3efa0c7b
 claimed_at: '2026-06-10 13:26:21'
 context_hash: 58d6f9d818aa1c4f
-spec_hash: c50e6ded75977d0d
 branch: agent/TASK-277-fix-transaction-invariant-validation-to--1a3efa0c7b
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-277
 ---

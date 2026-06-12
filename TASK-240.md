@@ -7,7 +7,6 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: 1e6ebeb577972c85
-spec_hash: eea59ec74268aa9e
 branch: agent/TASK-240-allow-task-state-updates-via-taskforge-c--f021eeb375
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-240
 ---

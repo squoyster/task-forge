@@ -7,7 +7,6 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: abc123def456
-spec_hash: 25d76d43c7e2f01d
 override_reason: >-
   Direct completion after all gates pass; documentation task requires no review
   cycle

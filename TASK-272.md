@@ -7,7 +7,6 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: c920478ff4788012
-spec_hash: 1be786b3444fea8f
 ---
 
 # TASK-272: Fix MCP captureStdout crash in strict mode on Node 24

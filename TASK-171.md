@@ -6,7 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-spec_hash: b2981af951685e62
 ---
 # Add Extension Methodology Checklist
 

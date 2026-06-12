@@ -6,7 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-spec_hash: dce78169e45393a1
 ---
 
 # TASK-015: Jittered Retries for Optimistic Concurrency

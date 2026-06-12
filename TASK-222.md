@@ -9,7 +9,6 @@ humanInterventionRequired: false
 assignee: d3b07f8a4b
 claimed_at: '2026-06-11 23:30:40'
 context_hash: 6cd5541d1cdfd05c
-spec_hash: bf4bac5aa5f2cc3c
 branch: agent/TASK-222-refactor-command-state-machine-registry--d3b07f8a4b
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-222
 ---

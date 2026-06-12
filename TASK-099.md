@@ -7,7 +7,6 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: 8c607774d14d0be5
-spec_hash: 77a8ee088a4a888a
 ---
 
 # TASK-099: Fix missing await on assertTaskOwnership in git-facade

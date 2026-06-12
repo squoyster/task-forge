@@ -6,7 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-spec_hash: 6c573f073a724df0
 ---
 
 # TASK-060: Extend config schema for agent framework integration

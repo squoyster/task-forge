@@ -6,7 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-spec_hash: 4ac674066b2e91cd
 ---
 
 # TASK-260: MAKE CLEANUP INTEGRATION-AWARE AND RECOVERABLE

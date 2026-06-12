@@ -7,7 +7,6 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: 9ee05952d2d2a685
-spec_hash: 8b645c4345dc57f5
 branch: agent/TASK-218-make-claim-create-worktree-and-return-wo--45283ca690
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-218
 ---

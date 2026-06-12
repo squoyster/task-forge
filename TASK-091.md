@@ -7,7 +7,6 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: 8c607774d14d0be5
-spec_hash: b4172e11f5b767cc
 branch: agent/TASK-091-fix-done-test-git-repo-not-found-failure--b5ee8dbbd3
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-091
 ---

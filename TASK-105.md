@@ -9,7 +9,6 @@ humanInterventionRequired: false
 dependsOn:
   - TASK-124
 context_hash: f3613895c8a77f2e
-spec_hash: d1dd4950f0798e6b
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-105
 ---
 

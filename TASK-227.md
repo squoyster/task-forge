@@ -7,7 +7,6 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: bdaa0cb7ba07f9e6
-spec_hash: f5c334aeda7a31d2
 branch: agent/TASK-227-update-agentsmd-with-control-plane-direc--95dffc88cf
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-227
 ---

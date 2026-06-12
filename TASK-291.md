@@ -9,7 +9,6 @@ humanInterventionRequired: false
 assignee: b6b4e89a30
 claimed_at: '2026-06-11 11:22:16'
 context_hash: 24c64b5cba799406
-spec_hash: dcef5fe2dd3c70ad
 branch: agent/TASK-291-fix-false-force-push-rejection-on-task-b--b6b4e89a30
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-291
 ---

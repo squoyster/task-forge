@@ -7,7 +7,6 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: 1e6ebeb577972c85
-spec_hash: 09bf924e3a504eb7
 branch: agent/TASK-186-fix-start-command-move-file-writes-into--6c9a2ceab3
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-186
 ---

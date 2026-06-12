@@ -7,7 +7,6 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: 1e6ebeb577972c85
-spec_hash: d7f57292aaa92c59
 branch: agent/TASK-243-fix-claimstart-self-deadlock-and-remove--b27ca834ad
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-243
 ---

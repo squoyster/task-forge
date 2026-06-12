@@ -9,7 +9,6 @@ humanInterventionRequired: false
 dependsOn:
   - TASK-162
 context_hash: abc123def456
-spec_hash: 14bb3f1dda8149be
 ---
 # Implement Doctor Fix Mode
 

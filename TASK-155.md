@@ -8,7 +8,6 @@ riskLevel: Medium
 humanInterventionRequired: false
 dependsOn:
   - TASK-152
-spec_hash: 11b6a1ea5eb2f5d8
 override_reason: >-
   AC satisfied: typecheck, build, and tests pass; pre-existing failures from
   TASK-091

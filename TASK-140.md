@@ -9,7 +9,6 @@ humanInterventionRequired: false
 dependsOn:
   - TASK-139
 context_hash: 9ee8ade673fccaae
-spec_hash: 43a26c12aaad6bc3
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-140
 override_reason: AC validation gate implemented with tests
 override_actor: unknown

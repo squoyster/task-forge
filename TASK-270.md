@@ -6,7 +6,6 @@ priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-spec_hash: e11dec2593c439df
 ---
 
 # TASK-270: Align config settings under opencode section

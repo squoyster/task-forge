@@ -7,7 +7,6 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: abc123def456
-spec_hash: 73d5d80ba36dc299
 ---
 # Enforce Audit Event Type Schema
 

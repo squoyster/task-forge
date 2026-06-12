@@ -6,7 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-spec_hash: de90180eea0221a8
 ---
 
 # TASK-001: Initialize TaskForge workflow

@@ -6,7 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
-spec_hash: 44de7125f22ec18c
 ---
 
 # TASK-040: Agent Capability Levels

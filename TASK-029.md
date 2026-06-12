@@ -6,7 +6,6 @@ priority: P3
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
-spec_hash: dc8ce5888326979b
 ---
 
 # TASK-029: Safe Cleanup with Dry-Run

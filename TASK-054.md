@@ -7,7 +7,6 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: 27705145f76d1ff7
-spec_hash: 5c6db4b8f1c01b2f
 ---
 
 # TASK-054: Fix TASK-045 dependsOn null value
