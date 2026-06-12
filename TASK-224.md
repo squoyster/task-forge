@@ -9,7 +9,7 @@ humanInterventionRequired: false
 assignee: 7c39bec944
 claimed_at: '2026-06-12 15:18:02'
 context_hash: 6cd5541d1cdfd05c
-spec_hash: 052799375b519eee
+spec_hash: dec4b80faa9b56f3
 branch: agent/TASK-224-implement-unhandled-state-closure-task-g--7c39bec944
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-224
 ---
@@ -28,15 +28,15 @@ Disallowed files/directories:
 -
 
 ## Acceptance Criteria
-- [ ] `src/core/closure-task.ts` exists with `createClosureTaskCommand()` and `maybeAutoCreateClosureTask()`.
-- [ ] Unknown error code returns a `taskforge new` command in `nextActions`.
-- [ ] Unknown task status combination returns a closure task command.
-- [ ] Missing recovery command returns a closure task command.
-- [ ] Generated task is P1 Bug by default.
-- [ ] System avoids infinite recursive task creation (guard against `taskforge new` failure).
-- [ ] Closure task body includes all required context fields.
-- [ ] Tests cover unknown error and unknown state paths.
-- [ ] Tests verify no recursive closure task creation.
+- [x] `src/core/closure-task.ts` exists with `createClosureTaskCommand()` and `maybeAutoCreateClosureTask()`.
+- [x] Unknown error code returns a `taskforge new` command in `nextActions`.
+- [x] Unknown task status combination returns a closure task command.
+- [x] Missing recovery command returns a closure task command.
+- [x] Generated task is P1 Bug by default.
+- [x] System avoids infinite recursive task creation (guard against `taskforge new` failure).
+- [x] Closure task body includes all required context fields.
+- [x] Tests cover unknown error and unknown state paths.
+- [x] Tests verify no recursive closure task creation.
 
 ## Test / Verification Command
 ```bash
@@ -57,6 +57,9 @@ Auto-continue unless a stopping condition occurs.
 
 ## Agent Notes
 
+### 2026-06-12T00:00:00Z System
+- Task updated via taskforge update
+- section acceptanceCriteria updated (630 chars)
 ### 2026-06-12T00:00:00Z System
 - Task updated via taskforge update
 - section acceptanceCriteria updated (630 chars)
