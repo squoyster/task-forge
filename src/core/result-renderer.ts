@@ -19,34 +19,35 @@ export function renderResultMarkdown(result: TaskForgeCommandResult): string {
     sections.push(renderAgentPromptSection(result));
   }
 
-  // Section 4: Valid Next Commands
-  if (result.validNextCommands.length > 0) {
-    sections.push(renderNextCommandsSection(result));
-  }
-
-  // Section 5: Todo Merge Required
+  // Section 4: Todo Merge Required
   if (result.todoMerge.required || result.todoMerge.items.length > 0) {
     sections.push(renderTodoMergeSection(result));
   }
 
-  // Section 6: Context Cleanup
+  // Section 5: Context Cleanup
   if (result.contextCleanup.required) {
     sections.push(renderContextCleanupSection(result));
   }
 
-  // Section 7: Prohibited Actions
+  // Section 6: Prohibited Actions
   if (result.prohibitedActions.length > 0) {
     sections.push(renderProhibitedActionsSection(result));
   }
 
-  // Section 8: Recovery Guidance
+  // Section 7: Recovery Guidance
   if (result.recovery.required) {
     sections.push(renderRecoverySection(result));
   }
 
-  // Section 9: Audit and Trace
+  // Section 8: Audit and Trace
   if (result.audit || result.diagnostics.length > 0) {
     sections.push(renderAuditSection(result));
+  }
+
+  // Section 9: Valid Next Actions. Keep this last so human output ends with
+  // immediately actionable commands.
+  if (result.nextActions.length > 0) {
+    sections.push(renderNextActionsSection(result));
   }
 
   return sections.join("\n\n");
@@ -82,11 +83,17 @@ function renderAgentPromptSection(result: TaskForgeCommandResult): string {
   return `## Agentic Instruction\n\n**Role:** ${result.agentPrompt.role}\n\n${result.agentPrompt.instruction}`;
 }
 
-function renderNextCommandsSection(result: TaskForgeCommandResult): string {
-  const lines = ["## Valid Next Commands"];
-  const sorted = [...result.validNextCommands].sort((a, b) => a.priority - b.priority);
-  for (const cmd of sorted) {
-    lines.push(`- \`${cmd.command}\` — ${cmd.purpose} (${cmd.when})`);
+function renderNextActionsSection(result: TaskForgeCommandResult): string {
+  const lines = ["## Valid next actions:"];
+  const sorted = [...result.nextActions].sort((a, b) => Number(b.preferred) - Number(a.preferred));
+  for (let i = 0; i < sorted.length; i++) {
+    const action = sorted[i]!;
+    lines.push(`${i + 1}. \`${action.command}\``);
+    lines.push(`   Reason: ${action.reason}`);
+    lines.push(`   Safety: ${action.safety}`);
+    if (action.stateTransition) {
+      lines.push(`   State transition: ${action.stateTransition.from} -> ${action.stateTransition.to}`);
+    }
   }
   return lines.join("\n");
 }

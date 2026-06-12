@@ -1,12 +1,43 @@
 import { describe, it, expect } from "vitest";
+import fs from "node:fs";
 import {
+  COMMAND_STATE_REGISTRY,
   claimStateMachine,
+  getErrorGuidance,
+  getNextActions,
   startStateMachine,
   gatesStateMachine,
   unhandledError,
   ClaimStates,
   StartStates,
 } from "../src/core/command-states.js";
+
+function commandName(spec: string): string {
+  return spec.split(/\s+/)[0]!;
+}
+
+function registeredCliCommands(): string[] {
+  const source = fs.readFileSync(new URL("../src/cli.ts", import.meta.url), "utf-8");
+  const commands = new Set<string>();
+  const groupVars = new Map<string, string>();
+
+  for (const match of source.matchAll(/const\s+(\w+)\s*=\s*program\.command\("([^"]+)"/g)) {
+    groupVars.set(match[1]!, commandName(match[2]!));
+  }
+
+  for (const match of source.matchAll(/program\s*\n\s*\.command\("([^"]+)"/g)) {
+    commands.add(commandName(match[1]!));
+  }
+
+  for (const [variable, prefix] of groupVars) {
+    const childPattern = new RegExp(`${variable}\\s*\\n\\s*\\.command\\("([^"]+)"`, "g");
+    for (const match of source.matchAll(childPattern)) {
+      commands.add(`${prefix} ${commandName(match[1]!)}`);
+    }
+  }
+
+  return [...commands].sort();
+}
 
 describe("claimStateMachine — no force/start guidance", () => {
   it("does not recommend 'taskforge start' on success with worktree", () => {
@@ -173,5 +204,72 @@ describe("unhandledError — closure task guidance", () => {
     expect(result.guidance).toContain("taskforge new");
     expect(result.guidance).toContain("Handle unclosed TaskForge error: branch exists during start");
     expect(result.guidance).toContain("If the correct action cannot be cleanly inferred, request human input.");
+  });
+});
+
+describe("command state registry", () => {
+  it("covers every command registered in the CLI", () => {
+    const registered = registeredCliCommands();
+    const missing = registered.filter((command) => !COMMAND_STATE_REGISTRY[command]);
+
+    expect(missing).toEqual([]);
+  });
+
+  it("returns spec-shaped next actions with task placeholders resolved", () => {
+    const actions = getNextActions("start", { taskId: "TASK-123" });
+
+    expect(actions.length).toBeGreaterThan(0);
+    expect(actions[0]).toMatchObject({
+      command: "opencode",
+      safety: "safe",
+      preferred: true,
+    });
+    expect(actions.every((action) => typeof action.reason === "string")).toBe(true);
+  });
+
+  it("maps known errors to safe or escalated next actions", () => {
+    const actions = getErrorGuidance("done", "WORKTREE_DIRTY", { taskId: "TASK-123" });
+
+    expect(actions[0]).toMatchObject({
+      command: "taskforge checkpoint TASK-123 --message \"Save completion work\"",
+      safety: "safe",
+      preferred: true,
+    });
+  });
+
+  it("returns a closure task action for unknown errors", () => {
+    const actions = getErrorGuidance("done", "NEW_UNKNOWN_ERROR", { taskId: "TASK-123" });
+
+    expect(actions).toHaveLength(1);
+    expect(actions[0]).toMatchObject({
+      safety: "requires_human",
+      preferred: true,
+    });
+    expect(actions[0]?.command).toContain("taskforge new");
+    expect(actions[0]?.command).toContain("NEW_UNKNOWN_ERROR");
+  });
+
+  it("marks force paths as human or doctor authority only", () => {
+    const unsafeForceActions = Object.values(COMMAND_STATE_REGISTRY).flatMap((rule) => [
+      ...rule.nextActions,
+      ...Object.values(rule.errorActions).flat(),
+    ]).filter((action) => action.command.includes("--force") && action.safety !== "doctor_only" && action.safety !== "requires_human");
+
+    expect(unsafeForceActions).toEqual([]);
+  });
+
+  it("keeps legacy state machines compatible while exposing spec-shaped actions", () => {
+    const result = gatesStateMachine({
+      totalGates: 0,
+      passedGates: 0,
+      failedGates: [],
+    });
+
+    expect(result.nextAction).toBe("create_pr");
+    expect(result.nextActions[0]).toMatchObject({
+      command: "taskforge submit TASK-ID",
+      safety: "safe",
+      preferred: true,
+    });
   });
 });

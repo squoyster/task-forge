@@ -1,3 +1,5 @@
+import type { NextAction } from "../core/command-result.js";
+
 export function logInfo(msg: string): void {
   console.log(msg);
 }
@@ -24,4 +26,21 @@ export function logSub(msg: string): void {
 
 export function logDivider(): void {
   console.log("");
+}
+
+export function printNextActions(actions: NextAction[]): void {
+  if (actions.length === 0) {
+    return;
+  }
+
+  logInfo("Valid next actions:");
+  for (let i = 0; i < actions.length; i++) {
+    const action = actions[i]!;
+    logSub(`${i + 1}. ${action.command}`);
+    logSub(`   Reason: ${action.reason}`);
+    logSub(`   Safety: ${action.safety}`);
+    if (action.stateTransition) {
+      logSub(`   State transition: ${action.stateTransition.from} -> ${action.stateTransition.to}`);
+    }
+  }
 }
