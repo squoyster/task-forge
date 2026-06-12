@@ -11,6 +11,7 @@ claimed_at: '2026-06-12 15:18:02'
 context_hash: 6cd5541d1cdfd05c
 spec_hash: ee506bc4b20a63a9
 branch: agent/TASK-224-implement-unhandled-state-closure-task-g--7c39bec944
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-224
 ---
 
 # TASK-224: Implement unhandled-state closure task generation
@@ -93,6 +94,9 @@ export function maybeAutoCreateClosureTask(
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-12T00:00:00Z System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-224
 
 ### 2026-06-12T00:00:00Z System
 - Task claimed via taskforge start TASK-224
