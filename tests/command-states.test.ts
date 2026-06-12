@@ -3,6 +3,7 @@ import {
   claimStateMachine,
   startStateMachine,
   gatesStateMachine,
+  unhandledError,
   ClaimStates,
   StartStates,
 } from "../src/core/command-states.js";
@@ -158,5 +159,19 @@ describe("gatesStateMachine — no done --force guidance", () => {
     expect(result.guidance).not.toMatch(/done --force/i);
     expect(result.guidance).toContain("Fix the issues");
     expect(result.guidance).toContain("request human input");
+  });
+});
+
+describe("unhandledError — closure task guidance", () => {
+  it("includes a safe taskforge new command in guidance", () => {
+    const result = unhandledError("start", "branch exists during start", {
+      branch: "agent/TASK-123",
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.errorCode).toBe("UNHANDLED_ERROR");
+    expect(result.guidance).toContain("taskforge new");
+    expect(result.guidance).toContain("Handle unclosed TaskForge error: branch exists during start");
+    expect(result.guidance).toContain("If the correct action cannot be cleanly inferred, request human input.");
   });
 });
