@@ -16,6 +16,8 @@
  *   - Unknown errors (create task, request human input)
  */
 
+import { createClosureTaskCommand } from "./closure-task.js";
+
 export type Safety = "safe" | "requires_human" | "doctor_only" | "blocked";
 
 export interface NextAction {
@@ -132,12 +134,18 @@ export function unhandledError(
   message: string,
   context?: Record<string, unknown>,
 ): CommandResult {
+  const closureCommand = createClosureTaskCommand("UNMAPPED_ERROR", message, {
+    command: state,
+    errorMessage: message,
+    observedState: context,
+  });
   return error(
     state,
     "UNHANDLED_ERROR",
     "create_task_for_error",
     `An unexpected error occurred: ${message}. ` +
     `Please create a new task to handle this case. ` +
+    `Suggested closure task command: ${closureCommand}. ` +
     `If the correct action cannot be cleanly inferred, request human input.`,
     context,
   );
