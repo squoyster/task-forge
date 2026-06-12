@@ -2,7 +2,7 @@
 id: TASK-297
 type: Bug
 status: Ready
-priority: P1
+priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
@@ -34,3 +34,6 @@ Observed while creating TASK-224 remediation tasks: `TASK-293`, `TASK-294`, `TAS
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-12T00:00:00Z System
+- Field(s) updated via taskforge update: priority
