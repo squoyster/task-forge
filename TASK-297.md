@@ -1,11 +1,15 @@
 ---
 id: TASK-297
 type: Bug
-status: Ready
+status: In Progress
 priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 0f439c05c4
+claimed_at: '2026-06-15 05:47:43'
+context_hash: c325879bc50725fa
+branch: agent/TASK-297-make-taskforge-new-atomic-and-recoverabl--0f439c05c4
 ---
 
 # TASK-297: Make taskforge new atomic and recoverable when task-state push fails
@@ -34,6 +38,11 @@ Observed while creating TASK-224 remediation tasks: `TASK-293`, `TASK-294`, `TAS
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-15T00:00:00Z System
+- Task claimed via taskforge start TASK-297
+- Session: 0f439c05c4
+- Branch: agent/TASK-297-make-taskforge-new-atomic-and-recoverabl--0f439c05c4
 
 ### 2026-06-12T00:00:00Z System
 - Field(s) updated via taskforge update: priority
