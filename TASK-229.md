@@ -11,6 +11,7 @@ claimed_at: '2026-06-15 19:33:13'
 context_hash: 86c2d0ddbd80d3ed
 spec_hash: 720e20b24cd14e8b
 branch: agent/TASK-229-record-worktree-path-in-task-state-durin--6bc4775335
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-229
 ---
 
 # TASK-229: Record worktree path in task-state during claim/start
@@ -39,6 +40,9 @@ Acceptance criteria should verify:
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-15T00:00:00Z System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-229
 
 ### 2026-06-15T00:00:00Z System
 - Task claimed via taskforge start TASK-229
