@@ -1,7 +1,7 @@
 ---
 id: TASK-297
 type: Bug
-status: In Progress
+status: Implementation Complete
 priority: P0
 agentRole: Implementer
 riskLevel: Low
@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: 0f439c05c4
 claimed_at: '2026-06-15 05:47:43'
 context_hash: c325879bc50725fa
+spec_hash: 1a64cf4c0c2cc56a
 branch: agent/TASK-297-make-taskforge-new-atomic-and-recoverabl--0f439c05c4
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-297
 ---
@@ -39,6 +40,13 @@ Observed while creating TASK-224 remediation tasks: `TASK-293`, `TASK-294`, `TAS
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-15T00:00:00Z System
+- Report generated — task moved to Implementation Complete
+- Changed files: dist/chunk-RYDMXDO2.js.map, src/commands/new.ts, src/commands/start.ts, src/commands/sync.ts, src/core/closure-task.ts, src/core/command-result.ts, src/core/command-states.ts, src/core/next-command-maps.ts, src/core/pending-publish.ts, src/core/result-builder.ts, src/core/result-renderer.ts, src/util/logging.ts, tests/closure-task.test.ts, tests/command-result.test.ts, tests/command-states.test.ts, tests/commands/new.test.ts, tests/pending-publish.test.ts
+- Commits: 189a26d TASK-297: Make taskforge new atomic and recoverable when task-state push fails
+- AC section: present
+- AC has unchecked items
 
 ### 2026-06-15T00:00:00Z System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-297
