@@ -281,6 +281,25 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
     }
   }
 
+  // Persist worktree path to task-state (enables resume to find the worktree)
+  if (worktreePath) {
+    try {
+      await withTaskStateTransaction(
+        { command: `claim ${taskId} [workspace]`, maxRetries: 2 },
+        (tx) => {
+          const t = tx.loadTask(taskId);
+          if (t) {
+            t.worktree = worktreePath;
+            tx.updateTask(t);
+            tx.appendNote(taskId, "System", [`Worktree created: ${worktreePath}`]);
+          }
+        },
+      );
+    } catch {
+      // Non-fatal: worktree exists and is usable even if recording fails
+    }
+  }
+
   // Write session state file for agent recovery across restarts
   if (worktreePath) {
     writeSessionState(worktreePath, {

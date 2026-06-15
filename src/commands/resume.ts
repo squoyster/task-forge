@@ -128,14 +128,30 @@ function recoverByDirtyWorktree(): RecoveryResult | null {
  */
 function autoDetectRecovery(taskId?: string): RecoveryResult | null {
   if (taskId) {
-    // Specific task requested — try session file first
+    const tasks = loadAllTasks();
+    const task = tasks.find((t) => t.id === taskId);
+
+    // 1. Task-state recorded worktree path (set by start or claim) — most reliable
+    if (task && task.worktree && fs.existsSync(task.worktree)) {
+      const byFile = recoverBySessionFile(task.worktree);
+      if (byFile) return byFile;
+      // Even without session file, the worktree path is valid
+      return {
+        taskId: task.id,
+        sessionId: "",
+        worktreePath: task.worktree,
+        branch: task.branch ?? "",
+        method: "dirty-worktree",
+        claimedAt: typeof task.claimed_at === "string" ? task.claimed_at : (task.claimed_at?.toISOString() ?? ""),
+      };
+    }
+
+    // 2. Computed path with session file (pre-start migration)
     const wtPath = getWorktreePath(getRepoRoot(), taskId);
     const byFile = recoverBySessionFile(wtPath);
     if (byFile) return byFile;
 
-    // Fallback to branch match for this specific task
-    const tasks = loadAllTasks();
-    const task = tasks.find((t) => t.id === taskId);
+    // 3. Branch session ID matching (no worktree path recorded yet)
     if (task && task.status === STATUS.IN_PROGRESS && task.branch) {
       const match = task.branch.match(/--([a-f0-9]{16})$/);
       if (match) {
@@ -150,15 +166,16 @@ function autoDetectRecovery(taskId?: string): RecoveryResult | null {
       }
     }
 
-    // Fallback to dirty worktree
-    if (task && task.worktree && fs.existsSync(task.worktree)) {
+    // 4. Fallback: computed path exists as a dirty worktree
+    const computedPath = getWorktreePath(getRepoRoot(), taskId);
+    if (fs.existsSync(computedPath)) {
       return {
-        taskId: task.id,
+        taskId,
         sessionId: "",
-        worktreePath: task.worktree,
-        branch: task.branch ?? "",
+        worktreePath: computedPath,
+        branch: task?.branch ?? "",
         method: "dirty-worktree",
-        claimedAt: typeof task.claimed_at === "string" ? task.claimed_at : (task.claimed_at?.toISOString() ?? ""),
+        claimedAt: typeof task?.claimed_at === "string" ? task.claimed_at : (task?.claimed_at?.toISOString() ?? ""),
       };
     }
 
