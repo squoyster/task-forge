@@ -1,7 +1,7 @@
 ---
 id: TASK-228
 type: Bug
-status: Review
+status: Merge Ready
 priority: P1
 agentRole: Implementer
 riskLevel: Low
