@@ -1,7 +1,7 @@
 ---
 id: TASK-293
 type: Bug
-status: Merge Ready
+status: Verify
 priority: P0
 agentRole: Implementer
 riskLevel: Low
