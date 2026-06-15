@@ -3,6 +3,7 @@ import { setRepoRoot } from "../src/util/paths.js";
 
 vi.mock("../src/core/task-store.js", () => ({
   loadTaskById: vi.fn(),
+  writeTaskFile: vi.fn(),
 }));
 
 vi.mock("../src/core/session.js", () => ({
@@ -38,12 +39,21 @@ vi.mock("../src/util/logging.js", () => ({
   logError: vi.fn(),
 }));
 
+vi.mock("../src/core/git.js", async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    getBranchCommitsBehind: vi.fn().mockResolvedValue(0),
+  };
+});
+
 import { cmdCheckpoint, cmdPr, cmdSubmit } from "../src/commands/git-facade.js";
 import { appendTaskTranscript } from "../src/core/audit.js";
 import { TaskForgeError } from "../src/core/errors.js";
 import { assertTaskOwnership } from "../src/core/session.js";
 import { loadTaskById } from "../src/core/task-store.js";
 import { run } from "../src/util/exec.js";
+import { getBranchCommitsBehind } from "../src/core/git.js";
 
 const task = {
   id: "TASK-285",
@@ -132,14 +142,16 @@ describe("git facade commands", () => {
   it("returns success when branch push occurs and branch is mergeable", async () => {
     vi.mocked(loadTaskById).mockReturnValue(task);
     vi.mocked(assertTaskOwnership).mockResolvedValue(undefined);
+    vi.mocked(getBranchCommitsBehind).mockResolvedValue(0);
     vi.mocked(run)
-      .mockResolvedValueOnce({ stdout: "", stderr: "", exitCode: 0 })
-      .mockResolvedValueOnce({ stdout: "deadbeef\n", stderr: "", exitCode: 0 })
+      .mockResolvedValueOnce({ stdout: "", stderr: "", exitCode: 0 })   // fetch
+      .mockResolvedValueOnce({ stdout: "deadbeef\n", stderr: "", exitCode: 0 })  // merge-tree
       .mockResolvedValueOnce({
         stdout: "  refs/heads/agent/TASK-285-test:refs/heads/agent/TASK-285-test abc123..def456\n",
         stderr: "",
         exitCode: 0,
-      });
+      })  // push
+      .mockResolvedValueOnce({ stdout: "abc123def\n", stderr: "", exitCode: 0 });  // rev-parse HEAD
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
     await cmdSubmit("TASK-285", true);
@@ -154,7 +166,52 @@ describe("git facade commands", () => {
     logSpy.mockRestore();
   });
 
-  it("returns failed when mergeability preflight cannot be verified", async () => {
+  it("returns failed when merge-tree check fails", async () => {
+    vi.mocked(loadTaskById).mockReturnValue(task);
+    vi.mocked(assertTaskOwnership).mockResolvedValue(undefined);
+    vi.mocked(run)
+      .mockResolvedValueOnce({ stdout: "", stderr: "", exitCode: 0 })   // fetch succeeds
+      .mockResolvedValueOnce({
+        stdout: "",
+        stderr: "fatal: Not a valid object name: origin/main",
+        exitCode: 128,
+      });  // merge-tree fails
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    await cmdSubmit("TASK-285", true);
+
+    const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
+    expect(output.ok).toBe(false);
+    expect(output.code).toBe("MERGEABILITY_CHECK_FAILED");
+    expect(output.error).toContain("Could not verify whether");
+    expect(output.error).toContain("Not a valid object name");
+
+    logSpy.mockRestore();
+  });
+
+  it("returns failed with BRANCH_BEHIND when branch is behind integration branch", async () => {
+    vi.mocked(loadTaskById).mockReturnValue(task);
+    vi.mocked(assertTaskOwnership).mockResolvedValue(undefined);
+    vi.mocked(getBranchCommitsBehind).mockResolvedValue(3);
+    vi.mocked(run)
+      .mockResolvedValueOnce({ stdout: "", stderr: "", exitCode: 0 });  // fetch
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    await cmdSubmit("TASK-285", true);
+
+    const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
+    expect(output.ok).toBe(false);
+    expect(output.status).toBe("failed");
+    expect(output.code).toBe("BRANCH_BEHIND");
+    expect(output.error).toContain("3 commit(s) behind origin/main");
+    expect(output.error).toContain("rebase");
+    expect(run).toHaveBeenCalledTimes(1);
+    expect(appendTaskTranscript).not.toHaveBeenCalled();
+
+    logSpy.mockRestore();
+  });
+
+  it("returns failed with FETCH_FAILED when initial fetch fails", async () => {
     vi.mocked(loadTaskById).mockReturnValue(task);
     vi.mocked(assertTaskOwnership).mockResolvedValue(undefined);
     vi.mocked(run).mockResolvedValueOnce({
@@ -168,9 +225,9 @@ describe("git facade commands", () => {
 
     const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
     expect(output.ok).toBe(false);
-    expect(output.code).toBe("MERGEABILITY_CHECK_FAILED");
-    expect(output.error).toContain("Could not verify whether");
-    expect(output.error).toContain("fatal: could not read from remote repository");
+    expect(output.code).toBe("FETCH_FAILED");
+    expect(output.error).toContain("Could not fetch origin/main");
+    expect(run).toHaveBeenCalledTimes(1);
 
     logSpy.mockRestore();
   });

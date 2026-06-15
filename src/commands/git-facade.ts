@@ -1,5 +1,5 @@
 import { getRepoRoot } from "../util/paths.js";
-import { loadTaskById } from "../core/task-store.js";
+import { loadTaskById, writeTaskFile } from "../core/task-store.js";
 import { assertTaskOwnership } from "../core/session.js";
 import { run } from "../util/exec.js";
 import { createTaskEvent, appendTaskTranscript } from "../core/audit.js";
@@ -13,6 +13,7 @@ import { writeResult } from "../util/write-command-result.js";
 import { successResult, noopResult, failedResult } from "../core/result-builder.js";
 import { checkpointStateMachine, submitStateMachine } from "../core/command-states.js";
 import { getDefaultGuidanceAdapter } from "../core/guidance-adapter.js";
+import { getBranchCommitsBehind } from "../core/git.js";
 
 function requireTask(taskId: string): Task {
   const task = loadTaskById(taskId);
@@ -35,22 +36,15 @@ function summarizeMergeConflict(output: string): string | undefined {
   return lines.find((line) => /conflict|CONFLICT|add\/add|modify\/delete/i.test(line)) ?? lines[0];
 }
 
-async function checkMergeabilityAgainstMain(
+async function checkMergeabilityAgainst(
   repoRoot: string,
   worktree: string,
+  integrationBranch: string,
 ): Promise<MergeabilityResult> {
-  const fetchResult = await run("git", ["-C", worktree, "fetch", "origin", "main"], repoRoot);
-  if (fetchResult.exitCode !== 0) {
-    return {
-      ok: false,
-      mergeable: false,
-      detail: fetchResult.stderr.trim() || fetchResult.stdout.trim() || "git fetch origin main failed",
-    };
-  }
-
+  // Note: origin/<integrationBranch> must already be fetched by the caller.
   const mergeTreeResult = await run(
     "git",
-    ["-C", worktree, "merge-tree", "--write-tree", "--messages", "HEAD", "origin/main"],
+    ["-C", worktree, "merge-tree", "--write-tree", "--messages", "HEAD", `origin/${integrationBranch}`],
     repoRoot,
   );
 
@@ -59,6 +53,14 @@ async function checkMergeabilityAgainstMain(
     .join("\n");
 
   if (mergeTreeResult.exitCode !== 0) {
+    // exit code 1 = conflict; exit code > 1 = tool error
+    if (mergeTreeResult.exitCode > 1) {
+      return {
+        ok: false,
+        mergeable: false,
+        detail: summarizeMergeConflict(mergeOutput),
+      };
+    }
     return {
       ok: true,
       mergeable: false,
@@ -313,6 +315,7 @@ export async function cmdSubmit(taskId: string, json = false): Promise<void> {
   }
 
   const config = loadConfig(repoRoot);
+  const integrationBranch = config.project?.defaultBranch ?? "main";
   const githubConfigured = !!(config.github?.enabled && config.github.owner && config.github.repo);
 
   try {
@@ -329,10 +332,89 @@ export async function cmdSubmit(taskId: string, json = false): Promise<void> {
     throw error instanceof TaskForgeError ? error : new Error(result.guidance);
   }
 
-  const mergeability = await checkMergeabilityAgainstMain(repoRoot, task.worktree);
+  // ── Pre-push validation: fetch integration branch ──────────────
+  const fetchResult = await run(
+    "git",
+    ["-C", task.worktree, "fetch", "origin", integrationBranch],
+    repoRoot,
+  );
+  if (fetchResult.exitCode !== 0) {
+    const guidance =
+      `Could not fetch origin/${integrationBranch} from ${task.worktree}. ` +
+      `Resolve the repository state and retry submit.`;
+    logError(guidance);
+    writeResult(failedResult({
+      command: "submit",
+      taskId,
+      branch: task.branch,
+      worktree: task.worktree,
+      error: guidance,
+      code: "FETCH_FAILED",
+    }), json);
+    return;
+  }
+
+  // ── Pre-push validation: check if branch is behind ─────────────
+  const behindCount = await getBranchCommitsBehind(repoRoot, task.branch, integrationBranch);
+  if (behindCount > 0) {
+    const result = submitStateMachine({
+      prCreated: false,
+      githubConfigured,
+      taskId,
+      branchBehind: true,
+      behindCount,
+      integrationBranch,
+    });
+    getDefaultGuidanceAdapter().pushGuidance(result);
+    logError(result.guidance);
+    writeResult(failedResult({
+      command: "submit",
+      taskId,
+      branch: task.branch,
+      worktree: task.worktree,
+      error: result.guidance,
+      code: "BRANCH_BEHIND",
+    }), json);
+    return;
+  }
+
+  // ── Pre-push validation: check for unrelated commits ──────────
+  // This check uses base_sha recorded by TASK-259's branch provenance.
+  // If base_sha is not yet recorded, the check is skipped gracefully.
+  const taskFrontmatter = task as unknown as Record<string, unknown>;
+  const baseSha = taskFrontmatter.base_sha as string | undefined;
+  if (baseSha) {
+    const mergeBaseResult = await run(
+      "git",
+      ["-C", task.worktree, "merge-base", "--is-ancestor", baseSha, "HEAD"],
+      repoRoot,
+    );
+    if (mergeBaseResult.exitCode !== 0) {
+      const result = submitStateMachine({
+        prCreated: false,
+        githubConfigured,
+        taskId,
+        unrelatedCommits: true,
+      });
+      getDefaultGuidanceAdapter().pushGuidance(result);
+      logError(result.guidance);
+      writeResult(failedResult({
+        command: "submit",
+        taskId,
+        branch: task.branch,
+        worktree: task.worktree,
+        error: result.guidance,
+        code: "UNRELATED_COMMITS",
+      }), json);
+      return;
+    }
+  }
+
+  // ── Pre-push validation: mergeability check ────────────────────
+  const mergeability = await checkMergeabilityAgainst(repoRoot, task.worktree, integrationBranch);
   if (!mergeability.ok) {
     const guidance =
-      `Could not verify whether ${task.branch} merges cleanly with origin/main. ` +
+      `Could not verify whether ${task.branch} merges cleanly with origin/${integrationBranch}. ` +
       `Resolve the repository state and retry submit. ${mergeability.detail ?? ""}`.trim();
     logError(guidance);
     writeResult(failedResult({
@@ -349,8 +431,8 @@ export async function cmdSubmit(taskId: string, json = false): Promise<void> {
   if (!mergeability.mergeable) {
     const detail = mergeability.detail ? ` Conflict detail: ${mergeability.detail}` : "";
     const guidance =
-      `Branch ${task.branch} does not merge cleanly with origin/main. ` +
-      `Rebase or merge main into the task branch, resolve conflicts, checkpoint, and submit again.${detail}`;
+      `Branch ${task.branch} does not merge cleanly with origin/${integrationBranch}. ` +
+      `Rebase or merge ${integrationBranch} into the task branch, resolve conflicts, checkpoint, and submit again.${detail}`;
     logError(guidance);
     writeResult(failedResult({
       command: "submit",
@@ -363,6 +445,7 @@ export async function cmdSubmit(taskId: string, json = false): Promise<void> {
     return;
   }
 
+  // ── Push ───────────────────────────────────────────────────────
   const pushResult = await run(
     "git",
     ["-C", task.worktree, "push", "--porcelain", "origin", task.branch],
@@ -380,7 +463,7 @@ export async function cmdSubmit(taskId: string, json = false): Promise<void> {
 
   if (isPushNoop(pushOutput)) {
     const guidance =
-      `Branch ${task.branch} is already submitted and merges cleanly with origin/main. ` +
+      `Branch ${task.branch} is already submitted and merges cleanly with origin/${integrationBranch}. ` +
       `No changes to submit for ${taskId}.`;
     logInfo(guidance);
     writeResult(noopResult({
@@ -394,9 +477,93 @@ export async function cmdSubmit(taskId: string, json = false): Promise<void> {
     return;
   }
 
+  // ── Record submitted SHA ────────────────────────────────────────
+  const headShaResult = await run(
+    "git",
+    ["-C", task.worktree, "rev-parse", "HEAD"],
+    repoRoot,
+  );
+  const headSha = headShaResult.stdout.trim();
+  if (headSha) {
+    const updatedTask = loadTaskById(taskId);
+    if (updatedTask) {
+      updatedTask.submitted_sha = headSha;
+      updatedTask.submitted_at = new Date().toISOString();
+      writeTaskFile(updatedTask);
+    }
+  }
+
+  // ── Auto-create PR if GitHub configured ────────────────────────
+  if (githubConfigured) {
+    const title = `[${taskId}] ${taskId}`;
+    const body = `Task: ${taskId}\n\nAuto-generated by TaskForge.`;
+
+    try {
+      const githubConfig: GitHubConfig = {
+        owner: config.github!.owner!,
+        repo: config.github!.repo!,
+        token: process.env.GITHUB_TOKEN,
+      };
+      const pr = await createPullRequest(githubConfig, title, task.branch, integrationBranch, body);
+
+      const result = submitStateMachine({
+        prCreated: true,
+        prNumber: pr.number,
+        prUrl: pr.url,
+        githubConfigured: true,
+        taskId,
+      });
+      getDefaultGuidanceAdapter().pushGuidance(result);
+      logSuccess(result.guidance);
+
+      writeResult(successResult({
+        command: "submit",
+        taskId,
+        branch: task.branch,
+        worktree: task.worktree,
+        guidance: result.guidance,
+      }), json);
+
+      appendTaskTranscript(repoRoot, taskId, createTaskEvent(taskId, "git.push", {
+        summary: `Pushed branch ${task.branch} and created PR #${pr.number}`,
+        metadata: { integrationBranch, prNumber: pr.number, prUrl: pr.url, submittedSha: headSha },
+      }));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+
+      const result = submitStateMachine({
+        prCreated: false,
+        githubConfigured: true,
+        taskId,
+        prCreationFailed: true,
+        integrationBranch,
+        errorMessage: message,
+      });
+      getDefaultGuidanceAdapter().pushGuidance(result);
+      logWarn(result.guidance);
+
+      writeResult(failedResult({
+        command: "submit",
+        taskId,
+        branch: task.branch,
+        worktree: task.worktree,
+        error: result.guidance,
+        code: "PR_CREATION_FAILED",
+      }), json);
+
+      appendTaskTranscript(repoRoot, taskId, createTaskEvent(taskId, "github.pr.failed", {
+        summary: `Branch pushed but PR creation failed: ${message}`,
+        metadata: { integrationBranch, submittedSha: headSha },
+      }));
+    }
+    return;
+  }
+
+  // ── No GitHub configured — success with manual PR instructions ──
   const guidance =
     `Pushed branch ${task.branch} to origin. ` +
-    `Branch merges cleanly with origin/main. Run 'taskforge pr ${taskId}' to create or update a pull request.`;
+    `Branch merges cleanly with origin/${integrationBranch}. ` +
+    `Create a PR manually: gh pr create --title "[${taskId}] ${taskId}" --head ${task.branch} --base ${integrationBranch}`;
   logSuccess(guidance);
 
   writeResult(successResult({
@@ -409,7 +576,7 @@ export async function cmdSubmit(taskId: string, json = false): Promise<void> {
 
   appendTaskTranscript(repoRoot, taskId, createTaskEvent(taskId, "git.push", {
     summary: `Pushed branch ${task.branch}`,
-    metadata: { mergeableAgainst: "origin/main", pushOutput },
+    metadata: { integrationBranch, submittedSha: headSha },
   }));
 }
 
@@ -441,6 +608,7 @@ export async function cmdPr(taskId: string, json = false): Promise<void> {
     throw new Error(result.guidance);
   }
 
+  const integrationBranch = config.project?.defaultBranch ?? "main";
   const title = `[${taskId}] ${taskId}`;
   const body = `Task: ${taskId}\n\nAuto-generated by TaskForge.`;
 
@@ -453,7 +621,7 @@ export async function cmdPr(taskId: string, json = false): Promise<void> {
         repo: config.github.repo,
         token: process.env.GITHUB_TOKEN,
       };
-      const pr = await createPullRequest(githubConfig, title, task.branch, "main", body);
+      const pr = await createPullRequest(githubConfig, title, task.branch, integrationBranch, body);
 
       const result = submitStateMachine({
         prCreated: true,
@@ -505,8 +673,8 @@ export async function cmdPr(taskId: string, json = false): Promise<void> {
 
     logWarn(result.guidance);
     logInfo("To create a PR manually:");
-    logInfo(`  gh pr create --title "${title}" --head ${task.branch} --base main --body "${body}"`);
-    logInfo(`  Or visit: https://github.com/<owner>/<repo>/compare/main...${task.branch}`);
+    logInfo(`  gh pr create --title "${title}" --head ${task.branch} --base ${integrationBranch} --body "${body}"`);
+    logInfo(`  Or visit: https://github.com/<owner>/<repo>/compare/${integrationBranch}...${task.branch}`);
 
     writeResult(successResult({
       command: "pr",
