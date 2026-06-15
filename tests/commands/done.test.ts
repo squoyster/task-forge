@@ -5,9 +5,25 @@ import os from "node:os";
 import { cmdDone } from "../../src/commands/done.js";
 import { setRepoRoot } from "../../src/util/paths.js";
 
+const { mockRunGates, mockResolveAuthority, mockAssertCanForce } = vi.hoisted(() => ({
+  mockRunGates: vi.fn(),
+  mockResolveAuthority: vi.fn(),
+  mockAssertCanForce: vi.fn(),
+}));
+
 vi.mock("../../src/commands/gates.js", () => ({
   cmdGates: vi.fn().mockResolvedValue(true),
-  runGates: vi.fn().mockResolvedValue({ passed: true, results: [] }),
+  runGates: mockRunGates,
+}));
+
+vi.mock("../../src/core/authority.js", () => ({
+  resolveAuthority: mockResolveAuthority,
+  assertCanForce: mockAssertCanForce,
+  ForceRequiresHumanOrDoctorError: class ForceRequiresHumanOrDoctorError extends Error {
+    code = "FORCE_REQUIRES_HUMAN_OR_DOCTOR";
+    exitCode = 1;
+    constructor(msg?: string) { super(msg ?? "Normal agents may not use --force."); }
+  },
 }));
 
 vi.mock("../../src/core/git.js", () => ({
@@ -39,9 +55,15 @@ beforeEach(() => {
   stateDir = path.resolve(repoDir, "..", "task-state");
   fs.mkdirSync(stateDir, { recursive: true });
   setRepoRoot(repoDir);
+  mockRunGates.mockResolvedValue({ passed: true, results: [] });
+  mockResolveAuthority.mockReturnValue("human");
+  mockAssertCanForce.mockImplementation((authority: string) => {
+    if (authority === "agent") throw new Error("Normal agents may not use --force.");
+  });
 });
 
 afterEach(() => {
+  vi.clearAllMocks();
   fs.rmSync(uniqueDir, { recursive: true, force: true });
 });
 
@@ -96,5 +118,63 @@ describe("cmdDone", () => {
 
     const content = fs.readFileSync(fp, "utf-8");
     expect(content).toContain("Task marked Done");
+  });
+
+  describe("--force", () => {
+    it("bypasses gate failures with human authority and records override", async () => {
+      const fp = makeTaskFile("TASK-001");
+      mockResolveAuthority.mockReturnValue("human");
+      mockRunGates.mockResolvedValue({ passed: false, results: [
+        { name: "typecheck", passed: false, command: "tsc --noEmit", duration: 100 },
+        { name: "lint", passed: true, command: "eslint .", duration: 50 },
+      ]});
+
+      await cmdDone("TASK-001", { force: true });
+
+      const content = fs.readFileSync(fp, "utf-8");
+      expect(content).toContain("Done");
+      expect(content).toContain("override_reason");
+      expect(content).toContain("override_actor: human");
+      expect(content).toContain("override_failed_gates");
+      expect(content).toContain("typecheck");
+      expect(content).toMatch(/Force override by human/);
+    });
+
+    it("bypasses gate failures with doctor authority and records override", async () => {
+      const fp = makeTaskFile("TASK-001");
+      mockResolveAuthority.mockReturnValue("doctor");
+      mockRunGates.mockResolvedValue({ passed: false, results: [
+        { name: "test", passed: false, command: "npm test", duration: 200 },
+      ]});
+
+      await cmdDone("TASK-001", { force: true });
+
+      const content = fs.readFileSync(fp, "utf-8");
+      expect(content).toContain("Done");
+      expect(content).toContain("override_actor: doctor");
+      expect(content).toMatch(/Force override by doctor/);
+    });
+
+    it("rejects --force for agent authority when gates fail", async () => {
+      makeTaskFile("TASK-001");
+      mockResolveAuthority.mockReturnValue("agent");
+      mockRunGates.mockResolvedValue({ passed: false, results: [
+        { name: "lint", passed: false, command: "eslint .", duration: 50 },
+      ]});
+
+      await expect(cmdDone("TASK-001", { force: true })).rejects.toThrow(/--force/);
+    });
+
+    it("works normally when --force is used and gates already pass", async () => {
+      const fp = makeTaskFile("TASK-001");
+      mockRunGates.mockResolvedValue({ passed: true, results: [] });
+
+      await cmdDone("TASK-001", { force: true });
+
+      const content = fs.readFileSync(fp, "utf-8");
+      expect(content).toContain("Done");
+      // No override metadata recorded since gates passed
+      expect(content).not.toContain("override_reason");
+    });
   });
 });

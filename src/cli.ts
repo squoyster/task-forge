@@ -141,11 +141,13 @@ program
   .description("Mark a task as done")
   .option("--cleanup", "Remove worktree after marking done")
   .option("--delete-branch", "Delete the task branch after marking done (implies --cleanup)")
+  .option("--force", "Bypass gate checks (human/doctor only)")
   .option("--json", "Output in JSON format")
-  .action((taskId: string, opts: { cleanup?: boolean; deleteBranch?: boolean; json?: boolean }) => {
+  .action((taskId: string, opts: { cleanup?: boolean; deleteBranch?: boolean; force?: boolean; json?: boolean }) => {
     const doneOpts: DoneOptions = {
       cleanup: opts.cleanup ?? false,
       deleteBranch: opts.deleteBranch ?? false,
+      force: opts.force ?? false,
       json: opts.json ?? false,
     };
     if (doneOpts.deleteBranch && !doneOpts.cleanup) doneOpts.cleanup = true;
