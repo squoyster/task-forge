@@ -1,7 +1,7 @@
 ---
 id: TASK-228
 type: Bug
-status: In Progress
+status: Implementation Complete
 priority: P1
 agentRole: Implementer
 riskLevel: Low
@@ -59,6 +59,13 @@ Discovered during exploration for control-plane closure spec. `done.ts:65` and `
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-15T00:00:00Z System
+- Report generated — task moved to Implementation Complete
+- Changed files: src/cli.ts, src/commands/done.ts, src/core/command-states.ts, tests/commands/done.test.ts
+- Commits: 0d10cf0 TASK-228: Register done --force in CLI and implement gate bypass with authority check
+- AC section: present
+- AC has unchecked items
 
 ### 2026-06-15T00:00:00Z System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-228
