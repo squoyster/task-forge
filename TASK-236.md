@@ -1,7 +1,7 @@
 ---
 id: TASK-236
 type: Task
-status: In Progress
+status: Implementation Complete
 priority: P1
 agentRole: Implementer
 riskLevel: Low
@@ -56,6 +56,13 @@ Agents must never modify files on main. All edits happen in worktrees. When task
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-15T00:00:00Z System
+- Report generated — task moved to Implementation Complete
+- Changed files: AGENTS.md, package-lock.json, src/commands/git-facade.ts, src/commands/new.ts, src/commands/next.ts, src/commands/resume.ts, src/commands/start.ts, src/commands/sync.ts, src/core/closure-task.ts, src/core/command-result.ts, src/core/command-states.ts, src/core/git.ts, src/core/next-command-maps.ts, src/core/pending-publish.ts, src/core/result-builder.ts, src/core/result-renderer.ts, src/integrations/github/service.ts, src/util/logging.ts, tests/closure-task.test.ts, tests/command-result.test.ts, tests/command-states.test.ts, tests/commands/new.test.ts, tests/commands/next.test.ts, tests/git-facade.test.ts, tests/git.test.ts, tests/pending-publish.test.ts, tests/resume.test.ts
+- Commits: 9bb3041 TASK-236: Enforce worktree-only edits, auto-pull, pending PR blocking
+- AC section: present
+- AC has unchecked items
 
 ### 2026-06-15T00:00:00Z System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-236
