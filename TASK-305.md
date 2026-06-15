@@ -1,7 +1,7 @@
 ---
 id: TASK-305
 type: Feature
-status: Merge Ready
+status: Verify
 priority: P1
 agentRole: Implementer
 riskLevel: Low
