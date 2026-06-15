@@ -162,6 +162,33 @@ export interface PullRequestResult {
   url: string;
 }
 
+export async function findPullRequestByHead(
+  config: GitHubConfig,
+  head: string,
+): Promise<PullRequestResult | null> {
+  const octokit = config.token ? new Octokit({ auth: config.token }) : getOctokit();
+
+  try {
+    const response = await octokit.pulls.list({
+      owner: config.owner,
+      repo: config.repo,
+      head: `${config.owner}:${head}`,
+      state: "open",
+      per_page: 1,
+    });
+
+    if (response.data.length > 0) {
+      return {
+        number: response.data[0].number,
+        url: response.data[0].html_url,
+      };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export async function createPullRequest(
   config: GitHubConfig,
   title: string,

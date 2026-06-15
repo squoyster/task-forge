@@ -47,6 +47,7 @@ This repository is managed by TaskForge. All agents operating in this repository
 - All task-state changes must flow through TaskForge CLI commands
 - Do not edit `.opencode/**` or `.taskforge/**` unless role is doctor
 - Stop all normal operations when `.doctor-lock` exists
+- **Ensure `main` is up-to-date** before starting work: run `taskforge next` (which ensures main is synced) before picking up tasks. If working manually, ensure `git fetch origin main` has been run so the task branch is based on the latest main. The `git fetch origin main` step is performed automatically by `cmdSubmit` during its mergeability check.
 
 ### Doctor Mode Protocol
 
