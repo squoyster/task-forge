@@ -11,6 +11,7 @@ claimed_at: '2026-06-15 18:30:19'
 context_hash: 86c2d0ddbd80d3ed
 spec_hash: b10668fe7d0a9af3
 branch: agent/TASK-228-register-done-force-in-cli-and-implement--1ae14fe502
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-228
 ---
 
 # TASK-228: Register done --force in CLI and implement gate bypass with authority check
@@ -58,6 +59,9 @@ Discovered during exploration for control-plane closure spec. `done.ts:65` and `
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-15T00:00:00Z System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-228
 
 ### 2026-06-15T00:00:00Z System
 - Task claimed via taskforge start TASK-228
