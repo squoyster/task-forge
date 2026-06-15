@@ -884,7 +884,7 @@ export function newStateMachine(
       "request_human_input",
       `Task ${conditions.taskId} was created locally but failed to push to remote. ` +
       `The task may not be visible to other agents. ` +
-      `Run 'taskforge submit' or request human input to push the task-state branch.`,
+       `Run 'taskforge sync' to publish pending task-state changes, or request human input.`,
       { taskId: conditions.taskId, filePath: conditions.filePath },
     );
   }
