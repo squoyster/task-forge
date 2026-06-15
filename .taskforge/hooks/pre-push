@@ -27,9 +27,11 @@ while read -r local_ref local_sha remote_ref remote_sha; do
     exit 1
   fi
 
-  # Block force push
+  # Block force push — allow new branch creation and deletion
   if [[ "$local_sha" == "0000000000000000000000000000000000000000" ]]; then
-    :
+    :  # Deleting a branch
+  elif [[ "$remote_sha" == "0000000000000000000000000000000000000000" ]]; then
+    :  # Creating a new branch (remote doesn't have this ref yet)
   else
     base=$(git merge-base "$local_sha" "$remote_sha" 2>/dev/null || echo "")
     if [[ "$base" != "$remote_sha" ]]; then
