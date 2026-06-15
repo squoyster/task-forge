@@ -124,7 +124,10 @@ Skip by default: `session-ses_*.md`, `specs/session-ses_*.md`, `docs/archive/`, 
 ## TaskForge Managed Policy
 
 - **Never run git directly.** Use `taskforge start|done|checkpoint|submit` instead.
+- **Work only in the assigned worktree.** All file modifications must happen inside the task worktree directory (`../worktrees/<project>/TASK-NNN`). Never edit files in the main checkout.
 - **No direct edits** to `../task-state/*.md`, `tasks/*.md`, `.opencode/**`, `.taskforge/**` (doctor excepted).
+- **Keep your branch up to date.** Before starting or resuming work, ensure the worktree branch is not behind `origin/main`. Run `taskforge resume TASK-ID` which warns when behind, then pull/rebase as needed.
+- **Check for open PRs** before starting new work. Use `gh pr list --state open --json number,title` to check. If open agent/* PRs exist that haven't been approved, request human approval before continuing with auto-continuation.
 - **Stop all work** when `.doctor-lock` exists.
 - **Doctor protocol:** check → lock → fix → release via `taskforge done`. Minimize task-state edits; never force push.
 - **Allowed commands:** `taskforge next|start TASK-ID|heartbeat TASK-ID|inspect TASK-ID|diff TASK-ID|checkpoint TASK-ID --message "..."|submit TASK-ID|done TASK-ID|block TASK-ID "reason"|release TASK-ID|doctor --check`
