@@ -133,6 +133,48 @@ Skip by default: `session-ses_*.md`, `specs/session-ses_*.md`, `docs/archive/`, 
 - **Allowed commands:** `taskforge next|start TASK-ID|heartbeat TASK-ID|inspect TASK-ID|diff TASK-ID|checkpoint TASK-ID --message "..."|submit TASK-ID|done TASK-ID|block TASK-ID "reason"|release TASK-ID|doctor --check`
 <!-- TASKFORGE:END managed-agent-policy -->
 
+## Durable Agent Identity
+
+Agents MUST NOT rely on conversation memory, summaries, or prompt text as the source of truth for identity. Identity MUST be stored in durable project state and rehydrated into context before every model invocation.
+
+### Required IDs
+
+Use separate IDs for each entity type:
+
+- agentId: stable identity of the agent/runtime
+- sessionId: current conversational/model session
+- runId: one execution attempt
+- taskId: durable work item, when applicable
+- claimId: task ownership record, when applicable
+
+IDs MUST be typed. Prefer UUIDv7 or ULID.
+
+### Source of Truth
+
+The durable state file or database is authoritative. Prompt-visible identity is only a projection.
+
+Recommended project paths: .taskforge/agents/<agentId>.json, .taskforge/sessions/<sessionId>.json, .taskforge/runs/<runId>.json
+
+### Runtime Requirements
+
+Before every model invocation, the agent runtime MUST:
+1. Load identity from durable state.
+2. Validate repo, worktree, task, and claim scope.
+3. Inject identity into model context.
+4. Refuse identity-sensitive work if required identity is missing or inconsistent.
+
+### Write Requirements
+
+The agent MUST include agentId, sessionId, and runId in task claims, checkpoints, logs, summaries, handoff notes, and PR/submission metadata when available.
+
+### Regeneration Rule
+
+The agent MUST NOT regenerate agentId when durable state exists. A new agentId is allowed only when initializing a new agent identity or explicitly forking an existing one.
+
+### Subagents and Handoffs
+
+Subagents MUST receive their own agentId and inherit parent linkage explicitly. Handoff notes MUST include source and target identity fields.
+
 <!-- gitnexus:start -->
 ## GitNexus — Code Intelligence
 
