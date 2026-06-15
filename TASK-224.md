@@ -1,7 +1,7 @@
 ---
 id: TASK-224
 type: Feature
-status: Submitted
+status: Review
 priority: P1
 agentRole: Implementer
 riskLevel: Low
