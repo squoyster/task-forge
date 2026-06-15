@@ -11,6 +11,7 @@ claimed_at: '2026-06-15 20:24:22'
 context_hash: 86c2d0ddbd80d3ed
 spec_hash: 1048ed25ba7ee839
 branch: agent/TASK-305-add-durable-agent-identity-boilerplate-t--f31a56bbad
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-305
 ---
 
 # TASK-305: Add Durable Agent Identity boilerplate to AGENTS.md
@@ -91,6 +92,9 @@ Large boilerplate addition to AGENTS.md may push the doc over recommended length
 Auto-continue unless a stopping condition occurs.
 
 ## Agent Notes
+
+### 2026-06-15T00:00:00Z System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-305
 
 ### 2026-06-15T00:00:00Z System
 - Task claimed via taskforge start TASK-305
