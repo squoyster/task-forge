@@ -1,7 +1,7 @@
 ---
 id: TASK-305
 type: Feature
-status: Done
+status: In Progress
 priority: P1
 agentRole: Implementer
 riskLevel: Low
