@@ -5,7 +5,7 @@ import { run } from "../util/exec.js";
 import { createTaskEvent, appendTaskTranscript } from "../core/audit.js";
 import { TaskForgeError, TaskNotFoundError } from "../core/errors.js";
 import { loadConfig } from "../core/config.js";
-import { createPullRequest } from "../integrations/github/service.js";
+import { createPullRequest, findPullRequestByHead } from "../integrations/github/service.js";
 import type { GitHubConfig } from "../integrations/github/types.js";
 import type { Task } from "../core/task.js";
 import { logInfo, logHeader, logSuccess, logWarn, logError } from "../util/logging.js";
@@ -71,6 +71,60 @@ async function checkMergeabilityAgainstMain(
 
 function isPushNoop(pushOutput: string): boolean {
   return /\[up to date\]/i.test(pushOutput) || /^=\s/m.test(pushOutput);
+}
+
+interface BranchAssessment {
+  remoteSha: string | null;
+  localHeadSha: string;
+  commitsAheadOfRemote: number;
+  state: "missing_remote" | "local_ahead" | "already_pushed";
+}
+
+/**
+ * Assess the publication state of a task branch by checking the remote
+ * without fetching. Uses `git ls-remote` (lightweight, no fetch needed)
+ * and `git rev-list --count` to determine whether the branch needs pushing,
+ * has unpushed commits, or is already up to date with the remote.
+ */
+async function assessBranchState(
+  repoRoot: string,
+  worktree: string,
+  branch: string,
+): Promise<BranchAssessment> {
+  const lsRemote = await run(
+    "git",
+    ["ls-remote", "origin", `refs/heads/${branch}`],
+    repoRoot,
+  );
+  const remoteSha = lsRemote.stdout.trim().split(/\s+/)[0] || null;
+
+  const revParse = await run(
+    "git",
+    ["-C", worktree, "rev-parse", "HEAD"],
+    repoRoot,
+  );
+  const localHeadSha = revParse.stdout.trim();
+
+  let commitsAheadOfRemote = 0;
+  if (remoteSha) {
+    const revList = await run(
+      "git",
+      ["-C", worktree, "rev-list", "--count", `${remoteSha}..HEAD`],
+      repoRoot,
+    );
+    commitsAheadOfRemote = parseInt(revList.stdout.trim(), 10) || 0;
+  }
+
+  let state: BranchAssessment["state"];
+  if (!remoteSha) {
+    state = "missing_remote";
+  } else if (commitsAheadOfRemote > 0) {
+    state = "local_ahead";
+  } else {
+    state = "already_pushed";
+  }
+
+  return { remoteSha, localHeadSha, commitsAheadOfRemote, state };
 }
 
 export async function cmdDiff(taskId: string, json = false): Promise<void> {
@@ -363,6 +417,130 @@ export async function cmdSubmit(taskId: string, json = false): Promise<void> {
     return;
   }
 
+  // ── Pre-push branch state assessment ──────────────────────────────────────
+  const assessment = await assessBranchState(repoRoot, task.worktree, task.branch);
+
+  // Build diagnostic messages about branch state
+  const diagParts: string[] = [];
+  if (!assessment.remoteSha) {
+    diagParts.push("Remote branch does not exist");
+  } else if (assessment.commitsAheadOfRemote > 0) {
+    diagParts.push(`Remote exists, local is ${assessment.commitsAheadOfRemote} commit(s) ahead`);
+  } else {
+    diagParts.push("Remote branch is up to date with local");
+  }
+  diagParts.push(`HEAD: ${assessment.localHeadSha.slice(0, 8)}`);
+
+  // ── Fast path: branch already up to date on remote ──────────────────────
+  if (assessment.state === "already_pushed") {
+    let prNumber: number | null = null;
+    if (githubConfigured) {
+      const ghConfig: GitHubConfig = {
+        owner: config.github!.owner as string,
+        repo: config.github!.repo as string,
+        token: process.env.GITHUB_TOKEN,
+      };
+      try {
+        const pr = await findPullRequestByHead(ghConfig, task.branch);
+        prNumber = pr?.number ?? null;
+        if (pr) {
+          diagParts.push(`PR #${pr.number} exists`);
+        } else {
+          diagParts.push("No open PR found");
+        }
+      } catch {
+        diagParts.push("PR lookup failed (API error)");
+      }
+    } else {
+      diagParts.push("GitHub not configured — cannot check PR status");
+    }
+
+    if (prNumber) {
+      // Truly clean: branch pushed + PR exists → nothing to do
+      const guidance =
+        `Branch ${task.branch} is fully submitted and merges cleanly with origin/main. ` +
+        `PR already exists. No changes to submit for ${taskId}.`;
+      logInfo(guidance);
+      writeResult(noopResult({
+        command: "submit",
+        taskId,
+        branch: task.branch,
+        worktree: task.worktree,
+        guidance,
+        reason: "Branch is already submitted with an open pull request.",
+        nextCommands: [
+          { command: `taskforge diff ${taskId}`, purpose: "Review the latest diff", when: "After confirming submission", allowedFor: "all", priority: 2 },
+          { command: `taskforge done ${taskId}`, purpose: "Complete the task", when: "After PR is reviewed and merged", allowedFor: "all", priority: 3 },
+        ],
+      }), json);
+      return;
+    }
+
+    // Branch pushed but no PR — create one (no push needed)
+    if (githubConfigured) {
+      const ghConfig: GitHubConfig = {
+        owner: config.github!.owner as string,
+        repo: config.github!.repo as string,
+        token: process.env.GITHUB_TOKEN,
+      };
+      try {
+        const title = `[${taskId}] ${taskId}`;
+        const body = `Task: ${taskId}\n\nAuto-generated by TaskForge.`;
+        const pr = await createPullRequest(ghConfig, title, task.branch, "main", body);
+        const prGuidance =
+          `Branch ${task.branch} was already on remote and merges cleanly with origin/main. ` +
+          `PR #${pr.number} created: ${pr.url}.`;
+        logSuccess(prGuidance);
+        writeResult(successResult({
+          command: "submit",
+          taskId,
+          branch: task.branch,
+          worktree: task.worktree,
+          guidance: prGuidance,
+        }), json);
+        appendTaskTranscript(repoRoot, taskId, createTaskEvent(taskId, "github.pr.created", {
+          summary: `Created PR #${pr.number}`,
+          metadata: { prNumber: pr.number, prUrl: pr.url },
+        }));
+        return;
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        const guidance =
+          `Branch ${task.branch} is on remote but PR creation failed: ${message}. ` +
+          `Run 'taskforge pr ${taskId}' to create the PR manually.`;
+        logWarn(guidance);
+        writeResult(noopResult({
+          command: "submit",
+          taskId,
+          branch: task.branch,
+          worktree: task.worktree,
+          guidance,
+          reason: "Branch pushed; PR creation failed.",
+          nextCommands: [
+            { command: `taskforge pr ${taskId}`, purpose: "Create pull request manually", when: "After submit indicates PR creation failed", allowedFor: "all", priority: 1 },
+          ],
+        }), json);
+        return;
+      }
+    }
+
+    // No GitHub config → tell user to create PR manually
+    const guidance =
+      `Branch ${task.branch} is on remote and merges cleanly with origin/main. ` +
+      `To create a pull request, run 'taskforge pr ${taskId}' or create one on GitHub manually.`;
+    logInfo(guidance);
+    writeResult(noopResult({
+      command: "submit",
+      taskId,
+      branch: task.branch,
+      worktree: task.worktree,
+      guidance,
+      reason: "Branch is already submitted. Create a PR manually.",
+    }), json);
+    return;
+  }
+
+  // ── Push needed (missing_remote or local_ahead) ──────────────────────────
   const pushResult = await run(
     "git",
     ["-C", task.worktree, "push", "--porcelain", "origin", task.branch],
@@ -379,9 +557,10 @@ export async function cmdSubmit(taskId: string, json = false): Promise<void> {
   }
 
   if (isPushNoop(pushOutput)) {
+    // Safety net: shouldn't normally fire after assessBranchState
     const guidance =
-      `Branch ${task.branch} is already submitted and merges cleanly with origin/main. ` +
-      `No changes to submit for ${taskId}.`;
+      `Branch ${task.branch} is on remote and merges cleanly with origin/main. ` +
+      `Run 'taskforge pr ${taskId}' to create a pull request.`;
     logInfo(guidance);
     writeResult(noopResult({
       command: "submit",
@@ -389,14 +568,37 @@ export async function cmdSubmit(taskId: string, json = false): Promise<void> {
       branch: task.branch,
       worktree: task.worktree,
       guidance,
-      reason: "Branch is already submitted and mergeable.",
+      reason: "Branch already on remote (noop push).",
     }), json);
     return;
   }
 
-  const guidance =
-    `Pushed branch ${task.branch} to origin. ` +
-    `Branch merges cleanly with origin/main. Run 'taskforge pr ${taskId}' to create or update a pull request.`;
+  // Push succeeded — create PR if GitHub is configured
+  let prGuidance = "";
+  if (githubConfigured) {
+    const ghConfig: GitHubConfig = {
+      owner: config.github!.owner as string,
+      repo: config.github!.repo as string,
+      token: process.env.GITHUB_TOKEN,
+    };
+    try {
+      const title = `[${taskId}] ${taskId}`;
+      const body = `Task: ${taskId}\n\nAuto-generated by TaskForge.`;
+      const pr = await createPullRequest(ghConfig, title, task.branch, "main", body);
+      prGuidance = ` PR #${pr.number} created: ${pr.url}.`;
+      appendTaskTranscript(repoRoot, taskId, createTaskEvent(taskId, "github.pr.created", {
+        summary: `Created PR #${pr.number}`,
+        metadata: { prNumber: pr.number, prUrl: pr.url },
+      }));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      prGuidance = ` PR creation failed: ${message}. Run 'taskforge pr ${taskId}' manually.`;
+    }
+  } else {
+    prGuidance = ` Run 'taskforge pr ${taskId}' to create a pull request.`;
+  }
+
+  const guidance = `Pushed branch ${task.branch} to origin. Branch merges cleanly with origin/main.${prGuidance}`;
   logSuccess(guidance);
 
   writeResult(successResult({
