@@ -1,7 +1,7 @@
 ---
 id: TASK-229
 type: Task
-status: In Progress
+status: Implementation Complete
 priority: P1
 agentRole: Implementer
 riskLevel: Low
@@ -40,6 +40,13 @@ Acceptance criteria should verify:
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-15T00:00:00Z System
+- Report generated — task moved to Implementation Complete
+- Changed files: AGENTS.md, dist/chunk-RYDMXDO2.js.map, package-lock.json, src/commands/claim.ts, src/commands/git-facade.ts, src/commands/new.ts, src/commands/resume.ts, src/commands/start.ts, src/commands/sync.ts, src/core/closure-task.ts, src/core/command-result.ts, src/core/command-states.ts, src/core/next-command-maps.ts, src/core/pending-publish.ts, src/core/result-builder.ts, src/core/result-renderer.ts, src/integrations/github/service.ts, src/util/logging.ts, tests/closure-task.test.ts, tests/command-result.test.ts, tests/command-states.test.ts, tests/commands/new.test.ts, tests/git-facade.test.ts, tests/pending-publish.test.ts
+- Commits: ba98efd TASK-229: Record worktree path in task-state for claim/resume recovery
+- AC section: present
+- AC has blank items
 
 ### 2026-06-15T00:00:00Z System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-229
