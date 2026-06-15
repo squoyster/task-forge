@@ -1,7 +1,7 @@
 ---
 id: TASK-297
 type: Bug
-status: Submitted
+status: Review
 priority: P0
 agentRole: Implementer
 riskLevel: Low
