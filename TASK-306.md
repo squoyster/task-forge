@@ -11,6 +11,7 @@ claimed_at: '2026-06-15 20:50:44'
 context_hash: 86c2d0ddbd80d3ed
 spec_hash: eb442cb0f8ba6b72
 branch: agent/TASK-306-add-branch-behind-validation-and-pr-auto--fc3f15e832
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-306
 ---
 
 # TASK-306: Add Branch-Behind Validation and PR Auto-Creation to `taskforge submit`
@@ -148,6 +149,9 @@ Auto-continue unless:
 - PR auto-creation fails after push — stop and request human input
 
 ## Agent Notes
+
+### 2026-06-15T00:00:00Z System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-306
 
 ### 2026-06-15T00:00:00Z System
 - Task claimed via taskforge start TASK-306
