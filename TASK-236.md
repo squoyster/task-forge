@@ -1,7 +1,7 @@
 ---
 id: TASK-236
 type: Task
-status: Submitted
+status: Review
 priority: P1
 agentRole: Implementer
 riskLevel: Low
