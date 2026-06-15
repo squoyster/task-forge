@@ -4,6 +4,7 @@ import { logHeader, logSub, logDivider, logWarn, logSuccess, logInfo } from "../
 import { TaskNotFoundError } from "../core/errors.js";
 import { writeResult } from "../util/write-command-result.js";
 import { successResult, failedResult } from "../core/result-builder.js";
+import { checkWorktreeBehindMain } from "../core/git.js";
 import fs from "node:fs";
 import path from "node:path";
 import { execSync } from "node:child_process";
@@ -275,4 +276,16 @@ export async function cmdResume(taskId?: string, options?: { json?: boolean }): 
   logSub(`6. Use 'taskforge done ${recovery.taskId}' when complete`);
   logDivider();
   logSuccess(`Ready to resume ${recovery.taskId}.`);
+
+  // Warn if worktree branch is behind origin/main
+  const branchToCheck = recovery.branch || task.branch || "";
+  if (branchToCheck && recovery.worktreePath) {
+    const behindStatus = await checkWorktreeBehindMain(repoRoot, recovery.worktreePath, branchToCheck);
+    if (behindStatus.behind) {
+      logWarn(
+        `\n⚠️  Worktree branch is ${behindStatus.count} commit(s) behind origin/main. ` +
+        `Run 'taskforge gates --json' then pull latest before continuing with new work.`
+      );
+    }
+  }
 }
