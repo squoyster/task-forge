@@ -1,7 +1,7 @@
 ---
 id: TASK-304
 type: Task
-status: Submitted
+status: Review
 priority: P2
 agentRole: Implementer
 riskLevel: Low
