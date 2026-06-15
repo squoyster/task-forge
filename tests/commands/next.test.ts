@@ -21,8 +21,20 @@ vi.mock("../../src/core/git.js", () => ({
   checkUncommittedWorktrees: vi.fn().mockResolvedValue([]),
 }));
 
+// Mock config to return harmless defaults
+vi.mock("../../src/core/config.js", () => ({
+  loadConfig: vi.fn().mockReturnValue({}),
+}));
+
+// Mock GitHub service to avoid API calls in tests
+vi.mock("../../src/integrations/github/service.js", () => ({
+  listPullRequests: vi.fn().mockResolvedValue([]),
+}));
+
 // Import after mocking
 import { sweepStaleTasks } from "../../src/core/sweeper.js";
+import { listPullRequests } from "../../src/integrations/github/service.js";
+import { loadConfig } from "../../src/core/config.js";
 
 let uniqueDir: string;
 let stateDir: string;
@@ -175,5 +187,34 @@ describe("cmdNext", () => {
     await cmdNext();
     expect(logSpy).toHaveBeenCalledWith(expect.stringContaining("TASK-002"));
     logSpy.mockRestore();
+  });
+
+  it("warns about open agent PRs when GitHub is configured", async () => {
+    makeTaskFile("TASK-001", { status: "Ready" });
+    vi.mocked(loadConfig).mockReturnValue({
+      github: { enabled: true, owner: "test", repo: "test", token: "ghp_test" },
+    } as any);
+    vi.mocked(listPullRequests).mockResolvedValue([
+      { number: 42, title: "Test PR", headRefName: "agent/TASK-100", body: "", draft: false, url: "" },
+    ]);
+
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    await cmdNext();
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("42"));
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("Test PR"));
+    warnSpy.mockRestore();
+  });
+
+  it("does not warn about open PRs when GitHub is not configured", async () => {
+    makeTaskFile("TASK-001", { status: "Ready" });
+    vi.mocked(loadConfig).mockReturnValue({});
+    vi.mocked(listPullRequests).mockResolvedValue([
+      { number: 99, title: "Hidden PR", headRefName: "agent/TASK-200", body: "", draft: false, url: "" },
+    ]);
+
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    await cmdNext();
+    expect(warnSpy).not.toHaveBeenCalledWith(expect.stringContaining("Hidden PR"));
+    warnSpy.mockRestore();
   });
 });

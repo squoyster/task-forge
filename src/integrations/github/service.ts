@@ -157,9 +157,75 @@ export async function getIssue(
   }
 }
 
+export interface PullRequestInfo {
+  number: number;
+  title: string;
+  headRefName: string;
+  body: string;
+  draft: boolean;
+  url: string;
+}
+
 export interface PullRequestResult {
   number: number;
   url: string;
+}
+
+export async function findPullRequestByHead(
+  config: GitHubConfig,
+  head: string,
+): Promise<PullRequestResult | null> {
+  const octokit = config.token ? new Octokit({ auth: config.token }) : getOctokit();
+
+  try {
+    const response = await octokit.pulls.list({
+      owner: config.owner,
+      repo: config.repo,
+      head: `${config.owner}:${head}`,
+      state: "open",
+      per_page: 1,
+    });
+
+    if (response.data.length > 0) {
+      return {
+        number: response.data[0].number,
+        url: response.data[0].html_url,
+      };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * List all open pull requests for the configured repo.
+ * Returns empty array on auth failure, network error, or if no config is set.
+ */
+export async function listPullRequests(
+  config?: GitHubConfig,
+): Promise<PullRequestInfo[]> {
+  const cfg = config || getConfig();
+  if (!cfg) return [];
+  const octokit = cfg.token ? new Octokit({ auth: cfg.token }) : getOctokit();
+  try {
+    const response = await octokit.pulls.list({
+      owner: cfg.owner,
+      repo: cfg.repo,
+      state: "open",
+      per_page: 100,
+    });
+    return response.data.map((pr) => ({
+      number: pr.number,
+      title: pr.title,
+      headRefName: pr.head.ref,
+      body: (pr.body ?? "").slice(0, 200),
+      draft: pr.draft ?? false,
+      url: pr.html_url,
+    }));
+  } catch {
+    return [];
+  }
 }
 
 export async function createPullRequest(

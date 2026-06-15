@@ -16,7 +16,31 @@
  *   - Unknown errors (create task, request human input)
  */
 
-export type NextAction =
+import { createClosureTaskCommand } from "./closure-task.js";
+
+export type Safety = "safe" | "requires_human" | "doctor_only" | "blocked";
+
+export interface NextAction {
+  command: string;
+  reason: string;
+  safety: Safety;
+  preferred: boolean;
+  stateTransition?: { from: string; to: string };
+}
+
+export interface CommandStateRule {
+  command: string;
+  allowedStatuses?: string[];
+  forbiddenStatuses?: string[];
+  requiresTask?: boolean;
+  requiresWorktree?: boolean;
+  requiresNoDoctorLock?: boolean;
+  forbidsAgentForce?: boolean;
+  nextActions: NextAction[];
+  errorActions: Record<string, NextAction[]>;
+}
+
+export type LegacyNextAction =
   | "start_task"
   | "create_worktree"
   | "work_on_task"
@@ -40,8 +64,10 @@ export interface CommandResult {
   ok: boolean;
   /** The state the operation ended in */
   state: string;
-  /** What the agent should do next */
-  nextAction: NextAction;
+  /** Legacy single action consumed by existing command handlers */
+  nextAction: LegacyNextAction;
+  /** Spec-shaped next actions for newer callers */
+  nextActions: NextAction[];
   /** Human-readable guidance for the next step */
   guidance: string;
   /** Machine-readable error code (only set when ok is false) */
@@ -50,16 +76,40 @@ export interface CommandResult {
   context?: Record<string, unknown>;
 }
 
+function legacyNextActionToSpecAction(nextAction: LegacyNextAction, context: Record<string, unknown> = {}): NextAction {
+  const taskId = typeof context.taskId === "string" ? context.taskId : "TASK-ID";
+  const actions: Record<LegacyNextAction, NextAction> = {
+    start_task: workAction(`taskforge start ${taskId}`, "Start the selected task.", true, { from: "Ready", to: "In Progress" }),
+    create_worktree: workAction(`taskforge start ${taskId}`, "Create or repair the task worktree.", true),
+    work_on_task: workAction(`taskforge checkpoint ${taskId} --message "Describe progress"`, "Continue implementation and checkpoint meaningful progress.", true),
+    commit_changes: workAction(`taskforge checkpoint ${taskId} --message "Describe progress"`, "Commit task changes.", true),
+    run_gates: workAction("taskforge gates --json", "Run verification gates.", true),
+    create_pr: workAction(`taskforge submit ${taskId}`, "Push the branch and create or update the PR.", true),
+    complete_task: workAction(`taskforge done ${taskId}`, "Complete the task after verification.", true, { from: "Verify", to: "Done" }),
+    block_task: workAction(`taskforge block ${taskId} "Blocked"`, "Record why the task cannot proceed.", true, { from: "In Progress", to: "Blocked" }),
+    release_task: workAction(`taskforge release ${taskId}`, "Release the task claim.", true, { from: "In Progress", to: "Ready" }),
+    resolve_dependency: workAction("taskforge next", "Work on the unmet dependency first.", true),
+    commit_then_next: workAction(`taskforge checkpoint ${taskId} --message "Save progress"`, "Commit current changes before selecting another task.", true),
+    complete_current_then_next: workAction(`taskforge done ${taskId}`, "Close the current task before selecting another task.", true),
+    create_task_for_error: closureTaskAction("unknown", "UNHANDLED_ERROR", context),
+    request_human_input: humanAction(`taskforge inspect ${taskId} --json`, "Request or gather human review before continuing.", true),
+    retry: workAction(`taskforge inspect ${taskId} --json`, "Inspect state and retry the command.", true),
+    wait: blockedAction("taskforge doctor --check", "Wait while doctor recovery is active.", true),
+    none: workAction("taskforge next", "No follow-up required beyond selecting the next task.", true),
+  };
+  return actions[nextAction];
+}
+
 /**
  * Build a success result with guidance for the next step.
  */
 export function success(
   state: string,
-  nextAction: NextAction,
+  nextAction: LegacyNextAction,
   guidance: string,
   context?: Record<string, unknown>,
 ): CommandResult {
-  return { ok: true, state, nextAction, guidance, context };
+  return { ok: true, state, nextAction, nextActions: [legacyNextActionToSpecAction(nextAction, context)], guidance, context };
 }
 
 /**
@@ -68,11 +118,11 @@ export function success(
 export function error(
   state: string,
   errorCode: string,
-  nextAction: NextAction,
+  nextAction: LegacyNextAction,
   guidance: string,
   context?: Record<string, unknown>,
 ): CommandResult {
-  return { ok: false, state, errorCode, nextAction, guidance, context };
+  return { ok: false, state, errorCode, nextAction, nextActions: [legacyNextActionToSpecAction(nextAction, context)], guidance, context };
 }
 
 /**
@@ -84,15 +134,602 @@ export function unhandledError(
   message: string,
   context?: Record<string, unknown>,
 ): CommandResult {
+  const closureCommand = createClosureTaskCommand("UNMAPPED_ERROR", message, {
+    command: state,
+    errorMessage: message,
+    observedState: context,
+  });
   return error(
     state,
     "UNHANDLED_ERROR",
     "create_task_for_error",
     `An unexpected error occurred: ${message}. ` +
     `Please create a new task to handle this case. ` +
+    `Suggested closure task command: ${closureCommand}. ` +
     `If the correct action cannot be cleanly inferred, request human input.`,
     context,
   );
+}
+
+function taskCommand(template: string, context: Record<string, unknown>): string {
+  const taskId = typeof context.taskId === "string" ? context.taskId : "TASK-ID";
+  return template.replaceAll("{taskId}", taskId);
+}
+
+function action(
+  command: string,
+  reason: string,
+  safety: Safety = "safe",
+  preferred = false,
+  stateTransition?: { from: string; to: string },
+): NextAction {
+  return { command, reason, safety, preferred, stateTransition };
+}
+
+function workAction(command: string, reason: string, preferred = false, stateTransition?: { from: string; to: string }): NextAction {
+  return action(command, reason, "safe", preferred, stateTransition);
+}
+
+function humanAction(command: string, reason: string, preferred = false): NextAction {
+  return action(command, reason, "requires_human", preferred);
+}
+
+function doctorAction(command: string, reason: string, preferred = false): NextAction {
+  return action(command, reason, "doctor_only", preferred);
+}
+
+function blockedAction(command: string, reason: string, preferred = false): NextAction {
+  return action(command, reason, "blocked", preferred);
+}
+
+function closureTaskAction(commandName: string, errorCode: string, context: Record<string, unknown>): NextAction {
+  const taskId = typeof context.taskId === "string" ? ` for ${context.taskId}` : "";
+  return humanAction(
+    `taskforge new "Investigate ${commandName} ${errorCode}${taskId}" --type Bug --priority P2`,
+    "Create a closure task for an unmapped command error before guessing recovery steps.",
+    true,
+  );
+}
+
+const commonErrorActions: Record<string, NextAction[]> = {
+  TASK_NOT_FOUND: [
+    humanAction("taskforge list --json", "Verify the task exists and the task-state branch is current.", true),
+  ],
+  DOCTOR_LOCKED: [
+    blockedAction("taskforge doctor --check", "Inspect doctor recovery state; normal agents must wait.", true),
+  ],
+  UNCOMMITTED_CHANGES: [
+    workAction("taskforge checkpoint {taskId} --message \"Save progress\"", "Commit the current task changes before continuing.", true),
+  ],
+  UNCOMMITTED_BLOCKED_TASK: [
+    workAction("taskforge checkpoint {taskId} --message \"WIP: save blocked progress\"", "Preserve blocked task work before selecting another task.", true),
+  ],
+  OUTSTANDING_TASK: [
+    workAction("taskforge done {taskId}", "Close the outstanding owned task before taking another one.", true),
+    workAction("taskforge release {taskId}", "Release the outstanding task if it cannot be completed now."),
+  ],
+  OWNERSHIP_MISMATCH: [
+    workAction("taskforge inspect {taskId} --json", "Inspect task ownership and workspace state.", true),
+    humanAction("taskforge block {taskId} \"Ownership mismatch\" --category unsafe_operation --blocked-by human", "Escalate ownership drift for review."),
+  ],
+  INVALID_STATUS: [
+    humanAction("taskforge inspect {taskId} --json", "Inspect the current task status before changing workflow state.", true),
+  ],
+  INVALID_TRANSITION: [
+    humanAction("taskforge inspect {taskId} --json", "Inspect the task status and choose an allowed transition.", true),
+  ],
+  PUSH_FAILED: [
+    workAction("taskforge inspect {taskId} --json", "Inspect branch and ownership state before retrying.", true),
+    workAction("taskforge submit {taskId}", "Retry the push after confirming the branch state."),
+  ],
+  PR_FAILED: [
+    humanAction("taskforge pr {taskId}", "Retry PR creation after credentials or remote state are repaired.", true),
+  ],
+  NO_CHANGES: [
+    workAction("taskforge diff {taskId}", "Review the task diff and continue implementation if needed.", true),
+  ],
+  FORCE_REQUIRES_AUTHORITY: [
+    doctorAction("taskforge doctor --check", "Force operations require doctor authority.", true),
+    humanAction("taskforge block {taskId} \"Force operation requires human approval\" --category unsafe_operation --blocked-by human", "Escalate force intent instead of bypassing safety."),
+  ],
+};
+
+function withCommonErrors(errorActions: Record<string, NextAction[]> = {}): Record<string, NextAction[]> {
+  return { ...commonErrorActions, ...errorActions };
+}
+
+function rule(config: CommandStateRule): CommandStateRule {
+  return config;
+}
+
+export const COMMAND_STATE_REGISTRY: Record<string, CommandStateRule> = {
+  init: rule({
+    command: "init",
+    requiresNoDoctorLock: false,
+    forbidsAgentForce: true,
+    nextActions: [
+      workAction("taskforge next", "Select the next available task after initialization.", true),
+      workAction("taskforge doctor --check", "Verify repository health after initialization."),
+    ],
+    errorActions: withCommonErrors({
+      FORCE_REQUIRES_AUTHORITY: [
+        doctorAction("taskforge init --force", "Repair initialization artifacts only under doctor authority.", true),
+      ],
+    }),
+  }),
+  next: rule({
+    command: "next",
+    requiresNoDoctorLock: true,
+    nextActions: [
+      workAction("taskforge start {taskId}", "Start the selected ready task.", true, { from: "Ready", to: "In Progress" }),
+    ],
+    errorActions: withCommonErrors({
+      NO_ACTIONABLE_TASKS: [
+        humanAction("taskforge list --json", "Review blocked, deferred, or underspecified tasks.", true),
+      ],
+    }),
+  }),
+  start: rule({
+    command: "start",
+    allowedStatuses: ["Ready", "In Progress"],
+    requiresTask: true,
+    requiresNoDoctorLock: true,
+    forbidsAgentForce: true,
+    nextActions: [
+      workAction("opencode", "Begin work in the created task worktree.", true, { from: "Ready", to: "In Progress" }),
+      workAction("taskforge checkpoint {taskId} --message \"Describe progress\"", "Save completed work after implementation."),
+    ],
+    errorActions: withCommonErrors({
+      ALREADY_ASSIGNED: [
+        workAction("taskforge resume {taskId}", "Resume the existing claimed workspace if it belongs to this task.", true),
+        humanAction("taskforge block {taskId} \"Task already assigned\" --category unsafe_operation --blocked-by human", "Escalate claim conflicts."),
+      ],
+      WORKTREE_FAILED: [
+        humanAction("taskforge doctor --check", "Diagnose worktree creation failure.", true),
+      ],
+    }),
+  }),
+  status: rule({
+    command: "status",
+    nextActions: [
+      workAction("taskforge next", "Choose the next actionable task.", true),
+    ],
+    errorActions: withCommonErrors(),
+  }),
+  summary: rule({
+    command: "summary",
+    nextActions: [
+      workAction("taskforge next", "Continue with the recommended task.", true),
+    ],
+    errorActions: withCommonErrors(),
+  }),
+  gates: rule({
+    command: "gates",
+    nextActions: [
+      workAction("taskforge submit {taskId}", "Submit after all gates pass.", true),
+    ],
+    errorActions: withCommonErrors({
+      GATE_FAILURE: [
+        workAction("taskforge diff {taskId}", "Inspect failing changes and repair them.", true),
+        humanAction("taskforge block {taskId} \"Gates failing\" --category test_failure --blocked-by agent", "Block if the gate failure cannot be resolved locally."),
+      ],
+    }),
+  }),
+  block: rule({
+    command: "block",
+    requiresTask: true,
+    nextActions: [
+      workAction("taskforge next", "Find another task after recording the blocker.", true, { from: "In Progress", to: "Blocked" }),
+    ],
+    errorActions: withCommonErrors(),
+  }),
+  done: rule({
+    command: "done",
+    allowedStatuses: ["Review", "Verify"],
+    requiresTask: true,
+    requiresWorktree: true,
+    nextActions: [
+      workAction("taskforge next", "Select the next task after terminal completion.", true, { from: "Verify", to: "Done" }),
+    ],
+    errorActions: withCommonErrors({
+      WORKTREE_DIRTY: [
+        workAction("taskforge checkpoint {taskId} --message \"Save completion work\"", "Commit remaining work before marking done.", true),
+      ],
+      BRANCH_UNPUSHED: [
+        workAction("taskforge submit {taskId}", "Push the task branch before marking done.", true),
+      ],
+      CONTROL_FILE_CHANGED: [
+        humanAction("taskforge inspect {taskId} --json", "Re-read updated control files and confirm compliance.", true),
+      ],
+      MISSING_ACCEPTANCE_CRITERIA: [
+        workAction("taskforge update {taskId} --field acceptanceCriteria --value \"...\"", "Add verifiable acceptance criteria before completion.", true),
+      ],
+      BLANK_ACCEPTANCE_CRITERIA: [
+        workAction("taskforge update {taskId} --field acceptanceCriteria --value \"...\"", "Replace blank acceptance criteria before completion.", true),
+      ],
+      UNCHECKED_ACCEPTANCE_CRITERIA: [
+        workAction("taskforge update {taskId} --field acceptanceCriteria --value \"...\"", "Check off verified acceptance criteria before completion.", true),
+      ],
+    }),
+  }),
+  sync: rule({
+    command: "sync",
+    nextActions: [
+      workAction("taskforge next", "Continue after external issue tracker sync.", true),
+    ],
+    errorActions: withCommonErrors(),
+  }),
+  list: rule({
+    command: "list",
+    nextActions: [
+      workAction("taskforge inspect {taskId} --json", "Inspect a selected task from the list.", true),
+    ],
+    errorActions: withCommonErrors(),
+  }),
+  promote: rule({
+    command: "promote",
+    requiresTask: true,
+    nextActions: [
+      workAction("taskforge promote {taskId}", "Advance to the next valid status when appropriate.", true),
+    ],
+    errorActions: withCommonErrors(),
+  }),
+  unlock: rule({
+    command: "unlock",
+    requiresTask: true,
+    forbidsAgentForce: true,
+    nextActions: [
+      humanAction("taskforge inspect {taskId} --json", "Inspect unlock result and task ownership.", true),
+    ],
+    errorActions: withCommonErrors({
+      FORCE_REQUIRES_AUTHORITY: [
+        doctorAction("taskforge unlock {taskId} --force", "Force unlock is doctor-only.", true),
+      ],
+    }),
+  }),
+  sweep: rule({
+    command: "sweep",
+    forbidsAgentForce: true,
+    nextActions: [
+      workAction("taskforge next", "Continue after stale task sweep.", true),
+    ],
+    errorActions: withCommonErrors({
+      FORCE_REQUIRES_AUTHORITY: [
+        doctorAction("taskforge sweep --force", "Force sweeping skips classification and is doctor-only.", true),
+      ],
+    }),
+  }),
+  heartbeat: rule({
+    command: "heartbeat",
+    requiresTask: true,
+    forbidsAgentForce: true,
+    nextActions: [
+      workAction("taskforge checkpoint {taskId} --message \"Describe progress\"", "Continue work and checkpoint meaningful progress.", true),
+    ],
+    errorActions: withCommonErrors({
+      FORCE_REQUIRES_AUTHORITY: [
+        doctorAction("taskforge heartbeat {taskId} --force", "Force heartbeat bypasses ownership and is doctor-only.", true),
+      ],
+    }),
+  }),
+  agents: rule({
+    command: "agents",
+    nextActions: [
+      workAction("taskforge next", "Continue task selection after reviewing agent state.", true),
+    ],
+    errorActions: withCommonErrors(),
+  }),
+  inspect: rule({
+    command: "inspect",
+    requiresTask: true,
+    nextActions: [
+      workAction("taskforge resume {taskId}", "Resume the inspected task workspace when work should continue.", true),
+      workAction("taskforge next", "Return to queue selection if no action is needed."),
+    ],
+    errorActions: withCommonErrors(),
+  }),
+  claim: rule({
+    command: "claim",
+    allowedStatuses: ["Ready", "In Progress"],
+    requiresTask: true,
+    requiresNoDoctorLock: true,
+    forbidsAgentForce: true,
+    nextActions: [
+      workAction("taskforge resume {taskId}", "Enter the claimed workspace if one exists.", true),
+    ],
+    errorActions: withCommonErrors({
+      ALREADY_CLAIMED: [
+        humanAction("taskforge inspect {taskId} --json", "Inspect ownership before resolving claim conflicts.", true),
+        humanAction("taskforge block {taskId} \"Already claimed\" --category unsafe_operation --blocked-by human", "Escalate claim conflicts."),
+      ],
+    }),
+  }),
+  report: rule({
+    command: "report",
+    requiresTask: true,
+    nextActions: [
+      workAction("taskforge promote {taskId} --to Submitted", "Submit after implementation report is accepted.", true, { from: "Implementation Complete", to: "Submitted" }),
+    ],
+    errorActions: withCommonErrors(),
+  }),
+  cleanup: rule({
+    command: "cleanup",
+    requiresTask: true,
+    forbidsAgentForce: true,
+    nextActions: [
+      workAction("taskforge next", "Continue after workspace cleanup.", true),
+    ],
+    errorActions: withCommonErrors({
+      FORCE_REQUIRES_AUTHORITY: [
+        doctorAction("taskforge cleanup {taskId} --force", "Force cleanup skips safety checks and is doctor-only.", true),
+      ],
+    }),
+  }),
+  new: rule({
+    command: "new",
+    nextActions: [
+      workAction("taskforge next", "Return to queue selection after task creation.", true),
+    ],
+    errorActions: withCommonErrors(),
+  }),
+  update: rule({
+    command: "update",
+    requiresTask: true,
+    nextActions: [
+      workAction("taskforge inspect {taskId} --json", "Inspect the updated task document.", true),
+      workAction("taskforge next", "Return to queue selection after task metadata updates."),
+    ],
+    errorActions: withCommonErrors({
+      PROTECTED_FIELD: [
+        humanAction("taskforge inspect {taskId} --json", "Protected fields are system-owned; inspect state before deciding on recovery.", true),
+      ],
+      SPEC_HASH_MISMATCH: [
+        workAction("taskforge inspect {taskId} --json", "Reload current task state before retrying the update.", true),
+      ],
+    }),
+  }),
+  prompt: rule({
+    command: "prompt",
+    requiresTask: true,
+    nextActions: [
+      workAction("opencode", "Use the prompt packet to continue task work.", true),
+    ],
+    errorActions: withCommonErrors(),
+  }),
+  resume: rule({
+    command: "resume",
+    requiresTask: true,
+    requiresWorktree: true,
+    nextActions: [
+      workAction("taskforge checkpoint {taskId} --message \"Describe progress\"", "Save progress after resuming work.", true),
+    ],
+    errorActions: withCommonErrors(),
+  }),
+  doctor: rule({
+    command: "doctor",
+    nextActions: [
+      workAction("taskforge next", "Continue normal workflow if doctor checks pass.", true),
+    ],
+    errorActions: withCommonErrors(),
+  }),
+  "config-validate": rule({
+    command: "config-validate",
+    nextActions: [
+      workAction("taskforge next", "Continue after config validation.", true),
+    ],
+    errorActions: withCommonErrors(),
+  }),
+  release: rule({
+    command: "release",
+    requiresTask: true,
+    nextActions: [
+      workAction("taskforge next", "Select another task after releasing the claim.", true, { from: "In Progress", to: "Ready" }),
+    ],
+    errorActions: withCommonErrors(),
+  }),
+  reject: rule({
+    command: "reject",
+    requiresTask: true,
+    nextActions: [
+      workAction("taskforge next", "Continue after terminal rejection.", true, { from: "Ready", to: "Rejected" }),
+    ],
+    errorActions: withCommonErrors(),
+  }),
+  "validate-state": rule({
+    command: "validate-state",
+    nextActions: [
+      workAction("taskforge next", "Continue if state validation passes.", true),
+      humanAction("taskforge doctor --check", "Diagnose state issues if validation fails."),
+    ],
+    errorActions: withCommonErrors(),
+  }),
+  audit: rule({
+    command: "audit",
+    requiresTask: true,
+    nextActions: [
+      workAction("taskforge inspect {taskId} --json", "Inspect task state after audit review.", true),
+    ],
+    errorActions: withCommonErrors(),
+  }),
+  transcript: rule({
+    command: "transcript",
+    requiresTask: true,
+    nextActions: [
+      workAction("taskforge inspect {taskId} --json", "Inspect task state after transcript review.", true),
+    ],
+    errorActions: withCommonErrors(),
+  }),
+  timeline: rule({
+    command: "timeline",
+    requiresTask: true,
+    nextActions: [
+      workAction("taskforge inspect {taskId} --json", "Inspect task state after timeline review.", true),
+    ],
+    errorActions: withCommonErrors(),
+  }),
+  "ac-check": rule({
+    command: "ac-check",
+    nextActions: [
+      workAction("taskforge update {taskId} --field acceptanceCriteria --value \"...\"", "Repair acceptance criteria when the scan reports issues.", true),
+    ],
+    errorActions: withCommonErrors(),
+  }),
+  diff: rule({
+    command: "diff",
+    requiresTask: true,
+    requiresWorktree: true,
+    nextActions: [
+      workAction("taskforge checkpoint {taskId} --message \"Describe progress\"", "Checkpoint reviewed changes.", true),
+    ],
+    errorActions: withCommonErrors(),
+  }),
+  checkpoint: rule({
+    command: "checkpoint",
+    requiresTask: true,
+    requiresWorktree: true,
+    nextActions: [
+      workAction("taskforge gates --json", "Run verification gates after checkpointing.", true),
+      workAction("taskforge submit {taskId}", "Submit when verification is complete."),
+    ],
+    errorActions: withCommonErrors({
+      CHECKPOINT_AUDIT_WRITE_FAILED: [
+        workAction("taskforge inspect {taskId} --json", "Inspect partial checkpoint state before continuing.", true),
+        humanAction("taskforge doctor --check", "Diagnose audit write failures."),
+      ],
+    }),
+  }),
+  submit: rule({
+    command: "submit",
+    requiresTask: true,
+    requiresWorktree: true,
+    nextActions: [
+      workAction("taskforge pr {taskId}", "Create or update the pull request after push.", true),
+      workAction("taskforge report {taskId} --complete", "Move implementation to verification after submission."),
+    ],
+    errorActions: withCommonErrors({
+      MERGE_CONFLICT: [
+        workAction("taskforge diff {taskId}", "Inspect conflicting changes before merging main.", true),
+        humanAction("taskforge block {taskId} \"Merge conflict\" --category merge_conflict --blocked-by agent", "Block if the merge conflict cannot be resolved locally."),
+      ],
+    }),
+  }),
+  pr: rule({
+    command: "pr",
+    requiresTask: true,
+    nextActions: [
+      workAction("taskforge report {taskId} --complete", "Advance task after PR creation.", true),
+    ],
+    errorActions: withCommonErrors({
+      PR_FAILED: [
+        humanAction("gh auth status", "Verify GitHub authentication before retrying PR creation.", true),
+      ],
+    }),
+  }),
+  mcp: rule({
+    command: "mcp",
+    nextActions: [
+      workAction("taskforge next", "Continue task workflow after MCP server use.", true),
+    ],
+    errorActions: withCommonErrors(),
+  }),
+  "guard status": rule({
+    command: "guard status",
+    nextActions: [
+      workAction("taskforge next", "Continue after checking guard status.", true),
+    ],
+    errorActions: withCommonErrors(),
+  }),
+  "guard override": rule({
+    command: "guard override",
+    requiresTask: true,
+    forbidsAgentForce: true,
+    nextActions: [
+      doctorAction("taskforge guard override {taskId} <command> <reason>", "Guard overrides are doctor-only recovery actions.", true),
+    ],
+    errorActions: withCommonErrors(),
+  }),
+  "deps scan": rule({
+    command: "deps scan",
+    nextActions: [
+      workAction("taskforge deps summary", "Summarize dependency findings after scan.", true),
+    ],
+    errorActions: withCommonErrors(),
+  }),
+  "deps audit": rule({
+    command: "deps audit",
+    nextActions: [
+      workAction("taskforge deps create-tasks", "Create dependency remediation tasks for actionable findings.", true),
+    ],
+    errorActions: withCommonErrors(),
+  }),
+  "deps outdated": rule({
+    command: "deps outdated",
+    nextActions: [
+      workAction("taskforge deps plan", "Plan safe dependency updates.", true),
+    ],
+    errorActions: withCommonErrors(),
+  }),
+  "deps deprecated": rule({
+    command: "deps deprecated",
+    nextActions: [
+      workAction("taskforge deps plan", "Plan replacements for deprecated dependencies.", true),
+    ],
+    errorActions: withCommonErrors(),
+  }),
+  "deps plan": rule({
+    command: "deps plan",
+    nextActions: [
+      workAction("taskforge deps create-tasks", "Create tasks from the remediation plan.", true),
+    ],
+    errorActions: withCommonErrors(),
+  }),
+  "deps create-tasks": rule({
+    command: "deps create-tasks",
+    nextActions: [
+      workAction("taskforge next", "Pick up created dependency remediation tasks.", true),
+    ],
+    errorActions: withCommonErrors(),
+  }),
+  "deps pr": rule({
+    command: "deps pr",
+    nextActions: [
+      workAction("taskforge deps summary", "Summarize dependency PR results.", true),
+    ],
+    errorActions: withCommonErrors(),
+  }),
+  "deps summary": rule({
+    command: "deps summary",
+    nextActions: [
+      workAction("taskforge next", "Continue workflow after reviewing dependency health.", true),
+    ],
+    errorActions: withCommonErrors(),
+  }),
+};
+
+export function getNextActions(commandName: string, context: Record<string, unknown> = {}): NextAction[] {
+  const rule = COMMAND_STATE_REGISTRY[commandName];
+  if (!rule) {
+    return [closureTaskAction(commandName, "UNKNOWN_COMMAND", context)];
+  }
+  return rule.nextActions.map((next) => ({
+    ...next,
+    command: taskCommand(next.command, context),
+  }));
+}
+
+export function getErrorGuidance(commandName: string, errorCode: string, context: Record<string, unknown> = {}): NextAction[] {
+  const rule = COMMAND_STATE_REGISTRY[commandName];
+  if (!rule) {
+    return [closureTaskAction(commandName, errorCode, context)];
+  }
+  const actions = rule.errorActions[errorCode] ?? rule.errorActions.UNHANDLED_ERROR;
+  if (!actions) {
+    return [closureTaskAction(commandName, errorCode, context)];
+  }
+  return actions.map((next) => ({
+    ...next,
+    command: taskCommand(next.command, context),
+  }));
 }
 
 // ── Task Selection States (next command) ──────────────────────────
@@ -772,6 +1409,7 @@ export function doneStateMachine(
   conditions: {
     validTransition: boolean;
     gatesPassed: boolean;
+    forceRejected?: boolean;
     ownershipMatch: boolean;
     controlFileHashMatch: boolean;
     hasAcSection: boolean;
@@ -793,6 +1431,19 @@ export function doneStateMachine(
       `Cannot transition from "${conditions.currentStatus}" to "Done". ` +
       `Request human input to correct the task status.`,
       { taskId: conditions.taskId, status: conditions.currentStatus },
+    );
+  }
+
+  if (!conditions.gatesPassed && conditions.forceRejected) {
+    return error(
+      DoneStates.GATES_FAILED,
+      "FORCE_REJECTED",
+      "work_on_task",
+      `Verification gates failed and --force is not available for agent authority. ` +
+      `Fix the gate failures and re-run 'taskforge gates', ` +
+      `then try 'taskforge done ${conditions.taskId}' again. ` +
+      `Alternatively, block for human review: taskforge block ${conditions.taskId} "Gates failed; requires human review" --blocked-by human.`,
+      { taskId: conditions.taskId },
     );
   }
 
@@ -941,7 +1592,7 @@ export function newStateMachine(
       "request_human_input",
       `Task ${conditions.taskId} was created locally but failed to push to remote. ` +
       `The task may not be visible to other agents. ` +
-      `Run 'taskforge submit' or request human input to push the task-state branch.`,
+       `Run 'taskforge sync' to publish pending task-state changes, or request human input.`,
       { taskId: conditions.taskId, filePath: conditions.filePath },
     );
   }
