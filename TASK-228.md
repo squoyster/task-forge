@@ -1,7 +1,7 @@
 ---
 id: TASK-228
 type: Bug
-status: Implementation Complete
+status: Submitted
 priority: P1
 agentRole: Implementer
 riskLevel: Low
