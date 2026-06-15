@@ -10,6 +10,7 @@ assignee: 0f439c05c4
 claimed_at: '2026-06-15 05:47:43'
 context_hash: c325879bc50725fa
 branch: agent/TASK-297-make-taskforge-new-atomic-and-recoverabl--0f439c05c4
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-297
 ---
 
 # TASK-297: Make taskforge new atomic and recoverable when task-state push fails
@@ -38,6 +39,9 @@ Observed while creating TASK-224 remediation tasks: `TASK-293`, `TASK-294`, `TAS
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-15T00:00:00Z System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-297
 
 ### 2026-06-15T00:00:00Z System
 - Task claimed via taskforge start TASK-297
