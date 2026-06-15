@@ -20,7 +20,7 @@ vi.mock("../src/core/task-store.js", () => ({
 
 import { cmdResume } from "../src/commands/resume.js";
 import { checkWorktreeBehindMain } from "../src/core/git.js";
-import { loadTaskById } from "../src/core/task-store.js";
+import { loadTaskById, loadAllTasks } from "../src/core/task-store.js";
 import { readSessionState } from "../src/core/session-state.js";
 
 // Re-assignable refs set up fresh per test
@@ -44,8 +44,11 @@ beforeEach(() => {
   fs.mkdirSync(stateDir, { recursive: true });
   setRepoRoot(repoDir);
   vi.clearAllMocks();
-  // Set default mock return value for session-state after clearAllMocks.
-  // IMPORTANT: recoverBySessionFile uses snake_case keys from session state
+  // Set default mock return values after clearAllMocks.
+  // loadAllTasks must return an array so autoDetectRecovery's .find() works
+  vi.mocked(loadAllTasks).mockReturnValue([validMockTask(worktreePath)]);
+  vi.mocked(loadTaskById).mockReturnValue(validMockTask(worktreePath));
+  // readSessionState uses snake_case keys (from session state format)
   vi.mocked(readSessionState).mockReturnValue({
     task_id: "TASK-001",
     session_id: "ses_test123",
