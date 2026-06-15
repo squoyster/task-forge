@@ -6,6 +6,7 @@ priority: P2
 agentRole: Planner
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: 05dae1124e424d0c
 ---
 
 # TASK-303: Document doctor-mode and forbidden raw-command boundaries

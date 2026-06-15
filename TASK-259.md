@@ -6,6 +6,7 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: c080af5e5dced1dc
 ---
 
 # TASK-259: PREVENT NESTED WORKTREES AND CROSS-TASK BRANCH ANCESTRY

@@ -6,6 +6,7 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: 4dd39581a04a9b3a
 ---
 
 # TASK-263: ADD SCOPE-CONFORMANCE VALIDATION BEFORE SUBMISSION

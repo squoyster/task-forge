@@ -6,6 +6,7 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: 211ade2d7b9fdf15
 ---
 # Link Agent Framework Integration Documentation from README and TASKFORGE
 

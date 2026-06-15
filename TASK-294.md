@@ -6,6 +6,7 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: 809208ff5d8be20d
 ---
 
 # TASK-294: Make taskforge pr authenticate predictably or fall back to gh

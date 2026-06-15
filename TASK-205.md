@@ -6,6 +6,7 @@ priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: 59d722779a7aea53
 ---
 
 # TASK-205: Fix taskforge new silent push failure and add uncommitted-worktree detection with actionable guidance

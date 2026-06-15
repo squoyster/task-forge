@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: d925e59984f58cea
+spec_hash: c272802ca3d10a4a
 override_reason: 'AC satisfied: JSON output implemented and tested'
 override_actor: unknown
 override_timestamp: '2026-05-25T00:38:44.329Z'

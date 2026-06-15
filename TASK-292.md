@@ -6,6 +6,7 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: 4db1a7cd358d9c86
 ---
 # TASK-292: Refuse task start when local main is behind origin/main
 ## Goal

@@ -6,6 +6,7 @@ priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: b4a09d89beaf5d3f
 branch: agent/TASK-007-force-init-flag
 worktree: ../worktrees/TASK-007
 ---

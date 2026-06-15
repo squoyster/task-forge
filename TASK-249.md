@@ -6,6 +6,7 @@ priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: 66c7ced9d2b2cc9e
 ---
 
 # TASK-249: Install dependencies and build CLI in task worktrees during claim/start

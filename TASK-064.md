@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: 6eb8f67de42c153d
+spec_hash: c0ee1c5b87f6125a
 ---
 
 # TASK-064: Generate OpenCode project configuration

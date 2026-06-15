@@ -6,6 +6,7 @@ priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: b639206f265b6a09
 ---
 # Add AC Linter for Task Files
 

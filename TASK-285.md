@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: 32511141ee
 claimed_at: '2026-06-11 11:06:00'
 context_hash: 24c64b5cba799406
+spec_hash: bbabd2f1fea8e17f
 branch: agent/TASK-285-add-mergeability-preflight-to-submit-aga--32511141ee
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-285
 ---

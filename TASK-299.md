@@ -6,6 +6,7 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: 734b281ec6b0b1e5
 ---
 
 # TASK-299: Add taskforge state publish recovery command

@@ -1,11 +1,16 @@
 ---
 id: TASK-228
 type: Bug
-status: Ready
+status: In Progress
 priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 1ae14fe502
+claimed_at: '2026-06-15 18:30:19'
+context_hash: 86c2d0ddbd80d3ed
+spec_hash: b10668fe7d0a9af3
+branch: agent/TASK-228-register-done-force-in-cli-and-implement--1ae14fe502
 ---
 
 # TASK-228: Register done --force in CLI and implement gate bypass with authority check
@@ -53,3 +58,8 @@ Discovered during exploration for control-plane closure spec. `done.ts:65` and `
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-15T00:00:00Z System
+- Task claimed via taskforge start TASK-228
+- Session: 1ae14fe502
+- Branch: agent/TASK-228-register-done-force-in-cli-and-implement--1ae14fe502

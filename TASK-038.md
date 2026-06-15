@@ -6,6 +6,7 @@ priority: P2
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
+spec_hash: 622423136d07ad35
 ---
 
 # TASK-038: Harden `doctor` — Integrate Inspect and Add Consistency Validation

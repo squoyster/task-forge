@@ -6,6 +6,7 @@ priority: P1
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
+spec_hash: 8a71568968e0e576
 ---
 
 # TASK-034: Proactive Git Pull Before Reading Task-State

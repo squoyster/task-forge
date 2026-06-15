@@ -6,6 +6,7 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: 87c76b3df2634d68
 ---
 
 # TASK-298: Fix taskforge new body/template section duplication

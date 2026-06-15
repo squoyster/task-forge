@@ -9,6 +9,7 @@ humanInterventionRequired: false
 dependsOn:
   - TASK-135
 context_hash: e318700d2a0c3978
+spec_hash: 08f8dd7ae55bc88a
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-137
 ---
 # Reject Done Transition When AC Items Are Unchecked

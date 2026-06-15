@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: f97a6e176df669e8
+spec_hash: 0ba2de33e065effc
 ---
 
 # TASK-217: Wire command state machines into all lifecycle commands with guidance adapter interface

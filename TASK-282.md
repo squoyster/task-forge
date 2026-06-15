@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: 37059d1b67
 claimed_at: '2026-06-11 12:14:19'
 context_hash: 6cd5541d1cdfd05c
+spec_hash: fbef85ccf95d5fca
 branch: agent/TASK-282-fix-symlinked-taskforge-launcher-path-re--37059d1b67
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-282
 ---

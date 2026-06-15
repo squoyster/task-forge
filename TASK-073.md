@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: 6eb8f67de42c153d
+spec_hash: ded0666a9d6370e5
 ---
 
 # TASK-073: Remove conflicting direct-git guidance for normal agents

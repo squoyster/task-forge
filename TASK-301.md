@@ -6,6 +6,7 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: d929c238abb4db0e
 ---
 
 # TASK-301: Convert closure-task guidance to structured next actions

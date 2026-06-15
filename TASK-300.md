@@ -6,6 +6,7 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: 4f4ce29fe2858127
 ---
 
 # TASK-300: Fix closure-task auto-create gating

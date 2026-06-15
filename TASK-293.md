@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: c325879bc50725fa
+spec_hash: b51d089beab54e60
 branch: agent/TASK-293-fix-submit-no-op-when-task-branch-is-ahe--2f2abaf446
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-293
 ---

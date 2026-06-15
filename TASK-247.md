@@ -6,6 +6,7 @@ priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: 10588b79a3b171ea
 branch: agent/TASK-247-update-agentic-descriptions-and-docs--42a0aaaa59
 ---
 

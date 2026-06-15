@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: 162808a4e2
 claimed_at: '2026-06-11 12:29:02'
 context_hash: 6cd5541d1cdfd05c
+spec_hash: 5571d11e576257bd
 branch: agent/TASK-279-handle-gate-dirtied-worktrees-in-done-co--162808a4e2
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-279
 ---

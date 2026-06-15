@@ -6,6 +6,7 @@ priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: afe2add685450561
 ---
 
 # TASK-302: Add Codex-style workflow failure regression fixture

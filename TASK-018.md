@@ -6,6 +6,7 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: d084cd7980ad1059
 ---
 
 # TASK-018: Add `gates` Command

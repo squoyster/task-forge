@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: 0cd53b090047347c
+spec_hash: 4dac9eab80075e12
 ---
 
 # TASK-056: Add reject command for obsolete/wont-implement tasks

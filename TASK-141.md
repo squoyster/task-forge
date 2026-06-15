@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
 context_hash: 3a03a0322eb9729c
+spec_hash: 5ee4abd851187035
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-141
 override_reason: >-
   AC satisfied: type, build, and new tests pass; pre-existing failures from

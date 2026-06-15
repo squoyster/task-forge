@@ -6,6 +6,7 @@ priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: c2873cdd72b50b39
 ---
 
 # TASK-188: Fix taskforge new to use transactional push with proper error handling

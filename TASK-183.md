@@ -6,6 +6,7 @@ priority: P3
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: 826a7ad193f1f120
 ---
 
 # TASK-183: Enhance timeline command with actionable audit detail

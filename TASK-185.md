@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 context_hash: 031dad131e20d5a4
+spec_hash: 4199570bff1b780d
 branch: agent/TASK-185-bump-version-from-010-to-020--7f84346400
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-185
 ---

@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: 7c39bec944
 claimed_at: '2026-06-12 15:18:02'
 context_hash: 6cd5541d1cdfd05c
+spec_hash: dec4b80faa9b56f3
 branch: agent/TASK-224-implement-unhandled-state-closure-task-g--7c39bec944
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-224
 ---

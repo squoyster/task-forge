@@ -6,6 +6,7 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: 1a414e2dc74cd9fe
 ---
 
 # TASK-296: Report PR mergeability after creation and return repair actions

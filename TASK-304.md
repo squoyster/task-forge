@@ -9,6 +9,7 @@ humanInterventionRequired: false
 assignee: 00702984b9
 claimed_at: '2026-06-15 05:00:04'
 context_hash: c325879bc50725fa
+spec_hash: 06118f738221c62f
 branch: agent/TASK-304-compact-root-agentsmd-non-dox-sections--00702984b9
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-304
 ---
