@@ -1352,6 +1352,7 @@ export function doneStateMachine(
   conditions: {
     validTransition: boolean;
     gatesPassed: boolean;
+    forceRejected?: boolean;
     ownershipMatch: boolean;
     controlFileHashMatch: boolean;
     hasAcSection: boolean;
@@ -1373,6 +1374,19 @@ export function doneStateMachine(
       `Cannot transition from "${conditions.currentStatus}" to "Done". ` +
       `Request human input to correct the task status.`,
       { taskId: conditions.taskId, status: conditions.currentStatus },
+    );
+  }
+
+  if (!conditions.gatesPassed && conditions.forceRejected) {
+    return error(
+      DoneStates.GATES_FAILED,
+      "FORCE_REJECTED",
+      "work_on_task",
+      `Verification gates failed and --force is not available for agent authority. ` +
+      `Fix the gate failures and re-run 'taskforge gates', ` +
+      `then try 'taskforge done ${conditions.taskId}' again. ` +
+      `Alternatively, block for human review: taskforge block ${conditions.taskId} "Gates failed; requires human review" --blocked-by human.`,
+      { taskId: conditions.taskId },
     );
   }
 

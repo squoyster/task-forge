@@ -21,11 +21,13 @@ import { checkCompletionEligibility } from "../core/completion-policy.js";
 import { GitHubPullRequestVerifier } from "../core/pr-verifier.js";
 import { loadConfig } from "../core/config.js";
 import { buildTerminalAuditNotes } from "../core/terminal-audit.js";
+import { resolveAuthority, assertCanForce, ForceRequiresHumanOrDoctorError } from "../core/authority.js";
 import type { ParsedTask } from "../core/task-store.js";
 
 export interface DoneOptions {
   cleanup?: boolean;
   deleteBranch?: boolean;
+  force?: boolean;
   json?: boolean;
 }
 
@@ -64,7 +66,7 @@ export async function cmdDone(
   taskId: string,
   options: DoneOptions = {},
 ): Promise<void> {
-  const { cleanup = false, deleteBranch = false, json = false } = options;
+  const { cleanup = false, deleteBranch = false, force = false, json = false } = options;
   const repoRoot = getRepoRoot();
   const task = loadTaskById(taskId);
   const dirtyFilesBeforeGates = task?.worktree
@@ -113,25 +115,81 @@ export async function cmdDone(
     }
   }
   if (!gatesPassed) {
-    const result = doneStateMachine({
-      validTransition: true,
-      gatesPassed: false,
-      ownershipMatch: true,
-      worktreeClean: true,
-      branchPushed: true,
-      controlFileHashMatch: true,
-      hasAcSection: true,
-      hasBlankAc: false,
-      hasUncheckedAc: false,
-      taskId,
-      currentStatus: task.status,
-    });
-    getDefaultGuidanceAdapter().pushGuidance(result);
-    if (json) {
-      writeResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "GATES_FAILED" }), json);
-      return;
+    if (force) {
+      const authority = resolveAuthority();
+      try {
+        assertCanForce(authority);
+      } catch {
+        // Force rejected — agent authority attempting --force
+        const result = doneStateMachine({
+          validTransition: true,
+          gatesPassed: false,
+          forceRejected: true,
+          ownershipMatch: true,
+          worktreeClean: true,
+          branchPushed: true,
+          controlFileHashMatch: true,
+          hasAcSection: true,
+          hasBlankAc: false,
+          hasUncheckedAc: false,
+          taskId,
+          currentStatus: task.status,
+        });
+        getDefaultGuidanceAdapter().pushGuidance(result);
+        if (json) {
+          writeResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "FORCE_REJECTED" }), json);
+          return;
+        }
+        throw new ForceRequiresHumanOrDoctorError();
+      }
+
+      // Force override by human/doctor — bypass gate check
+      if (!json) {
+        logWarn(`Force override by ${authority}. Bypassing gate check for ${taskId}.`);
+        logInfo("Recording override in task frontmatter.");
+      }
+
+      // Record override metadata in task frontmatter
+      const parsed = parseTaskFile(task.filePath);
+      if (parsed) {
+        const failedGates = gateResults.filter((r) => !r.passed).map((r) => r.name);
+        parsed.override_reason = `Manual force override by ${authority}. Gate check bypassed.`;
+        parsed.override_actor = authority;
+        parsed.override_timestamp = new Date().toISOString();
+        parsed.override_failed_gates = failedGates;
+        writeTaskFile(parsed);
+      }
+
+      // Append agent note about the override
+      const today = new Date().toISOString().split("T")[0];
+      appendAgentNote(task.filePath, today, "System", [
+        `Force override by ${authority}: gates bypassed.`,
+        `Failed gates: ${gateResults.filter((r) => !r.passed).map((r) => r.name).join(", ")}`,
+      ]);
+
+      // Continue with remaining checks (skip gate failure error)
+    } else {
+      // No --force flag — show gate failure guidance
+      const result = doneStateMachine({
+        validTransition: true,
+        gatesPassed: false,
+        ownershipMatch: true,
+        worktreeClean: true,
+        branchPushed: true,
+        controlFileHashMatch: true,
+        hasAcSection: true,
+        hasBlankAc: false,
+        hasUncheckedAc: false,
+        taskId,
+        currentStatus: task.status,
+      });
+      getDefaultGuidanceAdapter().pushGuidance(result);
+      if (json) {
+        writeResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "GATES_FAILED" }), json);
+        return;
+      }
+      throw new Error(result.guidance);
     }
-    throw new Error(result.guidance);
   }
 
   // --- Status transition ---
