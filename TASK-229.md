@@ -1,7 +1,7 @@
 ---
 id: TASK-229
 type: Task
-status: Merge Ready
+status: Verify
 priority: P1
 agentRole: Implementer
 riskLevel: Low
