@@ -121,6 +121,12 @@ export function writeTaskFile(
     override_failed_gates: task.override_failed_gates,
     issue: task.issue,
     pr: task.pr,
+    submitted_sha: task.submitted_sha,
+    submitted_at: task.submitted_at,
+    pr_merged: task.pr_merged,
+    pr_head_sha: task.pr_head_sha,
+    pr_base_branch: task.pr_base_branch,
+    code_task: task.code_task,
   };
 
   // Remove undefined values — gray-matter can't serialize them

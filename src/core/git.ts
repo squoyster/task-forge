@@ -119,7 +119,7 @@ export async function getBranchCommitsAhead(repoRoot: string, branch: string): P
 }
 
 /**
- * Check how many commits the working directory is behind its remote tracking branch.
+ * Check how many commits the working tree branch is behind its remote tracking branch.
  * The inverse of getBranchCommitsAhead — counts commits in origin/branch not in local branch.
  * Returns 0 if up to date or if remote tracking branch doesn't exist.
  */
@@ -127,6 +127,33 @@ export async function getBranchCommitsBehind(repoRoot: string, branch: string): 
   try {
     const remoteBranch = `origin/${branch.replace(/^refs\/heads\//, "")}`;
     const result = await execa("git", ["rev-list", "--count", `refs/heads/${branch}..${remoteBranch}`], { cwd: repoRoot });
+    return parseInt(result.stdout.trim(), 10) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * Check how many commits the integration branch has that the given branch does not.
+ * Returns 0 if the branch is up to date with origin/<integrationBranch> or if the
+ * remote tracking branch doesn't exist.
+ *
+ * @param repoRoot - Root of the git repository.
+ * @param branch - The task branch name.
+ * @param integrationBranch - The integration branch name (e.g. "main").
+ */
+export async function getBranchCommitsBehindIntegration(
+  repoRoot: string,
+  branch: string,
+  integrationBranch: string,
+): Promise<number> {
+  try {
+    const cleanBranch = branch.replace(/^refs\/heads\//, "");
+    const result = await execa(
+      "git",
+      ["rev-list", "--count", `${cleanBranch}..origin/${integrationBranch}`],
+      { cwd: repoRoot },
+    );
     return parseInt(result.stdout.trim(), 10) || 0;
   } catch {
     return 0;

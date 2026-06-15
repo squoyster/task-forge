@@ -1283,6 +1283,9 @@ export const SubmitStates = {
   PR_FAILED: "pr_failed",
   PR_MANUAL: "pr_manual",
   NO_CHANGES: "no_changes",
+  BRANCH_BEHIND: "branch_behind",
+  UNRELATED_COMMITS: "unrelated_commits",
+  PR_CREATION_FAILED: "pr_creation_failed",
 } as const;
 
 export function submitStateMachine(
@@ -1293,8 +1296,62 @@ export function submitStateMachine(
     githubConfigured: boolean;
     errorMessage?: string;
     taskId?: string;
+    /** Branch is behind the integration branch; warn and stop */
+    branchBehind?: boolean;
+    behindCount?: number;
+    integrationBranch?: string;
+    /** Unrelated commits detected in branch ancestry */
+    unrelatedCommits?: boolean;
+    /** PR creation failed after a successful push */
+    prCreationFailed?: boolean;
   },
 ): CommandResult {
+  // Branch behind the integration branch — warn and request human input
+  if (conditions.branchBehind) {
+    return error(
+      SubmitStates.BRANCH_BEHIND,
+      "BRANCH_BEHIND",
+      "request_human_input",
+      `Branch is ${conditions.behindCount ?? 0} commit(s) behind origin/${conditions.integrationBranch ?? "main"}. ` +
+      `Rebase or merge the integration branch into the task branch before submitting. ` +
+      `Suggested: git rebase origin/${conditions.integrationBranch ?? "main"} (or git merge origin/${conditions.integrationBranch ?? "main"}), ` +
+      `then run 'taskforge submit ${conditions.taskId}' again.`,
+      {
+        taskId: conditions.taskId,
+        behindCount: conditions.behindCount,
+        integrationBranch: conditions.integrationBranch,
+      },
+    );
+  }
+
+  // Unrelated commits detected — stop and request human input
+  if (conditions.unrelatedCommits) {
+    return error(
+      SubmitStates.UNRELATED_COMMITS,
+      "UNRELATED_COMMITS",
+      "request_human_input",
+      `Branch contains commits that are not descendants of the recorded base SHA. ` +
+      `This may indicate cross-task contamination or an incorrect branch base. ` +
+      `If the correct action cannot be cleanly inferred, request human input.`,
+      { taskId: conditions.taskId },
+    );
+  }
+
+  // PR creation failed after a successful push (SHA already recorded)
+  if (conditions.prCreationFailed) {
+    return error(
+      SubmitStates.PR_CREATION_FAILED,
+      "PR_CREATION_FAILED",
+      "request_human_input",
+      `Branch was pushed successfully and submitted SHA has been recorded, ` +
+      `but pull request creation failed: ${conditions.errorMessage ?? "unknown error"}. ` +
+      `Create the PR manually: gh pr create --head ${conditions.taskId ? `<branch>` : "<branch>"} ` +
+      `--base ${conditions.integrationBranch ?? "main"} ` +
+      `or via the GitHub web interface. After PR is created, run 'taskforge done ${conditions.taskId}'.`,
+      { taskId: conditions.taskId },
+    );
+  }
+
   if (conditions.prCreated && conditions.prNumber) {
     return success(
       SubmitStates.PR_CREATED,
