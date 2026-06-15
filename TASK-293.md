@@ -6,8 +6,6 @@ priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 2f2abaf446
-claimed_at: '2026-06-15 05:20:32'
 context_hash: c325879bc50725fa
 branch: agent/TASK-293-fix-submit-no-op-when-task-branch-is-ahe--2f2abaf446
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-293
@@ -39,6 +37,9 @@ Observed in TASK-224: `taskforge submit TASK-224` returned no-op even though `gh
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-15T00:00:00Z System
+- Task released by session "2f2abaf446"
 
 ### 2026-06-15T00:00:00Z System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-293
