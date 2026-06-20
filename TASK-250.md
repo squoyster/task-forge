@@ -1,7 +1,7 @@
 ---
 id: TASK-250
 type: Feature
-status: Ready
+status: Rejected
 priority: P2
 agentRole: Implementer
 riskLevel: Low
@@ -24,3 +24,6 @@ The `appendAgentNote()` function exists in `src/core/task-store.ts` and is calle
 - [ ] `taskforge note --help` shows clear usage documentation
 
 ## Agent Notes
+
+### 2026-06-20T00:00:00Z System
+- Task rejected: Recalibration - pre-306 task pool retired, superseded by 306+ frontier.
