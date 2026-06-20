@@ -6,8 +6,6 @@ priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 95479e7aec
-claimed_at: '2026-06-20 18:42:12'
 context_hash: ad8142e125a8fad2
 spec_hash: 98c9ecf27c1083f8
 branch: agent/TASK-225-add-clidocumentation-consistency-tests--95479e7aec

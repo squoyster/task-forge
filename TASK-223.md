@@ -6,8 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 47c37df308
-claimed_at: '2026-06-11 23:42:28'
 context_hash: 6cd5541d1cdfd05c
 spec_hash: 8a295a3bff60e1c4
 branch: agent/TASK-223-wire-structured-nextactions-to-all-comma--47c37df308

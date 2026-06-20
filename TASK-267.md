@@ -6,8 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 7c30c62341
-claimed_at: '2026-06-08 14:18:53'
 context_hash: b516925ba8cef30c
 spec_hash: 0e6eddfe02fd63fc
 branch: agent/TASK-267-add-taskforge-update-command-for-task-fi--7c30c62341

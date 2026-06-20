@@ -6,8 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
-assignee: fc3f15e832
-claimed_at: '2026-06-15 20:50:44'
 context_hash: 86c2d0ddbd80d3ed
 spec_hash: eb442cb0f8ba6b72
 branch: agent/TASK-306-add-branch-behind-validation-and-pr-auto--fc3f15e832

@@ -6,8 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 815c3f8444
-claimed_at: '2026-06-11 12:01:51'
 context_hash: 6cd5541d1cdfd05c
 spec_hash: d38d63651a60a9bc
 branch: agent/TASK-283-fix-done-command-handling-for-control-fi--815c3f8444

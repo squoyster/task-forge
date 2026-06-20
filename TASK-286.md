@@ -6,8 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 436da08871
-claimed_at: '2026-06-11 11:52:38'
 context_hash: 6cd5541d1cdfd05c
 spec_hash: 03f9449c1ac6e8a9
 branch: agent/TASK-286-make-checkpoint-results-atomic-with-audi--436da08871
