@@ -1,7 +1,7 @@
 ---
 id: TASK-298
 type: Bug
-status: Ready
+status: Rejected
 priority: P1
 agentRole: Implementer
 riskLevel: Low
@@ -35,6 +35,9 @@ Observed in TASK-293 through TASK-297 after using `taskforge new --body`: duplic
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-20T00:00:00Z System
+- Task rejected: Backlog cleared to focus queue on TaskForge Slimming Refactor (TASK-307..315). Superseded, descoped, or obsoleted by refactor per specs/taskforge-slimming-refactor.md. Task record retained as historical reference; re-evaluate post-refactor.
 
 ### 2026-06-12T00:00:00Z System
 - Field(s) updated via taskforge update: acceptanceCriteria
