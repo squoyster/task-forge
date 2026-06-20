@@ -1,7 +1,7 @@
 ---
 id: TASK-292
 type: Bug
-status: Ready
+status: Rejected
 priority: P1
 agentRole: Implementer
 riskLevel: Low
@@ -41,6 +41,9 @@ Remote checks can fail offline; implementation should distinguish an unreachable
 Auto-continue unless remote-state detection semantics require human policy input.
 
 ## Agent Notes
+
+### 2026-06-20T00:00:00Z System
+- Task rejected: Backlog cleared to focus queue on TaskForge Slimming Refactor (TASK-307..315). Superseded, descoped, or obsoleted by refactor per specs/taskforge-slimming-refactor.md. Task record retained as historical reference; re-evaluate post-refactor.
 
 ### 2026-06-12T00:00:00Z System
 - Task updated via taskforge update
