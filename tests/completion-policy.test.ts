@@ -157,13 +157,13 @@ describe("checkCompletionEligibility — code-bearing tasks", () => {
     expect(result.preconditions.some((p) => p.code === "WRONG_BASE_BRANCH")).toBe(true);
   });
 
-  it("AC 3: rejects SHA mismatch between PR head and submitted SHA", async () => {
+  it("AC 3: accepts a recorded submitted SHA (head mismatch no longer blocks under Done-as-closeout)", async () => {
     const result = await checkCompletionEligibility(
       { ...defaultTask, pr_head_sha: "differentSHA", submitted_sha: "originalSHA" },
       defaultConfig,
     );
-    expect(result.eligible).toBe(false);
-    expect(result.preconditions.some((p) => p.code === "SHA_MISMATCH")).toBe(true);
+    expect(result.preconditions.some((p) => p.code === "SHA_MISMATCH")).toBe(false);
+    expect(result.preconditions.some((p) => p.code === "SHA_RECORDED")).toBe(true);
   });
 
   it("AC 3: rejects when submitted SHA is missing", async () => {
@@ -416,7 +416,7 @@ describe("checkCompletionEligibility — integration scenarios", () => {
     expect(result.eligible).toBe(false);
   });
 
-  it("Scenario: merged PR with mismatched SHA → not Done", async () => {
+  it("Scenario: merged PR with recorded SHA → Done (head mismatch no longer blocks)", async () => {
     const verifier = createMockVerifier({
       checkMerged: async () => ({ merged: true }),
       checkReachable: async () => true,
@@ -436,7 +436,7 @@ describe("checkCompletionEligibility — integration scenarios", () => {
       { integrationBranch: "main", github: { enabled: true, owner: "owner", repo: "repo" } },
       verifier,
     );
-    expect(result.eligible).toBe(false);
+    expect(result.eligible).toBe(true);
   });
 
   it("Scenario: merged PR not targeting configured base → not Done", async () => {
