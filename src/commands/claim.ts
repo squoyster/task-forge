@@ -3,6 +3,7 @@ import { pullTaskState, createWorktree, checkUncommittedWorktrees } from "../cor
 import { withTaskStateTransaction } from "../core/task-state-transaction.js";
 import { parseSessionIdFromBranch, resolveSessionId } from "../core/session.js";
 import { sweepStaleTasks } from "../core/sweeper.js";
+import { loadConfig } from "../core/config.js";
 import { STATUS } from "../util/status-constants.js";
 import { logInfo, logSuccess, logWarn, logError, logDivider, logSub } from "../util/logging.js";
 import { TaskNotFoundError } from "../core/errors.js";
@@ -31,7 +32,10 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
   const json = options?.json ?? false;
 
   await pullTaskState(repoRoot);
-  await sweepStaleTasks(repoRoot, { commit: true });
+  // Auto-reclaim stale-claimed tasks before claiming (gated by sweep.autoReclaim, default on).
+  if (loadConfig(repoRoot)?.sweep?.autoReclaim ?? true) {
+    await sweepStaleTasks(repoRoot, { commit: true });
+  }
 
   const task = loadTaskById(taskId);
 

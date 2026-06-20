@@ -116,6 +116,13 @@ dependencies: z
       })
       .optional()
       .default({}),
+    sweep: z
+      .object({
+        staleThresholdMinutes: z.number().default(15),
+        autoReclaim: z.boolean().default(true),
+      })
+      .optional()
+      .default({}),
     controlFiles: z
       .array(z.string())
       .optional()
