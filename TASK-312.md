@@ -1,12 +1,17 @@
 ---
 id: TASK-312
 type: Task
-status: Ready
+status: Done
 priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 61e7aaf23d
+claimed_at: '2026-06-20 10:00:00'
+completed_at: '2026-06-20 10:20:00'
 spec_hash: 3d6ac205c870e4d7
+branch: agent/TASK-312-remove-git-facade
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-312
 ---
 
 # TASK-312: Slimming Refactor 06: Remove git facade commands
@@ -40,6 +45,15 @@ Auto-continue unless a stopping condition occurs.
 ## Agent Notes
 
 ## Result
+
+Done. Git facade removed; sync+deps moved behind an opt-in flag.
+
+- Deleted `src/commands/git-facade.ts` (845 lines) + `tests/git-facade.test.ts`.
+- `cli.ts`: removed diff/checkpoint/submit/pr registrations + the git-facade import; gated `sync` + `deps/*` behind `TASKFORGE_WITH_DEPS` env (not registered by default).
+- `commands/mcp.ts`: stripped the `taskforge_checkpoint` MCP tool (imported the deleted `cmdCheckpoint`).
+- `core/command-states.ts`: removed dead `submitStateMachine` + `SubmitStates` enum (branch-behind/prCreationFailed/unrelatedCommits conditions) + the diff/checkpoint/submit/pr entries from `COMMAND_STATE_REGISTRY`.
+
+865 tests pass (−16 git-facade tests); typecheck/lint/build clean. 5 files, +9/−1504. PR branch `agent/TASK-312-remove-git-facade` pushed; awaiting merge.
 
 ## Links
 - Issue:
