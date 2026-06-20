@@ -6,7 +6,6 @@ import { cmdNext } from "./next.js";
 import { cmdGates } from "./gates.js";
 import { cmdStart, type StartOptions } from "./start.js";
 import { cmdDone, type DoneOptions } from "./done.js";
-import { cmdCheckpoint } from "../commands/git-facade.js";
 import { loadConfig } from "../core/config.js";
 import { getRepoRoot } from "../util/paths.js";
 import { Writable } from "node:stream";
@@ -156,27 +155,6 @@ function registerTools(server: McpServer): void {
         };
         const output = await captureStdout(() => cmdDone(args.taskId, opts));
         return { content: [{ type: "text" as const, text: output.trim() }] };
-      } catch (err) {
-        return {
-          content: [{ type: "text" as const, text: `Error: ${(err as Error).message}` }],
-          isError: true,
-        };
-      }
-    },
-  );
-
-  // taskforge_checkpoint - Commit changes on task branch
-  server.tool(
-    "taskforge_checkpoint",
-    "Create a commit on the current task branch with the given message",
-    {
-      taskId: z.string(),
-      message: z.string(),
-    },
-    async (args: { taskId: string; message: string }) => {
-      try {
-        const output = await captureStdout(() => cmdCheckpoint(args.taskId, args.message));
-        return { content: [{ type: "text" as const, text: output.trim() || `Checkpoint created for ${args.taskId}.` }] };
       } catch (err) {
         return {
           content: [{ type: "text" as const, text: `Error: ${(err as Error).message}` }],
