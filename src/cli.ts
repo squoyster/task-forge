@@ -635,7 +635,17 @@ program
   .option("--json", "Output in JSON format")
   .action((name: string, opts: { json?: boolean }) => {
     const hookOpts: HookOptions = { json: opts.json ?? false };
-    return wrapWithAudit("_hook", [], opts, () => cmdHook(name, hookOpts))();
+    // cmdHook returns boolean (ok). wrapWithAudit only exits non-zero on thrown
+    // errors, so capture the boolean and force a non-zero exit when the hook
+    // blocks — otherwise the delegating bash hook (`exec taskforge _hook ...`)
+    // would let the push/commit through despite the "blocked" message.
+    let ok = true;
+    const fn = async () => {
+      ok = await cmdHook(name, hookOpts);
+    };
+    return wrapWithAudit("_hook", [], opts, fn)().then(() => {
+      if (!ok) process.exit(1);
+    });
   });
 
 program.parse();
