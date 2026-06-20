@@ -38,7 +38,6 @@ import { cmdDepsSummary } from "./commands/deps/summary.js";
 import { cmdAudit, cmdTranscript, cmdTimeline } from "./commands/audit.js";
 import { cmdAcCheck } from "./commands/ac-check.js";
 import { cmdPromote, type PromoteOptions } from "./commands/promote.js";
-import { cmdDiff, cmdCheckpoint, cmdSubmit, cmdPr } from "./commands/git-facade.js";
 import { cmdGuardStatus, cmdGuardOverride } from "./commands/guard-cmd.js";
 import { cmdMcp } from "./commands/mcp.js";
 import { TaskForgeError } from "./core/errors.js";
@@ -155,10 +154,12 @@ program
     return wrapWithAudit("done", [taskId], opts, () => cmdDone(taskId, doneOpts))();
   });
 
-program
-  .command("sync")
-  .description("Sync with external issue tracker")
-  .action(wrapWithAudit("sync", [], {}, cmdSync));
+if (process.env.TASKFORGE_WITH_DEPS) {
+  program
+    .command("sync")
+    .description("Sync with external issue tracker (opt-in: TASKFORGE_WITH_DEPS)")
+    .action(wrapWithAudit("sync", [], {}, cmdSync));
+}
 
 program
   .command("list")
@@ -411,7 +412,8 @@ program
     return wrapWithAudit("update", [taskId], opts, () => cmdUpdate(taskId, updateOpts))();
   });
 
-// Dependency Steward commands
+// Dependency Steward commands (opt-in via TASKFORGE_WITH_DEPS; not registered by default)
+if (process.env.TASKFORGE_WITH_DEPS) {
 const deps = program.command("deps").description("Dependency health management");
 
 deps
@@ -455,6 +457,7 @@ deps
   .command("summary")
   .description("Produce a dependency health summary")
   .action(wrapWithAudit("deps summary", [], {}, cmdDepsSummary));
+}
 
 /**
  * Wrap a command action with CLI invocation audit capture.
@@ -597,35 +600,6 @@ program
   .option("--json", "Output in JSON format")
   .action((taskId: string | undefined, opts: { json?: boolean }) =>
     wrapWithAudit("ac-check", taskId ? [taskId] : [], opts, async () => { cmdAcCheck(taskId, opts); })(),
-  );
-
-program
-  .command("diff <taskId>")
-  .description("Show current worktree diff for a task")
-  .action((taskId: string) =>
-    wrapWithAudit("diff", [taskId], {}, async () => { await cmdDiff(taskId); })(),
-  );
-
-program
-  .command("checkpoint <taskId>")
-  .description("Create a commit on the task branch")
-  .requiredOption("-m, --message <text>", "Commit message")
-  .action((taskId: string, opts: { message: string }) =>
-    wrapWithAudit("checkpoint", [taskId], opts, async () => { await cmdCheckpoint(taskId, opts.message); })(),
-  );
-
-program
-  .command("submit <taskId>")
-  .description("Push the task branch")
-  .action((taskId: string) =>
-    wrapWithAudit("submit", [taskId], {}, async () => { await cmdSubmit(taskId); })(),
-  );
-
-program
-  .command("pr <taskId>")
-  .description("Create a PR for the task")
-  .action((taskId: string) =>
-    wrapWithAudit("pr", [taskId], {}, async () => { await cmdPr(taskId); })(),
   );
 
 program
