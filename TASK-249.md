@@ -1,7 +1,7 @@
 ---
 id: TASK-249
 type: Feature
-status: Ready
+status: Rejected
 priority: P2
 agentRole: Implementer
 riskLevel: Low
@@ -23,3 +23,6 @@ When `taskforge claim` or `taskforge start` creates a worktree, the worktree lac
 - [ ] No adverse side effects on existing worktree lifecycle or cleanup
 
 ## Agent Notes
+
+### 2026-06-20T00:00:00Z System
+- Task rejected: Recalibration - pre-306 task pool retired, superseded by 306+ frontier.
