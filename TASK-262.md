@@ -1,7 +1,7 @@
 ---
 id: TASK-262
 type: Feature
-status: Ready
+status: Rejected
 priority: P1
 agentRole: Implementer
 riskLevel: Low
@@ -20,6 +20,9 @@ Describe the desired outcome.
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-20T00:00:00Z System
+- Task rejected: Backlog cleared for TaskForge Slimming Refactor focus.
 
 
 ## Problem
