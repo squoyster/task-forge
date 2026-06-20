@@ -1,7 +1,7 @@
 ---
 id: TASK-258
 type: Feature
-status: Submitted
+status: Rejected
 priority: P0
 agentRole: Implementer
 riskLevel: Low
@@ -25,6 +25,9 @@ Describe the desired outcome.
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-20T00:00:00Z System
+- Task rejected: Recalibration - pre-306 task pool retired, superseded by 306+ frontier.
 
 ### 2026-06-08T00:00:00Z Implementer
 - ## Implementation Summary
