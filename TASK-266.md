@@ -1,7 +1,7 @@
 ---
 id: TASK-266
 type: Documentation
-status: Ready
+status: Rejected
 priority: P2
 agentRole: Planner
 riskLevel: Low
@@ -20,6 +20,9 @@ Describe the desired outcome.
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-20T00:00:00Z System
+- Task rejected: Recalibration - pre-306 task pool retired, superseded by 306+ frontier.
 
 
 ## Problem
