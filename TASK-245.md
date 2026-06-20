@@ -1,7 +1,7 @@
 ---
 id: TASK-245
 type: Task
-status: Ready
+status: Rejected
 priority: P2
 agentRole: Implementer
 riskLevel: Low
@@ -23,6 +23,9 @@ worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-245
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-20T00:00:00Z System
+- Task rejected: Recalibration - pre-306 task pool retired, superseded by 306+ frontier.
 
 ### 2026-05-29T00:00:00Z System
 - Task swept by Sweeper Protocol — reset to Ready. Claim by "14bee24522" was 10.7h old (threshold: 4h).
