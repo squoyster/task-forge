@@ -1,7 +1,7 @@
 ---
 id: TASK-290
 type: Bug
-status: Submitted
+status: Rejected
 priority: P1
 agentRole: Implementer
 riskLevel: Low
@@ -52,6 +52,9 @@ Continuation Policy: Auto-continue unless a stopping condition occurs.
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-20T00:00:00Z System
+- Task rejected: Recalibration - pre-306 task pool retired, superseded by 306+ frontier.
 
 ### 2026-06-11T00:00:00Z System
 - Report generated — task moved to Implementation Complete
