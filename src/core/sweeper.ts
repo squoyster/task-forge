@@ -2,18 +2,24 @@ import { loadAllTasks, updateTaskStatus, clearTaskLock, appendAgentNote } from "
 import { withTaskStateTransaction } from "./task-state-transaction.js";
 import { STATUS } from "../util/status-constants.js";
 import { getRepoRoot } from "../util/paths.js";
+import { loadConfig } from "./config.js";
 import { logInfo, logSuccess, logSub, logWarn } from "../util/logging.js";
 import type { InspectResult } from "../commands/inspect.js";
 import type { ParsedTask } from "./task-store.js";
 
-const STALE_THRESHOLD_MS = 4 * 60 * 60 * 1000; // 4 hours
+/** Fallback threshold when config is absent (config default is 15 minutes). */
+const DEFAULT_STALE_THRESHOLD_MS = 15 * 60 * 1000;
 
 export interface SweepOptions {
   now?: Date;
+  /** Override the configured stale threshold (milliseconds). */
   staleThresholdMs?: number;
   skipAssignee?: string;
   commit?: boolean;
   dryRun?: boolean;
+  /** Skip worktree classification and skip the "review" path — always reset stale tasks to Ready (re-assignable). */
+  reclaim?: boolean;
+  /** Skip worktree classification (requires authority at the command layer). */
   force?: boolean;
   inspectTask?: (task: ParsedTask, repoRoot: string) => Promise<InspectResult>;
 }
@@ -55,17 +61,26 @@ function parseClaimedAt(value: string | Date): Date | null {
   return null;
 }
 
+/** Resolve the stale threshold (ms) from config unless explicitly overridden. */
+function resolveThresholdMs(repoRoot: string, override?: number): number {
+  if (override !== undefined) return override;
+  const configuredMinutes = loadConfig(repoRoot)?.sweep?.staleThresholdMinutes;
+  return (configuredMinutes ?? DEFAULT_STALE_THRESHOLD_MS / 60_000) * 60_000;
+}
+
 export async function sweepStaleTasks(
   repoRoot?: string,
   options?: SweepOptions,
 ): Promise<SweepResult> {
   const root = repoRoot ?? getRepoRoot();
   const now = options?.now ?? new Date();
-  const threshold = options?.staleThresholdMs ?? STALE_THRESHOLD_MS;
+  const threshold = resolveThresholdMs(root, options?.staleThresholdMs);
+  const thresholdMinutes = Math.round(threshold / 60_000);
   const skipAssignee = options?.skipAssignee;
   const shouldCommit = options?.commit ?? true;
   const dryRun = options?.dryRun ?? false;
   const force = options?.force ?? false;
+  const reclaim = options?.reclaim ?? false;
   const inspectTaskFn = options?.inspectTask;
 
   const tasks = loadAllTasks(root);
@@ -92,8 +107,9 @@ export async function sweepStaleTasks(
     let action: "reset" | "review" | "skipped" = "reset";
     let reason: string | undefined;
 
-    // Classify worktree state unless --force
-    if (!force && inspectTaskFn) {
+    // --reclaim and --force both skip worktree classification: reclaim always
+    // resets to Ready (re-assignable); force is the same (authority-gated).
+    if (!force && !reclaim && inspectTaskFn) {
       try {
         const insp = await inspectTaskFn(task, root);
         if (insp.dirty) {
@@ -104,7 +120,7 @@ export async function sweepStaleTasks(
           reason = `worktree has ${insp.aheadOfMain} commit(s) ahead of main — moving to Review`;
         }
       } catch {
-        // Inspect may fail if worktree doesn't exist — that's fine, default to reset
+        // Inspect may fail if worktree doesn't exist — default to reset.
       }
     }
 
@@ -134,7 +150,7 @@ export async function sweepStaleTasks(
       const actionLabel = action === "review" ? "moved to Review" : "reset to Ready";
       appendAgentNote(task.filePath, today, "System", [
         `Task swept by Sweeper Protocol — ${actionLabel}. ` +
-        `Claim by "${task.assignee}" was ${ageHours}h old (threshold: 4h).` +
+        `Claim by "${task.assignee}" was ${ageHours}h old (threshold: ${thresholdMinutes}m).` +
         (reason ? ` Reason: ${reason}` : ""),
       ]);
     }
@@ -173,14 +189,16 @@ export async function runSweeperAndPrint(
   repoRoot?: string,
   options?: SweepOptions,
 ): Promise<SweepResult> {
-  const result = await sweepStaleTasks(repoRoot, options);
+  const root = repoRoot ?? getRepoRoot();
+  const result = await sweepStaleTasks(root, options);
+  const thresholdMinutes = Math.round(resolveThresholdMs(root, options?.staleThresholdMs) / 60_000);
 
   if (result.changed === 0) {
     logInfo("Sweeper: No stale tasks found.");
     return result;
   }
 
-  logInfo(`Sweeper: Found ${result.stale.length} stale task(s) with claims older than 4 hours${options?.dryRun ? " (dry-run)" : ""}.`);
+  logInfo(`Sweeper: Found ${result.stale.length} stale task(s) with claims older than ${thresholdMinutes} minutes${options?.dryRun ? " (dry-run)" : ""}.`);
 
   for (const swept of result.stale) {
     const ageHours = (swept.ageMs / (60 * 60 * 1000)).toFixed(1);

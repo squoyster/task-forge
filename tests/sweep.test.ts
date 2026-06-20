@@ -88,10 +88,16 @@ function hoursAgo(n: number): string {
   return d.toISOString().replace("T", " ").replace(/\.\d+Z$/, "");
 }
 
+// Helper: create a claimed_at string that is N minutes ago (default sweep threshold is 15m)
+function minutesAgo(n: number): string {
+  const d = new Date(Date.now() - n * 60 * 1000);
+  return d.toISOString().replace("T", " ").replace(/\.\d+Z$/, "");
+}
+
 describe("cmdSweep", () => {
   it("is a no-op when no stale tasks exist", async () => {
-    // A recent claim (< 4h)
-    makeTaskFile("TASK-001", { assignee: "abc123def0", claimed_at: hoursAgo(1) });
+    // A recent claim (< 15m default threshold)
+    makeTaskFile("TASK-001", { assignee: "abc123def0", claimed_at: minutesAgo(5) });
     await expect(cmdSweep()).resolves.not.toThrow();
     // Task should still be In Progress with claim intact
     const content = fs.readFileSync(path.join(stateDir, "TASK-001.md"), "utf-8");
@@ -99,7 +105,7 @@ describe("cmdSweep", () => {
     expect(content).toContain("abc123def0");
   });
 
-  it("recovers a stale task (claimed > 4h)", async () => {
+  it("recovers a stale task (claimed past threshold)", async () => {
     const fp = makeTaskFile("TASK-001", {
       assignee: "abc123def0",
       claimed_at: hoursAgo(5),
@@ -116,7 +122,7 @@ describe("cmdSweep", () => {
   it("recovers multiple stale tasks", async () => {
     makeTaskFile("TASK-001", { assignee: "sess-a", claimed_at: hoursAgo(5) });
     makeTaskFile("TASK-002", { assignee: "sess-b", claimed_at: hoursAgo(6) });
-    makeTaskFile("TASK-003", { assignee: "sess-c", claimed_at: hoursAgo(1) }); // not stale
+    makeTaskFile("TASK-003", { assignee: "sess-c", claimed_at: minutesAgo(5) }); // not stale (< 15m threshold)
 
     await expect(cmdSweep()).resolves.not.toThrow();
 

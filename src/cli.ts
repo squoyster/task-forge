@@ -201,12 +201,13 @@ program
 
 program
   .command("sweep")
-  .description("Sweeper Protocol: recover stale in-progress tasks (claimed >4h)")
+  .description("Sweeper Protocol: recover stale in-progress tasks (claimed past sweep.staleThresholdMinutes, default 15m)")
   .option("--json", "Output in JSON format")
   .option("--dry-run", "Preview what would happen without mutating state")
-  .option("--force", "Skip worktree classification, reset all stale tasks")
-  .action((opts: { json?: boolean; dryRun?: boolean; force?: boolean }) =>
-    wrapWithAudit("sweep", [], opts, () => cmdSweep({ json: opts.json, dryRun: opts.dryRun, force: opts.force }))());
+  .option("--force", "Skip worktree classification, reset all stale tasks (requires human/doctor authority)")
+  .option("--reclaim", "Reclaim stale-claimed tasks back to Ready (re-assignable), skipping review classification")
+  .action((opts: { json?: boolean; dryRun?: boolean; force?: boolean; reclaim?: boolean }) =>
+    wrapWithAudit("sweep", [], opts, () => cmdSweep({ json: opts.json, dryRun: opts.dryRun, force: opts.force, reclaim: opts.reclaim }))());
 
 program
   .command("heartbeat <taskId>")

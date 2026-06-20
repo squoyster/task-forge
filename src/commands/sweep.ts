@@ -10,6 +10,8 @@ export interface SweepOptions {
   json?: boolean;
   dryRun?: boolean;
   force?: boolean;
+  /** Reclaim stale-claimed tasks back to Ready (re-assignable), skipping review classification. */
+  reclaim?: boolean;
 }
 
 export async function cmdSweep(options?: SweepOptions): Promise<void> {
@@ -56,7 +58,8 @@ export async function cmdSweep(options?: SweepOptions): Promise<void> {
     commit: true,
     dryRun: options?.dryRun,
     force: options?.force,
-    inspectTask: options?.force ? undefined : inspectTask,
+    reclaim: options?.reclaim,
+    inspectTask: options?.force || options?.reclaim ? undefined : inspectTask,
   });
 
   if (options?.json) {
