@@ -1,7 +1,7 @@
 ---
 id: TASK-302
 type: Test
-status: Ready
+status: Rejected
 priority: P2
 agentRole: Implementer
 riskLevel: Low
@@ -24,6 +24,9 @@ Source: specs/taskforge-codex-session-remediation-tasks.md TASK-NEW-007.
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-20T00:00:00Z System
+- Task rejected: Recalibration: pre-306 task pool retired; superseded by 306+ frontier.
 
 ### 2026-06-12T00:00:00Z System
 - Field(s) updated via taskforge update: acceptanceCriteria
