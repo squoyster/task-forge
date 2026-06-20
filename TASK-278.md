@@ -1,7 +1,7 @@
 ---
 id: TASK-278
 type: Feature
-status: Ready
+status: Rejected
 priority: P1
 agentRole: Implementer
 riskLevel: Low
@@ -27,3 +27,6 @@ Must use git worktree remove --force for dirty worktrees.
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-20T00:00:00Z System
+- Task rejected: Backlog cleared to focus queue on TaskForge Slimming Refactor (TASK-307..315). Superseded, descoped, or obsoleted by refactor per specs/taskforge-slimming-refactor.md. Task record retained as historical reference; re-evaluate post-refactor.
