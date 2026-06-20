@@ -6,7 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-completed_at: '2026-06-20 10:05:00'
 spec_hash: 48be7df9a777fe24
 branch: agent/TASK-311-done-records-sha
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-311

@@ -1,12 +1,16 @@
 ---
 id: TASK-225
 type: Task
-status: Ready
+status: In Progress
 priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 95479e7aec
+claimed_at: '2026-06-20 18:42:12'
+context_hash: ad8142e125a8fad2
 spec_hash: 98c9ecf27c1083f8
+branch: agent/TASK-225-add-clidocumentation-consistency-tests--95479e7aec
 ---
 
 # TASK-225: Add CLI/documentation consistency tests
@@ -64,3 +68,8 @@ Create `tests/cli-docs-consistency.test.ts` with:
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-20T00:00:00Z System
+- Task claimed via taskforge start TASK-225
+- Session: 95479e7aec
+- Branch: agent/TASK-225-add-clidocumentation-consistency-tests--95479e7aec

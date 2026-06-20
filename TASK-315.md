@@ -7,7 +7,6 @@ agentRole: QA
 riskLevel: Low
 humanInterventionRequired: false
 spec_hash: eea0bee5feb07dac
-completed_at: '2026-06-20 12:10:00'
 branch: agent/TASK-315-final-gate-pass
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-315
 ---

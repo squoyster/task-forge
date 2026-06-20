@@ -6,7 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-completed_at: '2026-06-20 10:20:00'
 spec_hash: 3d6ac205c870e4d7
 branch: agent/TASK-312-remove-git-facade
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-312

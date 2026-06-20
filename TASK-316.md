@@ -6,6 +6,7 @@ priority: P3
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: 6e33e0e780bdc5e7
 ---
 
 # TASK-316: Resolve pre-existing DUPLICATE_TASK_SECTIONS warnings (48 warnings, 46 tasks)

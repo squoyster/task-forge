@@ -6,7 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-completed_at: '2026-06-20 07:40:00'
 spec_hash: 72485983793a5525
 branch: agent/TASK-308-gate-stamp-hook-internals
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-308

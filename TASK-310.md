@@ -6,7 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-completed_at: '2026-06-20 09:50:00'
 spec_hash: f4cdefdbd995fb76
 branch: agent/TASK-310-sweeper-stale-reclaim
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-310

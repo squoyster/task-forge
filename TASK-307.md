@@ -6,7 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-completed_at: '2026-06-20 07:40:00'
 context_hash: 86c2d0ddbd80d3ed
 spec_hash: e46359db69cb851c
 branch: agent/TASK-307-slimming-refactor-01-discard-task-306-an--61e7aaf23d
