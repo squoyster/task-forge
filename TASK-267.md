@@ -1,7 +1,7 @@
 ---
 id: TASK-267
 type: Feature
-status: Implementation Complete
+status: Rejected
 priority: P1
 agentRole: Implementer
 riskLevel: Low
@@ -122,6 +122,9 @@ TASK-261 (Replace Direct Task-State Editing with Supported Commands) — this ta
 _Source: discovered during TASK-255..TASK-266 bulk task creation session_
 
 ## Agent Notes
+
+### 2026-06-20T00:00:00Z System
+- Task rejected: Recalibration - pre-306 task pool retired, superseded by 306+ frontier.
 
 ### 2026-06-08T00:00:00Z Implementer
 - ## Implementation Summary
