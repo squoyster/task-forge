@@ -1,7 +1,7 @@
 ---
 id: TASK-306
 type: Feature
-status: Verify
+status: Rejected
 priority: P1
 agentRole: Implementer
 riskLevel: Medium
@@ -149,6 +149,9 @@ Auto-continue unless:
 - PR auto-creation fails after push — stop and request human input
 
 ## Agent Notes
+
+### 2026-06-20T00:00:00Z System
+- Task rejected: Superseded by TaskForge Slimming Refactor (TF-SLIM-01/TASK-307). The submit/checkpoint/pr facade commands this task extends are being removed entirely; branch-behind validation moves into pre-push hooks (TF-SLIM-03). Work discarded per refactor plan specs/taskforge-slimming-refactor.md.
 
 ### 2026-06-15T00:00:00Z System
 - Report generated — task moved to Implementation Complete
