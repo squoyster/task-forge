@@ -1,7 +1,7 @@
 ---
 id: TASK-251
 type: Documentation
-status: Ready
+status: Rejected
 priority: P3
 agentRole: Implementer
 riskLevel: Low
@@ -23,3 +23,6 @@ The workflow instructions in `AGENTS.md` say "Read the current task file under `
 - [ ] The `.agent/task.idx` index is updated if it references the old location
 
 ## Agent Notes
+
+### 2026-06-20T00:00:00Z System
+- Task rejected: Recalibration - pre-306 task pool retired, superseded by 306+ frontier.
