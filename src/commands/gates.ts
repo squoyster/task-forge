@@ -38,22 +38,24 @@ export async function runGates(
   const repoRoot = getRepoRoot();
   const config = loadConfig(repoRoot);
 
-  // Require a clean working tree — gates validate a specific tree, and the
-  // stamp binds to HEAD. A dirty tree makes the stamp meaningless.
-  const { clean, porcelain } = await isCleanTree(repoRoot);
-  if (!clean) {
-    const sample = porcelain
-      .split("\n")
-      .slice(0, 10)
-      .join("\n");
-    return {
-      passed: false,
-      results: [],
-      error:
-        "Working tree is dirty. Commit or stash before gating — gates validate a specific tree.\n" +
-        "Uncommitted changes:\n" +
-        sample,
-    };
+  // Require a clean working tree so the gate stamp binds to an exact HEAD.
+  // Skippable via config gates.requireCleanTree (default true).
+  if (config.gates?.requireCleanTree ?? true) {
+    const { clean, porcelain } = await isCleanTree(repoRoot);
+    if (!clean) {
+      const sample = porcelain
+        .split("\n")
+        .slice(0, 10)
+        .join("\n");
+      return {
+        passed: false,
+        results: [],
+        error:
+          "Working tree is dirty. Commit or stash before gating — gates validate a specific tree.\n" +
+          "Uncommitted changes:\n" +
+          sample,
+      };
+    }
   }
 
   const availableGates: Record<string, string> = {

@@ -171,7 +171,7 @@ export async function cmdInit(options: InitOptions = {}): Promise<void> {
       worktrees: { root: "../worktrees", branchPrefix: "agent" },
       github: { enabled: false },
       opencode: { enabled: true, command: "opencode" },
-      continuation: { autoContinue: true, maxTaskFixIterations: 3, allowDraftPr: true, allowCommit: true, allowPush: false },
+      continuation: { autoContinue: true, maxTaskFixIterations: 3 },
     };
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2), "utf-8");
     logSuccess("Created .taskforge/config.json");
