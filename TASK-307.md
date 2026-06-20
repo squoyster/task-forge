@@ -1,17 +1,18 @@
 ---
 id: TASK-307
 type: Task
-status: Submitted
+status: Done
 priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 assignee: 61e7aaf23d
 claimed_at: '2026-06-20 06:47:16'
+completed_at: '2026-06-20 07:40:00'
 context_hash: 86c2d0ddbd80d3ed
 spec_hash: e46359db69cb851c
 branch: agent/TASK-307-slimming-refactor-01-discard-task-306-an--61e7aaf23d
-worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-307
+worktree: ''
 ---
 
 # TASK-307: Slimming Refactor 01: Discard TASK-306 and confirm clean main
@@ -53,6 +54,8 @@ Auto-continue unless a stopping condition occurs.
 - Branch: agent/TASK-307-slimming-refactor-01-discard-task-306-an--61e7aaf23d
 
 ## Result
+
+Done. TASK-306 fully discarded (rejected in task-state; orphaned worktree removed via `git worktree remove --force`; branch deleted). Temporary git-bridge policy documented for the Slimming Refactor across opencode.json (`git *: allow`, force-push denied; `edit ../task-state/**: allow`), AGENTS.md, and docs/workflow.md (TEMPORARY refactor banners). Edits committed on branch `agent/TASK-307-...-61e7aaf23d` and live on the main working tree. Note: main checkout carries substantial pre-existing uncommitted work — tracked separately, out of scope. Slimming refactor spec at specs/taskforge-slimming-refactor.md.
 
 ## Links
 - Issue:
