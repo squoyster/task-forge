@@ -1,11 +1,12 @@
 ---
 id: TASK-316
 type: Task
-status: Inbox
+status: Done
 priority: P3
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+completed_at: '2026-06-20 18:50:00'
 spec_hash: 6e33e0e780bdc5e7
 ---
 
@@ -79,6 +80,25 @@ Auto-continue unless a stopping condition occurs.
 Discovered during TASK-315 (QA of slimming refactor). The refactor itself is clean — these warnings are pre-existing. TASK-315's Result documents the boundary.
 
 ## Result
+
+Resolved as a side-effect of the pre-306 task-pool recalibration (no code/file dedup required).
+
+On 2026-06-20, the pre-306 non-terminal task pool (28 tasks) was bulk-rejected
+as superseded by the 306+ frontier. The 46 files originally flagged for
+`DUPLICATE_TASK_SECTIONS` are overwhelmingly within that rejected set, and the
+`taskforge validate-state` validator skips terminal tasks. Consequently all 48
+duplicate-section warnings cleared without touching section bodies.
+
+The recalibration also surfaced 17 `TERMINAL_WITH_ASSIGNEE` warnings (rejected
+tasks retaining stale claims); clearing `assignee`/`claimed_at` on those 17
+brought the validator to fully clean.
+
+**Acceptance criterion met:** `taskforge validate-state --strict` reports
+`0 error(s), 0 warning(s)` (`"ok": true`) — verified 2026-06-20.
+
+Note: duplicate section bodies still physically exist in the now-archived
+(rejected) files but no longer warn. Acceptable per the validator's semantics;
+left as-is rather than editing 46 archived files.
 
 ## Links
 - Issue:
