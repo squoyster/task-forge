@@ -4,7 +4,9 @@ This is the current operating contract for humans and agents. When another docum
 
 ## Control Plane
 
-- Use `taskforge` for task workflow. Do not use raw git when a TaskForge facade exists.
+> **TEMPORARY — TaskForge Slimming Refactor (TASK-307..315):** For the duration of the refactor, the managed policy is **relaxed**. Agents MAY use raw git for ALL routine work — including task-state maintenance (edit `../task-state/*.md`, then `git commit`/`git push` directly). The git facade and task lifecycle commands are optional and may be bypassed in favor of direct git. The "Prohibited Substitutions" table below is suspended for the refactor. Git hooks still enforce branch/ref protections (no force-push, no push to `main`/`task-state` from worktrees). Gates must pass before completion; CI is the backstop. Full workflow rewrite tracked in TASK-314. See `specs/taskforge-slimming-refactor.md`.
+
+- During the refactor, raw git (commit/push/diff/branch/worktree, and direct task-state edits) is the primary workflow. `taskforge` CLI use is optional.
 - Authoritative task state lives in `../task-state/`, not in `tasks/` on `main`.
 - Normal agents do not edit `../task-state/*.md`, `tasks/*.md`, `.opencode/**`, or `.taskforge/**` directly.
 - JSON command output is authoritative for agents. Pick one returned `validNextCommands` entry and execute that command.

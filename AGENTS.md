@@ -81,7 +81,7 @@ When the user requests a durable behavior change, record it here or in the relev
 ## Child DOX Index
 
 ### `src/core/AGENTS.md`
-Core engine: state machine, task lifecycle, git operations, audit trail, hooks, config, agent registry, session management, state validation, sweeper, continuation policy, errors, and templates. 41 files — the heart of TaskForge.
+Core engine: state machine, task lifecycle, git operations, audit trail, hooks, config, agent registry, session management, state validation, sweeper, continuation policy, errors, templates, and pending publication tracking. 42 files — the heart of TaskForge.
 
 ### `src/commands/AGENTS.md`
 CLI command handlers: every `taskforge` subcommand (start, done, next, resume, block, claim, etc.) plus the `deps/` subdirectory for dependency management. Each file is a thin handler delegating to core modules.
@@ -112,68 +112,62 @@ Specifications: detailed design specs, gap analyses, task packs, and architectur
 
 ## Agent Instructions
 
-- `docs/workflow.md` is the canonical workflow contract
-- Read discovery indexes first: `.agent/tf.ctx` → `.agent/file.idx` → `.agent/symbol.idx` → `.agent/spec.idx` → `.agent/task.idx`
-- Use indexes to select files before glob/grep/read
-- Routine reads only: indexes, changed files, directly referenced sources/tests, relevant docs
-- If a file is missing from indexes: narrow grep/glob, then update `.agent/index.overrides`
+- Read discovery indexes first when navigating: `.agent/tf.ctx` → `.agent/file.idx` → `.agent/symbol.idx` → `.agent/spec.idx` → `.agent/task.idx`. Use them to select files before glob/grep/read.
+- Routine reads only: indexes, changed files, directly referenced sources/tests, relevant docs.
+- If a file is missing from indexes: narrow grep/glob, then update `.agent/index.overrides`.
 
 Skip by default: `session-ses_*.md`, `specs/session-ses_*.md`, `docs/archive/`, `.opencode/node_modules/`, `Volumes/`, `node_modules/`
 
-<!-- TASKFORGE:BEGIN managed-agent-policy -->
-## TaskForge Managed Policy
+## Agent Operating Policy (Slimming Refactor)
 
-- **Never run git directly.** Use `taskforge start|done|checkpoint|submit` instead.
-- **Work only in the assigned worktree.** All file modifications must happen inside the task worktree directory (`../worktrees/<project>/TASK-NNN`). Never edit files in the main checkout.
-- **No direct edits** to `../task-state/*.md`, `tasks/*.md`, `.opencode/**`, `.taskforge/**` (doctor excepted).
-- **Keep your branch up to date.** Before starting or resuming work, ensure the worktree branch is not behind `origin/main`. Run `taskforge resume TASK-ID` which warns when behind, then pull/rebase as needed.
-- **Check for open PRs** before starting new work. Use `gh pr list --state open --json number,title` to check. If open agent/* PRs exist that haven't been approved, request human approval before continuing with auto-continuation.
-- **Stop all work** when `.doctor-lock` exists.
-- **Doctor protocol:** check → lock → fix → release via `taskforge done`. Minimize task-state edits; never force push.
-- **Allowed commands:** `taskforge next|start TASK-ID|heartbeat TASK-ID|inspect TASK-ID|diff TASK-ID|checkpoint TASK-ID --message "..."|submit TASK-ID|done TASK-ID|block TASK-ID "reason"|release TASK-ID|doctor --check`
-<!-- TASKFORGE:END managed-agent-policy -->
+> **Active for the duration of the TaskForge Slimming Refactor (TASK-307..315).** This is a deliberately **permissive, direct-git policy** so you don't spend tokens deliberating about process — just follow it. It supersedes `docs/workflow.md` and any prior managed-policy until TASK-315 lands. Full design + task breakdown: `specs/taskforge-slimming-refactor.md`.
+>
+> **Mindset:** use git directly, move fast, keep gates green, maintain task-state. Don't ask "should I use the facade or git?" — use git. Don't agonize over token/context budget — the window is large; work normally.
 
-## Durable Agent Identity
+### 1. Use git directly for everything routine
+- The git facade (`taskforge checkpoint|submit|diff|pr`) is **deprecated and being removed** (TASK-312). Do not use it — use the git equivalent.
+- Lifecycle commands (`taskforge start|done|promote|cleanup`) are **optional**; prefer git for worktree/branch work and task-state.
+- Query commands (`taskforge next|inspect|list/gates`) are fine for *reading* state.
 
-Agents MUST NOT rely on conversation memory, summaries, or prompt text as the source of truth for identity. Identity MUST be stored in durable project state and rehydrated into context before every model invocation.
+### 2. Worktree setup (per task)
+- **Sequential refactor tasks branch from the previous task's tip** so the chain accumulates (307→308→309→310…). Standalone tasks branch from clean `main` HEAD.
+- Create: `git -C /Volumes/Transcend/devel/task-forge worktree add -b agent/TASK-NNN-<slug> /Volumes/Transcend/devel/worktrees/task-forge/TASK-NNN <base-branch>`
+- Fresh worktrees have no deps — symlink: `ln -s /Volumes/Transcend/devel/task-forge/node_modules <wt>/node_modules`.
+- **Never work in the main checkout** — it carries in-flight uncommitted work (the "swamp"). Leave it alone; do your work in worktrees.
 
-### Required IDs
+### 3. Task-state maintenance (directly, via git)
+Task-state lives in `../task-state/` (a separate worktree on the `task-state` branch). Edit `../task-state/TASK-NNN.md` directly:
+- Frontmatter fields: `status`, `assignee`, `claimed_at`, `completed_at`, `branch`, `worktree`.
+- Fill the `## Result` section on completion.
+- Commit + push **with `TASKFORGE_INTERNAL=1`** (hooks block task-state commits/pushes without it):
+  ```
+  cd ../task-state && TASKFORGE_INTERNAL=1 git add TASK-NNN.md && TASKFORGE_INTERNAL=1 git commit -m "TASK-NNN: ..." && TASKFORGE_INTERNAL=1 git push
+  ```
+- Status flow: `Inbox → Needs Spec → Ready → In Progress → Review → Verify → Done`. During the refactor, set `Done` + `completed_at` once implemented + gates pass (skip Review/Verify ceremony unless asked).
 
-Use separate IDs for each entity type:
+### 4. Gates must pass before a task is done
+Run in the worktree: `npm run typecheck` → `npm run lint` → `npm run build` → `npm test -- --run`. Run `typecheck` first (fastest feedback on import/type errors). Lint must be **0 errors** (pre-existing warnings are fine). The gate-stamp + `_hook` enforcement (TASK-308/309) is live — don't bypass gates.
 
-- agentId: stable identity of the agent/runtime
-- sessionId: current conversational/model session
-- runId: one execution attempt
-- taskId: durable work item, when applicable
-- claimId: task ownership record, when applicable
+### 5. Committing & pushing code
+`git add -A && git commit -m "TASK-NNN: <summary>"` in the worktree (`node_modules`/`dist` are gitignored). Push with `git push -u origin <branch>` when useful. Committing on the task branch (not main/task-state) is fine — the pre-commit hook allows it.
 
-IDs MUST be typed. Prefer UUIDv7 or ULID.
+### 6. Cleanup when a task is done
+- Remove the worktree: `git -C /Volumes/Transcend/devel/task-forge worktree remove <wt>` (add `--force` if dirty).
+- Delete the branch if merged/superseded: `git branch -D <branch>`. **Keep** the branch if it's the base for the next sequential task.
 
-### Source of Truth
+### 7. Hard rules
+- **Never force-push** — hook-enforced; opencode also denies `git push --force`. Non-fast-forward pushes are blocked.
+- **Stop all work** if `.doctor-lock` exists.
+- `main` and `task-state` are push-protected from worktrees. Task-state pushes go through the `task-state` worktree with `TASKFORGE_INTERNAL=1`.
 
-The durable state file or database is authoritative. Prompt-visible identity is only a projection.
+### 8. Permissions (already configured in `opencode.json`)
+`git *` → allow (force-push denied); `edit ../task-state/**` → allow; `tasks/**`, `.git/**` → deny. So git ops and task-state edits need no facade. After editing `opencode.json`, the user must restart opencode for changes to take effect.
 
-Recommended project paths: .taskforge/agents/<agentId>.json, .taskforge/sessions/<sessionId>.json, .taskforge/runs/<runId>.json
-
-### Runtime Requirements
-
-Before every model invocation, the agent runtime MUST:
-1. Load identity from durable state.
-2. Validate repo, worktree, task, and claim scope.
-3. Inject identity into model context.
-4. Refuse identity-sensitive work if required identity is missing or inconsistent.
-
-### Write Requirements
-
-The agent MUST include agentId, sessionId, and runId in task claims, checkpoints, logs, summaries, handoff notes, and PR/submission metadata when available.
-
-### Regeneration Rule
-
-The agent MUST NOT regenerate agentId when durable state exists. A new agentId is allowed only when initializing a new agent identity or explicitly forking an existing one.
-
-### Subagents and Handoffs
-
-Subagents MUST receive their own agentId and inherit parent linkage explicitly. Handoff notes MUST include source and target identity fields.
+### 9. Known gotchas
+- **Commander:** hide a command with `.command("name", { hidden: true })` — there is no `.hidden()`.
+- **Tests:** Vitest with temp dirs (`fs.mkdtempSync` + `git init`); mock `execa` by routing on the command string when a function shells out.
+- **Commit author hint:** git may print `git commit --amend --reset-author` after a commit — that's advisory, the commit succeeded; ignore it.
+- **Don't over-compress context.** The window is ~1M tokens; "max context" warnings are often false alarms.
 
 <!-- gitnexus:start -->
 ## GitNexus — Code Intelligence

@@ -68,37 +68,11 @@
   },
   "permission": {
     "*": "ask",
-    "edit": {
-      "*": "allow",
-      "../task-state/**": "deny",
-      "tasks/**": "deny",
-      ".git/**": "deny",
-      "../worktrees/**/.git/**": "deny"
-    },
-    "bash": {
-      "*": "ask",
-      "pwd": "allow",
-      "ls *": "allow",
-      "cat *": "allow",
-      "rg *": "allow",
-      "grep *": "allow",
-      "find *": "allow",
-      "npm install": "ask",
-      "npm run *": "allow",
-      "npm test *": "allow",
-      "taskforge *": "allow",
-      "npm run dev -- *": "allow",
-      "git *": "deny",
-      "sed *../task-state*": "deny",
-      "perl *../task-state*": "deny",
-      "python *../task-state*": "deny",
-      "node *../task-state*": "deny",
-      "tee *../task-state*": "deny",
-      "echo *../task-state*": "deny",
-      "rm *../task-state*": "deny",
-      "mv *../task-state*": "deny",
-      "cp *../task-state*": "deny"
-    },
+    "edit": "allow",
+    "bash": "allow",
+    "webfetch": "allow",
+    "bash.rm": "ask",
+    "bash.sudo": "deny",
     "external_directory": {
       "../task-state/**": "allow",
       "../worktrees/**": "allow"
