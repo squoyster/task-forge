@@ -6,32 +6,23 @@ import path from "node:path";
 import os from "node:os";
 
 describe("installGitHooks", () => {
-  it("creates hook files when installHooks is true", () => {
+  it("creates pre-commit and pre-push hook files (delegating to _hook) when installHooks is true", () => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "tf-hooks-"));
     installGitHooks({ projectRoot: tmp, dryRun: false, installHooks: true });
 
     const hooksDir = path.join(tmp, ".taskforge", "hooks");
     expect(fs.existsSync(path.join(hooksDir, "pre-commit"))).toBe(true);
     expect(fs.existsSync(path.join(hooksDir, "pre-push"))).toBe(true);
-    expect(fs.existsSync(path.join(hooksDir, "post-commit"))).toBe(true);
+
+    // post-commit audit hook is removed (git is the audit).
+    expect(fs.existsSync(path.join(hooksDir, "post-commit"))).toBe(false);
 
     const preCommit = fs.readFileSync(path.join(hooksDir, "pre-commit"), "utf-8");
-    expect(preCommit).toContain("TaskForge managed pre-commit hook");
-    expect(preCommit).toContain("task-state");
+    expect(preCommit).toContain("taskforge _hook pre-commit");
+    expect(preCommit).toContain("command -v taskforge");
 
     const prePush = fs.readFileSync(path.join(hooksDir, "pre-push"), "utf-8");
-    expect(prePush).toContain("TaskForge managed pre-push hook");
-    expect(prePush).toContain("Force push is forbidden.");
-    expect(prePush).toContain(
-      '"$remote_sha" == "0000000000000000000000000000000000000000"',
-    );
-    expect(prePush).toContain(
-      '"$local_sha" == "0000000000000000000000000000000000000000"',
-    );
-
-    const postCommit = fs.readFileSync(path.join(hooksDir, "post-commit"), "utf-8");
-    expect(postCommit).toContain("git.jsonl");
-    expect(postCommit).toContain(".taskforge/runtime/logs/taskforge/audit");
+    expect(prePush).toContain("taskforge _hook pre-push");
 
     fs.rmSync(tmp, { recursive: true, force: true });
   });
@@ -65,12 +56,12 @@ describe("checkHooks", () => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "tf-hooks-"));
     const result = checkHooks(tmp);
     expect(result.ok).toBe(false);
-    expect(result.issues.length).toBeGreaterThan(0);
+    expect(result.issues.length).toBe(2); // pre-commit + pre-push
     expect(result.issues[0]).toContain("Missing hook");
     fs.rmSync(tmp, { recursive: true, force: true });
   });
 
-  it("reports ok when hooks exist and are executable", () => {
+  it("reports ok when both hooks exist and are executable", () => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "tf-hooks-"));
     installGitHooks({ projectRoot: tmp, dryRun: false, installHooks: true });
     const result = checkHooks(tmp);

@@ -3,6 +3,7 @@ import {
   runPrePushLogic,
   type PushRef,
 } from "../core/hook-logic.js";
+import { loadConfig } from "../core/config.js";
 import { getRepoRoot } from "../util/paths.js";
 import { logError, logSuccess } from "../util/logging.js";
 import { writeResult } from "../util/write-command-result.js";
@@ -14,8 +15,8 @@ export interface HookOptions {
 
 /**
  * Hidden internals command that runs hook logic in TypeScript so the
- * enforcement (pre-commit, pre-push) is testable and the gate-stamp /
- * ownership checks (TF-SLIM-03) can be added without shell scripting.
+ * enforcement (pre-commit, pre-push) is testable. The generated bash hooks
+ * delegate here (see hooks.ts).
  *
  * Usage:
  *   taskforge _hook pre-commit
@@ -38,7 +39,11 @@ export async function cmdHook(
     }
     case "pre-push": {
       const refs = await readPushRefsFromStdin();
-      const r = await runPrePushLogic(repoRoot, refs);
+      const config = loadConfig(repoRoot);
+      const r = await runPrePushLogic(repoRoot, refs, {
+        expectedGates: config?.gates ? Object.keys(config.gates) : undefined,
+        allowedBranches: config?.push?.allowedBranches,
+      });
       ok = r.ok;
       reasons = r.reasons;
       break;
@@ -101,7 +106,7 @@ function readStdin(): Promise<string> {
       data += c;
     });
     process.stdin.on("end", () => resolve(data));
-    // Defensive: if no data arrives within a beat, resolve empty.
+    // Defensive: if no data arrives within a beat, resolve with what we have.
     setTimeout(() => resolve(data), 100);
   });
 }
