@@ -36,7 +36,10 @@ function registeredCliCommands(): string[] {
     }
   }
 
-  return [...commands].sort();
+  // Exclude internal/hidden commands (leading "_", e.g. _hook) — they are
+  // plumbing invoked by git hooks, not user-facing commands that need
+  // command-state or next-action coverage.
+  return [...commands].filter((c) => !c.startsWith("_")).sort();
 }
 
 describe("claimStateMachine — no force/start guidance", () => {
