@@ -6,6 +6,7 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: 4ef24da9370c556a
 ---
 
 # TASK-313: Slimming Refactor 07: Config schema changes

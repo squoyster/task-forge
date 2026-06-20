@@ -6,6 +6,7 @@ priority: P1
 agentRole: QA
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: eea0bee5feb07dac
 ---
 
 # TASK-315: Slimming Refactor 09: Full gate pass + end-to-end walkthrough

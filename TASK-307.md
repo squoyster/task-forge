@@ -1,11 +1,16 @@
 ---
 id: TASK-307
 type: Task
-status: Ready
+status: In Progress
 priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 61e7aaf23d
+claimed_at: '2026-06-20 06:47:16'
+context_hash: 86c2d0ddbd80d3ed
+spec_hash: e46359db69cb851c
+branch: agent/TASK-307-slimming-refactor-01-discard-task-306-an--61e7aaf23d
 ---
 
 # TASK-307: Slimming Refactor 01: Discard TASK-306 and confirm clean main
@@ -37,6 +42,11 @@ Known risks.
 Auto-continue unless a stopping condition occurs.
 
 ## Agent Notes
+
+### 2026-06-20T00:00:00Z System
+- Task claimed via taskforge start TASK-307
+- Session: 61e7aaf23d
+- Branch: agent/TASK-307-slimming-refactor-01-discard-task-306-an--61e7aaf23d
 
 ## Result
 

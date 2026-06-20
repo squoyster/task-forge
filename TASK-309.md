@@ -6,6 +6,7 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: 23f07735eb0a794c
 ---
 
 # TASK-309: Slimming Refactor 03: Rewrite hooks.ts (pre-push enforcement)

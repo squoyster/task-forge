@@ -6,6 +6,7 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: f4cdefdbd995fb76
 ---
 
 # TASK-310: Slimming Refactor 04: Sweeper stale-claim reclaim + config flags

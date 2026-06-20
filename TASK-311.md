@@ -6,6 +6,7 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: 48be7df9a777fe24
 ---
 
 # TASK-311: Slimming Refactor 05: Done records merge SHA as closeout

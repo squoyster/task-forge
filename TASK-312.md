@@ -6,6 +6,7 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: 3d6ac205c870e4d7
 ---
 
 # TASK-312: Slimming Refactor 06: Remove git facade commands

@@ -6,6 +6,7 @@ priority: P1
 agentRole: Planner
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: b6f602239189fa2e
 ---
 
 # TASK-314: Slimming Refactor 08: Rewrite workflow.md + AGENTS.md chain

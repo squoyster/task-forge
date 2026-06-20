@@ -6,6 +6,7 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
+spec_hash: 72485983793a5525
 ---
 
 # TASK-308: Slimming Refactor 02: Gate stamp + _hook internals
