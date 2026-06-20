@@ -1,7 +1,7 @@
 ---
 id: TASK-273
 type: Feature
-status: Ready
+status: Rejected
 priority: P1
 agentRole: Implementer
 riskLevel: Low
@@ -37,3 +37,6 @@ The status transition table allows `Implementation Complete → Review` and `Imp
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-20T00:00:00Z System
+- Task rejected: Backlog cleared to focus queue on TaskForge Slimming Refactor (TASK-307..315). Superseded, descoped, or obsoleted by refactor per specs/taskforge-slimming-refactor.md. Task record retained as historical reference; re-evaluate post-refactor.
