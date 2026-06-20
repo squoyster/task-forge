@@ -110,6 +110,12 @@ Specifications: detailed design specs, gap analyses, task packs, and architectur
 | `tasks/` | Legacy task files (deprecated — task state lives in task-state worktree) |
 | `.taskforge/` | TaskForge runtime configuration and state |
 
+## Reasoning & Communication Style
+
+- **Be terse.** Minimize deliberation prose — don't restate the task, narrate obvious steps, or hedge. Act, then report results briefly.
+- **Think in ordered sequence.** Before acting on non-trivial work, lay out the steps as a numbered/logical plan; execute them in order; verify each before the next.
+- **Make no mistakes.** Correctness over speed: read before editing, confirm assumptions, run the gates, and double-check commands and file paths. A careless action costs more tokens and time than a careful one.
+
 ## Agent Instructions
 
 - Read discovery indexes first when navigating: `.agent/tf.ctx` → `.agent/file.idx` → `.agent/symbol.idx` → `.agent/spec.idx` → `.agent/task.idx`. Use them to select files before glob/grep/read.
