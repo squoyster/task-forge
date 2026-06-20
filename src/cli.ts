@@ -6,6 +6,7 @@ import { cmdStart, type StartOptions } from "./commands/start.js";
 import { cmdStatus } from "./commands/status.js";
 import { cmdSummary } from "./commands/summary.js";
 import { cmdGates, type GatesOptions } from "./commands/gates.js";
+import { cmdHook, type HookOptions } from "./commands/hook.js";
 import { cmdBlock } from "./commands/block.js";
 import { cmdDone, type DoneOptions } from "./commands/done.js";
 import { cmdUnlock, type UnlockOptions } from "./commands/unlock.js";
@@ -652,5 +653,14 @@ guard
   .action((taskId: string, command: string, reason: string, opts: { json?: boolean }) =>
     wrapWithAudit("guard:override", [taskId], opts, () => cmdGuardOverride(taskId, command, reason, opts))(),
   );
+
+program
+  .command("_hook <name>", { hidden: true })
+  .description("Run hook logic in TypeScript (internal, used by git hooks)")
+  .option("--json", "Output in JSON format")
+  .action((name: string, opts: { json?: boolean }) => {
+    const hookOpts: HookOptions = { json: opts.json ?? false };
+    return wrapWithAudit("_hook", [], opts, () => cmdHook(name, hookOpts))();
+  });
 
 program.parse();

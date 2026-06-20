@@ -3,4 +3,5 @@ logs/
 .taskforge/runtime/
 .taskforge-session.json
 .taskforge/agent-registry.json
+.taskforge/gate-stamp.json
 dist/

@@ -41,7 +41,9 @@ function registeredCliCommands(): string[] {
     }
   }
 
-  return [...commands].sort();
+  // Exclude internal/hidden commands (leading "_", e.g. _hook) — plumbing
+  // invoked by git hooks, not user-facing commands needing next-action maps.
+  return [...commands].filter((c) => !c.startsWith("_")).sort();
 }
 
 describe("command-result schema", () => {
