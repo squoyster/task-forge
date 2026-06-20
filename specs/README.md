@@ -95,7 +95,10 @@ See [TASKFORGE.md](TASKFORGE.md) for the full specification, including the Sweep
 | `taskforge heartbeat TASK-N` | Extend Sweeper lease on active task |
 | `taskforge block TASK-N "reason"` | Mark task as blocked |
 | `taskforge done TASK-N` | Mark task as done (--cleanup, --delete-branch) |
+| `taskforge promote TASK-N` | Advance a task through the status state machine (--to) |
 | `taskforge release TASK-N` | Voluntarily release a claim |
+| `taskforge unlock TASK-N` | Manually unlock a task (requires --force, human/doctor) |
+| `taskforge update TASK-N` | Update editable task spec fields (--from-file) |
 | `taskforge agents --recover` | Mark stale registry entries as crashed |
 | `taskforge reject TASK-N "reason"` | Mark a task as rejected (obsolete, won't implement) |
 | `taskforge sweep` | Sweeper Protocol — recover stale in-progress tasks |
@@ -106,14 +109,13 @@ See [TASKFORGE.md](TASKFORGE.md) for the full specification, including the Sweep
 | `taskforge cleanup TASK-N` | Remove task worktree and branch safely |
 | `taskforge report TASK-N` | Generate structured completion report |
 | `taskforge new "Title"` | Create a new task file |
-| `taskforge diff TASK-N` | Show worktree diff (git facade) |
-| `taskforge checkpoint TASK-N -m "msg"` | Commit on task branch with trailers |
-| `taskforge submit TASK-N` | Push task branch (git facade) |
-| `taskforge pr TASK-N` | Create PR for task (git facade) |
 | `taskforge audit TASK-N` | Show audit events for a task |
 | `taskforge transcript TASK-N` | Show readable transcript for a task |
 | `taskforge timeline TASK-N` | Show event timeline summary for a task |
 | `taskforge ac-check [TASK-N]` | Scan task files for acceptance criteria issues |
+| `taskforge mcp` | Start a Model Context Protocol (MCP) server for TaskForge |
+| `taskforge guard status` | Show mutation boundary enforcement status |
+| `taskforge guard override TASK-N COMMAND "reason"` | Issue a time-limited mutation override (doctor only) |
 | `taskforge sync` | Sync with external issue tracker |
 | `taskforge deps scan` | Run broad dependency health checks |
 | `taskforge deps audit` | Run package-manager-native audit |
