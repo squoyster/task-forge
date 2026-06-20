@@ -6,8 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 6bc4775335
-claimed_at: '2026-06-15 19:33:13'
 context_hash: 86c2d0ddbd80d3ed
 spec_hash: 720e20b24cd14e8b
 branch: agent/TASK-229-record-worktree-path-in-task-state-durin--6bc4775335

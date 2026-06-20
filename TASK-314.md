@@ -6,7 +6,6 @@ priority: P1
 agentRole: Planner
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 61e7aaf23d
 completed_at: '2026-06-20 10:34:00'
 spec_hash: b6f602239189fa2e
 branch: agent/TASK-314-compact-workflow-doc

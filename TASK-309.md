@@ -6,8 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 61e7aaf23d
-claimed_at: '2026-06-20 07:50:00'
 completed_at: '2026-06-20 08:00:00'
 spec_hash: 23f07735eb0a794c
 branch: agent/TASK-309-rewrite-hooks-prepush

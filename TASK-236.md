@@ -6,8 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 0745b779f5
-claimed_at: '2026-06-15 19:59:54'
 context_hash: 86c2d0ddbd80d3ed
 spec_hash: 2e7fc293318e91c3
 branch: agent/TASK-236-enforce-worktree-only-edits-auto-pull-on--0745b779f5

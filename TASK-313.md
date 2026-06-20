@@ -6,7 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 61e7aaf23d
 completed_at: '2026-06-20 10:32:00'
 spec_hash: 4ef24da9370c556a
 branch: agent/TASK-313-config-schema-cleanup

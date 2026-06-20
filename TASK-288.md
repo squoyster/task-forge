@@ -6,8 +6,6 @@ priority: P2
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 454d025409
-claimed_at: '2026-06-10 23:13:41'
 context_hash: 24c64b5cba799406
 spec_hash: 2849a164b1008b01
 branch: agent/TASK-288-normalize-malformed-task-files-created-b--454d025409

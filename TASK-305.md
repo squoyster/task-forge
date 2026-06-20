@@ -6,8 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: f31a56bbad
-claimed_at: '2026-06-15 20:24:22'
 context_hash: 86c2d0ddbd80d3ed
 spec_hash: 1048ed25ba7ee839
 branch: agent/TASK-305-add-durable-agent-identity-boilerplate-t--f31a56bbad

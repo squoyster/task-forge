@@ -6,8 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 61e7aaf23d
-claimed_at: '2026-06-20 10:00:00'
 completed_at: '2026-06-20 10:20:00'
 spec_hash: 3d6ac205c870e4d7
 branch: agent/TASK-312-remove-git-facade

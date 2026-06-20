@@ -6,8 +6,6 @@ priority: P0
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 0f439c05c4
-claimed_at: '2026-06-15 05:47:43'
 context_hash: c325879bc50725fa
 spec_hash: 1a64cf4c0c2cc56a
 branch: agent/TASK-297-make-taskforge-new-atomic-and-recoverabl--0f439c05c4

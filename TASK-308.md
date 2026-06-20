@@ -6,8 +6,6 @@ priority: P1
 agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
-assignee: 61e7aaf23d
-claimed_at: '2026-06-20 07:00:00'
 completed_at: '2026-06-20 07:40:00'
 spec_hash: 72485983793a5525
 branch: agent/TASK-308-gate-stamp-hook-internals
