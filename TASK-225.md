@@ -11,6 +11,7 @@ claimed_at: '2026-06-20 18:42:12'
 context_hash: ad8142e125a8fad2
 spec_hash: 98c9ecf27c1083f8
 branch: agent/TASK-225-add-clidocumentation-consistency-tests--95479e7aec
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-225
 ---
 
 # TASK-225: Add CLI/documentation consistency tests
@@ -68,6 +69,9 @@ Create `tests/cli-docs-consistency.test.ts` with:
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-20T00:00:00Z System
+- Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-225
 
 ### 2026-06-20T00:00:00Z System
 - Task claimed via taskforge start TASK-225
