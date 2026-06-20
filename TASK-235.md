@@ -1,7 +1,7 @@
 ---
 id: TASK-235
 type: Task
-status: Ready
+status: Rejected
 priority: P2
 agentRole: Implementer
 riskLevel: Low
@@ -34,3 +34,6 @@ The task-state currently allows duplicate markdown sections (e.g., two '## Accep
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-20T00:00:00Z System
+- Task rejected: Recalibration - pre-306 task pool retired, superseded by 306+ frontier.
