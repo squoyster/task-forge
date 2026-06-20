@@ -101,14 +101,20 @@ dependencies: z
      })
      .optional()
      .default({}),
-   gates: z
-     .object({
-       typecheck: z.string().default("npm run typecheck"),
-       lint: z.string().default("npm run lint"),
-       build: z.string().default("npm run build"),
-       test: z.string().default("npm test -- --run"),
-     })
-     .optional()
+    gates: z
+      .object({
+        typecheck: z.string().default("npm run typecheck"),
+        lint: z.string().default("npm run lint"),
+        build: z.string().default("npm run build"),
+        test: z.string().default("npm test -- --run"),
+      })
+      .optional()
+       .default({}),
+    push: z
+      .object({
+        allowedBranches: z.array(z.string()).default([]),
+      })
+      .optional()
       .default({}),
     controlFiles: z
       .array(z.string())
