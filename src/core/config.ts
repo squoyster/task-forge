@@ -64,9 +64,6 @@ export const ConfigSchema = z.object({
     .object({
       autoContinue: z.boolean().default(true),
       maxTaskFixIterations: z.number().default(3),
-      allowDraftPr: z.boolean().default(true),
-      allowCommit: z.boolean().default(true),
-      allowPush: z.boolean().default(false),
     })
     .optional()
     .default({}),
@@ -107,6 +104,7 @@ dependencies: z
         lint: z.string().default("npm run lint"),
         build: z.string().default("npm run build"),
         test: z.string().default("npm test -- --run"),
+        requireCleanTree: z.boolean().default(true),
       })
       .optional()
        .default({}),
@@ -120,6 +118,12 @@ dependencies: z
       .object({
         staleThresholdMinutes: z.number().default(15),
         autoReclaim: z.boolean().default(true),
+      })
+      .optional()
+      .default({}),
+    hooks: z
+      .object({
+        enforce: z.boolean().default(true),
       })
       .optional()
       .default({}),

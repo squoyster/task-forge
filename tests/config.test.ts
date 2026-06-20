@@ -17,6 +17,25 @@ describe("ConfigSchema", () => {
       expect(result.data.continuation.autoContinue).toBe(true);
       expect(result.data.dependencies.enabled).toBe(true);
       expect(result.data.dependencies.packageManager).toBe("pnpm");
+      expect(result.data.gates.requireCleanTree).toBe(true);
+      expect(result.data.hooks.enforce).toBe(true);
+      expect(result.data.sweep.staleThresholdMinutes).toBe(15);
+      expect(result.data.sweep.autoReclaim).toBe(true);
+      expect(result.data.push.allowedBranches).toEqual([]);
+    }
+  });
+
+  it("strips deprecated continuation keys (allowPush/allowCommit/allowDraftPr)", () => {
+    const result = ConfigSchema.safeParse({
+      continuation: { autoContinue: false, allowPush: true, allowCommit: false, allowDraftPr: false },
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.continuation.autoContinue).toBe(false);
+      // Deprecated keys are stripped (non-strict schema migrates them away).
+      expect(result.data.continuation).not.toHaveProperty("allowPush");
+      expect(result.data.continuation).not.toHaveProperty("allowCommit");
+      expect(result.data.continuation).not.toHaveProperty("allowDraftPr");
     }
   });
 

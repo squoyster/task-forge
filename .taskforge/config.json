@@ -32,10 +32,7 @@
   },
   "continuation": {
     "autoContinue": true,
-    "maxTaskFixIterations": 3,
-    "allowDraftPr": true,
-    "allowCommit": true,
-    "allowPush": false
+    "maxTaskFixIterations": 3
   },
   "dependencies": {
     "enabled": true,
