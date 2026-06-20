@@ -1,7 +1,7 @@
 ---
 id: TASK-225
 type: Task
-status: In Progress
+status: Rejected
 priority: P2
 agentRole: Implementer
 riskLevel: Low
@@ -69,6 +69,9 @@ Create `tests/cli-docs-consistency.test.ts` with:
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-20T00:00:00Z System
+- Task rejected: Recalibration - pre-306 task pool retired, superseded by 306+ frontier. Valuable work salvaged to PR #150 (chore/cli-docs-consistency-tests).
 
 ### 2026-06-20T00:00:00Z System
 - Worktree created: /Volumes/Transcend/devel/worktrees/task-forge/TASK-225
