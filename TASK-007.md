@@ -9,6 +9,7 @@ humanInterventionRequired: false
 spec_hash: b4a09d89beaf5d3f
 branch: agent/TASK-007-force-init-flag
 worktree: ../worktrees/TASK-007
+issue: 67
 ---
 
 # TASK-007: Add --force flag to init command for re-initialization

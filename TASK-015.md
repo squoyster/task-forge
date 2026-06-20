@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 spec_hash: dce78169e45393a1
+issue: 75
 ---
 
 # TASK-015: Jittered Retries for Optimistic Concurrency

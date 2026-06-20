@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 spec_hash: d44ec3d971adef10
+issue: 62
 ---
 # TASK-002: Implement dependency audit command enhancement
 

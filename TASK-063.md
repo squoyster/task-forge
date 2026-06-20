@@ -8,6 +8,7 @@ riskLevel: Low
 humanInterventionRequired: false
 context_hash: 6eb8f67de42c153d
 spec_hash: 50bc15f1158abdbb
+issue: 123
 ---
 
 # TASK-063: Add managed block patching for AGENTS.md

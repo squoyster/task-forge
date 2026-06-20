@@ -8,6 +8,7 @@ riskLevel: Low
 humanInterventionRequired: false
 context_hash: ed264b332d269eec
 spec_hash: 5c76b0b5aee2515a
+issue: 104
 ---
 
 # TASK-044: Remove Legacy `tasks/` Directory from Main

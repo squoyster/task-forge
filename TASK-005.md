@@ -9,6 +9,7 @@ humanInterventionRequired: false
 spec_hash: ba3db048494d2218
 branch: agent/TASK-005-cleanup-done-flag
 worktree: ../worktrees/TASK-005
+issue: 65
 ---
 
 # TASK-005: Add --cleanup flag to done command for worktree/branch removal

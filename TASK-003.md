@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 spec_hash: 9171762034c99b50
+issue: 63
 ---
 
 # TASK-003: Add --json flag to status command for programmatic output

@@ -8,6 +8,7 @@ riskLevel: Low
 humanInterventionRequired: false
 context_hash: 2d40ee019028e7ff
 spec_hash: c3d28864eb13147c
+issue: 134
 ---
 
 # TASK-074: Documentation for agent framework initialization

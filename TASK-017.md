@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
 spec_hash: d9c1d138f49a2158
+issue: 77
 ---
 
 # TASK-017: Add Lifecycle JSON Contracts

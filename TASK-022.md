@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
 spec_hash: 527ef8902125f469
+issue: 82
 ---
 
 # TASK-022: Run Sweeper Automatically Before Task Selection and Claiming

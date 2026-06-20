@@ -8,6 +8,7 @@ riskLevel: Low
 humanInterventionRequired: false
 context_hash: 6eb8f67de42c153d
 spec_hash: 17338af6025a2b9a
+issue: 130
 ---
 
 # TASK-070: Add TaskForge git facade commands

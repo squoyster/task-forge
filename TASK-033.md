@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 spec_hash: 512921c2857ed84e
+issue: 93
 ---
 
 # TASK-033: Add `config validate` Command

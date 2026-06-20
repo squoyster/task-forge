@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
 spec_hash: 5c1c2f9d4fc6bd30
+issue: 87
 ---
 
 # TASK-027: Add `report` / `finish` Command — Structured Completion Report

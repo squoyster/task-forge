@@ -8,6 +8,7 @@ riskLevel: Low
 humanInterventionRequired: false
 context_hash: b8735c6ec8dfb371
 spec_hash: 056ab6c10080b16e
+issue: 136
 ---
 
 # TASK-076: Add container-first deployment architecture documentation

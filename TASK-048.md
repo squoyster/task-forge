@@ -10,6 +10,7 @@ dependsOn:
   - TASK-045
 context_hash: 27705145f76d1ff7
 spec_hash: 9d5ee97818c3c2a5
+issue: 108
 ---
 
 # TASK-048: Replace `jitteredPush` With Transactional CAS Reapply

@@ -8,6 +8,7 @@ riskLevel: Low
 humanInterventionRequired: false
 context_hash: 6eb8f67de42c153d
 spec_hash: 77ab696ec27f8c83
+issue: 125
 ---
 
 # TASK-065: Generate OpenCode agent files

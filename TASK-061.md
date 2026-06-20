@@ -8,6 +8,7 @@ riskLevel: Low
 humanInterventionRequired: false
 context_hash: 6eb8f67de42c153d
 spec_hash: baec9715fa5d67f4
+issue: 121
 ---
 
 # TASK-061: Template rendering utility for agent config generation

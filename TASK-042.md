@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
 spec_hash: 8f3ab17f83895d79
+issue: 102
 ---
 
 # TASK-042: Global Doctor-Lock — Pause All Agents During Recovery

@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 spec_hash: e2334af74ca96cd5
+issue: 103
 ---
 
 # TASK-043: Document Agent Discipline Policy — No Direct Git, Doctor Mode Protocol

@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
 spec_hash: 44de7125f22ec18c
+issue: 100
 ---
 
 # TASK-040: Agent Capability Levels

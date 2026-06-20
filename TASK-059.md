@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 spec_hash: ffa9accb40401d76
+issue: 119
 ---
 
 # TASK-059: Extend config schema for agent framework integration

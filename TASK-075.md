@@ -8,6 +8,7 @@ riskLevel: Low
 humanInterventionRequired: false
 context_hash: 6eb8f67de42c153d
 spec_hash: 8eeaabd8b60d58da
+issue: 135
 ---
 
 # TASK-075: Extend config schema for agent framework integration

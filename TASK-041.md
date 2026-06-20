@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
 spec_hash: 024a63f747eec202
+issue: 101
 ---
 
 # TASK-041: Qualify Worktree Paths with Project Name

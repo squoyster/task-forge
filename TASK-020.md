@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
 spec_hash: 7c61bd69c2f966f5
+issue: 80
 ---
 
 # TASK-020: Add Worktree Inspection

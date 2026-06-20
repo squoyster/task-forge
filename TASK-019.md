@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 spec_hash: b16f6e288cf1236d
+issue: 79
 ---
 
 # TASK-019: Add Heartbeat / Lease Refresh

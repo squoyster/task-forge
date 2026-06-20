@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 spec_hash: 86a53cb9dff0d229
+issue: 90
 ---
 
 # TASK-030: Add `prompt` Command — Agent Execution Packet

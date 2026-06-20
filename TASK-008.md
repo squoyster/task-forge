@@ -9,6 +9,7 @@ humanInterventionRequired: false
 spec_hash: 86d584c82b7437fb
 branch: agent/TASK-008-command-test-coverage
 worktree: ../worktrees/TASK-008
+issue: 68
 ---
 
 # TASK-008: Implement command-level test coverage

@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
 spec_hash: 80b118020103136c
+issue: 76
 ---
 
 # TASK-016: Normalize Task Status Values (Replaced)

@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
 spec_hash: 034114b36abf68cf
+issue: 84
 ---
 
 # TASK-024: Add `claim` Command — Separate Claim Primitive

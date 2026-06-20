@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 spec_hash: 4538ce2a42d4b176
+issue: 91
 ---
 
 # TASK-031: Add `resume` Command — Re-enter Existing Task Workspace

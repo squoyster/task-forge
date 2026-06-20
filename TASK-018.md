@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 spec_hash: d084cd7980ad1059
+issue: 78
 ---
 
 # TASK-018: Add `gates` Command

@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 spec_hash: 1f8399de1e71f553
+issue: 129
 ---
 
 # TASK-069: Add OpenCode guard plugin generation

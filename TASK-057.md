@@ -8,6 +8,7 @@ riskLevel: Low
 humanInterventionRequired: false
 context_hash: 0cd53b090047347c
 spec_hash: a905fadda8af26b2
+issue: 117
 ---
 
 # TASK-057: Migrate all lifecycle commands to transactional mutation layer

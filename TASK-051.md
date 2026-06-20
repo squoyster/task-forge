@@ -12,6 +12,7 @@ dependsOn:
 context_hash: 27705145f76d1ff7
 spec_hash: 4be9b80cb9c1cb93
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-051
+issue: 111
 ---
 
 # TASK-051: Implement Doctor-Mode Recovery as Privileged Transactional Operation

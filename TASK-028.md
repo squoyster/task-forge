@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 spec_hash: 0fa24c59bc023bb6
+issue: 88
 ---
 
 # TASK-028: Add Per-Task Event Log (NDJSON)

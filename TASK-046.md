@@ -10,6 +10,7 @@ dependsOn:
   - TASK-045
 context_hash: 27705145f76d1ff7
 spec_hash: 0f06ff85f7082de1
+issue: 106
 ---
 
 # TASK-046: Add State Invariant Validator and CI/Doctor Gate

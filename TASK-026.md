@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
 spec_hash: ee2b80d15955fab4
+issue: 86
 ---
 
 # TASK-026: Safe Sweep with Dry-Run and Worktree Classification

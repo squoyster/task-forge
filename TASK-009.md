@@ -9,6 +9,7 @@ humanInterventionRequired: false
 spec_hash: a593a2b95700a86a
 branch: agent/TASK-009-github-projects-sync
 worktree: ../worktrees/TASK-009
+issue: 69
 ---
 
 # TASK-009: GitHub Projects board sync for status columns

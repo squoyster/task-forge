@@ -9,6 +9,7 @@ humanInterventionRequired: false
 context_hash: 6eb8f67de42c153d
 spec_hash: 8a09f31b694eda8f
 worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-067
+issue: 127
 ---
 
 # TASK-067: Add TaskForge audit service

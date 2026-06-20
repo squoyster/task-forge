@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 spec_hash: de90180eea0221a8
+issue: 61
 ---
 
 # TASK-001: Initialize TaskForge workflow

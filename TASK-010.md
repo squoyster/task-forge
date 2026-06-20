@@ -9,6 +9,7 @@ humanInterventionRequired: false
 spec_hash: f4c56fe4e116f97f
 branch: agent/TASK-010-search-filter-list
 worktree: ../worktrees/TASK-010
+issue: 70
 ---
 
 # TASK-010: Add task search and filtering capabilities

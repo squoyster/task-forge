@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 spec_hash: 6a3e300dd76b7734
+issue: 85
 ---
 
 # TASK-025: Add Structured Blocker Fields

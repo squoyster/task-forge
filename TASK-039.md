@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
 spec_hash: 03fa2e6467eac90a
+issue: 99
 ---
 
 # TASK-039: Control-File Change Detection — Prevent Stale-Context Work

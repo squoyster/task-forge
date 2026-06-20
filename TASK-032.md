@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 spec_hash: ec08b84d13acf4ed
+issue: 92
 ---
 
 # TASK-032: Add `doctor` Command — Repo and Task-State Health Check

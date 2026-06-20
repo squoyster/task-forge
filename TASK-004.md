@@ -7,6 +7,7 @@ agentRole: Implementer
 riskLevel: Low
 humanInterventionRequired: false
 spec_hash: c2dfa06c7e134fdb
+issue: 64
 ---
 
 # TASK-004: Add --json flag to summary command for programmatic output

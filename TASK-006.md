@@ -9,6 +9,7 @@ humanInterventionRequired: false
 spec_hash: a38b6871832ad6df
 branch: agent/TASK-006-dependency-tracking
 worktree: ../worktrees/TASK-006
+issue: 66
 ---
 
 # TASK-006: Add task dependency tracking to schema and scheduler
