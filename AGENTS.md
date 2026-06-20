@@ -124,9 +124,9 @@ Specifications: detailed design specs, gap analyses, task packs, and architectur
 
 Skip by default: `session-ses_*.md`, `specs/session-ses_*.md`, `docs/archive/`, `.opencode/node_modules/`, `Volumes/`, `node_modules/`
 
-## Agent Operating Policy (Slimming Refactor)
+## Agent Operating Policy (Direct-Git Model)
 
-> **Active for the duration of the TaskForge Slimming Refactor (TASK-307..315).** This is a deliberately **permissive, direct-git policy** so you don't spend tokens deliberating about process — just follow it. It supersedes `docs/workflow.md` and any prior managed-policy until TASK-315 lands. Full design + task breakdown: `specs/taskforge-slimming-refactor.md`.
+> **Permanent operating policy.** This is a deliberately **permissive, direct-git policy** so you don't spend tokens deliberating about process — just follow it. The TaskForge Slimming Refactor (TASK-307..315) landed this model; the git facade was removed (TASK-312) and `docs/workflow.md` reflects it. Full design + task breakdown: `specs/taskforge-slimming-refactor.md`.
 >
 > **Mindset:** use git directly, move fast, keep gates green, maintain task-state. Don't ask "should I use the facade or git?" — use git. Don't agonize over token/context budget — the window is large; work normally.
 
@@ -168,10 +168,11 @@ Run in the worktree: `npm run typecheck` → `npm run lint` → `npm run build` 
 
 ### 8. Permissions (already configured in `opencode.json`)
 `git *` → allow (force-push denied); `edit ../task-state/**` → allow; `tasks/**`, `.git/**` → deny. So git ops and task-state edits need no facade. After editing `opencode.json`, the user must restart opencode for changes to take effect.
-
 ### 9. Known gotchas
+
 - **Commander:** hide a command with `.command("name", { hidden: true })` — there is no `.hidden()`.
-- **Tests:** Vitest with temp dirs (`fs.mkdtempSync` + `git init`); mock `execa` by routing on the command string when a function shells out.
+- **Tests:** Vitest with temp dirs (`fs.mkdtempSync` + `git init`); mock `execa` by routing on the command string when a function shells out. CLI-level regression tests may spawn `dist/cli.js` (built by the `build` gate before `test`) — precedented by `tests/done.test.ts` and `tests/commands/hook.test.ts`.
+- **Stale `taskforge` on PATH:** installed bash hooks `exec taskforge` from PATH. A pre-refactor global/local install will emit `unknown command '_hook'` (the hook's defensive guard skips only when `taskforge` is absent, not when stale). Reinstall/upgrade taskforge, or prepend a wrapper on PATH. Similarly, the pre-refactor shell `pre-push` misclassifies new-branch pushes as force-push — regenerate hooks via `taskforge init --agent-framework opencode` (installs the modern delegating hook) or override per-command with `git -c core.hooksPath=/dev/null push ...`.
 - **Commit author hint:** git may print `git commit --amend --reset-author` after a commit — that's advisory, the commit succeeded; ignore it.
 - **Don't over-compress context.** The window is ~1M tokens; "max context" warnings are often false alarms.
 

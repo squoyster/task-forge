@@ -40,8 +40,15 @@ export async function cmdHook(
     case "pre-push": {
       const refs = await readPushRefsFromStdin();
       const config = loadConfig(repoRoot);
+      // Expected gates = runnable gates from config (typecheck/lint/build/test).
+      // `requireCleanTree` is a precondition (checked separately in gates.ts),
+      // not a gate that produces a pass/fail result, so exclude it — otherwise
+      // every push would be blocked because gates.ts never records it in the stamp.
+      const expectedGates = config?.gates
+        ? Object.keys(config.gates).filter((g) => g !== "requireCleanTree")
+        : undefined;
       const r = await runPrePushLogic(repoRoot, refs, {
-        expectedGates: config?.gates ? Object.keys(config.gates) : undefined,
+        expectedGates,
         allowedBranches: config?.push?.allowedBranches,
       });
       ok = r.ok;

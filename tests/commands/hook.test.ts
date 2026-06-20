@@ -207,3 +207,69 @@ describe("cmdHook", () => {
     expect(ok).toBe(false);
   });
 });
+
+describe("_hook CLI exit code (TASK-315 regression)", () => {
+  // The bash pre-push hook is `exec taskforge _hook pre-push`. For git to honor
+  // the block, the CLI must exit non-zero when the hook blocks. This regression
+  // test runs the built CLI end-to-end so the exit-code propagation through
+  // wrapWithAudit (which only exits non-zero on thrown errors) is covered.
+  it("exits 1 when pre-push blocks (missing gate stamp)", async () => {
+    const tmp = await makeRepo();
+    try {
+      await git(["checkout", "-q", "-b", BRANCH], tmp);
+      // Run the CLI _hook subcommand with the ref line on stdin, mirroring what
+      // git passes. No stamp is written, so runPrePushLogic will block.
+      const res = await execa(
+        "node",
+        [path.resolve(__dirname, "..", "..", "dist", "cli.js"), "_hook", "pre-push"],
+        {
+          cwd: tmp,
+          input: `refs/heads/${BRANCH} ${SHA} refs/heads/${BRANCH} ${ZERO}\n`,
+          reject: false,
+        },
+      );
+      expect(res.exitCode).toBe(1);
+      expect(res.stderr + res.stdout).toContain("blocked");
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  }, 15000);
+
+  // Second TASK-315 regression: the hook derives expectedGates from config.gates
+  // keys, which (via Zod defaults) include `requireCleanTree`. But gates.ts only
+  // records the 4 runnable gates in the stamp — so every push was blocked with
+  // "Gate 'requireCleanTree' not recorded". The hook must exclude that precondition.
+  it("exits 0 with a 4-gate stamp (requireCleanTree is a precondition, not a gate)", async () => {
+    const tmp = await makeRepo();
+    try {
+      await git(["checkout", "-q", "-b", BRANCH], tmp);
+      // Write a config so Zod defaults populate gates.requireCleanTree = true.
+      fs.mkdirSync(path.join(tmp, ".taskforge"), { recursive: true });
+      fs.writeFileSync(path.join(tmp, ".taskforge", "config.json"), '{"gates":{}}');
+      // Write a stamp matching what gates.ts actually writes: 4 runnable gates.
+      fs.writeFileSync(
+        path.join(tmp, ".taskforge", "gate-stamp.json"),
+        JSON.stringify({
+          commit_sha: SHA,
+          gates: { typecheck: true, lint: true, build: true, test: true },
+          timestamp: "2026-01-01T00:00:00Z",
+          runner_session: "e2e",
+        }),
+      );
+      const res = await execa(
+        "node",
+        [path.resolve(__dirname, "..", "..", "dist", "cli.js"), "_hook", "pre-push"],
+        {
+          cwd: tmp,
+          input: `refs/heads/${BRANCH} ${SHA} refs/heads/${BRANCH} ${ZERO}\n`,
+          reject: false,
+        },
+      );
+      // Task branch with valid stamp + no task-state (no assignee) → fail-open, allowed.
+      expect(res.exitCode).toBe(0);
+      expect(res.stderr + res.stdout).not.toContain("requireCleanTree");
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  }, 15000);
+});
