@@ -23,13 +23,34 @@ export async function cmdSync(json = false): Promise<void> {
   logInfo("# TaskForge Sync");
   logInfo("");
 
+  // Always push task-state changes first, regardless of GitHub config.
+  // This ensures pending publications (from taskforge new) are pushed.
+  let taskStatePushed = false;
+  try {
+    await commitAndPushTaskState(repoRoot, "chore: sync task state");
+    taskStatePushed = true;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    logError(`Failed to push task-state: ${msg}`);
+  }
+
   if (!config.github?.enabled) {
     logInfo("GitHub integration is not enabled in config.");
     logInfo("");
-    logInfo("To enable, set in .taskforge/config.json:");
-    logInfo('  "github": { "enabled": true, "owner": "...", "repo": "..." }');
-    logInfo("");
-    logInfo("Ensure GITHUB_TOKEN is set in environment.");
+    if (taskStatePushed) {
+      logInfo("Task-state changes pushed successfully.");
+    } else {
+      logInfo("To enable GitHub sync, set in .taskforge/config.json:");
+      logInfo('  "github": { "enabled": true, "owner": "...", "repo": "..." }');
+      logInfo("");
+      logInfo("Ensure GITHUB_TOKEN is set in environment.");
+    }
+    writeResult(successResult({
+      command: "sync",
+      guidance: taskStatePushed
+        ? "Task-state changes pushed. GitHub integration not enabled."
+        : "GitHub integration not enabled.",
+    }), json);
     return;
   }
 
@@ -41,6 +62,12 @@ export async function cmdSync(json = false): Promise<void> {
 
   if (!githubConfig.owner || !githubConfig.repo) {
     logError("GitHub owner and repo must be configured.");
+    writeResult(successResult({
+      command: "sync",
+      guidance: taskStatePushed
+        ? "Task-state changes pushed. GitHub owner/repo not configured."
+        : "GitHub owner and repo must be configured.",
+    }), json);
     return;
   }
 
@@ -50,6 +77,10 @@ export async function cmdSync(json = false): Promise<void> {
 
   if (tasks.length === 0) {
     logInfo("No task files found.");
+    writeResult(successResult({
+      command: "sync",
+      guidance: "No task files found.",
+    }), json);
     return;
   }
 

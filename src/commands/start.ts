@@ -401,7 +401,8 @@ export async function cmdStart(taskId: string, options?: StartOptions): Promise<
       worktree: task.worktree ?? undefined,
       guidance: startResult.guidance,
       nextCommands: [
-        { command: "opencode", purpose: "Begin working on the task", when: "Begin working on the task", allowedFor: "all", priority: 1 },
+        { command: `cd ${task.worktree ?? repoRoot}`, purpose: "Enter the task worktree", when: "Before editing task files", allowedFor: "all", priority: 1 },
+        { command: "opencode", purpose: "Begin working on the task", when: "After entering the worktree", allowedFor: "all", priority: 2 },
       ],
     }), options.json);
     return;

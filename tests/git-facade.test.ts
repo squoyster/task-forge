@@ -3,6 +3,7 @@ import { setRepoRoot } from "../src/util/paths.js";
 
 vi.mock("../src/core/task-store.js", () => ({
   loadTaskById: vi.fn(),
+  writeTaskFile: vi.fn(),
 }));
 
 vi.mock("../src/core/session.js", () => ({
@@ -28,6 +29,7 @@ vi.mock("../src/core/config.js", () => ({
 
 vi.mock("../src/integrations/github/service.js", () => ({
   createPullRequest: vi.fn(),
+  findPullRequestByHead: vi.fn(),
 }));
 
 vi.mock("../src/util/logging.js", () => ({
@@ -38,12 +40,24 @@ vi.mock("../src/util/logging.js", () => ({
   logError: vi.fn(),
 }));
 
+vi.mock("../src/core/git.js", async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    getBranchCommitsBehindIntegration: vi.fn().mockResolvedValue(0),
+  };
+});
+
 import { cmdCheckpoint, cmdPr, cmdSubmit } from "../src/commands/git-facade.js";
 import { appendTaskTranscript } from "../src/core/audit.js";
 import { TaskForgeError } from "../src/core/errors.js";
 import { assertTaskOwnership } from "../src/core/session.js";
 import { loadTaskById } from "../src/core/task-store.js";
 import { run } from "../src/util/exec.js";
+import type { Mock } from "vitest";
+import { loadConfig } from "../src/core/config.js";
+import { getBranchCommitsBehindIntegration } from "../src/core/git.js";
+import { createPullRequest, findPullRequestByHead } from "../src/integrations/github/service.js";
 
 const task = {
   id: "TASK-285",
@@ -106,40 +120,47 @@ describe("git facade commands", () => {
     logSpy.mockRestore();
   });
 
-  it("returns noop when branch is already submitted and mergeable", async () => {
+  it("returns noop when branch is already on remote and no GitHub configured", async () => {
     vi.mocked(loadTaskById).mockReturnValue(task);
     vi.mocked(assertTaskOwnership).mockResolvedValue(undefined);
     vi.mocked(run)
-      .mockResolvedValueOnce({ stdout: "", stderr: "", exitCode: 0 })
-      .mockResolvedValueOnce({ stdout: "deadbeef\n", stderr: "", exitCode: 0 })
-      .mockResolvedValueOnce({
-        stdout: "= refs/heads/agent/TASK-285-test:refs/heads/agent/TASK-285-test [up to date]\n",
+      .mockResolvedValueOnce({ stdout: "", stderr: "", exitCode: 0 })               // fetch origin main
+      .mockResolvedValueOnce({ stdout: "deadbeef\n", stderr: "", exitCode: 0 })     // merge-tree
+      .mockResolvedValueOnce({                                                      // ls-remote → remote exists
+        stdout: "abc123def456789abc123def456789abc123def4\trefs/heads/agent/TASK-285-test\n",
         stderr: "",
         exitCode: 0,
-      });
+      })
+      .mockResolvedValueOnce({ stdout: "abc123def456789abc123def456789abc123def4\n", exitCode: 0 })  // rev-parse HEAD
+      .mockResolvedValueOnce({ stdout: "0\n", stderr: "", exitCode: 0 });           // rev-list (0 ahead)
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
     await cmdSubmit("TASK-285", true);
 
     const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
     expect(output.status).toBe("noop");
-    expect(output.guidance).toContain("already submitted and merges cleanly with origin/main");
+    expect(output.guidance).toContain("on remote");
+    expect(output.guidance).toContain("create a pull request");
     expect(appendTaskTranscript).not.toHaveBeenCalled();
 
     logSpy.mockRestore();
   });
 
-  it("returns success when branch push occurs and branch is mergeable", async () => {
+  it("returns success when branch is missing remote and push occurs", async () => {
     vi.mocked(loadTaskById).mockReturnValue(task);
     vi.mocked(assertTaskOwnership).mockResolvedValue(undefined);
+    vi.mocked(getBranchCommitsBehindIntegration).mockResolvedValue(0);
     vi.mocked(run)
-      .mockResolvedValueOnce({ stdout: "", stderr: "", exitCode: 0 })
-      .mockResolvedValueOnce({ stdout: "deadbeef\n", stderr: "", exitCode: 0 })
-      .mockResolvedValueOnce({
+      .mockResolvedValueOnce({ stdout: "", stderr: "", exitCode: 0 })               // fetch origin main
+      .mockResolvedValueOnce({ stdout: "deadbeef\n", stderr: "", exitCode: 0 })     // merge-tree
+      .mockResolvedValueOnce({ stdout: "", stderr: "", exitCode: 0 })               // ls-remote → empty (no remote)
+      .mockResolvedValueOnce({ stdout: "abc123def456789abc123def456789abc123def4\n", exitCode: 0 })  // rev-parse HEAD
+      .mockResolvedValueOnce({                                                      // push → success
         stdout: "  refs/heads/agent/TASK-285-test:refs/heads/agent/TASK-285-test abc123..def456\n",
         stderr: "",
         exitCode: 0,
-      });
+      })
+      .mockResolvedValueOnce({ stdout: "abc123def\n", stderr: "", exitCode: 0 });  // rev-parse HEAD for SHA
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
     await cmdSubmit("TASK-285", true);
@@ -154,7 +175,155 @@ describe("git facade commands", () => {
     logSpy.mockRestore();
   });
 
-  it("returns failed when mergeability preflight cannot be verified", async () => {
+  it("returns success and creates PR when remote branch exists with no PR", async () => {
+    vi.mocked(loadConfig).mockReturnValue({
+      github: { enabled: true, owner: "test-owner", repo: "test-repo" },
+    });
+    vi.mocked(findPullRequestByHead).mockResolvedValue(null);
+    vi.mocked(createPullRequest).mockResolvedValue({ number: 42, url: "https://github.com/test-owner/test-repo/pull/42" });
+    vi.mocked(loadTaskById).mockReturnValue(task);
+    vi.mocked(assertTaskOwnership).mockResolvedValue(undefined);
+    vi.mocked(getBranchCommitsBehindIntegration).mockResolvedValue(0);
+    vi.mocked(run)
+      .mockResolvedValueOnce({ stdout: "", stderr: "", exitCode: 0 })               // fetch origin main
+      .mockResolvedValueOnce({ stdout: "deadbeef\n", stderr: "", exitCode: 0 })     // merge-tree
+      .mockResolvedValueOnce({                                                      // ls-remote → remote exists
+        stdout: "abc123def456789abc123def456789abc123def4\trefs/heads/agent/TASK-285-test\n",
+        stderr: "",
+        exitCode: 0,
+      })
+      .mockResolvedValueOnce({ stdout: "abc123def456789abc123def456789abc123def4\n", exitCode: 0 })  // rev-parse HEAD
+      .mockResolvedValueOnce({ stdout: "0\n", stderr: "", exitCode: 0 });           // rev-list (0 ahead)
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    await cmdSubmit("TASK-285", true);
+
+    const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
+    expect(output.ok).toBe(true);
+    expect(output.status).toBe("success");
+    expect(output.guidance).toContain("PR #42 created");
+    expect(appendTaskTranscript).toHaveBeenCalled();
+
+    logSpy.mockRestore();
+  });
+
+  it("returns noop when PR already exists for the branch", async () => {
+    vi.mocked(loadConfig).mockReturnValue({
+      github: { enabled: true, owner: "test-owner", repo: "test-repo" },
+    });
+    vi.mocked(findPullRequestByHead).mockResolvedValue({ number: 42, url: "https://github.com/test-owner/test-repo/pull/42" });
+    vi.mocked(loadTaskById).mockReturnValue(task);
+    vi.mocked(assertTaskOwnership).mockResolvedValue(undefined);
+    vi.mocked(getBranchCommitsBehindIntegration).mockResolvedValue(0);
+    vi.mocked(run)
+      .mockResolvedValueOnce({ stdout: "", stderr: "", exitCode: 0 })               // fetch origin main
+      .mockResolvedValueOnce({ stdout: "deadbeef\n", stderr: "", exitCode: 0 })     // merge-tree
+      .mockResolvedValueOnce({                                                      // ls-remote → remote exists
+        stdout: "abc123def456789abc123def456789abc123def4\trefs/heads/agent/TASK-285-test\n",
+        stderr: "",
+        exitCode: 0,
+      })
+      .mockResolvedValueOnce({ stdout: "abc123def456789abc123def456789abc123def4\n", exitCode: 0 })  // rev-parse HEAD
+      .mockResolvedValueOnce({ stdout: "0\n", stderr: "", exitCode: 0 });           // rev-list (0 ahead)
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    await cmdSubmit("TASK-285", true);
+
+    const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
+    expect(output.status).toBe("noop");
+    expect(output.guidance).toContain("is already submitted");
+    expect(output.guidance).toContain("PR #42 exists");
+    expect(run).toHaveBeenCalledTimes(5);
+    expect(appendTaskTranscript).not.toHaveBeenCalled();
+
+    logSpy.mockRestore();
+  });
+
+  it("returns success when local branch is ahead of remote", async () => {
+    vi.mocked(loadConfig).mockReturnValue({
+      github: { enabled: true, owner: "test-owner", repo: "test-repo" },
+    });
+    vi.mocked(findPullRequestByHead).mockResolvedValue(null);
+    vi.mocked(createPullRequest).mockResolvedValue({ number: 43, url: "https://github.com/test-owner/test-repo/pull/43" });
+    vi.mocked(loadTaskById).mockReturnValue(task);
+    vi.mocked(assertTaskOwnership).mockResolvedValue(undefined);
+    vi.mocked(getBranchCommitsBehindIntegration).mockResolvedValue(0);
+    vi.mocked(run)
+      .mockResolvedValueOnce({ stdout: "", stderr: "", exitCode: 0 })               // fetch origin main
+      .mockResolvedValueOnce({ stdout: "deadbeef\n", stderr: "", exitCode: 0 })     // merge-tree
+      .mockResolvedValueOnce({                                                      // ls-remote → remote exists
+        stdout: "abc123def456789abc123def456789abc123def4\trefs/heads/agent/TASK-285-test\n",
+        stderr: "",
+        exitCode: 0,
+      })
+      .mockResolvedValueOnce({ stdout: "xyz789def456789abc123def456789abc123def4\n", exitCode: 0 })  // rev-parse HEAD (different from remote)
+      .mockResolvedValueOnce({ stdout: "3\n", stderr: "", exitCode: 0 })            // rev-list → 3 ahead
+      .mockResolvedValueOnce({                                                      // push → success
+        stdout: "  refs/heads/agent/TASK-285-test:refs/heads/agent/TASK-285-test abc123..def456\n",
+        stderr: "",
+        exitCode: 0,
+      })
+      .mockResolvedValueOnce({ stdout: "abc123def\n", stderr: "", exitCode: 0 });  // rev-parse HEAD for SHA
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    await cmdSubmit("TASK-285", true);
+
+    const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
+    expect(output.ok).toBe(true);
+    expect(output.status).toBe("success");
+    expect(output.guidance).toContain("Pull request created:");
+    expect(output.guidance).toContain("#43");
+    expect(appendTaskTranscript).toHaveBeenCalled();
+
+    logSpy.mockRestore();
+  });
+
+  it("returns failed when merge-tree check fails", async () => {
+    vi.mocked(loadTaskById).mockReturnValue(task);
+    vi.mocked(assertTaskOwnership).mockResolvedValue(undefined);
+    vi.mocked(run)
+      .mockResolvedValueOnce({ stdout: "", stderr: "", exitCode: 0 })   // fetch succeeds
+      .mockResolvedValueOnce({
+        stdout: "",
+        stderr: "fatal: Not a valid object name: origin/main",
+        exitCode: 128,
+      });  // merge-tree fails
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    await cmdSubmit("TASK-285", true);
+
+    const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
+    expect(output.ok).toBe(false);
+    expect(output.code).toBe("MERGEABILITY_CHECK_FAILED");
+    expect(output.error).toContain("Could not verify whether");
+    expect(output.error).toContain("Not a valid object name");
+
+    logSpy.mockRestore();
+  });
+
+  it("returns failed with BRANCH_BEHIND when branch is behind integration branch", async () => {
+    vi.mocked(loadTaskById).mockReturnValue(task);
+    vi.mocked(assertTaskOwnership).mockResolvedValue(undefined);
+    (getBranchCommitsBehindIntegration as unknown as Mock).mockResolvedValue(3);
+    vi.mocked(run)
+      .mockResolvedValueOnce({ stdout: "", stderr: "", exitCode: 0 });  // fetch
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    await cmdSubmit("TASK-285", true);
+
+    const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
+    expect(output.ok).toBe(false);
+    expect(output.status).toBe("failed");
+    expect(output.code).toBe("BRANCH_BEHIND");
+    expect(output.error).toContain("3 commit(s) behind origin/main");
+    expect(output.error).toContain("rebase");
+    expect(run).toHaveBeenCalledTimes(1);
+    expect(appendTaskTranscript).not.toHaveBeenCalled();
+
+    logSpy.mockRestore();
+  });
+
+  it("returns failed with FETCH_FAILED when initial fetch fails", async () => {
     vi.mocked(loadTaskById).mockReturnValue(task);
     vi.mocked(assertTaskOwnership).mockResolvedValue(undefined);
     vi.mocked(run).mockResolvedValueOnce({
@@ -168,9 +337,9 @@ describe("git facade commands", () => {
 
     const output = JSON.parse(logSpy.mock.calls[0]?.[0] ?? "{}");
     expect(output.ok).toBe(false);
-    expect(output.code).toBe("MERGEABILITY_CHECK_FAILED");
-    expect(output.error).toContain("Could not verify whether");
-    expect(output.error).toContain("fatal: could not read from remote repository");
+    expect(output.code).toBe("FETCH_FAILED");
+    expect(output.error).toContain("Could not fetch origin/main");
+    expect(run).toHaveBeenCalledTimes(1);
 
     logSpy.mockRestore();
   });

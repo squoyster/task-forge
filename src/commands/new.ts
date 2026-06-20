@@ -14,6 +14,12 @@ import {
   createTaskDocument,
   type TaskSectionKey,
 } from "../core/task-document.js";
+import {
+  findPendingByTitle,
+  addPendingPublish,
+  removePendingPublish,
+  pendingPublishCount,
+} from "../core/pending-publish.js";
 
 export interface NewOptions {
   type?: string;
@@ -75,6 +81,32 @@ export async function cmdNew(title: string | undefined, options?: NewOptions): P
   if (!taskTitle) {
     taskTitle = document.title || nextId;
   }
+
+  // Check for duplicate title among pending publications
+  const existingPending = findPendingByTitle(repoRoot, taskTitle);
+  if (existingPending) {
+    const dupResult = newStateMachine({
+      writeSucceeded: false,
+      pushSucceeded: false,
+      taskId: existingPending.id,
+      filePath: existingPending.filePath,
+      errorMessage: `Task with title "${taskTitle}" already pending publication as ${existingPending.id}`,
+    });
+    getDefaultGuidanceAdapter().pushGuidance(dupResult);
+    if (json) {
+      writeResult(failedResult({
+        command: "new",
+        error: `Task "${taskTitle}" already exists as ${existingPending.id} (pending publication). Use that ID or delete it first.`,
+        code: "DUPLICATE_TITLE",
+        taskId: existingPending.id,
+      }), json);
+    } else {
+      logInfo(`Task "${taskTitle}" already exists as ${existingPending.id} (pending publication).`);
+      logInfo(`Use: taskforge next or taskforge start ${existingPending.id}`);
+    }
+    return;
+  }
+
   if (Object.keys(sectionPatch).length > 0) {
     document.sections = { ...document.sections, ...sectionPatch };
   }
@@ -141,25 +173,38 @@ export async function cmdNew(title: string | undefined, options?: NewOptions): P
       },
     );
     pushSucceeded = true;
+    // Clear any pending publish entry for this ID (from a prior failed attempt)
+    removePendingPublish(repoRoot, nextId);
   } catch (err) {
     pushSucceeded = false;
+    // Track this task as pending publication so it can be recovered
+    addPendingPublish(repoRoot, { id: nextId, title: taskTitle, filePath });
+    const errorMessage = err instanceof Error ? err.message : String(err);
     const result = newStateMachine({
       writeSucceeded: true,
       pushSucceeded: false,
       taskId: nextId,
       filePath,
-      errorMessage: err instanceof Error ? err.message : String(err),
+      errorMessage,
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
+    const pendingCount = pendingPublishCount(repoRoot);
     if (json) {
       writeResult(failedResult({
         command: "new",
-        error: result.guidance,
+        taskId: nextId,
+        error: `[publicationStatus:pending] ${result.guidance} (${pendingCount} pending publications)`,
         code: result.errorCode ?? "PUSH_FAILED",
+        recoverySteps: [
+          `Run 'taskforge sync' to publish pending task-state changes (${pendingCount} pending)`,
+          `Run 'taskforge next' to continue working`,
+        ],
       }), json);
       return;
     }
     logInfo(result.guidance);
+    logInfo(`Pending publications: ${pendingCount}`);
+    logInfo("Recovery: run 'taskforge sync' to publish pending task-state changes.");
     return;
   }
 

@@ -4,7 +4,9 @@ import { sweepStaleTasks } from "../core/sweeper.js";
 import { pullTaskState, checkUncommittedWorktrees } from "../core/git.js";
 import { checkOutstandingSessionTasks } from "../core/session.js";
 import { isDoctorLocked } from "../core/doctor-lock.js";
-import { logInfo, logHeader, logSub, logDivider } from "../util/logging.js";
+import { loadConfig } from "../core/config.js";
+import { listPullRequests } from "../integrations/github/service.js";
+import { logInfo, logHeader, logSub, logDivider, logWarn } from "../util/logging.js";
 import { buildJsonTask } from "../util/json-result.js";
 import { getRepoRoot } from "../util/paths.js";
 import { STATUS } from "../util/status-constants.js";
@@ -197,6 +199,23 @@ export async function cmdNext(options?: NextOptions): Promise<void> {
     logInfo("All tasks are in Inbox, Needs Spec, Blocked, Done, Rejected, Deferred, or blocked by dependencies.");
     process.stdout.write(renderResultMarkdown(result) + "\n");
     return;
+  }
+
+  // Check for open PRs that haven't been approved
+  const config = loadConfig(repoRoot);
+  if (config.github?.enabled && config.github.owner && config.github.repo) {
+    const openPRs = await listPullRequests();
+    const agentBranches = openPRs.filter((pr) => pr.headRefName.startsWith("agent/"));
+    if (agentBranches.length > 0) {
+      const prList = agentBranches
+        .map((pr) => `  #${pr.number}: ${pr.title}${pr.draft ? " (draft)" : ""}`)
+        .join("\n");
+      const guidance =
+        `There are ${agentBranches.length} open agent PR(s) awaiting review:\n${prList}\n\n` +
+        `Request human approval before continuing with auto-continuation. ` +
+        `Use 'gh pr view ${agentBranches[0].number}' to check details.`;
+      logWarn(guidance);
+    }
   }
 
   // Happy path — task selected

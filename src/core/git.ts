@@ -119,6 +119,67 @@ export async function getBranchCommitsAhead(repoRoot: string, branch: string): P
 }
 
 /**
+ * Check how many commits the working tree branch is behind its remote tracking branch.
+ * The inverse of getBranchCommitsAhead — counts commits in origin/branch not in local branch.
+ * Returns 0 if up to date or if remote tracking branch doesn't exist.
+ */
+export async function getBranchCommitsBehind(repoRoot: string, branch: string): Promise<number> {
+  try {
+    const remoteBranch = `origin/${branch.replace(/^refs\/heads\//, "")}`;
+    const result = await execa("git", ["rev-list", "--count", `refs/heads/${branch}..${remoteBranch}`], { cwd: repoRoot });
+    return parseInt(result.stdout.trim(), 10) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * Check how many commits the integration branch has that the given branch does not.
+ * Returns 0 if the branch is up to date with origin/<integrationBranch> or if the
+ * remote tracking branch doesn't exist.
+ *
+ * @param repoRoot - Root of the git repository.
+ * @param branch - The task branch name.
+ * @param integrationBranch - The integration branch name (e.g. "main").
+ */
+export async function getBranchCommitsBehindIntegration(
+  repoRoot: string,
+  branch: string,
+  integrationBranch: string,
+): Promise<number> {
+  try {
+    const cleanBranch = branch.replace(/^refs\/heads\//, "");
+    const result = await execa(
+      "git",
+      ["rev-list", "--count", `${cleanBranch}..origin/${integrationBranch}`],
+      { cwd: repoRoot },
+    );
+    return parseInt(result.stdout.trim(), 10) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * Check whether the worktree branch is behind origin/main.
+ * Fetches origin/main first, then compares. Returns count of commits behind.
+ */
+export async function checkWorktreeBehindMain(
+  repoRoot: string,
+  worktreePath: string,
+  branch: string,
+): Promise<{ behind: boolean; count: number }> {
+  try {
+    await execa("git", ["-C", worktreePath, "fetch", "origin", "main", "--quiet"], { cwd: repoRoot });
+    const result = await execa("git", ["rev-list", "--count", `${branch}..origin/main`], { cwd: worktreePath });
+    const count = parseInt(result.stdout.trim(), 10) || 0;
+    return { behind: count > 0, count };
+  } catch {
+    return { behind: false, count: 0 };
+  }
+}
+
+/**
  * Find a task by its worktree path.
  */
 function findTaskByWorktree(tasks: ParsedTask[], worktreePath: string): ParsedTask | null {
