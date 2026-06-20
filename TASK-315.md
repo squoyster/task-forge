@@ -1,12 +1,16 @@
 ---
 id: TASK-315
 type: Task
-status: Ready
+status: In Progress
 priority: P1
 agentRole: QA
 riskLevel: Low
 humanInterventionRequired: false
 spec_hash: eea0bee5feb07dac
+assignee: ses_task315
+claimed_at: 2026-06-20T16:45:00Z
+branch: agent/TASK-315-final-gate-pass
+worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-315
 ---
 
 # TASK-315: Slimming Refactor 09: Full gate pass + end-to-end walkthrough
