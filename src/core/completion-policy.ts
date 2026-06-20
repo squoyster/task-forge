@@ -195,29 +195,23 @@ export async function checkCompletionEligibility(
     });
   }
 
-  // AC 3: PR head SHA must match submitted SHA
-  if (task.pr_head_sha && task.submitted_sha && task.pr_head_sha !== task.submitted_sha) {
+  // AC 3: Submitted SHA recorded (Done records the PR merge commit or HEAD as
+  // closeout; the old head==submitted match no longer applies under the
+  // Done-as-closeout model, so only presence is required).
+  if (task.pr && !task.submitted_sha) {
     preconditions.push({
-      name: "SHA match",
+      name: "Submitted SHA",
       passed: false,
-      message: `PR head SHA (${task.pr_head_sha.slice(0, 12)}) does not match submitted SHA (${task.submitted_sha.slice(0, 12)})`,
-      code: "SHA_MISMATCH",
-    });
-    reasons.push("PR head SHA does not match submitted SHA");
-  } else if (task.pr && !task.submitted_sha) {
-    preconditions.push({
-      name: "SHA match",
-      passed: false,
-      message: "Submitted SHA not recorded in task. Use 'taskforge submit' first",
+      message: "Submitted SHA not recorded. Re-run 'taskforge done' to capture it.",
       code: "NO_SUBMITTED_SHA",
     });
     reasons.push("Submitted SHA not recorded");
-  } else if (task.pr) {
+  } else if (task.pr && task.submitted_sha) {
     preconditions.push({
-      name: "SHA match",
+      name: "Submitted SHA",
       passed: true,
-      message: "PR head SHA matches submitted SHA",
-      code: "SHA_MATCH_OK",
+      message: "Submitted SHA recorded",
+      code: "SHA_RECORDED",
     });
   }
 
@@ -275,8 +269,9 @@ export async function checkCompletionEligibility(
     });
   }
 
-  // AC 5: SHA reachable from integration branch
-  if (task.submitted_sha && verifier && config.github?.owner && config.github?.repo) {
+  // AC 5: SHA reachable from integration branch (PR-backed tasks only; no-PR
+  // closeouts record HEAD and are not GitHub-reachability-checked).
+  if (task.pr && task.submitted_sha && verifier && config.github?.owner && config.github?.repo) {
     try {
       const reachable = await verifier.checkReachable({
         owner: config.github.owner,

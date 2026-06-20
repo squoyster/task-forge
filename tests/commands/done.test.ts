@@ -98,6 +98,15 @@ describe("cmdDone", () => {
     expect(content).toContain("Done");
   });
 
+  it("records submitted_sha and submitted_at as closeout (no PR → HEAD)", async () => {
+    const fp = makeTaskFile("TASK-001"); // non-code task, no PR
+    await cmdDone("TASK-001");
+
+    const content = fs.readFileSync(fp, "utf-8");
+    expect(content).toMatch(/submitted_sha:/);
+    expect(content).toMatch(/submitted_at:/);
+  });
+
   it("throws for non-existent task", async () => {
     await expect(cmdDone("TASK-999")).rejects.toThrow(/not found/i);
   });

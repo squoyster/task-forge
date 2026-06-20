@@ -19,6 +19,7 @@ import { removeSessionState } from "../core/session-state.js";
 import { markAgentIdle } from "../core/agent-registry.js";
 import { checkCompletionEligibility } from "../core/completion-policy.js";
 import { GitHubPullRequestVerifier } from "../core/pr-verifier.js";
+import { headSha } from "../core/gate-stamp.js";
 import { loadConfig } from "../core/config.js";
 import { buildTerminalAuditNotes } from "../core/terminal-audit.js";
 import { resolveAuthority, assertCanForce, ForceRequiresHumanOrDoctorError } from "../core/authority.js";
@@ -431,8 +432,35 @@ export async function cmdDone(
     verifier = new GitHubPullRequestVerifier(process.env.GITHUB_TOKEN);
   }
 
+  // --- Record the final SHA as closeout (replaces what `submit` used to do) ---
+  // PR-backed + merged: the merge commit (canonical integrated SHA). Otherwise: HEAD.
+  let finalSha: string | undefined;
+  if (verifier && task.pr && githubConfig?.owner && githubConfig?.repo) {
+    try {
+      const merged = await verifier.checkMerged({
+        owner: githubConfig.owner,
+        repo: githubConfig.repo,
+        prNumber: task.pr,
+      });
+      if (merged.merged && merged.mergeCommitSha) {
+        finalSha = merged.mergeCommitSha;
+      }
+    } catch {
+      // PR lookup failed — fall back to HEAD below.
+    }
+  }
+  if (!finalSha) {
+    finalSha = await headSha(repoRoot);
+  }
+  // Re-load the task fresh so recording the SHA doesn't clobber fields written
+  // by earlier steps (e.g. --force override metadata).
+  const closeoutTask = loadTaskById(taskId, repoRoot) ?? task;
+  closeoutTask.submitted_sha = finalSha;
+  closeoutTask.submitted_at = new Date().toISOString();
+  writeTaskFile(closeoutTask);
+
   const eligibility = await checkCompletionEligibility(
-    task,
+    closeoutTask,
     {
       github: githubConfig,
       integrationBranch: config.project?.defaultBranch ?? "main",
