@@ -1,7 +1,7 @@
 ---
 id: TASK-226
 type: Bug
-status: Ready
+status: Rejected
 priority: P2
 agentRole: Implementer
 riskLevel: Low
@@ -60,3 +60,6 @@ Per `taskforge-control-plane-closure-spec.md` §1.2 Gap C, §4.20, and §9 step 
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-20T00:00:00Z System
+- Task rejected: Recalibration - pre-306 task pool retired, superseded by 306+ frontier.
