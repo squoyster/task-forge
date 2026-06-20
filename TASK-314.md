@@ -1,12 +1,15 @@
 ---
 id: TASK-314
 type: Task
-status: Ready
+status: Done
 priority: P1
 agentRole: Planner
 riskLevel: Low
 humanInterventionRequired: false
+assignee: 61e7aaf23d
+completed_at: '2026-06-20 10:34:00'
 spec_hash: b6f602239189fa2e
+branch: agent/TASK-314-compact-workflow-doc
 ---
 
 # TASK-314: Slimming Refactor 08: Rewrite workflow.md + AGENTS.md chain
@@ -40,6 +43,8 @@ Auto-continue unless a stopping condition occurs.
 ## Agent Notes
 
 ## Result
+
+Done (workflow.md + root AGENTS.md). Compacted docs/workflow.md 100→52 lines for the post-facade direct-git model (removed dead diff/checkpoint/submit refs + suspended Prohibited Substitutions table; references AGENTS.md for full policy). Root AGENTS.md operating policy already landed via #139. 865 tests pass. Minor follow-up: child AGENTS.md DOX-index entries still mention git-facade (cosmetic; fold into 315). Branch `agent/TASK-314-compact-workflow-doc` pushed (PR pending).
 
 ## Links
 - Issue:
