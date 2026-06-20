@@ -1,7 +1,7 @@
 ---
 id: TASK-307
 type: Task
-status: Implementation Complete
+status: Submitted
 priority: P1
 agentRole: Implementer
 riskLevel: Low
