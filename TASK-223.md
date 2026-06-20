@@ -1,7 +1,7 @@
 ---
 id: TASK-223
 type: Feature
-status: Submitted
+status: Rejected
 priority: P1
 agentRole: Implementer
 riskLevel: Low
@@ -112,6 +112,9 @@ This task overlaps with TASK-215 and TASK-218. Those should be rejected or merge
 - [ ]
 
 ## Agent Notes
+
+### 2026-06-20T00:00:00Z System
+- Task rejected: Recalibration - pre-306 task pool retired, superseded by 306+ frontier.
 
 ### 2026-06-11T00:00:00Z System
 - Report generated — task moved to Implementation Complete

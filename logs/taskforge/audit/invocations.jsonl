@@ -1,2 +1,3 @@
 {"timestamp":"2026-06-08T05:54:08.536Z","command":"list","args":[],"flags":{},"exitCode":0,"sessionId":null,"taskId":null,"duration":131,"error":null}
 {"timestamp":"2026-06-20T19:12:45.607Z","command":"reject","args":["TASK-302","Recalibration: pre-306 task pool retired; superseded by 306+ frontier."],"flags":{"json":true},"exitCode":0,"sessionId":null,"taskId":null,"duration":1561,"error":null}
+{"timestamp":"2026-06-20T20:22:04.328Z","command":"reject","args":["TASK-222","Recalibration - pre-306 task pool retired, superseded by 306+ frontier."],"flags":{"json":true},"exitCode":0,"sessionId":null,"taskId":null,"duration":1695,"error":null}
