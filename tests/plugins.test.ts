@@ -107,8 +107,9 @@ describe("guard plugin", () => {
     expect(content).toContain("const DENIED:");
     expect(content).toContain("Doctor lock");
     expect(content).toContain("TASK_FORGE_ACTIVE");
-    expect(content).toContain("taskforge checkpoint");
-    expect(content).toContain("taskforge submit");
+    expect(content).toContain("taskforge done TASK-ID --delete-branch");
+    expect(content).not.toContain("taskforge checkpoint");
+    expect(content).not.toContain("taskforge submit");
   });
 
   it("generates warn mode for permissive policy", () => {

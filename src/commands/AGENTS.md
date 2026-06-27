@@ -18,7 +18,6 @@ Command handlers implement every `taskforge` CLI subcommand. Each file in this d
 | `doctor` | `doctor.ts` | Diagnostics and recovery |
 | `done` | `done.ts` | Complete a task |
 | `gates` | `gates.ts` | Run verification gates |
-| `git-facade` | `git-facade.ts` | TaskForge-aware git operations |
 | `guard-cmd` | `guard-cmd.ts` | Mutation guard management |
 | `heartbeat` | `heartbeat.ts` | Agent lease refresh |
 | `init` | `init.ts` | Initialize TaskForge in a repo |

@@ -50,8 +50,8 @@ This repository is managed by TaskForge. All agents operating in this repository
 
 ### Normal Agent Rules
 
-- Use TaskForge lifecycle commands: \`taskforge start\`, \`taskforge done\`, \`taskforge checkpoint\`, \`taskforge submit\`
-- Never run \`git\` directly (use \`taskforge diff\`, \`taskforge checkpoint\`, \`taskforge submit\` instead)
+- Use TaskForge lifecycle commands: \`taskforge start\`, \`taskforge done\`
+- Use direct git for routine work: \`git add -A && git commit -m "TASK-ID: ..."\`, \`git push -u origin <branch>\`
 - Never edit files under \`../task-state/*.md\` directly
 - Never edit legacy \`tasks/*.md\` files
 - All task-state changes must flow through TaskForge CLI commands
@@ -75,9 +75,6 @@ taskforge next
 taskforge start TASK-ID
 taskforge heartbeat TASK-ID
 taskforge inspect TASK-ID
-taskforge diff TASK-ID
-taskforge checkpoint TASK-ID --message "..."
-taskforge submit TASK-ID
 taskforge done TASK-ID
 taskforge block TASK-ID "reason"
 taskforge release TASK-ID

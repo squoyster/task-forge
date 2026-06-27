@@ -242,9 +242,10 @@ export function isReadOnlyGitCommand(normalised: string): boolean {
 /**
  * Map of denied git commands to their TaskForge replacements.
  */
+// ponytail: git commit/push have no TaskForge facade replacement (facade removed).
+// The guard still denies them in managed sessions via isDeniedGitCommand();
+// only the suggestion text is absent.
 const REPLACEMENTS: Record<string, string> = {
-  commit: "taskforge checkpoint TASK-ID --message \"...\"",
-  push: "taskforge submit TASK-ID",
   "branch -d": "taskforge done TASK-ID --delete-branch",
   "branch -D": "taskforge done TASK-ID --delete-branch",
   "branch --delete": "taskforge done TASK-ID --delete-branch",

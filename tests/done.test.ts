@@ -358,7 +358,7 @@ describe("cmdDone", () => {
     expect(output.ok).toBe(false);
     expect(output.code).toBe("WORKTREE_DIRTY");
     expect(output.error).toContain("uncommitted");
-    expect(output.error).toContain("taskforge checkpoint");
+    expect(output.error).toContain("git add -A && git commit");
   });
 
   it("allows done when gates are the only source of dirtiness", async () => {
@@ -419,7 +419,7 @@ describe("cmdDone", () => {
     expect(output.ok).toBe(false);
     expect(output.code).toBe("BRANCH_UNPUSHED");
     expect(output.error).toContain("unpushed");
-    expect(output.error).toContain("taskforge submit");
+    expect(output.error).toContain("git push -u origin <branch>");
   });
 
   it("returns actionable control-file drift guidance without asking for a recommit", async () => {

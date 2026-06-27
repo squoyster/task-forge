@@ -104,11 +104,12 @@ describe("init integration — OpenCode managed policy", () => {
     const impl = fs.readFileSync(path.join(tmp, ".opencode", "agents", "implementer.md"), "utf-8");
     expect(impl).toContain("taskforge start TASK-ID");
     expect(impl).toContain("taskforge done TASK-ID");
-    expect(impl).toContain("taskforge checkpoint");
+    expect(impl).toContain("git add -A && git commit");
+    expect(impl).not.toContain("taskforge checkpoint");
 
     const reviewer = fs.readFileSync(path.join(tmp, ".opencode", "agents", "reviewer.md"), "utf-8");
     expect(reviewer).toContain("taskforge inspect");
-    expect(reviewer).toContain("taskforge diff");
+    expect(reviewer).toContain("git diff");
 
     const doctor = fs.readFileSync(path.join(tmp, ".opencode", "agents", "doctor.md"), "utf-8");
     expect(doctor).toContain("taskforge doctor --check");

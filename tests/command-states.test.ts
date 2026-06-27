@@ -234,7 +234,7 @@ describe("command state registry", () => {
     const actions = getErrorGuidance("done", "WORKTREE_DIRTY", { taskId: "TASK-123" });
 
     expect(actions[0]).toMatchObject({
-      command: "taskforge checkpoint TASK-123 --message \"Save completion work\"",
+      command: "git add -A && git commit --message \"Save completion work\"",
       safety: "safe",
       preferred: true,
     });
@@ -270,7 +270,7 @@ describe("command state registry", () => {
 
     expect(result.nextAction).toBe("create_pr");
     expect(result.nextActions[0]).toMatchObject({
-      command: "taskforge submit TASK-ID",
+      command: "git push -u origin <branch>",
       safety: "safe",
       preferred: true,
     });

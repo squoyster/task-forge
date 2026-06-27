@@ -71,8 +71,8 @@ taskforge next
 taskforge start TASK-123
 # agent works in generated worktree
 taskforge gates --json
-taskforge checkpoint TASK-123 --message "Implement scoped change"
-taskforge submit TASK-123
+git add -A && git commit --message "Implement scoped change"
+git push -u origin <branch>
 taskforge done TASK-123
 ```
 

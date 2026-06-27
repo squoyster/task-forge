@@ -49,7 +49,7 @@ function getNextTaskCommands(task: { id: string; status: string; worktree?: stri
   if (task.status === STATUS.REVIEW) {
     return [
       {
-        command: `taskforge diff ${task.id}`,
+        command: `git diff`,
         purpose: "Review the task changes",
         when: "Before approving or returning work",
         allowedFor: "all",
@@ -92,7 +92,7 @@ function getNextTaskGuidance(task: { id: string; status: string }): string {
     return `Next task: ${task.id} is in Verify. Run 'taskforge resume ${task.id}' and verify it; do not run start.`;
   }
   if (task.status === STATUS.REVIEW) {
-    return `Next task: ${task.id} is in Review. Run 'taskforge diff ${task.id}' or 'taskforge resume ${task.id}' to review it.`;
+    return `Next task: ${task.id} is in Review. Run 'git diff' or 'taskforge resume ${task.id}' to review it.`;
   }
   if (task.status === STATUS.IN_PROGRESS) {
     return `Next task: ${task.id} is already In Progress. Run 'taskforge resume ${task.id}' to continue.`;

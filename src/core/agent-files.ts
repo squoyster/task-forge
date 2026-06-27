@@ -12,8 +12,8 @@ const AGENT_FILES: Record<string, string> = {
 
 1. Start work with \`taskforge start TASK-ID\`
 2. Work only in the assigned worktree (do not work on main)
-3. Use \`taskforge checkpoint TASK-ID --message "..."\` instead of direct git commits
-4. Use \`taskforge submit TASK-ID\` instead of direct git push
+3. Commit progress with \`git add -A && git commit -m "TASK-ID: ..."\`
+4. Push with \`git push -u origin <branch>\`, then open a PR (gh or human)
 5. Use \`taskforge done TASK-ID\` only after all verification gates pass
 6. Run \`taskforge doctor --check\` and stop immediately if doctor lock exists
 
@@ -29,7 +29,7 @@ Before marking a task Done, all must pass:
 
 - Never work directly on main — use worktrees/branches
 - Never edit files under ../task-state/ directly — use TaskForge CLI
-- Never run git directly — use taskforge facade commands
+- Use direct git for commits and pushes (the git facade was removed)
 
 ## Mutation Boundary
 
@@ -46,8 +46,6 @@ The following restrictions are enforced:
   audited and time-limited.
 
 If a command is blocked, use the suggested TaskForge replacement:
-- \`git commit\` → \`taskforge checkpoint TASK-ID --message "..."\`
-- \`git push\` → \`taskforge submit TASK-ID\`
 - \`git branch -d/-D\` → \`taskforge done TASK-ID --delete-branch\`
 - \`git worktree add\` → \`taskforge start TASK-ID\`
 - \`git worktree remove\` → \`taskforge done TASK-ID --cleanup\`
@@ -58,7 +56,7 @@ If a command is blocked, use the suggested TaskForge replacement:
 ## TaskForge Workflow
 
 1. Use \`taskforge inspect TASK-ID\` to check task status
-2. Review diffs via \`taskforge diff TASK-ID\`
+2. Review diffs via \`git diff\`
 3. Prefer comments and findings over direct edits
 4. Avoid direct mutation unless explicitly tasked
 5. Report findings through TaskForge agent notes

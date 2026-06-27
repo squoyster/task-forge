@@ -211,13 +211,13 @@ describe("standard prohibited actions", () => {
   it("includes git commit prohibition", () => {
     const gitCommit = STANDARD_PROHIBITED_ACTIONS.find((a) => a.action === "git commit");
     expect(gitCommit).toBeDefined();
-    expect(gitCommit?.reason).toContain("checkpoint");
+    expect(gitCommit?.reason).toContain("managed");
   });
 
   it("includes git push prohibition", () => {
     const gitPush = STANDARD_PROHIBITED_ACTIONS.find((a) => a.action === "git push");
     expect(gitPush).toBeDefined();
-    expect(gitPush?.reason).toContain("submit");
+    expect(gitPush?.reason).toContain("managed");
   });
 });
 
@@ -275,7 +275,7 @@ describe("next command maps", () => {
   it("returns next commands for start success", () => {
     const commands = getValidNextCommands("start", "success");
     expect(commands.length).toBeGreaterThan(0);
-    expect(commands.some((c) => c.command.includes("checkpoint"))).toBe(true);
+    expect(commands.some((c) => c.command.includes("git add -A && git commit"))).toBe(true);
   });
 
   it("returns empty array for unknown command", () => {

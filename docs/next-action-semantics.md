@@ -12,7 +12,7 @@ Next-action values are computed by `buildJson()` in `src/commands/summary.ts`. T
 |----------|-----------|------------|---------------------|-------------------|
 | 1 | `In Progress` tasks exist | `Continue existing in-progress work.` | Yes — continue current task | `taskforge heartbeat <taskId>`, then work |
 | 2 | `Verify` tasks exist | `Run QA/verification on tasks in Verify status.` | Yes — switch to QA role | `taskforge resume <taskId>`, then `taskforge gates --json` |
-| 3 | `Review` tasks exist | `Review tasks in Review status.` | Yes — switch to reviewer role | `taskforge diff <taskId>`, then `taskforge resume <taskId>` if edits are required |
+| 3 | `Review` tasks exist | `Review tasks in Review status.` | Yes — switch to reviewer role | `git diff <taskId>`, then `taskforge resume <taskId>` if edits are required |
 | 4 | Scheduler selects a task | `Start the highest-priority task: <TASK-ID>` | Yes — claim and start | `taskforge start <taskId>` |
 | 5 | `Needs Spec` tasks exist | `Create specs for tasks in Needs Spec.` | Yes — write specifications | `taskforge start <taskId>`, add ACs, `taskforge done <taskId>` |
 | 6 | `Inbox` tasks exist | `Process inbox items into structured tasks.` | Yes — triage inbox | `taskforge next` to see recommendations, then `taskforge start <taskId>` |

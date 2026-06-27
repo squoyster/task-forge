@@ -38,32 +38,31 @@ Never:
 ```bash
 taskforge start <TASK-ID>
 taskforge resume <TASK-ID>
-taskforge diff <TASK-ID>
+git diff
 taskforge gates
-taskforge checkpoint <TASK-ID> -m "..."
-taskforge submit <TASK-ID>
-taskforge pr <TASK-ID>
+git add -A && git commit -m "TASK-ID: ..."
+git push -u origin <branch>
+gh pr create
 taskforge report <TASK-ID> --complete
 taskforge done <TASK-ID>
 ```
 
-If gates fail: fix, rerun gates, checkpoint.
+If gates fail: fix, rerun gates, commit.
 
 Use `taskforge start` only for Ready tasks. For `In Progress`, `Review`, and `Verify`, use `taskforge resume`; `taskforge next --json` will return the correct command.
 
-## Forbidden Workflow Git
+## Direct-Git Routine
 
-| Do not use | Use |
+Agents use direct git for routine work (the git facade was removed):
+
+| Operation | Command |
 |---|---|
-| `git commit` | `taskforge checkpoint` |
-| `git push` | `taskforge submit` |
-| `git worktree add` | `taskforge start` |
-| `git worktree remove` | `taskforge cleanup` / `done --cleanup` |
-| `git branch -D` | `taskforge done --delete-branch` |
-| `git checkout` / `git switch` | assigned worktree |
-| `gh pr create` | `taskforge pr` |
+| Review changes | `git diff` |
+| Commit | `git add -A && git commit -m "TASK-ID: ..."` |
+| Push | `git push -u origin <branch>` |
+| Open PR | `gh pr create` (or a human opens it) |
 
-Read-only git is OK when needed. Do not mutate task-state with git.
+Worktree and branch lifecycle still flow through TaskForge (`taskforge start`, `taskforge done`). Read-only git is always fine. Do not mutate task-state with git.
 
 ## Acceptance Criteria
 

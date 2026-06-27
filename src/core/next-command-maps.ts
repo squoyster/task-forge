@@ -30,7 +30,7 @@ export const NEXT_COMMAND_MAPS: NextCommandMap = {
   },
   start: {
     success: [
-      { command: "taskforge checkpoint <TASK-ID>", purpose: "Save progress", when: "After making changes", allowedFor: "all", priority: 1 },
+      { command: "git add -A && git commit", purpose: "Save progress", when: "After making changes", allowedFor: "all", priority: 1 },
       { command: "taskforge done <TASK-ID>", purpose: "Mark task complete", when: "When all ACs are satisfied", allowedFor: "all", priority: 2 },
       { command: "taskforge heartbeat <TASK-ID>", purpose: "Extend lease", when: "Before lease expires", allowedFor: "all", priority: 3 },
     ],
@@ -61,18 +61,18 @@ export const NEXT_COMMAND_MAPS: NextCommandMap = {
   },
   heartbeat: {
     success: [
-      { command: "taskforge checkpoint <TASK-ID>", purpose: "Save progress", when: "After heartbeat", allowedFor: "all", priority: 1 },
+      { command: "git add -A && git commit", purpose: "Save progress", when: "After heartbeat", allowedFor: "all", priority: 1 },
     ],
   },
   checkpoint: {
     success: [
-      { command: "taskforge submit <TASK-ID>", purpose: "Push changes", when: "After checkpoint", allowedFor: "all", priority: 1 },
+      { command: "git push -u origin <branch>", purpose: "Push changes", when: "After checkpoint", allowedFor: "all", priority: 1 },
       { command: "taskforge done <TASK-ID>", purpose: "Mark task complete", when: "When all ACs are satisfied", allowedFor: "all", priority: 2 },
     ],
   },
   submit: {
     success: [
-      { command: "taskforge pr <TASK-ID>", purpose: "Create pull request", when: "After push", allowedFor: "all", priority: 1 },
+      { command: "gh pr create", purpose: "Create pull request", when: "After push", allowedFor: "all", priority: 1 },
     ],
   },
   pr: {
@@ -153,7 +153,7 @@ export const NEXT_COMMAND_MAPS: NextCommandMap = {
   },
   resume: {
     success: [
-      { command: "taskforge checkpoint <TASK-ID>", purpose: "Save progress", when: "After resuming", allowedFor: "all", priority: 1 },
+      { command: "git add -A && git commit", purpose: "Save progress", when: "After resuming", allowedFor: "all", priority: 1 },
       { command: "taskforge done <TASK-ID>", purpose: "Mark task complete", when: "When all ACs are satisfied", allowedFor: "all", priority: 2 },
     ],
   },
@@ -200,7 +200,7 @@ export const NEXT_COMMAND_MAPS: NextCommandMap = {
   },
   diff: {
     success: [
-      { command: "taskforge checkpoint <TASK-ID>", purpose: "Commit changes", when: "After reviewing diff", allowedFor: "all", priority: 1 },
+      { command: "git add -A && git commit", purpose: "Commit changes", when: "After reviewing diff", allowedFor: "all", priority: 1 },
     ],
   },
   sync: {

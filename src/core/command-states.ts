@@ -81,15 +81,15 @@ function legacyNextActionToSpecAction(nextAction: LegacyNextAction, context: Rec
   const actions: Record<LegacyNextAction, NextAction> = {
     start_task: workAction(`taskforge start ${taskId}`, "Start the selected task.", true, { from: "Ready", to: "In Progress" }),
     create_worktree: workAction(`taskforge start ${taskId}`, "Create or repair the task worktree.", true),
-    work_on_task: workAction(`taskforge checkpoint ${taskId} --message "Describe progress"`, "Continue implementation and checkpoint meaningful progress.", true),
-    commit_changes: workAction(`taskforge checkpoint ${taskId} --message "Describe progress"`, "Commit task changes.", true),
+    work_on_task: workAction(`git add -A && git commit --message "Describe progress"`, "Continue implementation and checkpoint meaningful progress.", true),
+    commit_changes: workAction(`git add -A && git commit --message "Describe progress"`, "Commit task changes.", true),
     run_gates: workAction("taskforge gates --json", "Run verification gates.", true),
-    create_pr: workAction(`taskforge submit ${taskId}`, "Push the branch and create or update the PR.", true),
+    create_pr: workAction(`git push -u origin <branch>`, "Push the branch and create or update the PR.", true),
     complete_task: workAction(`taskforge done ${taskId}`, "Complete the task after verification.", true, { from: "Verify", to: "Done" }),
     block_task: workAction(`taskforge block ${taskId} "Blocked"`, "Record why the task cannot proceed.", true, { from: "In Progress", to: "Blocked" }),
     release_task: workAction(`taskforge release ${taskId}`, "Release the task claim.", true, { from: "In Progress", to: "Ready" }),
     resolve_dependency: workAction("taskforge next", "Work on the unmet dependency first.", true),
-    commit_then_next: workAction(`taskforge checkpoint ${taskId} --message "Save progress"`, "Commit current changes before selecting another task.", true),
+    commit_then_next: workAction(`git add -A && git commit --message "Save progress"`, "Commit current changes before selecting another task.", true),
     complete_current_then_next: workAction(`taskforge done ${taskId}`, "Close the current task before selecting another task.", true),
     create_task_for_error: closureTaskAction("unknown", "UNHANDLED_ERROR", context),
     request_human_input: humanAction(`taskforge inspect ${taskId} --json`, "Request or gather human review before continuing.", true),
@@ -199,10 +199,10 @@ const commonErrorActions: Record<string, NextAction[]> = {
     blockedAction("taskforge doctor --check", "Inspect doctor recovery state; normal agents must wait.", true),
   ],
   UNCOMMITTED_CHANGES: [
-    workAction("taskforge checkpoint {taskId} --message \"Save progress\"", "Commit the current task changes before continuing.", true),
+    workAction("git add -A && git commit --message \"Save progress\"", "Commit the current task changes before continuing.", true),
   ],
   UNCOMMITTED_BLOCKED_TASK: [
-    workAction("taskforge checkpoint {taskId} --message \"WIP: save blocked progress\"", "Preserve blocked task work before selecting another task.", true),
+    workAction("git add -A && git commit --message \"WIP: save blocked progress\"", "Preserve blocked task work before selecting another task.", true),
   ],
   OUTSTANDING_TASK: [
     workAction("taskforge done {taskId}", "Close the outstanding owned task before taking another one.", true),
@@ -220,13 +220,13 @@ const commonErrorActions: Record<string, NextAction[]> = {
   ],
   PUSH_FAILED: [
     workAction("taskforge inspect {taskId} --json", "Inspect branch and ownership state before retrying.", true),
-    workAction("taskforge submit {taskId}", "Retry the push after confirming the branch state."),
+    workAction("git push -u origin <branch>", "Retry the push after confirming the branch state."),
   ],
   PR_FAILED: [
-    humanAction("taskforge pr {taskId}", "Retry PR creation after credentials or remote state are repaired.", true),
+    humanAction("gh pr create", "Retry PR creation after credentials or remote state are repaired.", true),
   ],
   NO_CHANGES: [
-    workAction("taskforge diff {taskId}", "Review the task diff and continue implementation if needed.", true),
+    workAction("git diff", "Review the task diff and continue implementation if needed.", true),
   ],
   FORCE_REQUIRES_AUTHORITY: [
     doctorAction("taskforge doctor --check", "Force operations require doctor authority.", true),
@@ -277,7 +277,7 @@ export const COMMAND_STATE_REGISTRY: Record<string, CommandStateRule> = {
     forbidsAgentForce: true,
     nextActions: [
       workAction("opencode", "Begin work in the created task worktree.", true, { from: "Ready", to: "In Progress" }),
-      workAction("taskforge checkpoint {taskId} --message \"Describe progress\"", "Save completed work after implementation."),
+      workAction("git add -A && git commit --message \"Describe progress\"", "Save completed work after implementation."),
     ],
     errorActions: withCommonErrors({
       ALREADY_ASSIGNED: [
@@ -306,11 +306,11 @@ export const COMMAND_STATE_REGISTRY: Record<string, CommandStateRule> = {
   gates: rule({
     command: "gates",
     nextActions: [
-      workAction("taskforge submit {taskId}", "Submit after all gates pass.", true),
+      workAction("git push -u origin <branch>", "Submit after all gates pass.", true),
     ],
     errorActions: withCommonErrors({
       GATE_FAILURE: [
-        workAction("taskforge diff {taskId}", "Inspect failing changes and repair them.", true),
+        workAction("git diff", "Inspect failing changes and repair them.", true),
         humanAction("taskforge block {taskId} \"Gates failing\" --category test_failure --blocked-by agent", "Block if the gate failure cannot be resolved locally."),
       ],
     }),
@@ -333,10 +333,10 @@ export const COMMAND_STATE_REGISTRY: Record<string, CommandStateRule> = {
     ],
     errorActions: withCommonErrors({
       WORKTREE_DIRTY: [
-        workAction("taskforge checkpoint {taskId} --message \"Save completion work\"", "Commit remaining work before marking done.", true),
+        workAction("git add -A && git commit --message \"Save completion work\"", "Commit remaining work before marking done.", true),
       ],
       BRANCH_UNPUSHED: [
-        workAction("taskforge submit {taskId}", "Push the task branch before marking done.", true),
+        workAction("git push -u origin <branch>", "Push the task branch before marking done.", true),
       ],
       CONTROL_FILE_CHANGED: [
         humanAction("taskforge inspect {taskId} --json", "Re-read updated control files and confirm compliance.", true),
@@ -404,7 +404,7 @@ export const COMMAND_STATE_REGISTRY: Record<string, CommandStateRule> = {
     requiresTask: true,
     forbidsAgentForce: true,
     nextActions: [
-      workAction("taskforge checkpoint {taskId} --message \"Describe progress\"", "Continue work and checkpoint meaningful progress.", true),
+      workAction("git add -A && git commit --message \"Describe progress\"", "Continue work and checkpoint meaningful progress.", true),
     ],
     errorActions: withCommonErrors({
       FORCE_REQUIRES_AUTHORITY: [
@@ -501,7 +501,7 @@ export const COMMAND_STATE_REGISTRY: Record<string, CommandStateRule> = {
     requiresTask: true,
     requiresWorktree: true,
     nextActions: [
-      workAction("taskforge checkpoint {taskId} --message \"Describe progress\"", "Save progress after resuming work.", true),
+      workAction("git add -A && git commit --message \"Describe progress\"", "Save progress after resuming work.", true),
     ],
     errorActions: withCommonErrors(),
   }),
@@ -763,7 +763,7 @@ export function nextStateMachine(
         "UNCOMMITTED_BLOCKED_TASK",
         "commit_then_next",
         `Task ${dirty.taskId} has ${dirty.dirtyFiles} uncommitted file(s) and is in Blocked status. ` +
-        `1. Commit your current changes: taskforge checkpoint -m "WIP: save progress on ${dirty.taskId}"\n` +
+        `1. Commit your current changes: git add -A && git commit -m "WIP: save progress on ${dirty.taskId}"\n` +
         `2. Look for the next task that resolves the block: taskforge next\n` +
         `3. If no resolving task is available, continue with the next available task.`,
         { taskId: dirty.taskId, dirtyFiles: dirty.dirtyFiles },
@@ -776,7 +776,7 @@ export function nextStateMachine(
       "complete_current_then_next",
       `Task ${dirty.taskId} has ${dirty.dirtyFiles} uncommitted file(s). ` +
       `Complete the current task before proceeding to the next task. ` +
-      `Run 'taskforge done ${dirty.taskId}' when ready, or 'taskforge checkpoint' to save progress.`,
+      `Run 'taskforge done ${dirty.taskId}' when ready, or 'git add -A && git commit' to save progress.`,
       { taskId: dirty.taskId, dirtyFiles: dirty.dirtyFiles },
     );
   }
@@ -867,7 +867,7 @@ export function claimStateMachine(
         "UNCOMMITTED_BLOCKED_TASK",
         "commit_then_next",
         `Task ${dirty.taskId} has ${dirty.dirtyFiles} uncommitted file(s) and is in Blocked status. ` +
-        `1. Commit your current changes: taskforge checkpoint -m "WIP: save progress on ${dirty.taskId}"\n` +
+        `1. Commit your current changes: git add -A && git commit -m "WIP: save progress on ${dirty.taskId}"\n` +
         `2. Look for the next task that resolves the block: taskforge next\n` +
         `3. If no resolving task is available, continue with the next available task.`,
         { taskId: dirty.taskId, dirtyFiles: dirty.dirtyFiles },
@@ -879,7 +879,7 @@ export function claimStateMachine(
       "complete_current_then_next",
       `Task ${dirty.taskId} has ${dirty.dirtyFiles} uncommitted file(s). ` +
       `Complete the current task before claiming a new one. ` +
-      `Run 'taskforge done ${dirty.taskId}' when ready, or 'taskforge checkpoint' to save progress.`,
+      `Run 'taskforge done ${dirty.taskId}' when ready, or 'git add -A && git commit' to save progress.`,
       { taskId: dirty.taskId, dirtyFiles: dirty.dirtyFiles },
     );
   }
@@ -1024,7 +1024,7 @@ export function startStateMachine(
         "UNCOMMITTED_BLOCKED_TASK",
         "commit_then_next",
         `Task ${dirty.taskId} has ${dirty.dirtyFiles} uncommitted file(s) and is in Blocked status. ` +
-        `1. Commit your current changes: taskforge checkpoint -m "WIP: save progress on ${dirty.taskId}"\n` +
+        `1. Commit your current changes: git add -A && git commit -m "WIP: save progress on ${dirty.taskId}"\n` +
         `2. Look for the next task that resolves the block: taskforge next\n` +
         `3. If no resolving task is available, continue with the next available task.`,
         { taskId: dirty.taskId, dirtyFiles: dirty.dirtyFiles },
@@ -1036,7 +1036,7 @@ export function startStateMachine(
       "complete_current_then_next",
       `Task ${dirty.taskId} has ${dirty.dirtyFiles} uncommitted file(s). ` +
       `Complete the current task before starting a new one. ` +
-      `Run 'taskforge done ${dirty.taskId}' when ready, or 'taskforge checkpoint' to save progress.`,
+      `Run 'taskforge done ${dirty.taskId}' when ready, or 'git add -A && git commit' to save progress.`,
       { taskId: dirty.taskId, dirtyFiles: dirty.dirtyFiles },
     );
   }
@@ -1157,7 +1157,7 @@ export function checkpointStateMachine(
       CheckpointStates.NO_CHANGES,
       "NO_CHANGES",
       "work_on_task",
-      "No changes to commit. Continue working on the task, then run 'taskforge checkpoint' again.",
+      "No changes to commit. Continue working on the task, then run 'git add -A && git commit' again.",
     );
   }
 
@@ -1176,7 +1176,7 @@ export function checkpointStateMachine(
     CheckpointStates.CHANGES_COMMIT,
     "run_gates",
     `Changes committed for ${conditions.taskId}. ` +
-    `Run 'taskforge gates' to verify, then 'taskforge submit' to create a PR.`,
+    `Run 'taskforge gates' to verify, then 'git push -u origin <branch>' to create a PR.`,
     { taskId: conditions.taskId },
   );
 }
@@ -1200,7 +1200,7 @@ export function gatesStateMachine(
     return success(
       GatesStates.NO_GATES,
       "create_pr",
-      "No gates configured. Proceed to create a PR with 'taskforge submit'.",
+      "No gates configured. Proceed to create a PR with 'git push -u origin <branch>'.",
     );
   }
 
@@ -1221,7 +1221,7 @@ export function gatesStateMachine(
     GatesStates.ALL_PASSED,
     "create_pr",
     `All ${conditions.totalGates} gate(s) passed. ` +
-    `Run 'taskforge submit' to create a pull request.`,
+    `Run 'git push -u origin <branch>' to create a pull request.`,
   );
 }
 
@@ -1317,7 +1317,7 @@ export function doneStateMachine(
       "work_on_task",
       `Task ${conditions.taskId} has ${fileCount} uncommitted file(s) in the worktree${fileList}. ` +
       `Done requires a clean worktree. ` +
-      `Run 'taskforge checkpoint -m "your message"' to commit changes, ` +
+      `Run 'git add -A && git commit -m "your message"' to commit changes, ` +
       `then try 'taskforge done ${conditions.taskId}' again.`,
       { taskId: conditions.taskId, dirtyFiles: conditions.dirtyFiles },
     );
@@ -1331,7 +1331,7 @@ export function doneStateMachine(
       "work_on_task",
       `Task ${conditions.taskId} has ${ahead} unpushed commit(s). ` +
       `Done requires all commits to be pushed. ` +
-      `Run 'taskforge submit' to push and create a PR, ` +
+      `Run 'git push -u origin <branch>' to push and create a PR, ` +
       `then try 'taskforge done ${conditions.taskId}' again.`,
       { taskId: conditions.taskId, commitsAhead: conditions.commitsAhead },
     );

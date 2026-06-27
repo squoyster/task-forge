@@ -50,8 +50,8 @@ Use the builder functions in `src/core/result-builder.ts` to create results:
 
 Every normal-agent result must include these 5 standard prohibited actions:
 
-1. `git commit` — Use `taskforge checkpoint` instead
-2. `git push` — Use `taskforge submit` instead
+1. `git commit` — Forbidden in managed agent sessions
+2. `git push` — Forbidden in managed agent sessions
 3. `git worktree add` — Use `taskforge start` instead
 4. `git branch -D` — Use `taskforge done --delete-branch` instead
 5. `direct task-state file edits` — Use `taskforge CLI` commands instead

@@ -246,10 +246,10 @@ export async function cmdResume(taskId?: string, options?: { json?: boolean }): 
       taskId: recovery.taskId,
       worktree: recovery.worktreePath,
       branch: recovery.branch || task.branch,
-      guidance: `Resume working in ${recovery.worktreePath}. Use 'taskforge checkpoint ${recovery.taskId}' to save progress, or 'taskforge done ${recovery.taskId}' when complete.`,
+      guidance: `Resume working in ${recovery.worktreePath}. Use 'git add -A && git commit' to save progress, or 'taskforge done ${recovery.taskId}' when complete.`,
       nextCommands: [
         { command: "work", purpose: "Continue working in the worktree", when: "after resume", allowedFor: "all", priority: 1 },
-        { command: `taskforge checkpoint ${recovery.taskId}`, purpose: "Save progress", when: "after resume", allowedFor: "all", priority: 2 },
+        { command: `git add -A && git commit`, purpose: "Save progress", when: "after resume", allowedFor: "all", priority: 2 },
         { command: `taskforge done ${recovery.taskId}`, purpose: "Complete the task", when: "after resume", allowedFor: "all", priority: 3 },
       ],
     }), options.json);
@@ -272,7 +272,7 @@ export async function cmdResume(taskId?: string, options?: { json?: boolean }): 
   logSub(`2. Read ${repoRoot}/TASKFORGE.md`);
   logSub(`3. Read the task file at ../task-state/${recovery.taskId}.md`);
   logSub(`4. Continue work on ${recovery.taskId}`);
-  logSub(`5. Use 'taskforge checkpoint ${recovery.taskId}' to save progress`);
+  logSub(`5. Use 'git add -A && git commit' to save progress`);
   logSub(`6. Use 'taskforge done ${recovery.taskId}' when complete`);
   logDivider();
   logSuccess(`Ready to resume ${recovery.taskId}.`);

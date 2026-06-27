@@ -12,7 +12,6 @@ The core engine implements the TaskForge state machine, task lifecycle, git oper
 | Task Model | `task.ts`, `task-store.ts`, `task-state-transaction.ts` | Task schema (Zod), CRUD, state transitions with invariants |
 | Task Documents | `task-document.ts` | Markdown task file parsing and generation |
 | Git | `git.ts` | Worktree creation, branch management, commits, pushes, diff |
-| Git Facade | `git-facade.ts` (in commands) | TaskForge-aware git wrappers |
 | Audit | `audit.ts`, `audit-schema.ts`, `audit-plugin.ts`, `cli-audit.ts`, `init-audit.ts` | Event logging, audit trail schema, CLI audit |
 | Hooks | `hooks.ts` | Pre/post command hooks |
 | Agent Registry | `agent-registry.ts`, `agent-files.ts` | Agent identity, heartbeat, stale detection |

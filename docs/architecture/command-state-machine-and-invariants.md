@@ -7,7 +7,7 @@ This document defines the complete command-state contract for TaskForge as the m
 Agents must not use raw `git` to bypass TaskForge. All task-state mutations flow through the TaskForge CLI or transaction layer.
 
 - **Forbidden**: `git commit`, `git push`, `git branch -D`, `git worktree remove`, manual edits to `../task-state/*.md`
-- **Required**: `taskforge checkpoint`, `taskforge submit`, `taskforge done --cleanup`, `taskforge done --delete-branch`
+- **Required**: `git add -A && git commit`, `git push -u origin <branch>`, `taskforge done --cleanup`, `taskforge done --delete-branch`
 - **Exception**: Doctor agents may use selected git commands under doctor protocol
 - **Workflow contract**: `docs/workflow.md` is the canonical operator guide for humans and agents.
 
@@ -205,8 +205,8 @@ Error codes emitted by state machines in `command-states.ts` and commands:
 | `GATES_FAILED` | `doneStateMachine` | Fix issues and re-run gates; do not use `done --force` |
 | `OWNERSHIP_MISMATCH` | `doneStateMachine` | Request human input |
 | `CONTROL_FILE_CHANGED` / `CONTEXT_CHANGED` | `doneStateMachine` | Re-read control files, verify compliance |
-| `WORKTREE_DIRTY` | `doneStateMachine` | `taskforge checkpoint`, then retry |
-| `BRANCH_UNPUSHED` | `doneStateMachine` | `taskforge submit`, then retry |
+| `WORKTREE_DIRTY` | `doneStateMachine` | `git add -A && git commit`, then retry |
+| `BRANCH_UNPUSHED` | `doneStateMachine` | `git push -u origin <branch>`, then retry |
 | `MISSING_ACCEPTANCE_CRITERIA` | `doneStateMachine` | Add AC section to task file |
 | `BLANK_ACCEPTANCE_CRITERIA` | `doneStateMachine` | Replace blank checkboxes with verifiable conditions |
 | `UNCHECKED_ACCEPTANCE_CRITERIA` | `doneStateMachine` | Check off each criterion with evidence |

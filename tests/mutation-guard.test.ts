@@ -211,14 +211,16 @@ describe("checkMutationAllowed", () => {
     const result = checkMutationAllowed("git commit -m test", MANAGED_ENV);
     expect(result.code).toBe("DENIED_COMMAND");
     expect(result.allowed).toBe(false);
-    expect(result.replacement).toBe("taskforge checkpoint TASK-ID --message \"...\"");
+    // TF-SIMP-01: git commit/push are still denied in managed sessions, but the
+    // facade replacement was removed (facade gone); no suggestion is emitted.
+    expect(result.replacement).toBeUndefined();
   });
 
   it("denies git push in managed session", () => {
     const result = checkMutationAllowed("git push origin branch", MANAGED_ENV);
     expect(result.code).toBe("DENIED_COMMAND");
     expect(result.allowed).toBe(false);
-    expect(result.replacement).toBe("taskforge submit TASK-ID");
+    expect(result.replacement).toBeUndefined();
   });
 
   it("denies git push with absolute path", () => {
@@ -373,12 +375,14 @@ describe("edge cases", () => {
     expect(result.code).toBe("ALLOWED");
   });
 
-  it("has replacement for each denied verb command", () => {
-    const deniedWithoutSub = DENIED_GIT_COMMANDS.filter((c) => !c.includes(" "));
-    for (const cmd of deniedWithoutSub) {
-      if (cmd === "commit" || cmd === "push") {
-        expect(checkMutationAllowed(`git ${cmd}`, MANAGED_ENV).replacement).toBeDefined();
-      }
+  it("denies commit/push without a facade replacement (facade removed)", () => {
+    // TF-SIMP-01: the git facade was removed; commit/push remain denied in
+    // managed sessions but emit no replacement suggestion.
+    for (const cmd of ["commit", "push"]) {
+      const result = checkMutationAllowed(`git ${cmd}`, MANAGED_ENV);
+      expect(result.code).toBe("DENIED_COMMAND");
+      expect(result.allowed).toBe(false);
+      expect(result.replacement).toBeUndefined();
     }
   });
 });

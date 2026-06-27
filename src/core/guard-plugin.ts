@@ -36,8 +36,6 @@ const READ_ONLY: string[] = ${readonlyJson};
 
 // --- Replacement map ---
 const REPLACEMENTS: Record<string, string> = {
-  commit: "taskforge checkpoint TASK-ID --message \\"…\\"",
-  push: "taskforge submit TASK-ID",
   "branch -d": "taskforge done TASK-ID --delete-branch",
   "branch -D": "taskforge done TASK-ID --delete-branch",
   "branch --delete": "taskforge done TASK-ID --delete-branch",

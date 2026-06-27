@@ -139,8 +139,8 @@ export type TaskForgeCommandResult = z.infer<typeof TaskForgeCommandResultSchema
 // ─── Standard prohibited actions ───────────────────────────────────────────
 
 export const STANDARD_PROHIBITED_ACTIONS: ProhibitedAction[] = [
-  { action: "git commit", reason: "Use taskforge checkpoint instead" },
-  { action: "git push", reason: "Use taskforge submit instead" },
+  { action: "git commit", reason: "Forbidden in managed agent sessions" },
+  { action: "git push", reason: "Forbidden in managed agent sessions" },
   { action: "git worktree add", reason: "Use taskforge start instead" },
   { action: "git branch -D", reason: "Use taskforge done --delete-branch instead" },
   { action: "direct task-state file edits", reason: "Use taskforge CLI commands instead" },

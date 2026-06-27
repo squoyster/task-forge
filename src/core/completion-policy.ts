@@ -164,7 +164,7 @@ export async function checkCompletionEligibility(
     preconditions.push({
       name: "PR recorded",
       passed: false,
-      message: "No pull request recorded. Create a PR with 'taskforge pr'",
+      message: "No pull request recorded. Create a PR with 'gh pr create'",
       code: "NO_PR_RECORDED",
     });
     reasons.push("No pull request recorded");
