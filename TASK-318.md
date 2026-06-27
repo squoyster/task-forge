@@ -1,11 +1,12 @@
 ---
 id: TASK-318
 type: Task
-status: Ready
+status: Done
 priority: P2
 agentRole: Implementer
 riskLevel: High
 humanInterventionRequired: false
+completed_at: 2026-06-27T14:03:13Z
 dependsOn:
   - TASK-317
 spec_hash: 7b2256d79f9b52d6
@@ -49,12 +50,12 @@ Forbidden files/directories:
 - `src/cli.ts`, `opencode.json`, `dist/**`
 
 ## Acceptance Criteria
-- [ ] `STATUS`, `TaskStatus`, `ALL_STATUSES`, `ACTIVE_STATUSES`, and `TERMINAL_STATUSES` describe one graph.
-- [ ] Legacy statuses parse using the exact mapping in this pack and serialize canonically on the next write.
-- [ ] `promote`, `report --complete`, validation, completion suggestions, and command guidance use only canonical statuses.
-- [ ] Git/PR facts remain metadata such as `submitted_sha`, `pr`, and `pr_merged`; no replacement transport status is added.
-- [ ] Tests cover every canonical transition, every forbidden transition, and all three legacy mappings.
-- [ ] The workflow and state-machine docs match executable behavior.
+- [x] `STATUS`, `TaskStatus`, `ALL_STATUSES`, `ACTIVE_STATUSES`, and `TERMINAL_STATUSES` describe one graph.
+- [x] Legacy statuses parse using the exact mapping in this pack and serialize canonically on the next write.
+- [x] `promote`, `report --complete`, validation, completion suggestions, and command guidance use only canonical statuses.
+- [x] Git/PR facts remain metadata such as `submitted_sha`, `pr`, and `pr_merged`; no replacement transport status is added.
+- [x] Tests cover every canonical transition, every forbidden transition, and all three legacy mappings.
+- [x] The workflow and state-machine docs match executable behavior.
 
 ## Test / Verification Command
 ```bash
@@ -86,13 +87,20 @@ Auto-continue unless gates fail or a forbidden file must be touched. Stop if a f
 - dependsOn set to [TASK-317]
 
 ## Result
+Collapsed to a single canonical 10-status graph. Removed the three transport statuses (Implementation Complete, Submitted, Merge Ready) from every active/terminal set, transition map, completion suggestion, command guidance, and GitHub label/color map.
+
+Legacy values normalize at the schema boundary via `normalizeStatus`/`createStatusSchema` preprocess: Implementation Complete & Submitted -> Review, Merge Ready -> Verify. Existing task files load and the next write persists a canonical value (idempotent, read-compatible).
+
+`report --complete` now enters Review (was Implementation Complete). The main forward path is In Progress -> Review -> Verify -> Done; Review/Verify may step back (rework/verify-failure), block, or defer. Transport facts (submitted_sha, pr, pr_merged) remain metadata — no replacement transport status was added.
+
+13 files changed (9 src + 1 doc + 3 tests + 1 transition-table doc), +150/-159. Gates: typecheck 0 errors, lint 0 errors, build success, 878 tests pass (added legacy-mapping + rejection tests; rewrote promote chain + completion/report expectations to the canonical model). Scope respected — no forbidden files touched.
 
 ## Links
 - Issue:
 - Project Item:
-- PR:
-- Branch:
-- Worktree:
+- PR: https://github.com/squoyster/task-forge/pull/new/agent/TASK-318-collapse-status-graph
+- Branch: agent/TASK-318-collapse-status-graph
+- Worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-318
 - CI:
 - Test Log:
 
