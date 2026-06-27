@@ -4,11 +4,12 @@ type: Task
 status: Inbox
 priority: P2
 agentRole: Implementer
-riskLevel: Low
+riskLevel: High
 humanInterventionRequired: false
-spec_hash: 56df82d764ecb53d
+dependsOn:
+  - TASK-320
+spec_hash: 2e9f4d825cb27a1d
 ---
-
 # TASK-321: TF-SIMP-05: Publish a minimal default CLI and a complete `next --json` packet
 ## Goal
 Make `taskforge next --json` the single normal entry point and keep rare/optional commands out of default help without compatibility wrappers. The CLI currently teaches many overlapping lifecycle, diagnostic, audit, guard, dependency, and adapter concepts. Hiding rare commands while making `next` complete reduces context and operator choice without deleting recovery capability.
@@ -76,6 +77,11 @@ Risk: High. Hidden does not mean unauthorized; authority checks must remain in c
 Auto-continue unless gates fail. Stop if a hidden command loses its authority check.
 
 ## Agent Notes
+
+### 2026-06-27T00:00:00Z System
+- Task updated via taskforge update
+- riskLevel set to "High"
+- dependsOn set to [TASK-320]
 
 ## Result
 

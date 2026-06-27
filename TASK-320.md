@@ -4,11 +4,11 @@ type: Task
 status: Inbox
 priority: P2
 agentRole: Implementer
-riskLevel: Critical
+riskLevel: High
 humanInterventionRequired: false
 dependsOn:
   - TASK-319
-spec_hash: 7698c08a6514a6db
+spec_hash: 26405872c79c5d2c
 ---
 # TASK-320: TF-SIMP-04: Remove TaskForge-owned git and worktree lifecycle mutation
 ## Goal
