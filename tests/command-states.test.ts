@@ -5,11 +5,9 @@ import {
   claimStateMachine,
   getErrorGuidance,
   getNextActions,
-  startStateMachine,
   gatesStateMachine,
   unhandledError,
   ClaimStates,
-  StartStates,
 } from "../src/core/command-states.js";
 
 function commandName(spec: string): string {
@@ -42,50 +40,46 @@ function registeredCliCommands(): string[] {
   return [...commands].filter((c) => !c.startsWith("_")).sort();
 }
 
-describe("claimStateMachine — no force/start guidance", () => {
-  it("does not recommend 'taskforge start' on success with worktree", () => {
+describe("claimStateMachine — direct-git guidance (TF-SIMP-04)", () => {
+  it("emits a direct-git worktree command on success and never recommends 'taskforge start'", () => {
     const result = claimStateMachine({
       taskFound: true,
       taskStatus: "Ready",
       doctorLocked: false,
       hasOutstandingTask: false,
       pushSucceeded: true,
-      worktreeExists: true,
-      worktreePath: "/tmp/worktree/TASK-001",
+      worktreeTargetPath: "/tmp/worktrees/TASK-001",
+      branchName: "agent/TASK-001-test",
       taskId: "TASK-001",
       sessionId: "abc123",
     });
 
     expect(result.ok).toBe(true);
     expect(result.state).toBe(ClaimStates.TASK_CLAIMED);
-    // Should NOT tell agent to run start as a next command
+    // TF claims state only; the worktree is created via direct git
+    expect(result.guidance).toContain("git worktree add");
+    expect(result.guidance).toContain("agent/TASK-001-test");
+    expect(result.guidance).toContain("/tmp/worktrees/TASK-001");
+    // Must never point the agent at the deleted start command
     expect(result.guidance).not.toMatch(/Run 'taskforge start/i);
-    expect(result.guidance).toContain("cd /tmp/worktree/TASK-001");
+    expect(result.guidance).toContain("taskforge prompt");
   });
 
-  it("does not recommend 'taskforge start' on success without worktree", () => {
+  it("still succeeds with direct-git guidance when no target path is supplied", () => {
     const result = claimStateMachine({
       taskFound: true,
       taskStatus: "Ready",
       doctorLocked: false,
       hasOutstandingTask: false,
       pushSucceeded: true,
-      worktreeExists: false,
       taskId: "TASK-001",
       sessionId: "abc123",
     });
 
     expect(result.ok).toBe(true);
     expect(result.state).toBe(ClaimStates.TASK_CLAIMED);
-    // Should NOT recommend start as a positive next command.
-    // The guidance may say "Do NOT run 'taskforge start'" which is a warning — that's fine.
-    // We check that there's no positive "Run 'taskforge start" without "Do NOT" preceding it.
-    const hasPositiveStartRecommendation = /(?<!Do NOT )Run 'taskforge start/i.test(result.guidance);
-    expect(hasPositiveStartRecommendation).toBe(false);
-    // Should explicitly warn against it
-    expect(result.guidance).toContain("Do NOT run");
-    expect(result.guidance).toContain("taskforge doctor");
-    expect(result.guidance).toContain("taskforge block");
+    expect(result.guidance).toContain("direct git");
+    expect(result.guidance).not.toMatch(/Run 'taskforge start/i);
   });
 
   it("does not recommend --force as a valid action on already-claimed error", () => {
@@ -109,71 +103,6 @@ describe("claimStateMachine — no force/start guidance", () => {
     expect(result.guidance).toContain("Normal agents may not use --force");
     expect(result.guidance).toContain("taskforge doctor");
     expect(result.guidance).toContain("taskforge block");
-  });
-});
-
-describe("startStateMachine — no force guidance", () => {
-  it("does not recommend --force as a valid action on already-assigned error", () => {
-    const result = startStateMachine({
-      taskFound: true,
-      taskStatus: "In Progress",
-      taskAssignee: "other-session",
-      taskClaimedAt: "2026-05-28 01:00:00",
-      doctorLocked: false,
-      hasOutstandingTask: false,
-      pushSucceeded: true,
-      worktreeCreated: false,
-      taskId: "TASK-001",
-    });
-
-    expect(result.ok).toBe(false);
-    expect(result.errorCode).toBe("ALREADY_ASSIGNED");
-    // Should NOT recommend using --force (it may say "may not use")
-    expect(result.guidance).not.toMatch(/use 'taskforge.*--force'/i);
-    expect(result.guidance).not.toMatch(/use.*--force.*to override/i);
-    expect(result.guidance).not.toMatch(/use.*--force.*if.*stale/i);
-    // Should explicitly say agents may not use it
-    expect(result.guidance).toContain("Normal agents may not use --force");
-    expect(result.guidance).toContain("taskforge resume");
-    expect(result.guidance).toContain("taskforge doctor");
-    expect(result.guidance).toContain("taskforge block");
-  });
-
-  it("does not recommend --force on push failure", () => {
-    const result = startStateMachine({
-      taskFound: true,
-      taskStatus: "Ready",
-      doctorLocked: false,
-      hasOutstandingTask: false,
-      pushSucceeded: false,
-      worktreeCreated: false,
-      taskId: "TASK-001",
-    });
-
-    expect(result.ok).toBe(false);
-    expect(result.errorCode).toBe("PUSH_FAILED");
-    expect(result.guidance).not.toMatch(/--force/i);
-    expect(result.guidance).toContain("taskforge next");
-    expect(result.guidance).toContain("retry");
-  });
-
-  it("succeeds with worktree guidance on happy path", () => {
-    const result = startStateMachine({
-      taskFound: true,
-      taskStatus: "Ready",
-      doctorLocked: false,
-      hasOutstandingTask: false,
-      pushSucceeded: true,
-      worktreeCreated: true,
-      worktreePath: "/tmp/worktree/TASK-001",
-      branch: "agent/TASK-001-test",
-      taskId: "TASK-001",
-      sessionId: "abc123",
-    });
-
-    expect(result.ok).toBe(true);
-    expect(result.state).toBe(StartStates.TASK_STARTED);
-    expect(result.guidance).toContain("cd /tmp/worktree/TASK-001");
   });
 });
 
@@ -219,11 +148,11 @@ describe("command state registry", () => {
   });
 
   it("returns spec-shaped next actions with task placeholders resolved", () => {
-    const actions = getNextActions("start", { taskId: "TASK-123" });
+    const actions = getNextActions("report", { taskId: "TASK-123" });
 
     expect(actions.length).toBeGreaterThan(0);
     expect(actions[0]).toMatchObject({
-      command: "opencode",
+      command: "taskforge promote TASK-123 --to Verify",
       safety: "safe",
       preferred: true,
     });

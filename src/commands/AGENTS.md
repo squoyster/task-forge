@@ -12,11 +12,10 @@ Command handlers implement every `taskforge` CLI subcommand. Each file in this d
 | `agents` | `agents.ts` | Agent registry management |
 | `audit` | `audit.ts` | Show audit log |
 | `block` | `block.ts` | Mark task as blocked |
-| `claim` | `claim.ts` | Claim a task for work |
-| `cleanup` | `cleanup-cmd.ts` | Clean up stale worktrees/branches |
+| `claim` | `claim.ts` | Claim a task for work (atomic state-only; worktree is direct-git) |
 | `config-validate` | `config-validate.ts` | Validate config |
 | `doctor` | `doctor.ts` | Diagnostics and recovery |
-| `done` | `done.ts` | Complete a task |
+| `done` | `done.ts` | Complete a task (state transition only; no worktree/branch deletion) |
 | `gates` | `gates.ts` | Run verification gates |
 | `guard-cmd` | `guard-cmd.ts` | Mutation guard management |
 | `heartbeat` | `heartbeat.ts` | Agent lease refresh |
@@ -31,8 +30,6 @@ Command handlers implement every `taskforge` CLI subcommand. Each file in this d
 | `reject` | `reject.ts` | Reject a task |
 | `release` | `release.ts` | Release a task claim |
 | `report` | `report.ts` | Generate report |
-| `resume` | `resume.ts` | Resume work on task |
-| `start` | `start.ts` | Start working on a task |
 | `status` | `status.ts` | Show project status |
 | `summary` | `summary.ts` | Show project summary |
 | `sweep` | `sweep.ts` | Sweep stale agents |

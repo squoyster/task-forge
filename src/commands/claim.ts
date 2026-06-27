@@ -1,5 +1,5 @@
 import { loadTaskById, loadAllTasks } from "../core/task-store.js";
-import { pullTaskState, createWorktree, checkUncommittedWorktrees } from "../core/git.js";
+import { pullTaskState, checkUncommittedWorktrees } from "../core/git.js";
 import { withTaskStateTransaction } from "../core/task-state-transaction.js";
 import { parseSessionIdFromBranch, resolveSessionId } from "../core/session.js";
 import { sweepStaleTasks } from "../core/sweeper.js";
@@ -16,9 +16,7 @@ import { writeResult } from "../util/write-command-result.js";
 import { successResult, failedResult } from "../core/result-builder.js";
 import { claimStateMachine } from "../core/command-states.js";
 import { getDefaultGuidanceAdapter } from "../core/guidance-adapter.js";
-import { writeSessionState } from "../core/session-state.js";
 import { registerAgent } from "../core/agent-registry.js";
-import fs from "node:fs";
 
 export interface ClaimOptions {
   force?: boolean;
@@ -212,7 +210,6 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
 
   // Push claim through transaction — all file writes happen inside the transaction
   // to avoid inconsistent state if the push fails.
-  let worktreePath: string | undefined;
   let branchName: string | undefined;
 
   try {
@@ -267,56 +264,13 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
     return;
   }
 
-  // Create worktree so the agent has a workspace immediately
-  const wtPath = getWorktreePath(repoRoot, taskId);
-  if (fs.existsSync(wtPath)) {
-    worktreePath = wtPath;
-  } else {
-    try {
-      const result = await createWorktree(repoRoot, {
-        id: taskId,
-        branch: branchName ?? makeBranchName(taskId, taskId, sessionId),
-      } as Parameters<typeof createWorktree>[1]);
-      worktreePath = result.path;
-      branchName = result.branch;
-    } catch {
-      // Worktree creation is non-fatal — claim succeeded even if workspace failed
-      worktreePath = undefined;
-    }
-  }
+  // TF-SIMP-04: TaskForge claims task state only. Worktree/branch creation is
+  // the agent's responsibility via direct git (R-04-001/R-04-003). Compute the
+  // target worktree path so the guidance can emit the exact git command.
+  const targetWorktree = getWorktreePath(repoRoot, taskId);
 
-  // Persist worktree path to task-state (enables resume to find the worktree)
-  if (worktreePath) {
-    try {
-      await withTaskStateTransaction(
-        { command: `claim ${taskId} [workspace]`, maxRetries: 2 },
-        (tx) => {
-          const t = tx.loadTask(taskId);
-          if (t) {
-            t.worktree = worktreePath;
-            tx.updateTask(t);
-            tx.appendNote(taskId, "System", [`Worktree created: ${worktreePath}`]);
-          }
-        },
-      );
-    } catch {
-      // Non-fatal: worktree exists and is usable even if recording fails
-    }
-  }
-
-  // Write session state file for agent recovery across restarts
-  if (worktreePath) {
-    writeSessionState(worktreePath, {
-      session_id: sessionId,
-      task_id: taskId,
-      claimed_at: new Date().toISOString(),
-      worktree_path: worktreePath,
-      last_heartbeat: new Date().toISOString(),
-    });
-  }
-
-  // Register agent in distributed registry
-  registerAgent(sessionId, taskId, worktreePath ?? null, repoRoot);
+  // Register agent in distributed registry (active even without a workspace)
+  registerAgent(sessionId, taskId, null, repoRoot);
 
   // Build success result through state machine
   const claimResult = claimStateMachine({
@@ -325,8 +279,8 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
     doctorLocked: false,
     hasOutstandingTask: false,
     pushSucceeded: true,
-    worktreeExists: !!worktreePath,
-    worktreePath,
+    worktreeTargetPath: targetWorktree,
+    branchName,
     taskId,
     sessionId,
   });
@@ -339,7 +293,6 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
       command: "claim",
       taskId: task.id,
       guidance: claimResult.guidance,
-      worktree: worktreePath,
       branch: branchName,
       sessionId,
     }), json);
@@ -352,10 +305,9 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
   }
 
   logSuccess(claimResult.guidance);
-  if (worktreePath) {
-    logSuccess(`Worktree: ${worktreePath}`);
+  if (branchName) {
     logSuccess(`Branch: ${branchName}`);
-    logInfo(`cd ${worktreePath} to begin work.`);
+    logInfo(`Create your workspace: git worktree add -b ${branchName} ${targetWorktree} main`);
   }
   eventLogEvent(taskId, "claimed", { session: sessionId, forced: force });
 }

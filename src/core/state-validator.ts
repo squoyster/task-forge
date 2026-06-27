@@ -152,7 +152,7 @@ export function validateCommandReturnSchema(): { errors: StateValidationIssue[];
   }
 
   // Check that next command maps exist for major commands
-  const majorCommands = ["init", "next", "start", "done", "claim", "release", "heartbeat", "checkpoint", "submit", "pr"];
+  const majorCommands = ["init", "next", "done", "claim", "release", "heartbeat", "checkpoint", "submit", "pr"];
   for (const cmd of majorCommands) {
     if (!NEXT_COMMAND_MAPS[cmd]) {
       errors.push({

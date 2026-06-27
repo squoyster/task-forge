@@ -1,14 +1,8 @@
 import simpleGit from "simple-git";
 import { execa } from "execa";
-import { getWorktreePath, makeBranchName, getTaskStateDir, getRepoRoot } from "../util/paths.js";
+import { getTaskStateDir, getRepoRoot } from "../util/paths.js";
 import type { ParsedTask } from "./task-store.js";
 import { logWarn } from "../util/logging.js";
-
-export interface WorktreeResult {
-  path: string;
-  branch: string;
-  created: boolean;
-}
 
 export interface UncommittedWorktree {
   taskId: string;
@@ -194,86 +188,6 @@ function findTaskByWorktree(tasks: ParsedTask[], worktreePath: string): ParsedTa
   return null;
 }
 
-export async function createWorktree(
-  repoRoot: string,
-  task: ParsedTask,
-): Promise<WorktreeResult> {
-  const git = simpleGit(repoRoot);
-  const worktreePath = getWorktreePath(repoRoot, task.id);
-  const branchName = task.branch ?? makeBranchName(task.id, extractTitle(task));
-
-  // Check if worktree already exists
-  const worktrees = await git.raw("worktree", "list", "--porcelain");
-  if (worktrees.includes(worktreePath)) {
-    return { path: worktreePath, branch: branchName, created: false };
-  }
-
-  // Check if branch exists
-  const branches = await git.branchLocal();
-  const branchExists = branches.all.includes(branchName);
-
-  if (branchExists) {
-    await execa("git", ["worktree", "add", worktreePath, branchName], {
-      cwd: repoRoot,
-    });
-  } else {
-    await execa("git", ["worktree", "add", worktreePath, "-b", branchName], {
-      cwd: repoRoot,
-    });
-  }
-
-  return { path: worktreePath, branch: branchName, created: true };
-}
-
-export async function removeWorktree(
-  repoRoot: string,
-  taskId: string,
-): Promise<boolean> {
-  const worktreePath = getWorktreePath(repoRoot, taskId);
-  // Check if worktree exists before attempting removal
-  const git = simpleGit(repoRoot);
-  const worktrees = await git.raw("worktree", "list", "--porcelain");
-  if (!worktrees.includes(worktreePath)) {
-    return false;
-  }
-  await execa("git", ["worktree", "remove", worktreePath], { cwd: repoRoot });
-  return true;
-}
-
-export async function removeBranch(
-  repoRoot: string,
-  branchName: string,
-  deleteRemote = false,
-): Promise<boolean> {
-  const git = simpleGit(repoRoot);
-  const branches = await git.branchLocal();
-  const branchExists = branches.all.includes(branchName);
-
-  if (!branchExists) {
-    return false;
-  }
-
-  // Cannot delete the currently checked-out branch
-  const current = await git.branch();
-  if (current.current === branchName) {
-    await git.checkout("main");
-  }
-
-  await git.deleteLocalBranch(branchName, true); // force delete
-
-  if (deleteRemote) {
-    try {
-      await execa("git", ["push", "origin", "--delete", branchName], {
-        cwd: repoRoot,
-      });
-    } catch {
-      // Remote branch may not exist — that's fine
-    }
-  }
-
-  return true;
-}
-
 export async function listWorktrees(
   repoRoot: string,
 ): Promise<{ path: string; branch: string; commit: string }[]> {
@@ -427,13 +341,6 @@ export async function pullTaskState(repoRoot?: string): Promise<void> {
   } catch {
     // Network unreachable, no remote, or not a git repo — proceed with whatever is on disk
   }
-}
-
-function extractTitle(task: ParsedTask): string {
-  // Try to extract title from body first line: # TASK-123: Title
-  const match = task.body.match(/^#\s+\S+:\s+(.+)$/m);
-  if (match) return match[1];
-  return task.id;
 }
 
 /**

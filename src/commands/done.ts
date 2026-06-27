@@ -1,6 +1,6 @@
 import { loadTaskById, updateTaskStatus, clearTaskLock, appendAgentNote, parseTaskFile, writeTaskFile, hasAcceptanceCriteriaSection, hasBlankAcceptanceCriteria, hasUncheckedAcceptanceCriteria } from "../core/task-store.js";
 import { validateTransition } from "../core/status-transition.js";
-import { removeWorktree, removeBranch, getWorktreeDirtyFiles, getBranchCommitsAhead } from "../core/git.js";
+import { getWorktreeDirtyFiles, getBranchCommitsAhead } from "../core/git.js";
 import { withTaskStateTransaction } from "../core/task-state-transaction.js";
 import { STATUS } from "../util/status-constants.js";
 import { logSuccess, logInfo, logWarn, logSub, logHeader, logDivider, logError } from "../util/logging.js";
@@ -23,11 +23,8 @@ import { headSha } from "../core/gate-stamp.js";
 import { loadConfig } from "../core/config.js";
 import { buildTerminalAuditNotes } from "../core/terminal-audit.js";
 import { resolveAuthority, assertCanForce, ForceRequiresHumanOrDoctorError } from "../core/authority.js";
-import type { ParsedTask } from "../core/task-store.js";
 
 export interface DoneOptions {
-  cleanup?: boolean;
-  deleteBranch?: boolean;
   force?: boolean;
   json?: boolean;
 }
@@ -67,7 +64,7 @@ export async function cmdDone(
   taskId: string,
   options: DoneOptions = {},
 ): Promise<void> {
-  const { cleanup = false, deleteBranch = false, force = false, json = false } = options;
+  const { force = false, json = false } = options;
   const repoRoot = getRepoRoot();
   const task = loadTaskById(taskId);
   const dirtyFilesBeforeGates = task?.worktree
@@ -558,8 +555,8 @@ export async function cmdDone(
   logDivider();
   logInfo("Next actions:");
   logSub("  taskforge next              — Find the next available task");
-  logSub(`  taskforge done ${taskId} --cleanup  — Remove worktree and branch`);
-  logSub(`  taskforge done ${taskId} --delete-branch — Delete branch only`);
+  logSub("  git -C <main-repo> worktree remove <worktree>  — Remove the task worktree (direct-git)");
+  logSub("  git -C <main-repo> branch -d <branch>          — Delete the task branch (direct-git)");
 
   appendTaskTranscript(repoRoot, taskId, createTaskEvent(taskId, "task.command.completed", {
     summary: `Task ${taskId} marked as Done`,
@@ -576,10 +573,8 @@ export async function cmdDone(
     markAgentIdle(task.assignee, repoRoot);
   }
 
-  // --- Cleanup: remove worktree ---
-  if (cleanup) {
-    await performCleanup(repoRoot, task, deleteBranch, today, notes);
-  }
+  // TF-SIMP-04: worktree/branch lifecycle is now direct-git (see guidance above).
+  // TaskForge `done` transitions state only; it does not delete workspaces.
 
   notes.push(...buildTerminalAuditNotes(repoRoot, taskId, "Done"));
   appendAgentNote(task.filePath, today, "System", notes);
@@ -591,64 +586,3 @@ export async function cmdDone(
   );
 }
 
-async function performCleanup(
-  repoRoot: string,
-  task: ParsedTask,
-  deleteBranch: boolean,
-  today: string,
-  notes: string[],
-): Promise<void> {
-  const hadWorktreeField = !!(task.worktree || task.branch);
-
-  // 1. Remove worktree
-  if (task.worktree) {
-    try {
-      const removed = await removeWorktree(repoRoot, task.id);
-      if (removed) {
-        logSub(`Worktree removed: ${task.worktree}`);
-        notes.push(`Worktree removed: ${task.worktree}`);
-      } else {
-        logInfo(`Worktree not found (already cleaned up): ${task.worktree}`);
-        notes.push(`Worktree not found (already cleaned up): ${task.worktree}`);
-      }
-    } catch (err) {
-      const msg = `Failed to remove worktree: ${err instanceof Error ? err.message : String(err)}`;
-      logWarn(msg);
-      notes.push(msg);
-    }
-  } else if (hadWorktreeField) {
-    logInfo("No worktree path recorded in task — skipping worktree removal.");
-  }
-
-  // 2. Delete branch
-  if (deleteBranch && task.branch) {
-    try {
-      const deleted = await removeBranch(repoRoot, task.branch);
-      if (deleted) {
-        logSub(`Branch deleted: ${task.branch}`);
-        notes.push(`Branch deleted: ${task.branch}`);
-      } else {
-        logInfo(`Branch not found (already deleted): ${task.branch}`);
-        notes.push(`Branch not found (already deleted): ${task.branch}`);
-      }
-    } catch (err) {
-      const msg = `Failed to delete branch: ${err instanceof Error ? err.message : String(err)}`;
-      logWarn(msg);
-      notes.push(msg);
-    }
-  } else if (deleteBranch && !task.branch) {
-    logInfo("No branch recorded in task — skipping branch deletion.");
-  }
-
-  // 3. Clear worktree/branch from frontmatter
-  if (hadWorktreeField) {
-    const current = parseTaskFile(task.filePath);
-    if (current) {
-      current.worktree = undefined;
-      current.branch = undefined;
-      writeTaskFile(current);
-      logSub("Worktree and branch fields cleared from task frontmatter.");
-      notes.push("Worktree and branch fields cleared from task frontmatter.");
-    }
-  }
-}

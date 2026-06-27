@@ -2,7 +2,6 @@
 import { Command } from "commander";
 import { cmdInit } from "./commands/init.js";
 import { cmdNext } from "./commands/next.js";
-import { cmdStart, type StartOptions } from "./commands/start.js";
 import { cmdStatus } from "./commands/status.js";
 import { cmdSummary } from "./commands/summary.js";
 import { cmdGates, type GatesOptions } from "./commands/gates.js";
@@ -15,11 +14,9 @@ import { cmdHeartbeat, type HeartbeatOptions } from "./commands/heartbeat.js";
 import { cmdInspect, type InspectOptions } from "./commands/inspect.js";
 import { cmdClaim, type ClaimOptions } from "./commands/claim.js";
 import { cmdReport, type ReportOptions } from "./commands/report.js";
-import { cmdCleanup, type CleanupOptions } from "./commands/cleanup-cmd.js";
 import { cmdPrompt } from "./commands/prompt.js";
 import { cmdNew, type NewOptions } from "./commands/new.js";
 import { cmdUpdate, type UpdateOptions } from "./commands/update.js";
-import { cmdResume } from "./commands/resume.js";
 import { cmdDoctor } from "./commands/doctor.js";
 import { cmdConfigValidate } from "./commands/config-validate.js";
 import { cmdRelease, type ReleaseOptions } from "./commands/release.js";
@@ -88,16 +85,6 @@ program
   .action((opts: { json?: boolean }) => wrapWithAudit("next", [], opts, () => cmdNext(opts))());
 
 program
-  .command("start <taskId>")
-  .description("Set up worktree, branch, and begin a task")
-  .option("--force", "Override stale lock if task is locked by another session")
-  .option("--json", "Output in JSON format")
-  .action((taskId: string, opts: { force?: boolean; json?: boolean }) => {
-    const startOpts: StartOptions = { force: opts.force ?? false, json: opts.json ?? false };
-    return wrapWithAudit("start", [taskId], opts, () => cmdStart(taskId, startOpts))();
-  });
-
-program
   .command("status")
   .description("Show project status summary")
   .option("--json", "Output in JSON format for programmatic consumption")
@@ -139,18 +126,13 @@ program
 program
   .command("done <taskId>")
   .description("Mark a task as done")
-  .option("--cleanup", "Remove worktree after marking done")
-  .option("--delete-branch", "Delete the task branch after marking done (implies --cleanup)")
   .option("--force", "Bypass gate checks (human/doctor only)")
   .option("--json", "Output in JSON format")
-  .action((taskId: string, opts: { cleanup?: boolean; deleteBranch?: boolean; force?: boolean; json?: boolean }) => {
+  .action((taskId: string, opts: { force?: boolean; json?: boolean }) => {
     const doneOpts: DoneOptions = {
-      cleanup: opts.cleanup ?? false,
-      deleteBranch: opts.deleteBranch ?? false,
       force: opts.force ?? false,
       json: opts.json ?? false,
     };
-    if (doneOpts.deleteBranch && !doneOpts.cleanup) doneOpts.cleanup = true;
     return wrapWithAudit("done", [taskId], opts, () => cmdDone(taskId, doneOpts))();
   });
 
@@ -270,23 +252,6 @@ program
   .action((taskId: string, opts: { complete?: boolean; json?: boolean }) => {
     const reportOpts: ReportOptions = { complete: opts.complete ?? false, json: opts.json ?? false };
     return wrapWithAudit("report", [taskId], opts, () => cmdReport(taskId, reportOpts))();
-  });
-
-program
-  .command("cleanup <taskId>")
-  .description("Remove task worktree and branch with safety checks")
-  .option("--dry-run", "Preview what would be removed without mutating")
-  .option("--apply", "Execute cleanup (fails if unsafe)")
-  .option("--force", "Skip all safety checks")
-  .option("--json", "Output in JSON format")
-  .action((taskId: string, opts: { dryRun?: boolean; apply?: boolean; force?: boolean; json?: boolean }) => {
-    const cleanupOpts: CleanupOptions = {
-      dryRun: opts.dryRun ?? false,
-      apply: opts.apply ?? false,
-      force: opts.force ?? false,
-      json: opts.json ?? false,
-    };
-    return wrapWithAudit("cleanup", [taskId], opts, () => cmdCleanup(taskId, cleanupOpts))();
   });
 
 program
@@ -518,12 +483,6 @@ program
   .description("Emit a complete agent execution packet")
   .option("--json", "Output in JSON format")
   .action((taskId: string, opts: { json?: boolean }) => wrapWithAudit("prompt", [taskId], opts, () => cmdPrompt(taskId, opts))());
-
-program
-  .command("resume <taskId>")
-  .description("Re-enter an existing task workspace")
-  .option("--json", "Output in JSON format")
-  .action((taskId: string, opts: { json?: boolean }) => wrapWithAudit("resume", [taskId], opts, () => cmdResume(taskId, opts))());
 
 program
   .command("doctor")

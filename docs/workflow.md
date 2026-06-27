@@ -28,14 +28,14 @@ Inbox -> Needs Spec -> Ready -> In Progress -> Review -> Verify -> Done
 
 | Status | Action |
 |---|---|
-| `Ready` | `taskforge start TASK-ID` (or create a worktree via git) |
+| `Ready` | `taskforge claim TASK-ID` (atomic ownership); then `git worktree add -b <branch> <wt> main` |
 | `In Progress` | continue in the worktree; `taskforge heartbeat TASK-ID` renews the lease |
 | `Review` | inspect the worktree; request edits if needed |
 | `Verify` | `taskforge gates --json` (typecheck/lint/build/test must pass) |
 | `Blocked` | do not improvise; unblock only with evidence or human direction |
 | `Done`/`Rejected` | historical; do not mutate except under explicit recovery |
 
-`taskforge next --json` returns the correct next commands. Don't substitute `start` when `next` says `resume`.
+`taskforge next --json` returns the correct next commands. Worktree and branch lifecycle is direct-git: `taskforge claim` only sets ownership and metadata.
 
 ## Implementation Loop
 

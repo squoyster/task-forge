@@ -4,7 +4,6 @@ import { z } from "zod";
 import { cmdStatus } from "./status.js";
 import { cmdNext } from "./next.js";
 import { cmdGates } from "./gates.js";
-import { cmdStart, type StartOptions } from "./start.js";
 import { cmdDone, type DoneOptions } from "./done.js";
 import { loadConfig } from "../core/config.js";
 import { getRepoRoot } from "../util/paths.js";
@@ -113,44 +112,17 @@ function registerTools(server: McpServer): void {
     },
   );
 
-  // taskforge_start - Start a task
-  server.tool(
-    "taskforge_start",
-    "Create a worktree and branch for a task and begin working on it",
-    {
-      taskId: z.string(),
-      force: z.boolean().optional().default(false),
-      json: z.boolean().optional().default(false),
-    },
-    async (args: { taskId: string; force?: boolean; json?: boolean }) => {
-      try {
-        const opts: StartOptions = { force: args.force ?? false, json: args.json ?? false };
-        const output = await captureStdout(() => cmdStart(args.taskId, opts));
-        return { content: [{ type: "text" as const, text: output.trim() }] };
-      } catch (err) {
-        return {
-          content: [{ type: "text" as const, text: `Error: ${(err as Error).message}` }],
-          isError: true,
-        };
-      }
-    },
-  );
-
   // taskforge_done - Mark a task as done
   server.tool(
     "taskforge_done",
-    "Mark a task as completed and optionally clean up its worktree",
+    "Mark a task as completed (worktree/branch lifecycle is direct-git)",
     {
       taskId: z.string(),
-      cleanup: z.boolean().optional().default(false),
-      deleteBranch: z.boolean().optional().default(false),
       json: z.boolean().optional().default(false),
     },
-    async (args: { taskId: string; cleanup?: boolean; deleteBranch?: boolean; json?: boolean }) => {
+    async (args: { taskId: string; json?: boolean }) => {
       try {
         const opts: DoneOptions = {
-          cleanup: args.cleanup ?? false,
-          deleteBranch: args.deleteBranch ?? false,
           json: args.json ?? false,
         };
         const output = await captureStdout(() => cmdDone(args.taskId, opts));

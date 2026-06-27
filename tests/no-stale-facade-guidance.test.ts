@@ -72,7 +72,6 @@ describe("TF-SIMP-01: no stale git-facade command guidance", () => {
     "src/core/next-command-maps.ts",
     "src/core/completion-policy.ts",
     "src/commands/next.ts",
-    "src/commands/resume.ts",
     "docs/architecture/command-return-contract.md",
     "docs/architecture/command-state-machine-and-invariants.md",
     "docs/next-action-semantics.md",

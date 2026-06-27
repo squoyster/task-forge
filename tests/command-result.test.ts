@@ -272,8 +272,8 @@ describe("result renderer", () => {
 });
 
 describe("next command maps", () => {
-  it("returns next commands for start success", () => {
-    const commands = getValidNextCommands("start", "success");
+  it("returns next commands for claim success", () => {
+    const commands = getValidNextCommands("claim", "success");
     expect(commands.length).toBeGreaterThan(0);
     expect(commands.some((c) => c.command.includes("git add -A && git commit"))).toBe(true);
   });
@@ -284,12 +284,12 @@ describe("next command maps", () => {
   });
 
   it("returns all next commands for a command", () => {
-    const commands = getAllValidNextCommands("start");
+    const commands = getAllValidNextCommands("claim");
     expect(commands.length).toBeGreaterThan(0);
   });
 
   it("has maps for all major commands", () => {
-    const majorCommands = ["init", "next", "start", "done", "claim", "release", "heartbeat", "checkpoint", "submit", "pr"];
+    const majorCommands = ["init", "next", "done", "claim", "release", "heartbeat", "checkpoint", "submit", "pr"];
     for (const cmd of majorCommands) {
       const commands = getAllValidNextCommands(cmd);
       expect(commands.length).toBeGreaterThan(0);

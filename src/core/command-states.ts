@@ -79,8 +79,8 @@ export interface CommandResult {
 function legacyNextActionToSpecAction(nextAction: LegacyNextAction, context: Record<string, unknown> = {}): NextAction {
   const taskId = typeof context.taskId === "string" ? context.taskId : "TASK-ID";
   const actions: Record<LegacyNextAction, NextAction> = {
-    start_task: workAction(`taskforge start ${taskId}`, "Start the selected task.", true, { from: "Ready", to: "In Progress" }),
-    create_worktree: workAction(`taskforge start ${taskId}`, "Create or repair the task worktree.", true),
+    start_task: workAction(`taskforge claim ${taskId}`, "Claim the selected task (worktree is direct-git).", true, { from: "Ready", to: "In Progress" }),
+    create_worktree: workAction(`git worktree add -b <branch> <worktree> main`, "Create or repair the task worktree via direct git.", true),
     work_on_task: workAction(`git add -A && git commit --message "Describe progress"`, "Continue implementation and checkpoint meaningful progress.", true),
     commit_changes: workAction(`git add -A && git commit --message "Describe progress"`, "Commit task changes.", true),
     run_gates: workAction("taskforge gates --json", "Run verification gates.", true),
@@ -261,31 +261,11 @@ export const COMMAND_STATE_REGISTRY: Record<string, CommandStateRule> = {
     command: "next",
     requiresNoDoctorLock: true,
     nextActions: [
-      workAction("taskforge start {taskId}", "Start the selected ready task.", true, { from: "Ready", to: "In Progress" }),
+      workAction("taskforge claim {taskId}", "Claim the selected ready task (worktree is direct-git).", true, { from: "Ready", to: "In Progress" }),
     ],
     errorActions: withCommonErrors({
       NO_ACTIONABLE_TASKS: [
         humanAction("taskforge list --json", "Review blocked, deferred, or underspecified tasks.", true),
-      ],
-    }),
-  }),
-  start: rule({
-    command: "start",
-    allowedStatuses: ["Ready", "In Progress"],
-    requiresTask: true,
-    requiresNoDoctorLock: true,
-    forbidsAgentForce: true,
-    nextActions: [
-      workAction("opencode", "Begin work in the created task worktree.", true, { from: "Ready", to: "In Progress" }),
-      workAction("git add -A && git commit --message \"Describe progress\"", "Save completed work after implementation."),
-    ],
-    errorActions: withCommonErrors({
-      ALREADY_ASSIGNED: [
-        workAction("taskforge resume {taskId}", "Resume the existing claimed workspace if it belongs to this task.", true),
-        humanAction("taskforge block {taskId} \"Task already assigned\" --category unsafe_operation --blocked-by human", "Escalate claim conflicts."),
-      ],
-      WORKTREE_FAILED: [
-        humanAction("taskforge doctor --check", "Diagnose worktree creation failure.", true),
       ],
     }),
   }),
@@ -423,7 +403,7 @@ export const COMMAND_STATE_REGISTRY: Record<string, CommandStateRule> = {
     command: "inspect",
     requiresTask: true,
     nextActions: [
-      workAction("taskforge resume {taskId}", "Resume the inspected task workspace when work should continue.", true),
+      workAction("git -C <worktree> status", "Continue work in the inspected task workspace via direct git.", true),
       workAction("taskforge next", "Return to queue selection if no action is needed."),
     ],
     errorActions: withCommonErrors(),
@@ -435,7 +415,7 @@ export const COMMAND_STATE_REGISTRY: Record<string, CommandStateRule> = {
     requiresNoDoctorLock: true,
     forbidsAgentForce: true,
     nextActions: [
-      workAction("taskforge resume {taskId}", "Enter the claimed workspace if one exists.", true),
+      workAction("git worktree add -b <branch> <worktree> main", "Create the claimed task's worktree via direct git (TF claims state only).", true),
     ],
     errorActions: withCommonErrors({
       ALREADY_CLAIMED: [
@@ -451,19 +431,6 @@ export const COMMAND_STATE_REGISTRY: Record<string, CommandStateRule> = {
       workAction("taskforge promote {taskId} --to Verify", "Advance to verification after implementation report is accepted.", true, { from: "Review", to: "Verify" }),
     ],
     errorActions: withCommonErrors(),
-  }),
-  cleanup: rule({
-    command: "cleanup",
-    requiresTask: true,
-    forbidsAgentForce: true,
-    nextActions: [
-      workAction("taskforge next", "Continue after workspace cleanup.", true),
-    ],
-    errorActions: withCommonErrors({
-      FORCE_REQUIRES_AUTHORITY: [
-        doctorAction("taskforge cleanup {taskId} --force", "Force cleanup skips safety checks and is doctor-only.", true),
-      ],
-    }),
   }),
   new: rule({
     command: "new",
@@ -493,15 +460,6 @@ export const COMMAND_STATE_REGISTRY: Record<string, CommandStateRule> = {
     requiresTask: true,
     nextActions: [
       workAction("opencode", "Use the prompt packet to continue task work.", true),
-    ],
-    errorActions: withCommonErrors(),
-  }),
-  resume: rule({
-    command: "resume",
-    requiresTask: true,
-    requiresWorktree: true,
-    nextActions: [
-      workAction("git add -A && git commit --message \"Describe progress\"", "Save progress after resuming work.", true),
     ],
     errorActions: withCommonErrors(),
   }),
@@ -801,7 +759,7 @@ export function nextStateMachine(
     NextStates.TASK_SELECTED,
     "start_task",
     `Next task: ${conditions.selectedTaskId}${depInfo}. ` +
-    `Run 'taskforge start ${conditions.selectedTaskId}' to begin.`,
+    `Run 'taskforge claim ${conditions.selectedTaskId}' to claim it, then create your worktree via direct git.`,
     { taskId: conditions.selectedTaskId },
   );
 }
@@ -832,8 +790,9 @@ export function claimStateMachine(
     outstandingTaskId?: string;
     uncommittedWorktrees?: { taskId: string; status: string; dirtyFiles: number }[];
     pushSucceeded: boolean;
-    worktreeExists?: boolean;
-    worktreePath?: string;
+    /** TF-SIMP-04: target worktree path (computed for direct-git guidance, never created by TF) */
+    worktreeTargetPath?: string;
+    branchName?: string;
     sessionId?: string;
     taskId?: string;
   },
@@ -935,192 +894,23 @@ export function claimStateMachine(
     );
   }
 
-  // Claim succeeded — guidance depends on worktree state
-  if (conditions.worktreeExists && conditions.worktreePath) {
-    return success(
-      ClaimStates.TASK_CLAIMED,
-      "work_on_task",
-      `Task ${conditions.taskId} claimed. Session: ${conditions.sessionId}. ` +
-      `Worktree: ${conditions.worktreePath}. ` +
-      `cd ${conditions.worktreePath} to begin work. ` +
-      `Run 'taskforge prompt ${conditions.taskId}' for task context.`,
-      { taskId: conditions.taskId, sessionId: conditions.sessionId, worktree: conditions.worktreePath },
-    );
-  }
-
-  // Claim succeeded but no worktree — do NOT recommend start (would deadlock)
+  // Claim succeeded — TF recorded ownership only. Worktree/branch creation is
+  // the agent's direct-git responsibility (R-04-001/R-04-003). Emit the exact
+  // git command using the computed branch + target worktree path.
   return success(
     ClaimStates.TASK_CLAIMED,
-    "request_human_input",
-    `Task ${conditions.taskId} claimed. Session: ${conditions.sessionId}. ` +
-    `Worktree creation did not complete. ` +
-    `Valid next commands: taskforge doctor --json, taskforge inspect ${conditions.taskId} --json, ` +
-    `or taskforge block ${conditions.taskId} "Claim succeeded but worktree creation failed" --category unsafe_operation --blocked-by human. ` +
-    `Do NOT run 'taskforge start ${conditions.taskId}' — the task is already assigned.`,
-    { taskId: conditions.taskId, sessionId: conditions.sessionId },
-  );
-}
-
-// ── Start States ──────────────────────────────────────────────────
-
-export const StartStates = {
-  TASK_STARTED: "task_started",
-  TASK_NOT_FOUND: "task_not_found",
-  INVALID_STATUS: "invalid_status",
-  ALREADY_ASSIGNED: "already_assigned",
-  PUSH_FAILED: "push_failed",
-  WORKTREE_FAILED: "worktree_failed",
-  DOCTOR_LOCKED: "doctor_locked",
-  OUTSTANDING_TASK: "outstanding_task",
-  UNCOMMITTED_CHANGES: "uncommitted_changes",
-} as const;
-
-export function startStateMachine(
-  conditions: {
-    taskFound: boolean;
-    taskStatus?: string;
-    taskAssignee?: string;
-    taskClaimedAt?: string;
-    force?: boolean;
-    doctorLocked: boolean;
-    doctorReason?: string;
-    hasOutstandingTask: boolean;
-    outstandingTaskId?: string;
-    uncommittedWorktrees?: { taskId: string; status: string; dirtyFiles: number }[];
-    pushSucceeded: boolean;
-    worktreeCreated: boolean;
-    worktreePath?: string;
-    sessionId?: string;
-    taskId?: string;
-    branch?: string;
-  },
-): CommandResult {
-  if (conditions.doctorLocked) {
-    return error(
-      StartStates.DOCTOR_LOCKED,
-      "DOCTOR_LOCKED",
-      "wait",
-      `System is in doctor recovery mode: ${conditions.doctorReason ?? "unknown"}. ` +
-      `All agents are paused. Wait until recovery is complete.`,
-    );
-  }
-
-  if (conditions.hasOutstandingTask && conditions.outstandingTaskId) {
-    return error(
-      StartStates.OUTSTANDING_TASK,
-      "OUTSTANDING_TASK",
-      "complete_current_then_next",
-      `You still own task ${conditions.outstandingTaskId}. ` +
-      `Close it first with 'taskforge done ${conditions.outstandingTaskId}'.`,
-    );
-  }
-
-  if (conditions.uncommittedWorktrees && conditions.uncommittedWorktrees.length > 0) {
-    const dirty = conditions.uncommittedWorktrees[0];
-    const isBlocked = dirty.status === "Blocked";
-    if (isBlocked) {
-      return error(
-        StartStates.UNCOMMITTED_CHANGES,
-        "UNCOMMITTED_BLOCKED_TASK",
-        "commit_then_next",
-        `Task ${dirty.taskId} has ${dirty.dirtyFiles} uncommitted file(s) and is in Blocked status. ` +
-        `1. Commit your current changes: git add -A && git commit -m "WIP: save progress on ${dirty.taskId}"\n` +
-        `2. Look for the next task that resolves the block: taskforge next\n` +
-        `3. If no resolving task is available, continue with the next available task.`,
-        { taskId: dirty.taskId, dirtyFiles: dirty.dirtyFiles },
-      );
-    }
-    return error(
-      StartStates.UNCOMMITTED_CHANGES,
-      "UNCOMMITTED_CHANGES",
-      "complete_current_then_next",
-      `Task ${dirty.taskId} has ${dirty.dirtyFiles} uncommitted file(s). ` +
-      `Complete the current task before starting a new one. ` +
-      `Run 'taskforge done ${dirty.taskId}' when ready, or 'git add -A && git commit' to save progress.`,
-      { taskId: dirty.taskId, dirtyFiles: dirty.dirtyFiles },
-    );
-  }
-
-  if (!conditions.taskFound) {
-    return error(
-      StartStates.TASK_NOT_FOUND,
-      "TASK_NOT_FOUND",
-      "request_human_input",
-      `Task ${conditions.taskId} not found. ` +
-      `Request human input to verify the task exists.`,
-      { taskId: conditions.taskId },
-    );
-  }
-
-  if (
-    conditions.taskStatus !== "Ready" &&
-    conditions.taskStatus !== "In Progress" &&
-    conditions.taskStatus !== "Review" &&
-    conditions.taskStatus !== "Verify"
-  ) {
-    return error(
-      StartStates.INVALID_STATUS,
-      "INVALID_STATUS",
-      "request_human_input",
-      `Cannot start task with status "${conditions.taskStatus}". ` +
-      `Must be "Ready", "In Progress", "Review", or "Verify". ` +
-      `Request human input to correct the task status.`,
-      { taskId: conditions.taskId, status: conditions.taskStatus },
-    );
-  }
-
-  if (conditions.taskAssignee && !conditions.force) {
-    return error(
-      StartStates.ALREADY_ASSIGNED,
-      "ALREADY_ASSIGNED",
-      "request_human_input",
-      `Task ${conditions.taskId} is assigned to session "${conditions.taskAssignee}" ` +
-      `since ${conditions.taskClaimedAt ?? "unknown"}. ` +
-      `Normal agents may not use --force. ` +
-      `Valid next commands: taskforge resume ${conditions.taskId}, taskforge inspect ${conditions.taskId} --json, ` +
-      `taskforge doctor --json, or taskforge block ${conditions.taskId} "Task already assigned; human or doctor recovery required" --category unsafe_operation --blocked-by human.`,
-      { taskId: conditions.taskId, assignee: conditions.taskAssignee },
-    );
-  }
-
-  if (!conditions.pushSucceeded) {
-    return error(
-      StartStates.PUSH_FAILED,
-      "PUSH_FAILED",
-      "retry",
-      `Failed to push claim for ${conditions.taskId}. ` +
-      `The task may have been claimed by another agent. ` +
-      `Run 'taskforge next' to find the next available task, ` +
-      `or retry with 'taskforge start ${conditions.taskId}' after a brief wait.`,
-      { taskId: conditions.taskId },
-    );
-  }
-
-  if (!conditions.worktreeCreated) {
-    return error(
-      StartStates.WORKTREE_FAILED,
-      "WORKTREE_FAILED",
-      "request_human_input",
-      `Could not create worktree for ${conditions.taskId}. ` +
-      `Claim was pushed successfully but workspace creation failed. ` +
-      `The task is claimed. Request human input to resolve the worktree issue, ` +
-      `or run 'taskforge start ${conditions.taskId}' to retry.`,
-      { taskId: conditions.taskId },
-    );
-  }
-
-  return success(
-    StartStates.TASK_STARTED,
     "work_on_task",
-    `Task ${conditions.taskId} started. ` +
-    `Worktree: ${conditions.worktreePath}. Branch: ${conditions.branch}. ` +
-    `cd ${conditions.worktreePath} and begin work. ` +
-    `Read TASKFORGE.md and AGENTS.md for guidance.`,
+    `Task ${conditions.taskId} claimed. Session: ${conditions.sessionId}. ` +
+    `Branch: ${conditions.branchName ?? "(none)"}. ` +
+    (conditions.branchName && conditions.worktreeTargetPath
+      ? `Create your workspace: git worktree add -b ${conditions.branchName} ${conditions.worktreeTargetPath} main. `
+      : `Create a worktree for this branch via direct git. `) +
+    `Run 'taskforge prompt ${conditions.taskId}' for task context.`,
     {
       taskId: conditions.taskId,
       sessionId: conditions.sessionId,
-      worktree: conditions.worktreePath,
-      branch: conditions.branch,
+      branch: conditions.branchName,
+      worktreeTargetPath: conditions.worktreeTargetPath,
     },
   );
 }
@@ -1148,7 +938,7 @@ export function checkpointStateMachine(
       CheckpointStates.NOT_IN_WORKTREE,
       "NOT_IN_WORKTREE",
       "request_human_input",
-      "Not in a task worktree. Run 'taskforge start TASK-ID' to create a worktree first.",
+      "Not in a task worktree. Create one via direct git (git worktree add), or run 'taskforge claim TASK-ID' to claim a task first.",
     );
   }
 

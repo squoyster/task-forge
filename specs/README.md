@@ -32,8 +32,8 @@ taskforge status
 # View full summary
 taskforge summary
 
-# Start a task (creates worktree + branch + locks task)
-taskforge start TASK-001
+# Claim a task (atomic ownership; worktree setup is direct-git)
+taskforge claim TASK-001
 
 # Extend lease on active task (prevents sweeper reclaim)
 taskforge heartbeat TASK-001
@@ -62,7 +62,7 @@ tests/                # Vitest test suite
 ../worktrees/          # Per-task isolated agent workspaces (sibling, git-required)
 ```
 
-> **Note:** The authoritative task state lives in `../task-state/`, a dedicated git worktree on the `task-state` branch. The `tasks/` directory on `main` is legacy/backward-compatible only. Agents must never create or modify `main/tasks/*.md` — use `taskforge start TASK-NNN` which manages task files through the task-state worktree automatically. See [TASKFORGE.md](TASKFORGE.md) for full details.
+> **Note:** The authoritative task state lives in `../task-state/`, a dedicated git worktree on the `task-state` branch. The `tasks/` directory on `main` is legacy/backward-compatible only. Agents must never create or modify `main/tasks/*.md` — use `taskforge claim TASK-NNN` (atomic ownership) followed by direct-git worktree setup. See [TASKFORGE.md](TASKFORGE.md) for full details.
 
 ## Task Workflow
 
@@ -83,9 +83,7 @@ See [TASKFORGE.md](TASKFORGE.md) for the full specification, including the Sweep
 | `taskforge init` | Initialize TaskForge in this repo |
 | `taskforge init --agent-framework opencode` | Init with OpenCode agent policy |
 | `taskforge next` | Return highest-priority safe task |
-| `taskforge claim TASK-N` | Claim a task (set assignee) without creating worktree |
-| `taskforge start TASK-N` | Set up worktree, branch, begin task |
-| `taskforge resume TASK-N` | Re-enter an existing task workspace |
+| `taskforge claim TASK-N` | Claim a task (atomic ownership); worktree setup is direct-git |
 | `taskforge gates` | Run verification gates |
 | `taskforge status` | Show project status summary |
 | `taskforge summary` | Show full project summary |
@@ -106,7 +104,6 @@ See [TASKFORGE.md](TASKFORGE.md) for the full specification, including the Sweep
 | `taskforge doctor` | Run diagnostic checks on repo health |
 | `taskforge prompt TASK-N` | Emit agent execution packet |
 | `taskforge config-validate` | Validate .taskforge/config.json |
-| `taskforge cleanup TASK-N` | Remove task worktree and branch safely |
 | `taskforge report TASK-N` | Generate structured completion report |
 | `taskforge new "Title"` | Create a new task file |
 | `taskforge audit TASK-N` | Show audit events for a task |

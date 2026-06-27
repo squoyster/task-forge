@@ -180,8 +180,10 @@ describe("cmdNext", () => {
     const parsed = JSON.parse(String(writeSpy.mock.calls[0][0]));
     writeSpy.mockRestore();
     expect(parsed.task.id).toBe("TASK-002");
-    expect(parsed.guidance).toContain("do not run start");
-    expect(parsed.validNextCommands[0].command).toBe("taskforge resume TASK-002");
+    expect(parsed.guidance).toContain("is in Verify");
+    expect(parsed.guidance).not.toMatch(/taskforge start/i);
+    // TF-SIMP-04: entering the workspace is direct-git (no taskforge resume/start)
+    expect(parsed.validNextCommands[0].command).toBe("git worktree add -b <branch> <worktree> main");
     expect(parsed.validNextCommands.map((cmd: { command: string }) => cmd.command)).not.toContain("taskforge start <TASK-ID>");
   });
 

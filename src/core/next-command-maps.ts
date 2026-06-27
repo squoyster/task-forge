@@ -21,26 +21,16 @@ export const NEXT_COMMAND_MAPS: NextCommandMap = {
   },
   next: {
     success: [
-      { command: "taskforge start <TASK-ID>", purpose: "Begin working on the selected task", when: "After finding a task", allowedFor: "all", priority: 1 },
-      { command: "taskforge claim <TASK-ID>", purpose: "Claim without creating worktree", when: "If you only need to claim", allowedFor: "all", priority: 2 },
+      { command: "taskforge claim <TASK-ID>", purpose: "Claim the selected task (worktree is direct-git)", when: "After finding a task", allowedFor: "all", priority: 1 },
     ],
     noop: [
       { command: "taskforge release <TASK-ID>", purpose: "Release current task to find another", when: "If you have an outstanding task", allowedFor: "all", priority: 1 },
     ],
   },
-  start: {
-    success: [
-      { command: "git add -A && git commit", purpose: "Save progress", when: "After making changes", allowedFor: "all", priority: 1 },
-      { command: "taskforge done <TASK-ID>", purpose: "Mark task complete", when: "When all ACs are satisfied", allowedFor: "all", priority: 2 },
-      { command: "taskforge heartbeat <TASK-ID>", purpose: "Extend lease", when: "Before lease expires", allowedFor: "all", priority: 3 },
-    ],
-    failed: [
-      { command: "taskforge resume <TASK-ID>", purpose: "Retry starting the task", when: "On start failure", allowedFor: "all", priority: 1 },
-    ],
-  },
   claim: {
     success: [
-      { command: "taskforge start <TASK-ID>", purpose: "Create worktree and begin work", when: "After claiming", allowedFor: "all", priority: 1 },
+      { command: "git worktree add -b <branch> <worktree> main", purpose: "Create the worktree for the claimed task (direct-git)", when: "After claiming", allowedFor: "all", priority: 1 },
+      { command: "git add -A && git commit", purpose: "Save progress", when: "After making changes", allowedFor: "all", priority: 2 },
     ],
     failed: [
       { command: "taskforge next", purpose: "Find a different task", when: "On claim failure", allowedFor: "all", priority: 1 },
@@ -51,7 +41,7 @@ export const NEXT_COMMAND_MAPS: NextCommandMap = {
       { command: "taskforge next", purpose: "Find the next task", when: "After completing a task", allowedFor: "all", priority: 1 },
     ],
     failed: [
-      { command: "taskforge start <TASK-ID>", purpose: "Return to In Progress to fix issues", when: "On done failure", allowedFor: "all", priority: 1 },
+      { command: "git add -A && git commit", purpose: "Return to the worktree to fix issues", when: "On done failure", allowedFor: "all", priority: 1 },
     ],
   },
   release: {
@@ -87,7 +77,7 @@ export const NEXT_COMMAND_MAPS: NextCommandMap = {
   },
   unlock: {
     success: [
-      { command: "taskforge start <TASK-ID>", purpose: "Begin working on unlocked task", when: "After unlock", allowedFor: "all", priority: 1 },
+      { command: "taskforge claim <TASK-ID>", purpose: "Claim the unlocked task (worktree is direct-git)", when: "After unlock", allowedFor: "all", priority: 1 },
     ],
   },
   sweep: {
@@ -100,7 +90,7 @@ export const NEXT_COMMAND_MAPS: NextCommandMap = {
       { command: "taskforge done <TASK-ID>", purpose: "Mark task complete", when: "When all gates pass and ACs satisfied", allowedFor: "all", priority: 1 },
     ],
     failed: [
-      { command: "taskforge start <TASK-ID>", purpose: "Fix gate failures", when: "On gate failure", allowedFor: "all", priority: 1 },
+      { command: "git add -A && git commit", purpose: "Fix gate failures in the worktree", when: "On gate failure", allowedFor: "all", priority: 1 },
     ],
   },
   status: {
@@ -115,7 +105,7 @@ export const NEXT_COMMAND_MAPS: NextCommandMap = {
   },
   inspect: {
     success: [
-      { command: "taskforge start <TASK-ID>", purpose: "Begin working on inspected task", when: "After inspection", allowedFor: "all", priority: 1 },
+      { command: "taskforge claim <TASK-ID>", purpose: "Claim the inspected task (worktree is direct-git)", when: "After inspection", allowedFor: "all", priority: 1 },
     ],
   },
   report: {
@@ -141,20 +131,9 @@ export const NEXT_COMMAND_MAPS: NextCommandMap = {
       { command: "taskforge inspect <TASK-ID> --json", purpose: "Reload current task state before retrying", when: "On update failure", allowedFor: "all", priority: 1 },
     ],
   },
-  cleanup: {
-    success: [
-      { command: "taskforge next", purpose: "Find the next task", when: "After cleanup", allowedFor: "all", priority: 1 },
-    ],
-  },
   new: {
     success: [
-      { command: "taskforge start <TASK-ID>", purpose: "Begin working on new task", when: "After task creation", allowedFor: "all", priority: 1 },
-    ],
-  },
-  resume: {
-    success: [
-      { command: "git add -A && git commit", purpose: "Save progress", when: "After resuming", allowedFor: "all", priority: 1 },
-      { command: "taskforge done <TASK-ID>", purpose: "Mark task complete", when: "When all ACs are satisfied", allowedFor: "all", priority: 2 },
+      { command: "taskforge claim <TASK-ID>", purpose: "Claim the new task (worktree is direct-git)", when: "After task creation", allowedFor: "all", priority: 1 },
     ],
   },
   doctor: {
@@ -190,7 +169,7 @@ export const NEXT_COMMAND_MAPS: NextCommandMap = {
   },
   timeline: {
     success: [
-      { command: "taskforge start <TASK-ID>", purpose: "Resume working on task", when: "After reviewing timeline", allowedFor: "all", priority: 1 },
+      { command: "taskforge claim <TASK-ID>", purpose: "Claim the task to resume work (worktree is direct-git)", when: "After reviewing timeline", allowedFor: "all", priority: 1 },
     ],
   },
   "ac-check": {
@@ -210,12 +189,12 @@ export const NEXT_COMMAND_MAPS: NextCommandMap = {
   },
   list: {
     success: [
-      { command: "taskforge start <TASK-ID>", purpose: "Begin working on listed task", when: "After listing", allowedFor: "all", priority: 1 },
+      { command: "taskforge claim <TASK-ID>", purpose: "Claim the listed task (worktree is direct-git)", when: "After listing", allowedFor: "all", priority: 1 },
     ],
   },
   prompt: {
     success: [
-      { command: "taskforge start <TASK-ID>", purpose: "Begin working with prompt", when: "After generating prompt", allowedFor: "all", priority: 1 },
+      { command: "taskforge claim <TASK-ID>", purpose: "Claim the task for the prompt (worktree is direct-git)", when: "After generating prompt", allowedFor: "all", priority: 1 },
     ],
   },
   mcp: {

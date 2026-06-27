@@ -27,8 +27,8 @@ vi.mock("../../src/core/authority.js", () => ({
 }));
 
 vi.mock("../../src/core/git.js", () => ({
-  removeWorktree: vi.fn(),
-  removeBranch: vi.fn(),
+  getWorktreeDirtyFiles: vi.fn().mockResolvedValue([]),
+  getBranchCommitsAhead: vi.fn().mockResolvedValue(0),
 }));
 
 vi.mock("../../src/core/completion-policy.js", () => ({

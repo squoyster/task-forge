@@ -6,8 +6,8 @@ This document defines the complete command-state contract for TaskForge as the m
 
 Agents must not use raw `git` to bypass TaskForge. All task-state mutations flow through the TaskForge CLI or transaction layer.
 
-- **Forbidden**: `git commit`, `git push`, `git branch -D`, `git worktree remove`, manual edits to `../task-state/*.md`
-- **Required**: `git add -A && git commit`, `git push -u origin <branch>`, `taskforge done --cleanup`, `taskforge done --delete-branch`
+- **Forbidden**: `git branch -D`, `git worktree remove` as TaskForge lifecycle shortcuts (managed boundary: `git commit`/`git push` are denied in managed agent sessions; use direct git from the task worktree per `docs/workflow.md`), manual edits to `../task-state/*.md` outside the transaction layer
+- **Required**: `taskforge claim TASK-ID` (atomic ownership), `git worktree add -b <branch> <wt> main` (worktree setup), `taskforge done TASK-ID` (state transition only; no worktree/branch deletion)
 - **Exception**: Doctor agents may use selected git commands under doctor protocol
 - **Workflow contract**: `docs/workflow.md` is the canonical operator guide for humans and agents.
 
@@ -23,7 +23,7 @@ Task files live on a dedicated `task-state` git branch, not on `main`. The `task
 
 Each agent session (identified by a 10-char hex session ID) may own at most one In Progress task at a time.
 
-- `taskforge next` and `taskforge start` check `checkOutstandingSessionTasks()` before proceeding
+- `taskforge next` and `taskforge claim` check `checkOutstandingSessionTasks()` before proceeding
 - If an outstanding task exists, the agent must complete or release it first
 
 ## 4. Worktree Isolation (G3)
@@ -198,7 +198,7 @@ Error codes emitted by state machines in `command-states.ts` and commands:
 | `NO_ACTIONABLE_TASKS` | `nextStateMachine` | Request human input to prioritize work |
 | `NO_CHANGES` | `checkpointStateMachine`, `submitStateMachine` | Continue working, then retry |
 | `COMMIT_FAILED` | `checkpointStateMachine` | Request human input |
-| `NOT_IN_WORKTREE` | `checkpointStateMachine` | Run `taskforge resume TASK-ID` for existing tasks or `taskforge start TASK-ID` for Ready tasks |
+| `NOT_IN_WORKTREE` | `checkpointStateMachine` | `git worktree add -b <branch> <wt> main` then `cd <wt>` (claim sets branch metadata); run `taskforge claim TASK-ID` if not yet claimed |
 | `GATE_FAILURE` | `gatesStateMachine` | Fix issues, re-run `taskforge gates` |
 | `PR_FAILED` | `submitStateMachine` | Request human input |
 | `INVALID_TRANSITION` | `doneStateMachine` | Request human input to correct status |

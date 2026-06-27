@@ -20,10 +20,16 @@ export interface NextOptions {
 }
 
 function getNextTaskCommands(task: { id: string; status: string; worktree?: string }): ValidNextCommand[] {
+  // TF-SIMP-04: entering an existing workspace is direct-git (cd <worktree>),
+  // and beginning a ready task is `taskforge claim` (worktree creation is direct-git).
+  const enterWorkspace = task.worktree
+    ? `cd ${task.worktree}`
+    : `git worktree add -b <branch> <worktree> main`;
+
   if (task.status === STATUS.VERIFY) {
     return [
       {
-        command: `taskforge resume ${task.id}`,
+        command: enterWorkspace,
         purpose: "Enter the verification workspace",
         when: "Before running QA or acceptance checks",
         allowedFor: "all",
@@ -56,7 +62,7 @@ function getNextTaskCommands(task: { id: string; status: string; worktree?: stri
         priority: 1,
       },
       {
-        command: `taskforge resume ${task.id}`,
+        command: enterWorkspace,
         purpose: "Enter the review workspace if deeper inspection is needed",
         when: "After reviewing task metadata",
         allowedFor: "all",
@@ -68,8 +74,8 @@ function getNextTaskCommands(task: { id: string; status: string; worktree?: stri
   if (task.status === STATUS.IN_PROGRESS || task.worktree) {
     return [
       {
-        command: `taskforge resume ${task.id}`,
-        purpose: "Continue the existing task workspace",
+        command: enterWorkspace,
+        purpose: "Continue the existing task workspace (direct-git)",
         when: "After selecting already-started work",
         allowedFor: "all",
         priority: 1,
@@ -87,17 +93,18 @@ function getNextTaskCommands(task: { id: string; status: string; worktree?: stri
   return getValidNextCommands("next", "success");
 }
 
-function getNextTaskGuidance(task: { id: string; status: string }): string {
+function getNextTaskGuidance(task: { id: string; status: string; worktree?: string }): string {
+  const enterCmd = task.worktree ? `cd ${task.worktree}` : `git worktree add -b <branch> <worktree> main`;
   if (task.status === STATUS.VERIFY) {
-    return `Next task: ${task.id} is in Verify. Run 'taskforge resume ${task.id}' and verify it; do not run start.`;
+    return `Next task: ${task.id} is in Verify. Run '${enterCmd}' and verify it.`;
   }
   if (task.status === STATUS.REVIEW) {
-    return `Next task: ${task.id} is in Review. Run 'git diff' or 'taskforge resume ${task.id}' to review it.`;
+    return `Next task: ${task.id} is in Review. Run 'git diff' or '${enterCmd}' to review it.`;
   }
   if (task.status === STATUS.IN_PROGRESS) {
-    return `Next task: ${task.id} is already In Progress. Run 'taskforge resume ${task.id}' to continue.`;
+    return `Next task: ${task.id} is already In Progress. Run '${enterCmd}' to continue.`;
   }
-  return `Next task: ${task.id}. Run 'taskforge start ${task.id}' to begin.`;
+  return `Next task: ${task.id}. Run 'taskforge claim ${task.id}' to claim it, then create your worktree via direct git.`;
 }
 
 export async function cmdNext(options?: NextOptions): Promise<void> {

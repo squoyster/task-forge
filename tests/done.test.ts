@@ -13,8 +13,6 @@ vi.mock("../src/core/control-files.js", () => ({
 
 // Mock the git module so we don't need real git operations
 vi.mock("../src/core/git.js", () => ({
-  removeWorktree: vi.fn(),
-  removeBranch: vi.fn(),
   commitAndPushTaskState: vi.fn(),
   pullTaskState: vi.fn(),
   jitteredPush: vi.fn(),
@@ -55,7 +53,7 @@ vi.mock("../src/core/task-state-transaction.js", () => ({
   }),
 }));
 
-import { removeWorktree, removeBranch, getWorktreeDirtyFiles, getBranchCommitsAhead } from "../src/core/git.js";
+import { getWorktreeDirtyFiles, getBranchCommitsAhead } from "../src/core/git.js";
 import { hashControlFiles } from "../src/core/control-files.js";
 
 let uniqueDir: string;
@@ -130,8 +128,6 @@ describe("cmdDone", () => {
     const task = readTaskFile(fp);
     expect(task.frontmatter.status).toBe("Done");
     expect(task.body).toContain("Task marked Done");
-    expect(removeWorktree).not.toHaveBeenCalled();
-    expect(removeBranch).not.toHaveBeenCalled();
   });
 
   it("rejects done for invalid transitions", async () => {
@@ -141,68 +137,8 @@ describe("cmdDone", () => {
     );
   });
 
-  it("removes worktree when --cleanup is used", async () => {
-    vi.mocked(removeWorktree).mockResolvedValue(true);
-
-    const fp = makeTaskFile("TASK-005", {
-      worktree: "../worktrees/TASK-005",
-      branch: "agent/TASK-005-cleanup",
-    });
-    await cmdDone("TASK-005", { cleanup: true });
-
-    expect(removeWorktree).toHaveBeenCalledWith(path.join(uniqueDir, "repo"), "TASK-005");
-    // Status should still be Done
-    const task = readTaskFile(fp);
-    expect(task.frontmatter.status).toBe("Done");
-  });
-
-  it("removes worktree and branch with --cleanup --delete-branch", async () => {
-    vi.mocked(removeWorktree).mockResolvedValue(true);
-    vi.mocked(removeBranch).mockResolvedValue(true);
-
-    makeTaskFile("TASK-005", {
-      worktree: "../worktrees/TASK-005",
-      branch: "agent/TASK-005-cleanup",
-    });
-    await cmdDone("TASK-005", { cleanup: true, deleteBranch: true });
-
-    expect(removeWorktree).toHaveBeenCalledWith(path.join(uniqueDir, "repo"), "TASK-005");
-    expect(removeBranch).toHaveBeenCalledWith(
-      path.join(uniqueDir, "repo"),
-      "agent/TASK-005-cleanup",
-    );
-  });
-
-  it("is safe (no-op) when worktree does not exist", async () => {
-    vi.mocked(removeWorktree).mockResolvedValue(false);
-
-    const fp = makeTaskFile("TASK-005", {
-      worktree: "../worktrees/TASK-005",
-    });
-    // Should not throw
-    await expect(
-      cmdDone("TASK-005", { cleanup: true }),
-    ).resolves.not.toThrow();
-
-    expect(removeWorktree).toHaveBeenCalledWith(path.join(uniqueDir, "repo"), "TASK-005");
-    const task = readTaskFile(fp);
-    expect(task.frontmatter.status).toBe("Done");
-  });
-
-  it("clears worktree and branch from frontmatter after cleanup", async () => {
-    vi.mocked(removeWorktree).mockResolvedValue(true);
-    vi.mocked(removeBranch).mockResolvedValue(true);
-
-    const fp = makeTaskFile("TASK-005", {
-      worktree: "../worktrees/TASK-005",
-      branch: "agent/TASK-005-cleanup",
-    });
-    await cmdDone("TASK-005", { cleanup: true, deleteBranch: true });
-
-    const task = readTaskFile(fp);
-    expect(task.frontmatter.worktree).toBeUndefined();
-    expect(task.frontmatter.branch).toBeUndefined();
-  });
+  // TF-SIMP-04: done's worktree/branch cleanup flags removed; lifecycle is direct-git.
+  // The worktree/branch deletion test cases were deleted with the flags.
 
   it("throws for non-existent task", async () => {
     await expect(cmdDone("TASK-999")).rejects.toThrow(/not found/i);
@@ -213,41 +149,6 @@ describe("cmdDone", () => {
     await expect(cmdDone("TASK-005")).rejects.toThrow(
       /cannot transition/i,
     );
-  });
-
-  it("handles cleanup gracefully when worktree removal fails", async () => {
-    vi.mocked(removeWorktree).mockRejectedValue(
-      new Error("git worktree remove failed"),
-    );
-
-    const fp = makeTaskFile("TASK-005", {
-      worktree: "../worktrees/TASK-005",
-    });
-    // Should not throw — cleanup failure should not roll back status
-    await expect(
-      cmdDone("TASK-005", { cleanup: true }),
-    ).resolves.not.toThrow();
-
-    const task = readTaskFile(fp);
-    expect(task.frontmatter.status).toBe("Done");
-  });
-
-  it("handles branch deletion failure gracefully", async () => {
-    vi.mocked(removeWorktree).mockResolvedValue(true);
-    vi.mocked(removeBranch).mockRejectedValue(
-      new Error("git branch delete failed"),
-    );
-
-    const fp = makeTaskFile("TASK-005", {
-      worktree: "../worktrees/TASK-005",
-      branch: "agent/TASK-005-cleanup",
-    });
-    await expect(
-      cmdDone("TASK-005", { cleanup: true, deleteBranch: true }),
-    ).resolves.not.toThrow();
-
-    const task = readTaskFile(fp);
-    expect(task.frontmatter.status).toBe("Done");
   });
 
   it("rejects done when Acceptance Criteria section is missing", async () => {

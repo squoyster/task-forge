@@ -38,8 +38,7 @@ Inbox → Needs Spec → Ready → In Progress → Review → Verify → Done
 |---|---|
 | `taskforge init` | Initialize TaskForge in this repo |
 | `taskforge next` | Return highest-priority safe task |
-| `taskforge start TASK-123` | Set up worktree, branch, and begin a Ready task |
-| `taskforge resume TASK-123` | Re-enter an existing task workspace |
+| `taskforge claim TASK-123` | Claim a Ready task (atomic ownership); worktree setup is direct-git |
 | `taskforge gates` | Run verification gates |
 | `taskforge status` | Show project status summary |
 | `taskforge summary` | Show full project summary |
