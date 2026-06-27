@@ -1,0 +1,1 @@
+{"timestamp":"2026-06-20T20:25:48.605Z","event":"task.command.completed","summary":"CLI: taskforge unlock TASK-222","metadata":{"type":"cli.invocation","command":"unlock","args":["TASK-222"],"flags":{"json":true},"exitCode":0,"duration":26,"error":null,"agentSession":null},"taskId":"TASK-222"}

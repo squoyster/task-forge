@@ -26,3 +26,9 @@
 {"timestamp":"2026-06-20T20:22:43.238Z","command":"reject","args":["TASK-290","Recalibration - pre-306 task pool retired, superseded by 306+ frontier."],"flags":{"json":true},"exitCode":0,"sessionId":null,"taskId":null,"duration":1542,"error":null}
 {"timestamp":"2026-06-20T20:22:44.910Z","command":"reject","args":["TASK-291","Recalibration - pre-306 task pool retired, superseded by 306+ frontier."],"flags":{"json":true},"exitCode":0,"sessionId":null,"taskId":null,"duration":1501,"error":null}
 {"timestamp":"2026-06-20T20:22:46.562Z","command":"reject","args":["TASK-303","Recalibration - pre-306 task pool retired, superseded by 306+ frontier."],"flags":{"json":true},"exitCode":0,"sessionId":null,"taskId":null,"duration":1479,"error":null}
+{"timestamp":"2026-06-20T20:23:01.739Z","command":"reject","args":["TASK-225","Recalibration - pre-306 task pool retired, superseded by 306+ frontier. Valuable work salvaged to PR #150 (chore/cli-docs-consistency-tests)."],"flags":{"json":true},"exitCode":0,"sessionId":null,"taskId":null,"duration":1628,"error":null}
+{"timestamp":"2026-06-20T20:25:48.605Z","command":"unlock","args":["TASK-222"],"flags":{"json":true},"exitCode":0,"sessionId":null,"taskId":"TASK-222","duration":26,"error":null}
+{"timestamp":"2026-06-20T20:27:13.247Z","command":"validate-state","args":[],"flags":{"strict":true,"json":true},"exitCode":0,"sessionId":null,"taskId":null,"duration":87,"error":null}
+{"timestamp":"2026-06-20T20:27:20.983Z","command":"validate-state","args":[],"flags":{"strict":true},"exitCode":0,"sessionId":null,"taskId":null,"duration":86,"error":null}
+{"timestamp":"2026-06-20T22:34:57.716Z","command":"validate-state","args":[],"flags":{"strict":true,"json":true},"exitCode":0,"sessionId":null,"taskId":null,"duration":99,"error":null}
+{"timestamp":"2026-06-20T22:35:11.935Z","command":"next","args":[],"flags":{"json":true},"exitCode":0,"sessionId":null,"taskId":null,"duration":1358,"error":null}
