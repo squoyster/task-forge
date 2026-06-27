@@ -1,11 +1,12 @@
 ---
 id: TASK-324
 type: Task
-status: Ready
+status: Done
 priority: P2
 agentRole: Implementer
 riskLevel: High
 humanInterventionRequired: false
+completed_at: 2026-06-27T23:57:03Z
 dependsOn:
   - TASK-322
 spec_hash: 3b932788904dc787
@@ -46,13 +47,13 @@ Forbidden files/directories:
 - `src/agent-frameworks/**`, `opencode.json`, `.taskforge/config.json`, `dist/**`
 
 ## Acceptance Criteria
-- [ ] The server advertises exactly seven tools and no git/worktree/shell proxy.
-- [ ] Tool results include typed structured content; human-readable text is optional and derived from the same result.
-- [ ] `taskforge_claim`, `taskforge_block`, and `taskforge_complete` preserve CLI authority, transaction, doctor-lock, audit, and validation behavior.
-- [ ] MCP task resources never expose unrelated task files or paths outside the configured project/task-state roots.
-- [ ] Server instructions put task/state-only scope and safety invariants in the first 512 characters.
-- [ ] Protocol-level tests use an MCP client transport and cover success, invalid input, doctor lock, ownership conflict, gate failure, and task-not-found.
-- [ ] MCP remains disabled unless explicitly enabled by the embedding adapter/configuration.
+- [x] The server advertises exactly seven tools and no git/worktree/shell proxy.
+- [x] Tool results include typed structured content; human-readable text is optional and derived from the same result.
+- [x] `taskforge_claim`, `taskforge_block`, and `taskforge_complete` preserve CLI authority, transaction, doctor-lock, audit, and validation behavior.
+- [x] MCP task resources never expose unrelated task files or paths outside the configured project/task-state roots.
+- [x] Server instructions put task/state-only scope and safety invariants in the first 512 characters.
+- [x] Protocol-level tests use an MCP client transport and cover success, invalid input, doctor lock, ownership conflict, gate failure, and task-not-found.
+- [x] MCP remains disabled unless explicitly enabled by the embedding adapter/configuration.
 
 ## Test / Verification Command
 ```bash
@@ -84,15 +85,28 @@ Stop if a second mutation implementation appears. Require mutating-tool invarian
 - dependsOn set to [TASK-322]
 
 ## Result
+Implemented a typed task/state MCP contract replacing the stdout-capturing mirror.
+
+**Design — result sink, not stdout parsing (R-E02-001).** Added `setResultSink`/`emitResult` (drop-in for `writeResult`) to `src/core/command-result.ts`. `runCommandForResult` (`src/core/mcp-contract.ts`) installs the sink, silences stdout (blackhole) to protect the stdio JSON-RPC transport, runs the CLI command function in json mode, and captures the typed `TaskForgeCommandResult`. Throws-without-emit synthesise `COMMAND_THREW`/`NO_RESULT_EMIT`. The client always receives typed `structuredContent`, never a string scrape.
+
+**Exactly 7 tools, no proxy (R-E02-003).** `next`, `get_task`, `claim`, `block`, `complete`, `gates`, `validate_state`. All declare `outputSchema` (passthrough so `next`'s enrichment packet survives). `rg` confirms no `start|resume|cleanup|push|commit|worktree|shell|transition` proxy.
+
+**Mutations reuse the CLI core (R-E02-002).** claim/block/complete/gates/validate_state call the real `cmdClaim`/`cmdBlock`/`cmdDone`/`cmdGates`/`cmdValidateState`; authority, doctor-lock, transaction, audit, and validation invariants are unchanged — no mutation logic duplicated.
+
+**Resources read-only (R-E02-004).** `taskforge://workflow` (compact guide) + `taskforge://task/{taskId}` (task body, never filePath). taskId is an opaque token guarded `^[A-Za-z0-9][A-Za-z0-9_-]*$` — rejects path traversal and out-of-root addressing.
+
+**MCP off unless enabled (R-E02/AC-7).** Pre-existing: `cli.ts` gates the command behind `TASKFORGE_WITH_MCP`; `opencode.json` defaults `mcp.taskforge.enabled:false`. Untouched.
+
+**Gates:** typecheck 0 errors, lint 0 errors (32 pre-existing warnings), build clean, test 885/885 (26 new in mcp.test.ts + mcp-contract.test.ts). Build-before-test required (hook.test.ts spawns dist/cli.js).
 
 ## Links
 - Issue:
 - Project Item:
-- PR:
-- Branch:
-- Worktree:
+- PR: (to be opened on merge of agent/TASK-324-typed-mcp-contract)
+- Branch: agent/TASK-324-typed-mcp-contract
+- Worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-324
 - CI:
-- Test Log:
+- Test Log: typecheck 0 / lint 0 err / build clean / test 885 passed (74 files)
 
 ## DOX Rules
 ```dox
