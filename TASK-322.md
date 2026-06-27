@@ -4,11 +4,12 @@ type: Task
 status: Inbox
 priority: P2
 agentRole: Implementer
-riskLevel: Low
+riskLevel: High
 humanInterventionRequired: false
-spec_hash: ac664ed988e74526
+dependsOn:
+  - TASK-321
+spec_hash: dc8395610827817b
 ---
-
 # TASK-322: TF-SIMP-06: Align OpenCode with least-privilege direct-git profiles
 ## Goal
 Make OpenCode permissions and adapter startup reflect the simplified core without masking hard denials behind broad allows. `opencode.json` broadly allows edit/bash and enables MCP by default; that conflicts with role-specific safety and makes an optional adapter part of the normal architecture.
@@ -70,6 +71,11 @@ Risk: High. An over-tight profile can block normal work; an over-broad profile m
 Stop if a normal documented implementer workflow is blocked, or if a hard denial is masked. Require precedence tests to pass.
 
 ## Agent Notes
+
+### 2026-06-27T00:00:00Z System
+- Task updated via taskforge update
+- riskLevel set to "High"
+- dependsOn set to [TASK-321]
 
 ## Result
 
