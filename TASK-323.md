@@ -4,11 +4,12 @@ type: Task
 status: Inbox
 priority: P2
 agentRole: Implementer
-riskLevel: Low
+riskLevel: Medium
 humanInterventionRequired: false
-spec_hash: 23203ef5a5f50c7b
+dependsOn:
+  - TASK-322
+spec_hash: 1a6d2ff0ebe12dc5
 ---
-
 # TASK-323: TF-EMBED-01: Install portable TaskForge Agent Skills
 ## Goal
 Embed two focused, open-format skills in initialized projects so any compatible agent can operate TaskForge faithfully without loading broad repository documentation. Generated role prompts are currently OpenCode-specific, verbose, and stale. A portable skill gives agents a triggerable workflow while keeping TaskForge's JSON output authoritative. Separating normal work from doctor recovery prevents routine agents from receiving elevated recovery guidance.
@@ -73,6 +74,11 @@ Risk: Medium. Over-broad descriptions cause false skill activation; copied workf
 Auto-continue unless gates fail. Stop if a skill duplicates dynamic command contract or exceeds 200 lines.
 
 ## Agent Notes
+
+### 2026-06-27T00:00:00Z System
+- Task updated via taskforge update
+- riskLevel set to "Medium"
+- dependsOn set to [TASK-322]
 
 ## Result
 
