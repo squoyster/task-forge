@@ -1,7 +1,7 @@
 ---
 id: TASK-319
 type: Task
-status: Needs Spec
+status: Ready
 priority: P2
 agentRole: Implementer
 riskLevel: High
