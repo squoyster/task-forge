@@ -11,11 +11,11 @@ Next-action values are computed by `buildJson()` in `src/commands/summary.ts`. T
 | Priority | Condition | nextAction | Agent May Continue? | Follow-up Command |
 |----------|-----------|------------|---------------------|-------------------|
 | 1 | `In Progress` tasks exist | `Continue existing in-progress work.` | Yes — continue current task | `taskforge heartbeat <taskId>`, then work |
-| 2 | `Verify` tasks exist | `Run QA/verification on tasks in Verify status.` | Yes — switch to QA role | `taskforge resume <taskId>`, then `taskforge gates --json` |
-| 3 | `Review` tasks exist | `Review tasks in Review status.` | Yes — switch to reviewer role | `git diff <taskId>`, then `taskforge resume <taskId>` if edits are required |
-| 4 | Scheduler selects a task | `Start the highest-priority task: <TASK-ID>` | Yes — claim and start | `taskforge start <taskId>` |
-| 5 | `Needs Spec` tasks exist | `Create specs for tasks in Needs Spec.` | Yes — write specifications | `taskforge start <taskId>`, add ACs, `taskforge done <taskId>` |
-| 6 | `Inbox` tasks exist | `Process inbox items into structured tasks.` | Yes — triage inbox | `taskforge next` to see recommendations, then `taskforge start <taskId>` |
+| 2 | `Verify` tasks exist | `Run QA/verification on tasks in Verify status.` | Yes — switch to QA role | `cd <worktree>`, then `taskforge gates --json` |
+| 3 | `Review` tasks exist | `Review tasks in Review status.` | Yes — switch to reviewer role | `git diff`, then `cd <worktree>` if edits are required |
+| 4 | Scheduler selects a task | `Start the highest-priority task: <TASK-ID>` | Yes — claim and start | `taskforge claim <taskId>`, then direct-git worktree |
+| 5 | `Needs Spec` tasks exist | `Create specs for tasks in Needs Spec.` | Yes — write specifications | `taskforge claim <taskId>`, add ACs, mark Done |
+| 6 | `Inbox` tasks exist | `Process inbox items into structured tasks.` | Yes — triage inbox | `taskforge next` to see recommendations, then `taskforge claim <taskId>` |
 | 7 | No actionable tasks | `No actionable tasks. Add work to the inbox.` | No — human intervention | `taskforge new "<title>"` to create work |
 
 ## Decision Flow
@@ -33,9 +33,9 @@ Nothing          → wait for human
 ## Agent Continuation Rules
 
 - **In Progress**: The owning agent continues work. Other agents should not interrupt unless the task is stale (>4h without heartbeat), in which case the sweeper reclaims it.
-- **Verify**: Any agent may pick up a Verify task. Use the QA agent role and resume the existing worktree; do not start a new task.
+- **Verify**: Any agent may pick up a Verify task. Use the QA agent role and enter the existing worktree (`cd <worktree>`); do not start a new task.
 - **Review**: Any agent may pick up a Review task. Use the reviewer agent role and inspect the existing worktree; do not start a new task.
-- **Scheduler pick**: The highest-scored Ready task is recommended. Use `taskforge start` to claim it.
+- **Scheduler pick**: The highest-scored Ready task is recommended. Use `taskforge claim` to claim it, then create the worktree via direct git.
 - **Needs Spec**: Write clear, verifiable acceptance criteria. Mark Done when ACs are complete.
 - **Inbox**: Convert raw inbox items into structured tasks with goal, ACs, and priority.
 - **No actionable**: Stop and wait for human direction. Do not create speculative work.

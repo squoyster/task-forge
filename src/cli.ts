@@ -42,6 +42,21 @@ import { logError } from "./util/logging.js";
 import { recordCliInvocation } from "./core/cli-audit.js";
 import { getRepoRoot } from "./util/paths.js";
 
+// TF-SIMP-05: command classification. Default help exposes only the entry
+// surface. Hidden commands stay callable but are discovered via `next --json`.
+// sync/deps/mcp are opt-in (absent unless their env var is set).
+export const VISIBLE_COMMANDS = [
+  "init", "next", "prompt", "inspect", "list", "new",
+  "update", "gates", "validate-state", "doctor",
+] as const;
+export const HIDDEN_COMMANDS = [
+  // Contextual task mutations (discoverable via next --json)
+  "claim", "heartbeat", "release", "block", "promote", "done", "reject",
+  // Recovery / diagnostic
+  "status", "summary", "unlock", "sweep", "agents", "report",
+  "audit", "transcript", "timeline", "ac-check", "config-validate", "guard",
+] as const;
+
 const program = new Command();
 
 program
@@ -85,13 +100,13 @@ program
   .action((opts: { json?: boolean }) => wrapWithAudit("next", [], opts, () => cmdNext(opts))());
 
 program
-  .command("status")
+  .command("status", { hidden: true })
   .description("Show project status summary")
   .option("--json", "Output in JSON format for programmatic consumption")
   .action((opts) => wrapWithAudit("status", [], opts, () => cmdStatus(opts.json ?? false))());
 
 program
-  .command("summary")
+  .command("summary", { hidden: true })
   .description("Show full project summary with recommended next action")
   .option("--json", "Output in JSON format for programmatic consumption")
   .action((opts) => wrapWithAudit("summary", [], opts, () => cmdSummary(opts.json ?? false))());
@@ -110,7 +125,7 @@ program
   });
 
 program
-  .command("block <taskId> <reason>")
+  .command("block <taskId> <reason>", { hidden: true })
   .description("Mark a task as blocked with a reason")
   .option("--category <cat>", "Blocker category: human_decision, test_failure, merge_conflict, missing_secret, unsafe_operation, ambiguous_spec")
   .option("--blocked-by <who>", "Who/what is blocking: human, agent, bot")
@@ -124,7 +139,7 @@ program
   });
 
 program
-  .command("done <taskId>")
+  .command("done <taskId>", { hidden: true })
   .description("Mark a task as done")
   .option("--force", "Bypass gate checks (human/doctor only)")
   .option("--json", "Output in JSON format")
@@ -163,7 +178,7 @@ program
   });
 
 program
-  .command("promote <taskId>")
+  .command("promote <taskId>", { hidden: true })
   .description("Advance a task through the status state machine")
   .option("--to <status>", "Target status to promote to")
   .option("--json", "Output in JSON format")
@@ -173,7 +188,7 @@ program
   });
 
 program
-  .command("unlock <taskId>")
+  .command("unlock <taskId>", { hidden: true })
   .description("Manually unlock a task (requires --force)")
   .option("--force", "Force unlock the task")
   .option("--json", "Output in JSON format")
@@ -183,7 +198,7 @@ program
   });
 
 program
-  .command("sweep")
+  .command("sweep", { hidden: true })
   .description("Sweeper Protocol: recover stale in-progress tasks (claimed past sweep.staleThresholdMinutes, default 15m)")
   .option("--json", "Output in JSON format")
   .option("--dry-run", "Preview what would happen without mutating state")
@@ -193,7 +208,7 @@ program
     wrapWithAudit("sweep", [], opts, () => cmdSweep({ json: opts.json, dryRun: opts.dryRun, force: opts.force, reclaim: opts.reclaim }))());
 
 program
-  .command("heartbeat <taskId>")
+  .command("heartbeat <taskId>", { hidden: true })
   .description("Extend the lease on an In Progress task by updating claimed_at")
   .option("--force", "Skip ownership verification")
   .option("--json", "Output in JSON format")
@@ -203,7 +218,7 @@ program
   });
 
 program
-  .command("agents")
+  .command("agents", { hidden: true })
   .description("List active agents in the distributed registry")
   .option("--json", "Output in JSON format")
   .option("--stale", "Show only stale agents (no heartbeat within threshold)")
@@ -230,7 +245,7 @@ program
   });
 
 program
-  .command("claim <taskId>")
+  .command("claim <taskId>", { hidden: true })
   .description("Claim a task (set assignee and claimed_at) without creating a worktree")
   .option("--force", "Override an existing claim")
   .option("--session <id>", "Use a specific session ID instead of generating one")
@@ -245,7 +260,7 @@ program
   });
 
 program
-  .command("report <taskId>")
+  .command("report <taskId>", { hidden: true })
   .description("Generate a structured completion report")
   .option("--complete", "Transition task to Review after generating report")
   .option("--json", "Output in JSON format")
@@ -496,13 +511,13 @@ program
   .action((opts: { json?: boolean; check?: boolean; fix?: boolean; lock?: boolean; reason?: string; ttlHours?: number }) => wrapWithAudit("doctor", [], opts, () => cmdDoctor(opts))());
 
 program
-  .command("config-validate")
+  .command("config-validate", { hidden: true })
   .description("Validate .taskforge/config.json")
   .option("--json", "Output in JSON format")
   .action((opts: { json?: boolean }) => wrapWithAudit("config-validate", [], opts, () => cmdConfigValidate(opts))());
 
 program
-  .command("release <taskId>")
+  .command("release <taskId>", { hidden: true })
   .description("Voluntarily release a task claim and reset to Ready")
   .option("--json", "Output in JSON format")
   .action((taskId: string, opts: { json?: boolean }) => {
@@ -511,7 +526,7 @@ program
   });
 
 program
-  .command("reject <taskId> <reason>")
+  .command("reject <taskId> <reason>", { hidden: true })
   .description("Mark a task as rejected (obsolete, won't implement)")
   .option("--json", "Output in JSON format")
   .action((taskId: string, reason: string, opts: { json?: boolean }) =>
@@ -530,7 +545,7 @@ program
   );
 
 program
-  .command("audit <taskId>")
+  .command("audit <taskId>", { hidden: true })
   .description("Show audit events for a task")
   .option("--json", "Output in JSON format")
   .action((taskId: string, opts: { json?: boolean }) =>
@@ -538,7 +553,7 @@ program
   );
 
 program
-  .command("transcript <taskId>")
+  .command("transcript <taskId>", { hidden: true })
   .description("Show readable transcript for a task")
   .option("--json", "Output in JSON format")
   .action((taskId: string, opts: { json?: boolean }) =>
@@ -546,7 +561,7 @@ program
   );
 
 program
-  .command("timeline <taskId>")
+  .command("timeline <taskId>", { hidden: true })
   .description("Show event timeline summary for a task")
   .option("--json", "Output in JSON format")
   .action((taskId: string, opts: { json?: boolean }) =>
@@ -554,23 +569,26 @@ program
   );
 
 program
-  .command("ac-check [taskId]")
+  .command("ac-check [taskId]", { hidden: true })
   .description("Scan task files for acceptance criteria issues")
   .option("--json", "Output in JSON format")
   .action((taskId: string | undefined, opts: { json?: boolean }) =>
     wrapWithAudit("ac-check", taskId ? [taskId] : [], opts, async () => { cmdAcCheck(taskId, opts); })(),
   );
 
-program
-  .command("mcp")
-  .description("Start a Model Context Protocol (MCP) server for TaskForge")
-  .option("--config <path>", "Path to config directory")
-  .option("--json", "Output in JSON format")
-  .action((opts: { config?: string; json?: boolean }) =>
-    wrapWithAudit("mcp", [], opts, async () => { await cmdMcp({ config: opts.config, json: opts.json }); })(),
-  );
+// MCP server (opt-in via TASKFORGE_WITH_MCP; not registered by default)
+if (process.env.TASKFORGE_WITH_MCP) {
+  program
+    .command("mcp")
+    .description("Start a Model Context Protocol (MCP) server for TaskForge (opt-in: TASKFORGE_WITH_MCP)")
+    .option("--config <path>", "Path to config directory")
+    .option("--json", "Output in JSON format")
+    .action((opts: { config?: string; json?: boolean }) =>
+      wrapWithAudit("mcp", [], opts, async () => { await cmdMcp({ config: opts.config, json: opts.json }); })(),
+    );
+}
 
-const guard = program.command("guard").description("Manage the mutation boundary");
+const guard = program.command("guard", { hidden: true }).description("Manage the mutation boundary");
 
 guard
   .command("status")
@@ -607,4 +625,10 @@ program
     });
   });
 
-program.parse();
+export { program };
+
+// Parse argv only when run as the main entry point, not when imported by tests.
+const isMainEntry = import.meta.url === `file://${process.argv[1]}`;
+if (isMainEntry) {
+  program.parse();
+}

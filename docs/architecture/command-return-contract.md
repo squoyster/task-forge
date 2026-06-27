@@ -52,8 +52,8 @@ Every normal-agent result must include these 5 standard prohibited actions:
 
 1. `git commit` — Forbidden in managed agent sessions
 2. `git push` — Forbidden in managed agent sessions
-3. `git worktree add` — Use `taskforge start` instead
-4. `git branch -D` — Use `taskforge done --delete-branch` instead
+3. `git worktree add` — Forbidden in managed agent sessions
+4. `git branch -D` — Forbidden in managed agent sessions
 5. `direct task-state file edits` — Use `taskforge CLI` commands instead
 
 ## Valid Next Commands
@@ -87,6 +87,24 @@ The `renderResultMarkdown()` function in `src/core/result-renderer.ts` produces 
 ## JSON Output
 
 The `renderResultJson()` function outputs the full `TaskForgeCommandResult` as JSON. JSON is authoritative; Markdown must render the same semantics. Agents must prefer `validNextCommands` and structured `data` over parsing prose guidance.
+
+### `next --json` Packet
+
+`taskforge next --json` is the single normal entry point. For an actionable task it returns a complete packet sufficient to select, claim, set up the worktree, load the prompt, and recognize safety constraints without consulting broad docs:
+
+| Field | Description |
+|-------|-------------|
+| `taskId` / `context.taskId` | The selected task identity |
+| `task.statusLabel` | Canonical task status (e.g. `Ready`, `In Progress`) |
+| `owner` | Current assignee (`null` if unclaimed) |
+| `workspace` | `{ worktree, branch, exists }` — existing worktree/branch, or the expected worktree path before creation |
+| `cwd` | Directory to enter (`worktree` if it exists, else repo root) |
+| `guidance` | Why this task was selected (the reason) |
+| `prohibitedActions` | Safety constraints (managed-agent git boundary) |
+| `nextActions` | Ordered, executable commands with per-action `safety` |
+| `prompt` | Reference to load the compact execution packet (`taskforge prompt <TASK-ID>`) |
+
+Doctor-locked and blocked states return `status: "doctor_required"` / `"blocked"` with recovery `nextActions`.
 
 ## Invariant Enforcement
 

@@ -58,6 +58,7 @@ Command handlers implement every `taskforge` CLI subcommand. Each file in this d
 
 - Every command handler exports a default function that accepts arguments and returns `Promise<CommandResult>`.
 - Use `commander` for argument parsing (defined in `src/cli.ts`).
+- **CLI surface classification** (TF-SIMP-05): default `--help` exposes only entry commands (`init`, `next`, `prompt`, `inspect`, `list`, `new`, `update`, `gates`, `validate-state`, `doctor`). All others are registered with `{ hidden: true }` (callable, not advertised) — see `VISIBLE_COMMANDS` / `HIDDEN_COMMANDS` in `cli.ts`. `sync`/`deps` gate on `TASKFORGE_WITH_DEPS`; `mcp` gates on `TASKFORGE_WITH_MCP`. `next --json` is the discovery entry point for hidden commands.
 - Delegate business logic to `src/core/` modules — command handlers are thin adapters.
 - Return structured `CommandResult` objects, never raw console output.
 - Handle errors with `TaskForgeError` subclasses; let the CLI layer catch and format.

@@ -8,7 +8,7 @@ import { loadConfig } from "../core/config.js";
 import { listPullRequests } from "../integrations/github/service.js";
 import { logInfo, logHeader, logSub, logDivider, logWarn } from "../util/logging.js";
 import { buildJsonTask } from "../util/json-result.js";
-import { getRepoRoot } from "../util/paths.js";
+import { getRepoRoot, getWorktreePath } from "../util/paths.js";
 import { STATUS } from "../util/status-constants.js";
 import { doctorRequiredResult, blockedResult, successResult, noopResult } from "../core/result-builder.js";
 import { getValidNextCommands } from "../core/next-command-maps.js";
@@ -239,14 +239,19 @@ export async function cmdNext(options?: NextOptions): Promise<void> {
     const jsonOutput = JSON.parse(renderResultJson(result)) as Record<string, unknown>;
     jsonOutput.task = buildJsonTask(next);
     jsonOutput.score = scoreTask(next);
+    // TF-SIMP-05: complete packet — sufficient to select, claim, set up the
+    // worktree, load the prompt, and recognize safety constraints.
+    jsonOutput.owner = next.assignee ?? null;
+    jsonOutput.cwd = next.worktree ?? repoRoot;
+    jsonOutput.prompt = `taskforge prompt ${next.id}`;
+    // Always surface workspace expectations, even before a worktree exists.
+    jsonOutput.workspace = {
+      worktree: next.worktree ?? getWorktreePath(repoRoot, next.id),
+      branch: next.branch ?? null,
+      exists: Boolean(next.worktree),
+    };
     if (unmet.length > 0) {
       jsonOutput.waitingOn = unmet;
-    }
-    if (next.worktree || next.branch) {
-      jsonOutput.workspace = {
-        worktree: next.worktree,
-        branch: next.branch,
-      };
     }
     process.stdout.write(JSON.stringify(jsonOutput, null, 2) + "\n");
     return;
