@@ -1,11 +1,12 @@
 ---
 id: TASK-320
 type: Task
-status: Ready
+status: Done
 priority: P2
 agentRole: Implementer
 riskLevel: High
 humanInterventionRequired: false
+completed_at: 2026-06-27T21:16:04Z
 dependsOn:
   - TASK-319
 spec_hash: 26405872c79c5d2c
@@ -53,12 +54,12 @@ Forbidden files/directories:
 - `.taskforge/config.json`, `opencode.json`, `dist/**`
 
 ## Acceptance Criteria
-- [ ] `taskforge start`, `resume`, and `cleanup` are not registered and have no MCP equivalents.
-- [ ] `claim` atomically records ownership/status and returns a direct-git setup command without creating a worktree.
-- [ ] `done` does not remove worktrees or branches and has no cleanup/delete flags.
-- [ ] No TaskForge production path creates/removes worktrees or branches after dead helper removal.
-- [ ] Doctor lock, ownership, task-state conflict detection, gates, AC checks, publication checks, and audit events remain enforced.
-- [ ] Tests prove a claim failure cannot leave partial task state and no mocked worktree command is invoked.
+- [x] `taskforge start`, `resume`, and `cleanup` are not registered and have no MCP equivalents.
+- [x] `claim` atomically records ownership/status and returns a direct-git setup command without creating a worktree.
+- [x] `done` does not remove worktrees or branches and has no cleanup/delete flags.
+- [x] No TaskForge production path creates/removes worktrees or branches after dead helper removal.
+- [x] Doctor lock, ownership, task-state conflict detection, gates, AC checks, publication checks, and audit events remain enforced.
+- [x] Tests prove a claim failure cannot leave partial task state and no mocked worktree command is invoked.
 
 ## Test / Verification Command
 ```bash
@@ -86,13 +87,50 @@ Stop at the first sign of weakened atomic ownership or completion checks. Requir
 ## Agent Notes
 
 ## Result
+Implemented. Direct-git boundary is now executable: claim performs atomic
+state mutation only (ownership + branch/worktree metadata + registerAgent with
+null worktree) and emits a direct-git `git worktree add -b <branch> <wt> main`
+guidance command; it no longer creates a worktree. done verifies+transitions
+only (lost --cleanup/--delete-branch flags and performCleanup); retains gates,
+AC, ownership, publication, audit. Deleted src/commands/{start,resume,cleanup-cmd}.ts
+and tests/{commands/start,resume,cleanup}.test.ts. Removed createWorktree/
+removeWorktree/removeBranch + dead helpers from git.ts. Removed startStateMachine
++ StartStates from command-states.ts. Repointed all next-command-maps +
+command-states + next.ts guidance to claim + direct-git worktree/branch cmds.
+mcp.ts lost taskforge_start tool + done flags. cli.ts lost start/cleanup/resume
+registrations + done flags. state-validator.ts majorCommands list dropped start
+(direct consequence; not forbidden). specs/README.md + TASKFORGE.md command
+tables updated (start/resume/cleanup → claim; direct consequence, not forbidden).
+docs/workflow.md + docs/architecture/command-state-machine-and-invariants.md +
+src/{core,commands}/AGENTS.md updated.
+
+Gates: typecheck 0 errors, lint 0 errors (26 pre-existing no-explicit-any
+warnings), build success, 859 tests pass / 72 files.
+
+AC rg behavioral contract MET: `--help` shows no start/resume/cleanup; zero
+production path invokes worktree/branch creation; zero symbol references
+(cmdStart/cmdResume/cmdCleanup/createWorktree/removeWorktree/removeBranch)
+remain anywhere in src/tests.
+
+Residual stale STRINGS (not symbols) in forbidden/not-allowed guard
+generators require human review — Option B (scope-disciplined): left
+src/core/mutation-guard.ts (FORBIDDEN), src/core/guard-plugin.ts (FORBIDDEN),
+src/core/command-result.ts (not-allowed), src/core/agent-files.ts
+(not-allowed) UNTOUCHED. These still emit `taskforge done --cleanup`/
+`--delete-branch`/`start TASK-ID` suggestion text. This is an unresolvable
+pack spec bug: TF-SIMP-01 explicitly left branch/worktree guard cleanup for
+TF-SIMP-04, but TF-SIMP-04 forbids the guard files. Denial/audit behavior is
+unchanged (mutation-guard denies via hardcoded verb checks, not the suggestion
+text). Resolution options for human: (a) relax forbidden list for stale-string
+cleanup, or (b) clean guard generators in TF-SIMP-06 (least-privilege
+profiles, which regenerates agent files).
 
 ## Links
 - Issue:
 - Project Item:
-- PR:
-- Branch:
-- Worktree:
+- PR: https://github.com/squoyster/task-forge/pull/new/agent/TASK-320-remove-tf-git-lifecycle
+- Branch: agent/TASK-320-remove-tf-git-lifecycle
+- Worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-320
 - CI:
 - Test Log:
 
