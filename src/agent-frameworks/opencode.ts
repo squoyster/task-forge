@@ -9,6 +9,7 @@ import type {
   Diagnostic,
 } from "./types.js";
 import { hasManagedBlock } from "../core/templates.js";
+import { getSkillFilePlanEntries } from "../core/skill-files.js";
 
 function detectConfig(projectRoot: string): AgentFrameworkDetection {
   const configPaths: string[] = [];
@@ -133,6 +134,11 @@ function planOpenCodeFiles(ctx: AgentFrameworkInitContext): GeneratedFilePlan {
     });
   }
 
+  // Portable skills (identical across all adapters — R-E01-004)
+  for (const entry of getSkillFilePlanEntries(root)) {
+    files.push(entry);
+  }
+
   return { files };
 }
 
@@ -176,6 +182,10 @@ export const opencodeAdapter: AgentFrameworkAdapter = {
       const { installGuardPlugin } = await import("../core/guard-plugin.js");
       installGuardPlugin(ctx.projectRoot, ctx.policy, ctx.dryRun);
     }
+
+    // Portable skills (identical across all adapters — R-E01-004)
+    const { installSkillFiles } = await import("../core/skill-files.js");
+    installSkillFiles(ctx.projectRoot, ctx.dryRun);
   },
 
   async doctor(ctx: AgentFrameworkDoctorContext): Promise<Diagnostic[]> {

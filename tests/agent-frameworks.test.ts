@@ -38,7 +38,7 @@ describe("generic adapter", () => {
     expect(result.frameworkId).toBe("generic");
   });
 
-  it("plan returns empty files", async () => {
+  it("plan returns portable skill files", async () => {
     const plan = await genericAdapter.plan({
       projectRoot: "/tmp",
       configPaths: [],
@@ -48,21 +48,29 @@ describe("generic adapter", () => {
       guard: true,
       dryRun: false,
     });
-    expect(plan.files).toEqual([]);
+    const paths = plan.files.map((f) => f.path);
+    expect(paths).toContain(path.join(".agents", "skills", "taskforge-work-task", "SKILL.md"));
+    expect(paths).toContain(path.join(".agents", "skills", "taskforge-recover-state", "SKILL.md"));
   });
 
-  it("apply is a no-op", async () => {
-    await expect(
-      genericAdapter.apply({
-        projectRoot: "/tmp",
-        configPaths: [],
-        policy: "managed",
-        installHooks: true,
-        audit: true,
-        guard: true,
-        dryRun: false,
-      }),
-    ).resolves.toBeUndefined();
+  it("apply installs skill files", async () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "tf-gen-"));
+    await genericAdapter.apply({
+      projectRoot: tmp,
+      configPaths: [],
+      policy: "managed",
+      installHooks: true,
+      audit: true,
+      guard: true,
+      dryRun: false,
+    });
+    expect(
+      fs.existsSync(path.join(tmp, ".agents", "skills", "taskforge-work-task", "SKILL.md")),
+    ).toBe(true);
+    expect(
+      fs.existsSync(path.join(tmp, ".agents", "skills", "taskforge-recover-state", "SKILL.md")),
+    ).toBe(true);
+    fs.rmSync(tmp, { recursive: true, force: true });
   });
 });
 
@@ -109,6 +117,8 @@ describe("opencode adapter", () => {
     expect(paths).toContain(".opencode/agents/doctor.md");
     expect(paths).toContain(".opencode/plugins/taskforge-audit.ts");
     expect(paths).toContain(".opencode/plugins/taskforge-guard.ts");
+    expect(paths).toContain(path.join(".agents", "skills", "taskforge-work-task", "SKILL.md"));
+    expect(paths).toContain(path.join(".agents", "skills", "taskforge-recover-state", "SKILL.md"));
     fs.rmSync(tmp, { recursive: true, force: true });
   });
 

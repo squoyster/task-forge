@@ -195,6 +195,14 @@ Installed in `.opencode/plugins/`:
 - `taskforge-audit.ts` — Records tool executions and permission events
 - `taskforge-guard.ts` — Enforces policy before tool execution
 
+### Portable Agent Skills
+
+Installed in `.agents/skills/` (cross-framework, identical for generic and OpenCode init):
+- `taskforge-work-task/SKILL.md` — Select, claim, execute, verify, and complete a task. Calls `taskforge next --json` and follows the returned actions.
+- `taskforge-recover-state/SKILL.md` — Doctor-lock, invalid-state, ownership-conflict, and stale-agent recovery. Requires read-only diagnosis before any mutation.
+
+Each skill has only `name` and `description` in frontmatter, then concise imperative instructions. Neither duplicates the status graph, command map, or framework permissions — they defer to JSON command output as the live contract. Re-running `taskforge init` updates stale skill content without touching unmanaged neighboring skills.
+
 ## Hooks
 
 Git hooks are installed in `.taskforge/hooks/`:

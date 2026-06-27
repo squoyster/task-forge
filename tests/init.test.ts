@@ -59,6 +59,13 @@ describe("cmdInit", () => {
     expect(fs.existsSync(path.join(uniqueDir, "repo", "logs", "taskforge"))).toBe(true);
   });
 
+  it("installs portable agent skills under .agents/skills/", async () => {
+    await cmdInit();
+    const skillsDir = path.join(uniqueDir, "repo", ".agents", "skills");
+    expect(fs.existsSync(path.join(skillsDir, "taskforge-work-task", "SKILL.md"))).toBe(true);
+    expect(fs.existsSync(path.join(skillsDir, "taskforge-recover-state", "SKILL.md"))).toBe(true);
+  });
+
   it("preserves existing files (no --force)", async () => {
     // First init creates everything
     await cmdInit();

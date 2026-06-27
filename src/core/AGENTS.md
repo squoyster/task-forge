@@ -32,6 +32,7 @@ The core engine implements the TaskForge state machine, task lifecycle, git oper
 | Pending Publish | `pending-publish.ts` | Track un-pushed task creations for recovery |
 | Templates | `templates.ts` | Task template rendering |
 | OpenCode Config | `opencode-config.ts` | OpenCode configuration sync (least-privilege profiles) |
+| Portable Skills | `skill-files.ts` | Canonical agent skills installed under `.agents/skills/` (cross-framework) |
 | Errors | `errors.ts` | TaskForgeError hierarchy |
 | Event Log | `event-log.ts` | Structured event logging |
 | Closure Task | `closure-task.ts` | Auto-create tasks for error states |
@@ -48,6 +49,7 @@ The core engine implements the TaskForge state machine, task lifecycle, git oper
 - **Config** (`config.ts`): Configuration loaded from `.taskforge/config.json`.
 - **Storage Paths** (`paths.ts`, config-authoritative since TF-SIMP-03): `tasks.stateDir` (default `../task-state`) and `worktrees.root` (default `../worktrees`, parent of `<repoName>/<taskId>`) are runtime-honored. `getTaskStateDir`/`getWorktreesDir` resolve against the MAIN repo root, so identical from main checkout or linked worktree. No decorative path fields.
 - **Least-Privilege Profiles** (`opencode-config.ts`, TF-SIMP-06): `opencode.json` uses role-scoped permissions, not broad global allows. Implementer may run direct git (`add/commit/push/branch/worktree`) but never force-push; planner/reviewer are read-only (`edit: deny`); doctor has an explicit recovery allowlist (`*: deny`, no wildcards). Hard denies (`git push --force*`, `.git/**`, `tasks/**`) appear at both global and role level. MCP disabled by default (`mcp.taskforge.enabled: false`; opt in via `TASKFORGE_WITH_MCP=1`). `generateOpenCodeConfig` must mirror checked-in `opencode.json`.
+- **Portable Skills** (`skill-files.ts`, TF-EMBED-01): Two canonical skills (`taskforge-work-task`, `taskforge-recover-state`) installed identically by generic and OpenCode adapters under `.agents/skills/`. Bodies are concise/imperative, defer to JSON output as the live contract, and do not duplicate the status graph or command map. Framework adapters reuse the canonical files; no vendor workflow forks.
 - **Agent Registry** (`agent-registry.ts`): Agents must heartbeat to maintain lease. Stale agents are swept.
 
 ## Work Guidance

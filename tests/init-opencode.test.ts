@@ -6,6 +6,8 @@ import { installAgentsMd } from "../src/core/agents-md.js";
 import { installOpenCodeConfig } from "../src/core/opencode-config.js";
 import { installAgentFiles } from "../src/core/agent-files.js";
 import { installGitHooks } from "../src/core/hooks.js";
+import { genericAdapter } from "../src/agent-frameworks/generic.js";
+import { opencodeAdapter } from "../src/agent-frameworks/opencode.js";
 
 describe("init integration — OpenCode managed policy", () => {
   it("generates all required files with managed policy", () => {
@@ -126,5 +128,45 @@ describe("init integration — OpenCode managed policy", () => {
     expect(doctor).toContain("git push --force");
 
     fs.rmSync(tmp, { recursive: true, force: true });
+  });
+
+  it("generic and opencode init produce identical skill files", async () => {
+    const genericTmp = fs.mkdtempSync(path.join(os.tmpdir(), "tf-gen-skills-"));
+    const ocTmp = fs.mkdtempSync(path.join(os.tmpdir(), "tf-oc-skills-"));
+
+    const ctx = {
+      projectRoot: genericTmp,
+      configPaths: [],
+      policy: "managed" as const,
+      installHooks: false,
+      audit: false,
+      guard: false,
+      dryRun: false,
+    };
+    await genericAdapter.apply({ ...ctx, projectRoot: genericTmp });
+    await opencodeAdapter.apply({ ...ctx, projectRoot: ocTmp });
+
+    const workGeneric = fs.readFileSync(
+      path.join(genericTmp, ".agents", "skills", "taskforge-work-task", "SKILL.md"),
+      "utf-8",
+    );
+    const workOc = fs.readFileSync(
+      path.join(ocTmp, ".agents", "skills", "taskforge-work-task", "SKILL.md"),
+      "utf-8",
+    );
+    expect(workGeneric).toBe(workOc);
+
+    const recGeneric = fs.readFileSync(
+      path.join(genericTmp, ".agents", "skills", "taskforge-recover-state", "SKILL.md"),
+      "utf-8",
+    );
+    const recOc = fs.readFileSync(
+      path.join(ocTmp, ".agents", "skills", "taskforge-recover-state", "SKILL.md"),
+      "utf-8",
+    );
+    expect(recGeneric).toBe(recOc);
+
+    fs.rmSync(genericTmp, { recursive: true, force: true });
+    fs.rmSync(ocTmp, { recursive: true, force: true });
   });
 });
