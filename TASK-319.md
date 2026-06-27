@@ -4,11 +4,12 @@ type: Task
 status: Inbox
 priority: P2
 agentRole: Implementer
-riskLevel: Low
+riskLevel: High
 humanInterventionRequired: false
-spec_hash: 1886e19e9e13c923
+dependsOn:
+  - TASK-318
+spec_hash: 28f8a53437cd8e1b
 ---
-
 # TASK-319: TF-SIMP-03: Make storage paths truthful and config-authoritative
 ## Goal
 Remove the deprecated `main/tasks` contract and make task-state/worktree path semantics explicit, portable, and tested. Config declares `tasks.directory = tasks`, while runtime reads sibling `../task-state`; worktree config is also decorative because path code hardcodes layout. A safety-oriented control plane cannot have path settings that runtime ignores.
@@ -70,6 +71,11 @@ Risk: High. Incorrect resolution can point multiple agents at different task-sta
 Auto-continue unless gates fail or a forbidden file must be touched. Stop if resolving portably requires touching a forbidden path module's caller.
 
 ## Agent Notes
+
+### 2026-06-27T00:00:00Z System
+- Task updated via taskforge update
+- riskLevel set to "High"
+- dependsOn set to [TASK-318]
 
 ## Result
 
