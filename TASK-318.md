@@ -4,11 +4,12 @@ type: Task
 status: Inbox
 priority: P2
 agentRole: Implementer
-riskLevel: Low
+riskLevel: High
 humanInterventionRequired: false
-spec_hash: 65d2baadeaa9ef25
+dependsOn:
+  - TASK-317
+spec_hash: 7b2256d79f9b52d6
 ---
-
 # TASK-318: TF-SIMP-02: Collapse to one task status graph
 ## Goal
 Make the canonical ten-status graph the only runtime workflow model while safely loading existing legacy task files. `TaskStatus`, `createStatusSchema`, transition validation, completion policy, commands, and docs currently disagree; three git/PR transport phases leaked into durable task state and duplicate `Review`/`Verify` semantics.
@@ -78,6 +79,11 @@ Risk: High. Changes durable input normalization. The migration must be read-comp
 Auto-continue unless gates fail or a forbidden file must be touched. Stop if a forbidden transition appears load-bearing.
 
 ## Agent Notes
+
+### 2026-06-27T00:00:00Z System
+- Task updated via taskforge update
+- riskLevel set to "High"
+- dependsOn set to [TASK-317]
 
 ## Result
 
