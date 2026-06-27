@@ -4,11 +4,13 @@ type: Task
 status: Inbox
 priority: P2
 agentRole: Implementer
-riskLevel: Low
+riskLevel: Medium
 humanInterventionRequired: false
-spec_hash: 2a2c03cf020eb564
+dependsOn:
+  - TASK-323
+  - TASK-324
+spec_hash: be194d8099d81fe9
 ---
-
 # TASK-325: TF-EMBED-03: Add fresh-project embedding conformance and repair
 ## Goal
 Prove that a newly initialized project gives an unfamiliar agent enough correct, compact context to use TaskForge and that `doctor` detects/repairs embedding drift. Generated files are currently tested individually, but the observed architecture drift occurred across their combined output. A black-box embedding contract catches stale skills, MCP tools, permissions, and guidance before release.
@@ -76,6 +78,11 @@ Risk: Medium. Framework-specific expectations can accidentally become the produc
 Stop if framework-specific expectations become the product contract. Require shared-contract separation.
 
 ## Agent Notes
+
+### 2026-06-27T00:00:00Z System
+- Task updated via taskforge update
+- riskLevel set to "Medium"
+- dependsOn set to [TASK-323, TASK-324]
 
 ## Result
 
