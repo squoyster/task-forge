@@ -4,11 +4,12 @@ type: Task
 status: Inbox
 priority: P2
 agentRole: Implementer
-riskLevel: Low
+riskLevel: Critical
 humanInterventionRequired: false
-spec_hash: 7bc19f155944204b
+dependsOn:
+  - TASK-319
+spec_hash: 7698c08a6514a6db
 ---
-
 # TASK-320: TF-SIMP-04: Remove TaskForge-owned git and worktree lifecycle mutation
 ## Goal
 Make the direct-git boundary executable: TaskForge claims and transitions tasks; it does not create/delete worktrees, branches, commits, pushes, or PRs. Root policy prefers direct git, but `start`, `resume`, `cleanup`, `done --cleanup`, MCP tools, and even `claim` still perform or orchestrate worktree/branch operations. Keeping two authorities preserves the architecture split.
