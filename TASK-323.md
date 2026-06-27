@@ -1,11 +1,12 @@
 ---
 id: TASK-323
 type: Task
-status: Ready
+status: Done
 priority: P2
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
+completed_at: 2026-06-27T23:25:22Z
 dependsOn:
   - TASK-322
 spec_hash: 1a6d2ff0ebe12dc5
@@ -43,13 +44,13 @@ Forbidden files/directories:
 - `opencode.json`, `.taskforge/config.json`, `dist/**`
 
 ## Acceptance Criteria
-- [ ] Fresh generic and OpenCode initialization produce identical canonical `.agents/skills/taskforge-work-task/SKILL.md` and `.agents/skills/taskforge-recover-state/SKILL.md` files.
-- [ ] Each skill has valid `name`/`description` frontmatter, clear positive and negative triggers, and fewer than 200 lines.
-- [ ] The work skill contains no doctor override, force, direct task-state write, or git-facade guidance.
-- [ ] The recovery skill requires doctor-lock/state evidence and read-only diagnosis before mutation.
-- [ ] Skills use JSON command output as the live contract and contain no vendor-specific required metadata.
-- [ ] Re-running `init --repair` is idempotent and updates stale managed skill content without overwriting unmanaged neighboring skills.
-- [ ] Trigger tests cover normal work, review/verify work, generic git work without TaskForge, doctor lock, and ownership conflict.
+- [x] Fresh generic and OpenCode initialization produce identical canonical `.agents/skills/taskforge-work-task/SKILL.md` and `.agents/skills/taskforge-recover-state/SKILL.md` files.
+- [x] Each skill has valid `name`/`description` frontmatter, clear positive and negative triggers, and fewer than 200 lines.
+- [x] The work skill contains no doctor override, force, direct task-state write, or git-facade guidance.
+- [x] The recovery skill requires doctor-lock/state evidence and read-only diagnosis before mutation.
+- [x] Skills use JSON command output as the live contract and contain no vendor-specific required metadata.
+- [x] Re-running `init --repair` is idempotent and updates stale managed skill content without overwriting unmanaged neighboring skills.
+- [x] Trigger tests cover normal work, review/verify work, generic git work without TaskForge, doctor lock, and ownership conflict.
 
 ## Test / Verification Command
 ```bash
@@ -81,13 +82,37 @@ Auto-continue unless gates fail. Stop if a skill duplicates dynamic command cont
 - dependsOn set to [TASK-322]
 
 ## Result
+Implemented. Created `src/core/skill-files.ts` with two canonical skills:
+`taskforge-work-task` (select/claim/execute/verify/complete) and
+`taskforge-recover-state` (doctor-lock/invalid-state/ownership-conflict/stale-
+agent recovery). Both wired into generic.ts (was a no-op apply) and opencode.ts
+apply/plan via `installSkillFiles`/`getSkillFilePlanEntries` — both adapters
+install IDENTICAL canonical files (AC #1). Bodies are concise (<60 lines each),
+imperative, defer to `taskforge next --json` as the live contract, and do not
+duplicate the status graph or command map. Frontmatter has only `name` +
+`description` (no vendor-specific metadata). Work skill has no doctor override,
+--force, task-state write, or facade guidance (AC #3). Recovery skill mandates
+read-only diagnosis before any mutation (AC #4). AC rg clean:
+`rg 'checkpoint|submit|taskforge diff|taskforge pr|--force' src/core/skill-files.ts`
+→ 0 matches. Idempotent install (writeGeneratedFile overwrite); neighbors
+untouched (AC #6).
+
+Tests: tests/skill-files.test.ts (19 tests: structure, forbidden content,
+diagnosis-first ordering, trigger coverage positive+negative, install behavior
+idempotent+neighbors+dry-run); tests/init.test.ts +1 (cmdInit installs skills);
+tests/init-opencode.test.ts +1 (generic vs opencode produce identical files);
+tests/agent-frameworks.test.ts updated (generic plan/apply no longer no-ops;
+opencode plan includes skills).
+
+Gates: typecheck 0 errors, lint 0 errors (32 no-explicit-any warnings), build
+success, 883 tests pass / 74 files (+19 from TASK-322's 864).
 
 ## Links
 - Issue:
 - Project Item:
-- PR:
-- Branch:
-- Worktree:
+- PR: https://github.com/squoyster/task-forge/pull/new/agent/TASK-323-portable-agent-skills
+- Branch: agent/TASK-323-portable-agent-skills
+- Worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-323
 - CI:
 - Test Log:
 
