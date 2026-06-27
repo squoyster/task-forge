@@ -12,6 +12,40 @@
       "mode": "primary",
       "env": {
         "TASK_FORGE_ACTIVE": "true"
+      },
+      "permission": {
+        "edit": {
+          "*": "allow",
+          ".git/**": "deny",
+          "tasks/**": "deny",
+          "dist/**": "deny"
+        },
+        "bash": {
+          "*": "ask",
+          "git status *": "allow",
+          "git diff *": "allow",
+          "git log *": "allow",
+          "git show *": "allow",
+          "git add *": "allow",
+          "git commit *": "allow",
+          "git push *": "allow",
+          "git push --force*": "deny",
+          "git checkout *": "allow",
+          "git branch *": "allow",
+          "git switch *": "allow",
+          "git fetch *": "allow",
+          "git worktree *": "allow",
+          "git merge *": "allow",
+          "git rebase *": "allow",
+          "git stash *": "allow",
+          "npm run *": "allow",
+          "npm test *": "allow",
+          "npm install": "ask",
+          "node *": "allow",
+          "npx *": "allow",
+          "rg *": "allow",
+          "taskforge *": "allow"
+        }
       }
     },
     "intake": {
@@ -20,13 +54,31 @@
     },
     "planner": {
       "description": "Decomposes epics and features into executable tasks",
-      "mode": "subagent"
+      "mode": "subagent",
+      "permission": {
+        "edit": "deny",
+        "bash": {
+          "*": "ask",
+          "rg *": "allow",
+          "taskforge inspect *": "allow",
+          "taskforge list *": "allow",
+          "taskforge next *": "allow"
+        }
+      }
     },
     "reviewer": {
       "description": "Reviews code for correctness, security, and scope compliance",
       "mode": "subagent",
       "permission": {
-        "edit": "deny"
+        "edit": "deny",
+        "bash": {
+          "*": "ask",
+          "git diff *": "allow",
+          "git log *": "allow",
+          "git show *": "allow",
+          "rg *": "allow",
+          "taskforge inspect *": "allow"
+        }
       }
     },
     "deps": {
@@ -34,11 +86,20 @@
       "mode": "subagent"
     },
     "doctor": {
+      "description": "Diagnoses and repairs TaskForge state under an explicit recovery allowlist",
+      "mode": "primary",
       "permission": {
+        "edit": {
+          "*": "deny",
+          "../task-state/**": "allow"
+        },
         "bash": {
           "taskforge doctor *": "allow",
           "taskforge inspect *": "allow",
           "taskforge audit *": "allow",
+          "taskforge validate-state *": "allow",
+          "taskforge agents *": "allow",
+          "taskforge unlock *": "allow",
           "git status *": "allow",
           "git diff *": "allow",
           "git log *": "allow",
@@ -49,7 +110,8 @@
           "git push *": "ask",
           "git reset *": "ask",
           "git rebase *": "ask",
-          "git push --force*": "deny"
+          "git push --force*": "deny",
+          "*": "deny"
         }
       }
     }
@@ -63,16 +125,21 @@
         "--config",
         ".taskforge/config.json"
       ],
-      "enabled": true
+      "enabled": false
     }
   },
   "permission": {
     "*": "ask",
-    "edit": "allow",
-    "bash": "allow",
+    "edit": {
+      "*": "ask",
+      ".git/**": "deny",
+      "tasks/**": "deny"
+    },
+    "bash": {
+      "*": "ask",
+      "git push --force*": "deny"
+    },
     "webfetch": "allow",
-    "bash.rm": "ask",
-    "bash.sudo": "deny",
     "external_directory": {
       "../task-state/**": "allow",
       "../worktrees/**": "allow"

@@ -125,10 +125,17 @@ describe("opencode adapter", () => {
       path.join(tmp, "opencode.json"),
       JSON.stringify({
         permission: {
-          bash: { "git *": "deny" },
-          edit: { "../task-state/**": "deny" },
+          bash: { "git push --force*": "deny" },
+          edit: { ".git/**": "deny", "tasks/**": "deny" },
         },
-        agent: { doctor: {} },
+        agent: {
+          doctor: {},
+          implementer: {
+            permission: {
+              bash: { "git push *": "allow", "git push --force*": "deny" },
+            },
+          },
+        },
       }),
     );
     const diags = await opencodeAdapter.doctor({ projectRoot: tmp, configPaths: [] });

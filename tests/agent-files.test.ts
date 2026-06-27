@@ -16,7 +16,7 @@ describe("installAgentFiles", () => {
     expect(fs.existsSync(path.join(agentsDir, "doctor.md"))).toBe(true);
 
     const impl = fs.readFileSync(path.join(agentsDir, "implementer.md"), "utf-8");
-    expect(impl).toContain("taskforge start TASK-ID");
+    expect(impl).toContain("taskforge claim TASK-ID");
     expect(impl).toContain("taskforge done TASK-ID");
 
     const doc = fs.readFileSync(path.join(agentsDir, "doctor.md"), "utf-8");

@@ -55,7 +55,7 @@ describe("init integration — OpenCode managed policy", () => {
     fs.rmSync(tmp, { recursive: true, force: true });
   });
 
-  it("generates correct permissions in opencode.json", () => {
+  it("generates least-privilege permissions in opencode.json", () => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "tf-int-"));
     installOpenCodeConfig(tmp, "managed", true, true, false);
 
@@ -63,10 +63,19 @@ describe("init integration — OpenCode managed policy", () => {
     const bash = config.permission.bash as Record<string, string>;
     const edit = config.permission.edit as Record<string, string>;
 
-    expect(bash["git *"]).toBe("deny");
-    expect(edit["../task-state/**"]).toBe("deny");
-    expect(bash["taskforge *"]).toBe("allow");
-    expect(bash["npm test *"]).toBe("allow");
+    // Global hard denies.
+    expect(bash["git push --force*"]).toBe("deny");
+    expect(edit[".git/**"]).toBe("deny");
+    expect(edit["tasks/**"]).toBe("deny");
+
+    // Implementer profile allows direct-git work.
+    const impl = config.agent.implementer.permission as Record<string, any>;
+    expect(impl.bash["git push *"]).toBe("allow");
+    expect(impl.bash["git commit *"]).toBe("allow");
+    expect(impl.bash["git push --force*"]).toBe("deny");
+
+    // MCP disabled by default.
+    expect(config.mcp.taskforge.enabled).toBe(false);
 
     fs.rmSync(tmp, { recursive: true, force: true });
   });
@@ -102,10 +111,11 @@ describe("init integration — OpenCode managed policy", () => {
     installAgentFiles(tmp, false);
 
     const impl = fs.readFileSync(path.join(tmp, ".opencode", "agents", "implementer.md"), "utf-8");
-    expect(impl).toContain("taskforge start TASK-ID");
+    expect(impl).toContain("taskforge claim TASK-ID");
     expect(impl).toContain("taskforge done TASK-ID");
     expect(impl).toContain("git add -A && git commit");
     expect(impl).not.toContain("taskforge checkpoint");
+    expect(impl).not.toContain("taskforge start");
 
     const reviewer = fs.readFileSync(path.join(tmp, ".opencode", "agents", "reviewer.md"), "utf-8");
     expect(reviewer).toContain("taskforge inspect");

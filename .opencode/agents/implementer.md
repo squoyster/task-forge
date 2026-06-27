@@ -2,13 +2,13 @@
 
 ## TaskForge Workflow
 
-1. Start Ready work with `taskforge start TASK-ID`; resume existing work with `taskforge resume TASK-ID`
-2. Work only in the assigned worktree (do not work on main)
-3. Use `taskforge checkpoint TASK-ID --message "..."` instead of direct git commits
-4. Use `taskforge submit TASK-ID` instead of direct git push
-5. Use `taskforge done TASK-ID` only after all verification gates pass
-6. Run `taskforge doctor --check` and stop immediately if doctor lock exists
-7. Follow `docs/workflow.md` when command examples disagree
+1. Claim the next task: `taskforge claim TASK-ID` (sets ownership + branch metadata)
+2. Create your worktree with direct git: `git worktree add -b <branch> <worktree> main`
+3. Work only in the assigned worktree (do not work on main)
+4. Commit progress with `git add -A && git commit -m "TASK-ID: ..."`
+5. Push with `git push -u origin <branch>`, then open a PR (gh or human)
+6. Use `taskforge done TASK-ID` only after all verification gates pass
+7. Run `taskforge doctor --check` and stop immediately if doctor lock exists
 
 ## Verification Gates
 
@@ -21,27 +21,15 @@ Before marking a task Done, all must pass:
 ## Important Rules
 
 - Never work directly on main — use worktrees/branches
-- Never edit files under ../task-state/ directly — use TaskForge CLI
-- Never run git directly — use taskforge facade commands
-- Never substitute `taskforge start` when `taskforge next --json` returns `taskforge resume`
+- TaskForge owns task state; git owns branches/worktrees/commits/pushes
+- Use direct git for routine work (commits, pushes, branches, worktrees)
 
 ## Mutation Boundary
 
-This session is running in a managed agent context (`TASK_FORGE_ACTIVE` is set).
-The following restrictions are enforced:
+This session runs under a least-privilege profile (`TASK_FORGE_ACTIVE` is set).
 
-- **Denied**: `git commit`, `git push`, `git merge`, `git rebase`, `git cherry-pick`,
-  `git reset`, `git branch -d/-D`, `git worktree add/remove`, `git update-ref`,
-  and direct edits to `task-state/` files.
-- **Allowed**: `git status`, `git diff`, `git log`, `git show`, `git branch`,
-  `git rev-parse`, `git fetch`, `git ls-remote`, and other read-only commands.
-- **Override**: A Human or Doctor may authorise specific mutations via
-  `taskforge guard override TASK-ID COMMAND "reason"` with a structured reason. Overrides are
-  audited and time-limited.
-
-If a command is blocked, use the suggested TaskForge replacement:
-- `git commit` → `taskforge checkpoint TASK-ID --message "..."`
-- `git push` → `taskforge submit TASK-ID`
-- `git branch -d/-D` → `taskforge done TASK-ID --delete-branch`
-- `git worktree add` → `taskforge start TASK-ID`
-- `git worktree remove` → `taskforge done TASK-ID --cleanup`
+- **Allowed (direct git)**: `git add`, `git commit`, `git push`, `git branch`,
+  `git checkout`, `git worktree`, `git fetch`, `npm run/test`, `taskforge *`.
+- **Denied unconditionally**: `git push --force*`, edits to `.git/**` and `tasks/**`.
+- **Protected branches**: pushes to `main` and `task-state` are blocked by the
+  runtime guard unless `TASKFORGE_INTERNAL=1` is set (task-state transactions only).

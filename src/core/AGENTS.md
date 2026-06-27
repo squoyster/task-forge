@@ -31,7 +31,7 @@ The core engine implements the TaskForge state machine, task lifecycle, git oper
 | PR Verifier | `pr-verifier.ts` | Pull request verification |
 | Pending Publish | `pending-publish.ts` | Track un-pushed task creations for recovery |
 | Templates | `templates.ts` | Task template rendering |
-| OpenCode Config | `opencode-config.ts` | OpenCode configuration sync |
+| OpenCode Config | `opencode-config.ts` | OpenCode configuration sync (least-privilege profiles) |
 | Errors | `errors.ts` | TaskForgeError hierarchy |
 | Event Log | `event-log.ts` | Structured event logging |
 | Closure Task | `closure-task.ts` | Auto-create tasks for error states |
@@ -47,6 +47,7 @@ The core engine implements the TaskForge state machine, task lifecycle, git oper
 - **Error Handling** (`errors.ts`): Use structured `TaskForgeError` subclasses. Never throw raw `Error`.
 - **Config** (`config.ts`): Configuration loaded from `.taskforge/config.json`.
 - **Storage Paths** (`paths.ts`, config-authoritative since TF-SIMP-03): `tasks.stateDir` (default `../task-state`) and `worktrees.root` (default `../worktrees`, parent of `<repoName>/<taskId>`) are runtime-honored. `getTaskStateDir`/`getWorktreesDir` resolve against the MAIN repo root, so identical from main checkout or linked worktree. No decorative path fields.
+- **Least-Privilege Profiles** (`opencode-config.ts`, TF-SIMP-06): `opencode.json` uses role-scoped permissions, not broad global allows. Implementer may run direct git (`add/commit/push/branch/worktree`) but never force-push; planner/reviewer are read-only (`edit: deny`); doctor has an explicit recovery allowlist (`*: deny`, no wildcards). Hard denies (`git push --force*`, `.git/**`, `tasks/**`) appear at both global and role level. MCP disabled by default (`mcp.taskforge.enabled: false`; opt in via `TASKFORGE_WITH_MCP=1`). `generateOpenCodeConfig` must mirror checked-in `opencode.json`.
 - **Agent Registry** (`agent-registry.ts`): Agents must heartbeat to maintain lease. Stale agents are swept.
 
 ## Work Guidance

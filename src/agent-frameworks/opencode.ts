@@ -46,10 +46,20 @@ function checkOpenCodeJson(projectRoot: string): Diagnostic[] {
     const bash = permissions.bash ?? {};
     const edit = permissions.edit ?? {};
 
-    if (bash["git *"] === "deny" && edit["../task-state/**"] === "deny") {
-      diags.push({ severity: "pass", check: "opencode-policy", message: "Normal agent permissions deny git and task-state edits." });
+    // Least-privilege invariants (TF-SIMP-06): global hard denies for force-push,
+    // .git/**, and tasks/** that no broad allow can silently override, plus an
+    // implementer profile that allows normal direct-git work while still denying force-push.
+    const globalForceDeny = bash["git push --force*"] === "deny";
+    const globalEditDeny = edit[".git/**"] === "deny" && edit["tasks/**"] === "deny";
+    const impl = config.agent?.implementer?.permission ?? {};
+    const implBash = impl.bash ?? {};
+    const implAllowsGit = implBash["git push *"] === "allow" || implBash["git commit *"] === "allow";
+    const implDeniesForce = implBash["git push --force*"] === "deny";
+
+    if (globalForceDeny && globalEditDeny && implAllowsGit && implDeniesForce) {
+      diags.push({ severity: "pass", check: "opencode-policy", message: "Least-privilege profiles enforce force-push/.git/tasks denials while allowing implementer direct-git work." });
     } else {
-      diags.push({ severity: "fail", check: "opencode-policy", message: "Normal agent permissions do not fully deny git or task-state edits." });
+      diags.push({ severity: "fail", check: "opencode-policy", message: "Least-privilege invariants not met: global force-push/.git/tasks denies or implementer git-allow/force-deny missing." });
     }
 
     if (config.agent?.doctor) {

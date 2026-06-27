@@ -9,29 +9,48 @@ import path from "node:path";
 import os from "node:os";
 
 describe("generateOpenCodeConfig", () => {
-  it("generates valid config with managed policy", () => {
+  it("generates least-privilege role profiles (TF-SIMP-06)", () => {
     const config = generateOpenCodeConfig("managed", true, true);
     expect(config.$schema).toBeDefined();
     expect(config.taskforge).toBeUndefined();
 
+    // Global hard denies that no broad allow can override.
     const perm = config.permission as Record<string, unknown>;
     expect(perm["*"]).toBe("ask");
 
     const edit = perm.edit as Record<string, string>;
-    expect(edit["../task-state/**"]).toBe("deny");
+    expect(edit[".git/**"]).toBe("deny");
     expect(edit["tasks/**"]).toBe("deny");
 
     const bash = perm.bash as Record<string, string>;
-    expect(bash["git *"]).toBe("deny");
-    expect(bash["taskforge *"]).toBe("allow");
-    expect(bash["npm test *"]).toBe("allow");
+    expect(bash["git push --force*"]).toBe("deny");
 
-    const agent = config.agent as Record<string, unknown>;
+    // Implementer profile: allows direct-git work, still denies force-push.
+    const agent = config.agent as Record<string, any>;
+    const impl = agent.implementer.permission as Record<string, any>;
+    const implBash = impl.bash as Record<string, string>;
+    expect(implBash["git push *"]).toBe("allow");
+    expect(implBash["git commit *"]).toBe("allow");
+    expect(implBash["git push --force*"]).toBe("deny");
+    const implEdit = impl.edit as Record<string, string>;
+    expect(implEdit["*"]).toBe("allow");
+    expect(implEdit[".git/**"]).toBe("deny");
+    expect(implEdit["tasks/**"]).toBe("deny");
+
+    // Planner/reviewer are read-only.
+    expect((agent.planner.permission as any).edit).toBe("deny");
+    expect((agent.reviewer.permission as any).edit).toBe("deny");
+
+    // Doctor: explicit recovery allowlist.
     const doctor = agent.doctor as Record<string, unknown>;
     const docPerm = doctor.permission as Record<string, unknown>;
     const docBash = docPerm.bash as Record<string, string>;
     expect(docBash["git status *"]).toBe("allow");
     expect(docBash["git push --force*"]).toBe("deny");
+
+    // MCP disabled by default.
+    const mcp = config.mcp as Record<string, any>;
+    expect(mcp.taskforge.enabled).toBe(false);
   });
 
   it("no longer emits taskforge block (moved to .taskforge/config.json)", () => {
@@ -48,7 +67,7 @@ describe("installOpenCodeConfig", () => {
     const config = JSON.parse(raw);
     expect(config.taskforge).toBeUndefined();
     const bash = config.permission.bash as Record<string, string>;
-    expect(bash["git *"]).toBe("deny");
+    expect(bash["git push --force*"]).toBe("deny");
     fs.rmSync(tmp, { recursive: true, force: true });
   });
 
@@ -68,7 +87,7 @@ describe("installOpenCodeConfig", () => {
     expect(config.theme).toBe("dark");
     expect(config.taskforge).toBeUndefined();
     const bash = config.permission.bash as Record<string, string>;
-    expect(bash["git *"]).toBe("deny");
+    expect(bash["git push --force*"]).toBe("deny");
     fs.rmSync(tmp, { recursive: true, force: true });
   });
 

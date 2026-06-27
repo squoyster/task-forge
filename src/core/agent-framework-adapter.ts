@@ -40,17 +40,21 @@ export class OpenCodeAgentFrameworkAdapter implements AgentFrameworkAdapter {
       issues.push({ severity: "warn", code: "OPENCODE_AGENTS_MD", message: "AGENTS.md not found — run 'taskforge init' to create" });
     }
 
-    // opencode.json permissions check
+    // opencode.json least-privilege permissions check (TF-SIMP-06)
     const openCodeJsonPath = path.join(repoRoot, "opencode.json");
     if (fs.existsSync(openCodeJsonPath)) {
       try {
         const ocConfig = JSON.parse(fs.readFileSync(openCodeJsonPath, "utf-8"));
         const bashPerms = ocConfig?.permission?.bash ?? {};
         const editPerms = ocConfig?.permission?.edit ?? {};
-        if (bashPerms["git *"] === "deny" && editPerms["../task-state/**"] === "deny") {
+        const implBash = ocConfig?.agent?.implementer?.permission?.bash ?? {};
+        const forceDeny = bashPerms["git push --force*"] === "deny" && implBash["git push --force*"] === "deny";
+        const hardDeny = editPerms[".git/**"] === "deny" && editPerms["tasks/**"] === "deny";
+        const implGitAllow = implBash["git push *"] === "allow" || implBash["git commit *"] === "allow";
+        if (forceDeny && hardDeny && implGitAllow) {
           // OK
         } else {
-          issues.push({ severity: "warn", code: "OPENCODE_PERMISSIONS", message: "opencode.json agent permissions incomplete" });
+          issues.push({ severity: "warn", code: "OPENCODE_PERMISSIONS", message: "opencode.json least-privilege invariants incomplete" });
         }
         if (ocConfig?.agent?.doctor) {
           // OK

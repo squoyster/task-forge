@@ -76,8 +76,11 @@ describe("AgentFrameworkAdapter", () => {
 
     it("does not warn when opencode.json has correct permissions", () => {
       fs.writeFileSync(openCodeJsonPath, JSON.stringify({
-        permission: { bash: { "git *": "deny" }, edit: { "../task-state/**": "deny" } },
-        agent: { doctor: true },
+        permission: { bash: { "git push --force*": "deny" }, edit: { ".git/**": "deny", "tasks/**": "deny" } },
+        agent: {
+          doctor: true,
+          implementer: { permission: { bash: { "git push *": "allow", "git push --force*": "deny" } } },
+        },
       }));
       const issues = adapter.doctor(repoRoot);
       const permsIssue = issues.find((i) => i.code === "OPENCODE_PERMISSIONS");
@@ -145,7 +148,9 @@ describe("AgentFrameworkAdapter", () => {
         const permsRepair = repairs.find((r) => r.code === "OPENCODE_PERMISSIONS");
         expect(permsRepair).toBeDefined();
         const config = JSON.parse(fs.readFileSync(openCodeJsonPath, "utf-8"));
-        expect(config.permission?.bash?.["git *"]).toBe("deny");
+        expect(config.permission?.bash?.["git push --force*"]).toBe("deny");
+        expect(config.permission?.edit?.[".git/**"]).toBe("deny");
+        expect(config.agent?.implementer?.permission?.bash?.["git push *"]).toBe("allow");
       });
 
       it("creates missing audit directory", () => {

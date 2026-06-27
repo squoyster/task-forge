@@ -48,13 +48,13 @@ Implements OpenCode-specific diagnostics and repairs:
 
 **Doctor checks:**
 - `AGENTS.md` exists and contains the `managed-agent-policy` block
-- `opencode.json` has correct agent permissions (`git *` deny, `../task-state/**` deny)
+- `opencode.json` enforces least-privilege invariants (global `git push --force*`/`.git/**`/`tasks/**` denies; implementer allows direct-git work while denying force-push)
 - `opencode.json` has doctor agent configured
 - Audit directory exists at `logs/taskforge/audit`
 
 **Fix repairs:**
 - Creates or updates `AGENTS.md` with managed policy block
-- Creates or repairs `opencode.json` with TaskForge permissions
+- Creates or repairs `opencode.json` with least-privilege TaskForge profiles
 - Creates audit directory if missing
 
 ### Adapter Selection
@@ -143,30 +143,42 @@ The managed block is maintained by TaskForge and should not be edited manually.
 
 ### opencode.json
 
-Contains TaskForge-managed permissions:
+Contains TaskForge-managed least-privilege role profiles (TF-SIMP-06). Hard denies (`git push --force*`, `.git/**`, `tasks/**`) appear at both global and implementer level so they survive regardless of agent-permission merge semantics. MCP is disabled by default; set `mcp.taskforge.enabled: true` (or run with `TASKFORGE_WITH_MCP=1`) to opt in.
 
 ```json
 {
-  "permission": {
-    "bash": {
-      "git *": "deny",
-      "taskforge *": "allow"
-    },
-    "edit": {
-      "../task-state/**": "deny"
-    }
-  },
+  "default_agent": "implementer",
   "agent": {
-    "doctor": {
+    "implementer": {
+      "mode": "primary",
+      "env": { "TASK_FORGE_ACTIVE": "true" },
       "permission": {
+        "edit": { "*": "allow", ".git/**": "deny", "tasks/**": "deny", "dist/**": "deny" },
         "bash": {
-          "taskforge doctor *": "allow"
+          "git push *": "allow",
+          "git push --force*": "deny",
+          "taskforge *": "allow"
         }
       }
+    },
+    "planner": { "permission": { "edit": "deny" } },
+    "reviewer": { "permission": { "edit": "deny" } },
+    "doctor": {
+      "permission": {
+        "edit": { "*": "deny", "../task-state/**": "allow" },
+        "bash": { "taskforge doctor *": "allow", "git push --force*": "deny", "*": "deny" }
+      }
     }
+  },
+  "mcp": { "taskforge": { "enabled": false } },
+  "permission": {
+    "edit": { ".git/**": "deny", "tasks/**": "deny" },
+    "bash": { "git push --force*": "deny" }
   }
 }
 ```
+
+Protected-branch push enforcement (`main`, `task-state`) stays in the runtime mutation-guard — it is branch-aware and opencode globs cannot reliably match branch names.
 
 ### Agent Files
 
