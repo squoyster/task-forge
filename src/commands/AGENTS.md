@@ -22,7 +22,7 @@ Command handlers implement every `taskforge` CLI subcommand. Each file in this d
 | `init` | `init.ts` | Initialize TaskForge in a repo |
 | `inspect` | `inspect.ts` | Inspect a task |
 | `list` | `list.ts` | List tasks |
-| `mcp` | `mcp.ts` | MCP server mode |
+| `mcp` | `mcp.ts` | Typed task/state MCP server: 7 tools + 2 read-only resources; no shell/git/proxy. OFF unless `TASKFORGE_WITH_MCP=1` |
 | `new` | `new.ts` | Create a new task |
 | `next` | `next.ts` | Get next task to work on |
 | `promote` | `promote.ts` | Promote task status |
@@ -61,6 +61,7 @@ Command handlers implement every `taskforge` CLI subcommand. Each file in this d
 - **CLI surface classification** (TF-SIMP-05): default `--help` exposes only entry commands (`init`, `next`, `prompt`, `inspect`, `list`, `new`, `update`, `gates`, `validate-state`, `doctor`). All others are registered with `{ hidden: true }` (callable, not advertised) — see `VISIBLE_COMMANDS` / `HIDDEN_COMMANDS` in `cli.ts`. `sync`/`deps` gate on `TASKFORGE_WITH_DEPS`; `mcp` gates on `TASKFORGE_WITH_MCP`. `next --json` is the discovery entry point for hidden commands.
 - Delegate business logic to `src/core/` modules — command handlers are thin adapters.
 - Return structured `CommandResult` objects, never raw console output.
+- **MCP command** (`mcp.ts`, TF-EMBED-02): exposes exactly 7 typed tools (`next`, `get_task`, `claim`, `block`, `complete`, `gates`, `validate_state`) returning `structuredContent` (a `TaskForgeCommandResult`, passthrough schema). Mutations reuse the CLI command core via `runCommandForResult` (`src/core/mcp-contract.ts`) — no mutation logic is duplicated, no shell/git/worktree/branch/push proxies exist. Two resources: `taskforge://workflow` and `taskforge://task/{taskId}` (read-only). `taskId` is an opaque token; path traversal is rejected.
 - Handle errors with `TaskForgeError` subclasses; let the CLI layer catch and format.
 
 ## Work Guidance

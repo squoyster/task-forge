@@ -12,7 +12,7 @@ import { eventLogEvent } from "../core/event-log.js";
 import { checkOutstandingSessionTasks } from "../core/session.js";
 import { isDoctorLocked } from "../core/doctor-lock.js";
 import { resolveAuthority, assertCanForce, ForceRequiresHumanOrDoctorError } from "../core/authority.js";
-import { writeResult } from "../util/write-command-result.js";
+import { emitResult } from "../core/command-result.js";
 import { successResult, failedResult } from "../core/result-builder.js";
 import { claimStateMachine } from "../core/command-states.js";
 import { getDefaultGuidanceAdapter } from "../core/guidance-adapter.js";
@@ -50,7 +50,7 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      writeResult(failedResult({ command: "claim", error: result.guidance, code: result.errorCode ?? "DOCTOR_LOCKED" }), json);
+      emitResult(failedResult({ command: "claim", error: result.guidance, code: result.errorCode ?? "DOCTOR_LOCKED" }), json);
       return;
     }
     logWarn(result.guidance);
@@ -70,7 +70,7 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      writeResult(failedResult({ command: "claim", error: result.guidance, code: result.errorCode ?? "OUTSTANDING_TASK" }), json);
+      emitResult(failedResult({ command: "claim", error: result.guidance, code: result.errorCode ?? "OUTSTANDING_TASK" }), json);
       return;
     }
     logError(result.guidance);
@@ -97,7 +97,7 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      writeResult(failedResult({ command: "claim", error: result.guidance, code: result.errorCode ?? "UNCOMMITTED_CHANGES" }), json);
+      emitResult(failedResult({ command: "claim", error: result.guidance, code: result.errorCode ?? "UNCOMMITTED_CHANGES" }), json);
       return;
     }
     logWarn(result.guidance);
@@ -114,7 +114,7 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      writeResult(failedResult({ command: "claim", error: result.guidance, code: result.errorCode ?? "TASK_NOT_FOUND" }), json);
+      emitResult(failedResult({ command: "claim", error: result.guidance, code: result.errorCode ?? "TASK_NOT_FOUND" }), json);
       return;
     }
     throw new TaskNotFoundError(taskId);
@@ -131,7 +131,7 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      writeResult(failedResult({ command: "claim", error: result.guidance, code: result.errorCode ?? "INVALID_STATUS" }), json);
+      emitResult(failedResult({ command: "claim", error: result.guidance, code: result.errorCode ?? "INVALID_STATUS" }), json);
       return;
     }
     throw new Error(result.guidance);
@@ -150,7 +150,7 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      writeResult(failedResult({ command: "claim", error: result.guidance, code: result.errorCode ?? "ALREADY_CLAIMED" }), json);
+      emitResult(failedResult({ command: "claim", error: result.guidance, code: result.errorCode ?? "ALREADY_CLAIMED" }), json);
       return;
     }
     logError(result.guidance);
@@ -185,7 +185,7 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
         });
         getDefaultGuidanceAdapter().pushGuidance(result);
         if (json) {
-          writeResult(failedResult({ command: "claim", error: "Normal agents may not use --force.", code: "FORCE_REQUIRES_HUMAN_OR_DOCTOR" }), json);
+          emitResult(failedResult({ command: "claim", error: "Normal agents may not use --force.", code: "FORCE_REQUIRES_HUMAN_OR_DOCTOR" }), json);
           return;
         }
         logError("Normal agents may not use --force.");
@@ -257,7 +257,7 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      writeResult(failedResult({ command: "claim", error: result.guidance, code: result.errorCode ?? "PUSH_FAILED" }), json);
+      emitResult(failedResult({ command: "claim", error: result.guidance, code: result.errorCode ?? "PUSH_FAILED" }), json);
       return;
     }
     logError(result.guidance);
@@ -289,7 +289,7 @@ export async function cmdClaim(taskId: string, options?: ClaimOptions): Promise<
   if (json) {
     // Reload after push to get the latest claimed state
     eventLogEvent(taskId, "claimed", { session: sessionId, forced: force });
-    writeResult(successResult({
+    emitResult(successResult({
       command: "claim",
       taskId: task.id,
       guidance: claimResult.guidance,

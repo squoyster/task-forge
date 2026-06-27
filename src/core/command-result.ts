@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { renderResultJson, renderResultMarkdown } from "./result-renderer.js";
 
 // ─── Sub-schemas ───────────────────────────────────────────────────────────
 
@@ -145,3 +146,40 @@ export const STANDARD_PROHIBITED_ACTIONS: ProhibitedAction[] = [
   { action: "git branch -D", reason: "Forbidden in managed agent sessions" },
   { action: "direct task-state file edits", reason: "Use taskforge CLI commands instead" },
 ];
+
+// ─── Result sink (MCP capture) ──────────────────────────────────────────────
+//
+// MCP tool handlers run CLI command functions in-process and need the typed
+// TaskForgeCommandResult back without parsing ANSI stdout (R-E02-001).
+// `emitResult` is a drop-in replacement for `writeResult` that ALSO pushes the
+// structured result into an optional sink. CLI code is unchanged; MCP sets the
+// sink before invoking a command function and reads it back afterwards.
+//
+// Importing result-renderer here creates a type-only cycle (result-renderer
+// imports TaskForgeCommandResult via `import type`, erased at runtime), so
+// there is no runtime circular dependency.
+
+export type ResultSink = (result: TaskForgeCommandResult) => void;
+
+let resultSink: ResultSink | null = null;
+
+/**
+ * Install (or clear, with null) the module-level result sink. Returns the
+ * previous sink so callers can restore it.
+ */
+export function setResultSink(sink: ResultSink | null): ResultSink | null {
+  const prev = resultSink;
+  resultSink = sink;
+  return prev;
+}
+
+/**
+ * Emit a TaskForgeCommandResult. Drop-in for `writeResult`:
+ * pushes to the sink if one is installed (MCP capture), then writes the
+ * rendered output to stdout in the requested format.
+ */
+export function emitResult(result: TaskForgeCommandResult, json: boolean): void {
+  if (resultSink) resultSink(result);
+  const output = json ? renderResultJson(result) : renderResultMarkdown(result);
+  console.log(output);
+}

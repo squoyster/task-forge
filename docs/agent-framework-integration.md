@@ -180,6 +180,28 @@ Contains TaskForge-managed least-privilege role profiles (TF-SIMP-06). Hard deni
 
 Protected-branch push enforcement (`main`, `task-state`) stays in the runtime mutation-guard — it is branch-aware and opencode globs cannot reliably match branch names.
 
+## MCP Server (TF-EMBED-02)
+
+TaskForge exposes a **typed task/state contract** over MCP — 7 tools and 2 read-only resources, no shell/git/worktree/branch/push/PR/force/unlock proxies. MCP is OFF by default; opt in via `TASKFORGE_WITH_MCP=1` or `mcp.taskforge.enabled: true`.
+
+**Tools** (all return typed `TaskForgeCommandResult` as `structuredContent`):
+
+| Tool | Reuses CLI core | Notes |
+|---|---|---|
+| `taskforge_next` | `cmdNext` | Enriched packet (task/score/owner/workspace) preserved top-level via passthrough schema |
+| `taskforge_get_task` | `loadTaskById` | `taskId` is an opaque token; path-traversal rejected |
+| `taskforge_claim` | `cmdClaim` | Honors authority, doctor-lock, session, ownership |
+| `taskforge_block` | `cmdBlock` | Ownership + status-transition invariants |
+| `taskforge_complete` | `cmdDone` | Gates, AC, audit, PR-verification — no git/worktree lifecycle |
+| `taskforge_gates` | `cmdGates` | Per-gate diagnostics |
+| `taskforge_validate_state` | `cmdValidateState` | Never `process.exit` (runs `emitOnly`) |
+
+**Resources** (read-only, never expose out-of-root paths):
+- `taskforge://workflow` — compact workflow guide.
+- `taskforge://task/{taskId}` — a task's markdown body (never its `filePath`).
+
+Results are captured via a result sink, not by parsing stdout — see `docs/architecture/command-return-contract.md`. Implementation: `src/commands/mcp.ts`, `src/core/mcp-contract.ts`.
+
 ### Agent Files
 
 Installed in `.opencode/agents/`:

@@ -171,14 +171,18 @@ describe("cmdNext", () => {
   it("returns verification next commands for Verify task in JSON", async () => {
     makeTaskFile("TASK-001", { status: "Ready" });
     makeTaskFile("TASK-002", { status: "Verify" });
+    // emitResult writes the JSON packet via console.log (not process.stdout.write).
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-    const writeSpy = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
 
     await cmdNext({ json: true });
 
+    // Find the JSON packet among the logged calls (emitResult renders via
+    // renderResultJson, which is a plain JSON.stringify of the result).
+    const jsonText = logSpy.mock.calls
+      .map((c) => String(c[0]))
+      .find((s) => s.startsWith("{") && s.includes('"task"'));
     logSpy.mockRestore();
-    const parsed = JSON.parse(String(writeSpy.mock.calls[0][0]));
-    writeSpy.mockRestore();
+    const parsed = JSON.parse(String(jsonText));
     expect(parsed.task.id).toBe("TASK-002");
     expect(parsed.guidance).toContain("is in Verify");
     expect(parsed.guidance).not.toMatch(/taskforge start/i);

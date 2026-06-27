@@ -174,3 +174,21 @@ export async function cmdExample(taskId: string, opts: { json?: boolean }): Prom
   }
 }
 ```
+
+> **Prefer `emitResult`** over raw `process.stdout.write(renderResult...)`. It is a drop-in (`emitResult(result, json)`) that renders identically AND pushes the typed result into an optional module-level sink, so in-process callers (the MCP bridge) can capture the structured result without parsing stdout (TF-EMBED-02).
+
+## Result Sink & MCP Typed Bridge (TF-EMBED-02)
+
+`src/core/command-result.ts` exposes a module-level result sink:
+
+- `setResultSink(sink | null)` — install/clear a sink; returns the previous one.
+- `emitResult(result, json)` — drop-in for `writeResult`: pushes to the sink (if installed), then renders + `console.log`s the output.
+
+The MCP server (`src/commands/mcp.ts`) uses this to run CLI command functions in-process and receive their typed `TaskForgeCommandResult` via `runCommandForResult()` (`src/core/mcp-contract.ts`):
+
+1. Install a sink that captures the result.
+2. Silence `process.stdout` (blackhole) for the duration of the command — commands emit progress via `console.log`, which would otherwise corrupt the stdio JSON-RPC transport. stderr is left intact.
+3. `await` the command function (called with `json: true` so it emits `failedResult` instead of throwing).
+4. Restore stdout + clear the sink. If the command threw without emitting, synthesise a `COMMAND_THREW`/`NO_RESULT_EMIT` failed result.
+
+This satisfies the contract invariant **`mcp_result → structured(schema=CommandResult) ∧ ¬ parse(ANSI_stdout)`**: the client always receives typed `structuredContent`, never a string scrape. Mutating tools (`claim`/`block`/`complete`) reuse the real CLI core, so authority, doctor-lock, transaction, audit, and validation invariants are preserved — no mutation logic is duplicated.

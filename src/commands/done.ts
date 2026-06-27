@@ -7,7 +7,7 @@ import { logSuccess, logInfo, logWarn, logSub, logHeader, logDivider, logError }
 import { TaskNotFoundError, InvalidStatusTransitionError, MissingAcceptanceCriteriaError, BlankAcceptanceCriteriaError, UncheckedAcceptanceCriteriaError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
 import { assertTaskOwnership } from "../core/session.js";
-import { writeResult } from "../util/write-command-result.js";
+import { emitResult } from "../core/command-result.js";
 import { successResult as buildSuccessResult, failedResult } from "../core/result-builder.js";
 import { createTaskEvent, appendTaskTranscript } from "../core/audit.js";
 import { runGates } from "./gates.js";
@@ -86,7 +86,7 @@ export async function cmdDone(
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      writeResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "TASK_NOT_FOUND", nextCommands: [mapNextAction(result.nextAction)] }), json);
+      emitResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "TASK_NOT_FOUND", nextCommands: [mapNextAction(result.nextAction)] }), json);
       return;
     }
     throw new TaskNotFoundError(taskId);
@@ -135,7 +135,7 @@ export async function cmdDone(
         });
         getDefaultGuidanceAdapter().pushGuidance(result);
         if (json) {
-          writeResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "FORCE_REJECTED" }), json);
+          emitResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "FORCE_REJECTED" }), json);
           return;
         }
         throw new ForceRequiresHumanOrDoctorError();
@@ -183,7 +183,7 @@ export async function cmdDone(
       });
       getDefaultGuidanceAdapter().pushGuidance(result);
       if (json) {
-        writeResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "GATES_FAILED" }), json);
+        emitResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "GATES_FAILED" }), json);
         return;
       }
       throw new Error(result.guidance);
@@ -208,7 +208,7 @@ export async function cmdDone(
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      writeResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "INVALID_TRANSITION", nextCommands: [mapNextAction(result.nextAction)] }), json);
+      emitResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "INVALID_TRANSITION", nextCommands: [mapNextAction(result.nextAction)] }), json);
       return;
     }
     throw new InvalidStatusTransitionError(
@@ -238,7 +238,7 @@ export async function cmdDone(
       });
       getDefaultGuidanceAdapter().pushGuidance(result);
       if (json) {
-        writeResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "OWNERSHIP_MISMATCH", nextCommands: [mapNextAction(result.nextAction)] }), json);
+        emitResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "OWNERSHIP_MISMATCH", nextCommands: [mapNextAction(result.nextAction)] }), json);
         return;
       }
       throw new Error(result.guidance);
@@ -266,7 +266,7 @@ export async function cmdDone(
       });
       getDefaultGuidanceAdapter().pushGuidance(result);
       if (json) {
-        writeResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "WORKTREE_DIRTY", nextCommands: [mapNextAction(result.nextAction)] }), json);
+        emitResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "WORKTREE_DIRTY", nextCommands: [mapNextAction(result.nextAction)] }), json);
         return;
       }
       throw new Error(result.guidance);
@@ -300,7 +300,7 @@ export async function cmdDone(
       });
       getDefaultGuidanceAdapter().pushGuidance(result);
       if (json) {
-        writeResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "BRANCH_UNPUSHED", nextCommands: [mapNextAction(result.nextAction)] }), json);
+        emitResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "BRANCH_UNPUSHED", nextCommands: [mapNextAction(result.nextAction)] }), json);
         return;
       }
       throw new Error(result.guidance);
@@ -327,7 +327,7 @@ export async function cmdDone(
       getDefaultGuidanceAdapter().pushGuidance(result);
       const guidance = buildControlFileDriftGuidance(taskId, task.context_hash, currentHash);
       if (json) {
-        writeResult(failedResult({
+        emitResult(failedResult({
           command: "done",
           taskId,
           worktree: task.worktree,
@@ -369,7 +369,7 @@ export async function cmdDone(
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      writeResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "MISSING_ACCEPTANCE_CRITERIA", nextCommands: [mapNextAction(result.nextAction)] }), json);
+      emitResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "MISSING_ACCEPTANCE_CRITERIA", nextCommands: [mapNextAction(result.nextAction)] }), json);
       return;
     }
     throw new MissingAcceptanceCriteriaError(taskId);
@@ -392,7 +392,7 @@ export async function cmdDone(
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      writeResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "BLANK_ACCEPTANCE_CRITERIA", nextCommands: [mapNextAction(result.nextAction)] }), json);
+      emitResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "BLANK_ACCEPTANCE_CRITERIA", nextCommands: [mapNextAction(result.nextAction)] }), json);
       return;
     }
     throw new BlankAcceptanceCriteriaError(taskId);
@@ -415,7 +415,7 @@ export async function cmdDone(
     });
     getDefaultGuidanceAdapter().pushGuidance(result);
     if (json) {
-      writeResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "UNCHECKED_ACCEPTANCE_CRITERIA", nextCommands: [mapNextAction(result.nextAction)] }), json);
+      emitResult(failedResult({ command: "done", error: result.guidance, code: result.errorCode ?? "UNCHECKED_ACCEPTANCE_CRITERIA", nextCommands: [mapNextAction(result.nextAction)] }), json);
       return;
     }
     throw new UncheckedAcceptanceCriteriaError(taskId);
@@ -501,7 +501,7 @@ export async function cmdDone(
     getDefaultGuidanceAdapter().pushGuidance(result);
 
     if (json) {
-      writeResult(failedResult({ command: "done", error: message, code: "COMPLETION_POLICY_BLOCKED", nextCommands: [mapNextAction(result.nextAction)] }), json);
+      emitResult(failedResult({ command: "done", error: message, code: "COMPLETION_POLICY_BLOCKED", nextCommands: [mapNextAction(result.nextAction)] }), json);
       return;
     }
 
@@ -546,12 +546,12 @@ export async function cmdDone(
   getDefaultGuidanceAdapter().pushGuidance(successResult);
 
   if (json) {
-    writeResult(buildSuccessResult({ command: "done", taskId: task.id, guidance: successResult.guidance, nextCommands: [mapNextAction(successResult.nextAction)] }), json);
+    emitResult(buildSuccessResult({ command: "done", taskId: task.id, guidance: successResult.guidance, nextCommands: [mapNextAction(successResult.nextAction)] }), json);
     return;
   }
 
   logSuccess(successResult.guidance);
-  writeResult(buildSuccessResult({ command: "done", taskId: task.id, guidance: successResult.guidance, nextCommands: [mapNextAction(successResult.nextAction)] }), json);
+  emitResult(buildSuccessResult({ command: "done", taskId: task.id, guidance: successResult.guidance, nextCommands: [mapNextAction(successResult.nextAction)] }), json);
   logDivider();
   logInfo("Next actions:");
   logSub("  taskforge next              — Find the next available task");

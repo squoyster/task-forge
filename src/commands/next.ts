@@ -12,8 +12,8 @@ import { getRepoRoot, getWorktreePath } from "../util/paths.js";
 import { STATUS } from "../util/status-constants.js";
 import { doctorRequiredResult, blockedResult, successResult, noopResult } from "../core/result-builder.js";
 import { getValidNextCommands } from "../core/next-command-maps.js";
-import { renderResultMarkdown, renderResultJson } from "../core/result-renderer.js";
-import type { ValidNextCommand } from "../core/command-result.js";
+import { renderResultJson } from "../core/result-renderer.js";
+import { emitResult, type ValidNextCommand, type TaskForgeCommandResult } from "../core/command-result.js";
 
 export interface NextOptions {
   json?: boolean;
@@ -129,10 +129,10 @@ export async function cmdNext(options?: NextOptions): Promise<void> {
       duration: Date.now() - startTime,
     });
     if (options?.json) {
-      process.stdout.write(renderResultJson(result) + "\n");
+      emitResult(result, true);
       return;
     }
-    process.stdout.write(renderResultMarkdown(result) + "\n");
+    emitResult(result, false);
     return;
   }
 
@@ -146,10 +146,10 @@ export async function cmdNext(options?: NextOptions): Promise<void> {
       duration: Date.now() - startTime,
     });
     if (options?.json) {
-      process.stdout.write(renderResultJson(result) + "\n");
+      emitResult(result, true);
       return;
     }
-    process.stdout.write(renderResultMarkdown(result) + "\n");
+    emitResult(result, false);
     return;
   }
 
@@ -161,11 +161,11 @@ export async function cmdNext(options?: NextOptions): Promise<void> {
       duration: Date.now() - startTime,
     });
     if (options?.json) {
-      process.stdout.write(renderResultJson(result) + "\n");
+      emitResult(result, true);
       return;
     }
     logInfo("No task files found.");
-    process.stdout.write(renderResultMarkdown(result) + "\n");
+    emitResult(result, false);
     return;
   }
 
@@ -181,10 +181,10 @@ export async function cmdNext(options?: NextOptions): Promise<void> {
       duration: Date.now() - startTime,
     });
     if (options?.json) {
-      process.stdout.write(renderResultJson(result) + "\n");
+      emitResult(result, true);
       return;
     }
-    process.stdout.write(renderResultMarkdown(result) + "\n");
+    emitResult(result, false);
     return;
   }
 
@@ -198,13 +198,13 @@ export async function cmdNext(options?: NextOptions): Promise<void> {
       duration: Date.now() - startTime,
     });
     if (options?.json) {
-      process.stdout.write(renderResultJson(result) + "\n");
+      emitResult(result, true);
       return;
     }
     logInfo("No actionable tasks found.");
     logDivider();
     logInfo("All tasks are in Inbox, Needs Spec, Blocked, Done, Rejected, Deferred, or blocked by dependencies.");
-    process.stdout.write(renderResultMarkdown(result) + "\n");
+    emitResult(result, false);
     return;
   }
 
@@ -253,7 +253,10 @@ export async function cmdNext(options?: NextOptions): Promise<void> {
     if (unmet.length > 0) {
       jsonOutput.waitingOn = unmet;
     }
-    process.stdout.write(JSON.stringify(jsonOutput, null, 2) + "\n");
+    // Route through emitResult so the MCP sink captures the enriched packet.
+    // jsonOutput is `result` plus agent-facing enrichment keys (task/score/
+    // owner/cwd/prompt/workspace); it is a structural superset of the result.
+    emitResult(jsonOutput as TaskForgeCommandResult, true);
     return;
   }
 
@@ -293,5 +296,5 @@ export async function cmdNext(options?: NextOptions): Promise<void> {
   }
 
   logDivider();
-  process.stdout.write(renderResultMarkdown(result) + "\n");
+  emitResult(result, false);
 }
