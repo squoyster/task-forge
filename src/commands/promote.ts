@@ -24,7 +24,7 @@ export interface PromoteOptions {
 }
 
 /**
- * Default forward path for status promotion.
+ * Default forward path for status promotion (canonical ten-status graph).
  * Key = current status, Value = next forward status.
  * Skips Blocked, Deferred, and rollback transitions.
  */
@@ -32,11 +32,8 @@ const DEFAULT_FORWARD_PATH: Record<string, string> = {
   [STATUS.INBOX]: STATUS.NEEDS_SPEC,
   [STATUS.NEEDS_SPEC]: STATUS.READY,
   [STATUS.READY]: STATUS.IN_PROGRESS,
-  [STATUS.IN_PROGRESS]: STATUS.IMPLEMENTATION_COMPLETE,
-  [STATUS.IMPLEMENTATION_COMPLETE]: STATUS.SUBMITTED,
-  [STATUS.SUBMITTED]: STATUS.REVIEW,
-  [STATUS.REVIEW]: STATUS.MERGE_READY,
-  [STATUS.MERGE_READY]: STATUS.VERIFY,
+  [STATUS.IN_PROGRESS]: STATUS.REVIEW,
+  [STATUS.REVIEW]: STATUS.VERIFY,
   [STATUS.VERIFY]: STATUS.DONE,
 };
 

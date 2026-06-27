@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { isValidTransition, getAllowedTransitions, validateTransition } from "../src/core/status-transition.js";
+import { normalizeStatus } from "../src/util/status-constants.js";
 
 describe("Status Transitions", () => {
   it("allows Inbox → Needs Spec", () => {
@@ -18,8 +19,12 @@ describe("Status Transitions", () => {
     expect(isValidTransition("Ready", "In Progress")).toBe(true);
   });
 
-  it("allows In Progress → Implementation Complete", () => {
-    expect(isValidTransition("In Progress", "Implementation Complete")).toBe(true);
+  it("allows In Progress → Review", () => {
+    expect(isValidTransition("In Progress", "Review")).toBe(true);
+  });
+
+  it("rejects In Progress → Implementation Complete (legacy status collapsed)", () => {
+    expect(isValidTransition("In Progress", "Implementation Complete")).toBe(false);
   });
 
   it("allows In Progress → Blocked", () => {
@@ -57,9 +62,12 @@ describe("Status Transitions", () => {
 
   it("returns correct allowed transitions from In Progress", () => {
     const transitions = getAllowedTransitions("In Progress");
-    expect(transitions).toContain("Implementation Complete");
+    expect(transitions).toContain("Review");
     expect(transitions).toContain("Blocked");
     expect(transitions).toContain("Deferred");
+    expect(transitions).not.toContain("Implementation Complete");
+    expect(transitions).not.toContain("Submitted");
+    expect(transitions).not.toContain("Merge Ready");
     expect(transitions).not.toContain("Done");
   });
 
@@ -72,5 +80,24 @@ describe("Status Transitions", () => {
     expect(error).not.toBeNull();
     expect(error).toContain("Inbox");
     expect(error).toContain("Done");
+  });
+
+  // Legacy status normalization (TF-SIMP-02): the three transport statuses
+  // load-compatibly and map onto canonical Review/Verify.
+  it("normalizes Implementation Complete → Review", () => {
+    expect(normalizeStatus("Implementation Complete")).toBe("Review");
+    expect(normalizeStatus("implementation_complete")).toBe("Review");
+    expect(normalizeStatus("ImplementationComplete")).toBe("Review");
+  });
+
+  it("normalizes Submitted → Review", () => {
+    expect(normalizeStatus("Submitted")).toBe("Review");
+    expect(normalizeStatus("submitted")).toBe("Review");
+  });
+
+  it("normalizes Merge Ready → Verify", () => {
+    expect(normalizeStatus("Merge Ready")).toBe("Verify");
+    expect(normalizeStatus("merge_ready")).toBe("Verify");
+    expect(normalizeStatus("MergeReady")).toBe("Verify");
   });
 });

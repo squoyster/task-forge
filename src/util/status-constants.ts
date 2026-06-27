@@ -1,15 +1,27 @@
 import { z } from "zod";
 
+/**
+ * Canonical task status graph (TF-SIMP-02).
+ *
+ *   Inbox -> Needs Spec -> Ready -> In Progress -> Review -> Verify -> Done
+ *
+ * Blocked is reachable from Ready/In Progress. Deferred returns to Ready.
+ * Rejected is terminal. Legacy transport statuses (Implementation Complete,
+ * Submitted, Merge Ready) are normalized away at the schema boundary:
+ *   Implementation Complete -> Review
+ *   Submitted               -> Review
+ *   Merge Ready             -> Verify
+ *
+ * Git/PR transport facts live as metadata (submitted_sha, pr, pr_merged), never
+ * re-encoded as a status.
+ */
 export const STATUS = {
   INBOX: "Inbox",
   NEEDS_SPEC: "Needs Spec",
   READY: "Ready",
   IN_PROGRESS: "In Progress",
   BLOCKED: "Blocked",
-  IMPLEMENTATION_COMPLETE: "Implementation Complete",
-  SUBMITTED: "Submitted",
   REVIEW: "Review",
-  MERGE_READY: "Merge Ready",
   VERIFY: "Verify",
   DONE: "Done",
   REJECTED: "Rejected",
@@ -21,10 +33,7 @@ export const ALL_STATUSES: readonly string[] = Object.values(STATUS);
 export const ACTIVE_STATUSES = [
   STATUS.READY,
   STATUS.IN_PROGRESS,
-  STATUS.IMPLEMENTATION_COMPLETE,
-  STATUS.SUBMITTED,
   STATUS.REVIEW,
-  STATUS.MERGE_READY,
   STATUS.VERIFY,
 ] as const;
 
@@ -35,19 +44,22 @@ type StatusValue = (typeof STATUS)[StatusKey];
 
 /**
  * Normalize status input to canonical form.
- * Accepts common variants and returns the canonical human-readable value.
+ * Accepts common variants AND the three legacy transport statuses, returning
+ * the canonical human-readable value.
  *
  * | Input | Output |
  * |---|---|
  * | "In Progress" | "In Progress" |
  * | "in_progress" | "In Progress" |
  * | "in-progress" | "In Progress" |
- * | "in progress" | "In Progress" |
  * | "InProgress" | "In Progress" |
  * | "needs_spec" | "Needs Spec" |
  * | "NeedsSpec" | "Needs Spec" |
  * | "ready" | "Ready" |
  * | "done" | "Done" |
+ * | "Implementation Complete" | "Review" (legacy) |
+ * | "Submitted" | "Review" (legacy) |
+ * | "Merge Ready" | "Verify" (legacy) |
  */
 export function normalizeStatus(input: string): string {
   const trimmed = input.trim();
@@ -60,7 +72,8 @@ export function normalizeStatus(input: string): string {
   // Normalize: convert to lowercase for comparison
   const lower = trimmed.toLowerCase();
 
-  // Map of normalized forms to canonical values
+  // Map of normalized forms to canonical values.
+  // Legacy transport statuses map to their canonical replacement.
   const variantMap: Record<string, StatusValue> = {
     // In Progress variants
     "in_progress": STATUS.IN_PROGRESS,
@@ -79,22 +92,8 @@ export function normalizeStatus(input: string): string {
     // Blocked variants
     "blocked": STATUS.BLOCKED,
 
-    // Implementation Complete variants
-    "implementation_complete": STATUS.IMPLEMENTATION_COMPLETE,
-    "implementation-complete": STATUS.IMPLEMENTATION_COMPLETE,
-    "implementation complete": STATUS.IMPLEMENTATION_COMPLETE,
-    "implcomplete": STATUS.IMPLEMENTATION_COMPLETE,
-
-    // Submitted variants
-    "submitted": STATUS.SUBMITTED,
-
     // Review variants
     "review": STATUS.REVIEW,
-
-    // Merge Ready variants
-    "merge_ready": STATUS.MERGE_READY,
-    "merge-ready": STATUS.MERGE_READY,
-    "merge ready": STATUS.MERGE_READY,
 
     // Verify variants
     "verify": STATUS.VERIFY,
@@ -110,14 +109,31 @@ export function normalizeStatus(input: string): string {
 
     // Inbox variants
     "inbox": STATUS.INBOX,
+
+    // Legacy: Implementation Complete -> Review
+    "implementation_complete": STATUS.REVIEW,
+    "implementation-complete": STATUS.REVIEW,
+    "implementation complete": STATUS.REVIEW,
+    "implcomplete": STATUS.REVIEW,
+
+    // Legacy: Submitted -> Review
+    "submitted": STATUS.REVIEW,
+
+    // Legacy: Merge Ready -> Verify
+    "merge_ready": STATUS.VERIFY,
+    "merge-ready": STATUS.VERIFY,
+    "merge ready": STATUS.VERIFY,
+    "mergeready": STATUS.VERIFY,
   };
 
-  // Also handle camelCase variants like "InProgress", "NeedsSpec"
+  // Also handle camelCase variants like "InProgress", "NeedsSpec".
+  // Legacy camelCase forms also map to their canonical replacement.
   const camelCaseMap: Record<string, StatusValue> = {
     "InProgress": STATUS.IN_PROGRESS,
     "NeedsSpec": STATUS.NEEDS_SPEC,
-    "ImplementationComplete": STATUS.IMPLEMENTATION_COMPLETE,
-    "MergeReady": STATUS.MERGE_READY,
+    // Legacy camelCase
+    "ImplementationComplete": STATUS.REVIEW,
+    "MergeReady": STATUS.VERIFY,
   };
 
   if (variantMap[lower]) {
@@ -133,7 +149,9 @@ export function normalizeStatus(input: string): string {
 }
 
 /**
- * Zod preprocessor that normalizes status input before validating against TaskStatus.
+ * Zod preprocessor that normalizes status input before validating against the
+ * canonical TaskStatus enum. Legacy statuses are accepted and normalized, so
+ * existing task files load and the next write persists a canonical value.
  */
 export function createStatusSchema() {
   return z.preprocess(
@@ -141,6 +159,17 @@ export function createStatusSchema() {
       if (typeof val !== "string") return val;
       return normalizeStatus(val);
     },
-    z.enum([STATUS.INBOX, STATUS.NEEDS_SPEC, STATUS.READY, STATUS.IN_PROGRESS, STATUS.BLOCKED, STATUS.IMPLEMENTATION_COMPLETE, STATUS.SUBMITTED, STATUS.REVIEW, STATUS.MERGE_READY, STATUS.VERIFY, STATUS.DONE, STATUS.REJECTED, STATUS.DEFERRED]),
+    z.enum([
+      STATUS.INBOX,
+      STATUS.NEEDS_SPEC,
+      STATUS.READY,
+      STATUS.IN_PROGRESS,
+      STATUS.BLOCKED,
+      STATUS.REVIEW,
+      STATUS.VERIFY,
+      STATUS.DONE,
+      STATUS.REJECTED,
+      STATUS.DEFERRED,
+    ]),
   );
 }

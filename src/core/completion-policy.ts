@@ -361,13 +361,13 @@ export async function checkCompletionEligibility(
 
   const eligible = preconditions.every((p) => p.passed);
 
-  // Determine suggested status based on which preconditions fail
+  // Determine suggested status based on which preconditions fail.
+  // Transport facts (no PR, unmerged PR) map onto the canonical Review phase,
+  // never a replacement transport status. Per TF-SIMP-02.
   let suggestedStatus: string | undefined;
   if (!eligible) {
-    if (!task.pr) {
-      suggestedStatus = STATUS.SUBMITTED;
-    } else if (task.pr_merged === false) {
-      suggestedStatus = STATUS.MERGE_READY;
+    if (!task.pr || task.pr_merged === false) {
+      suggestedStatus = STATUS.REVIEW;
     } else {
       suggestedStatus = STATUS.VERIFY;
     }
@@ -391,18 +391,13 @@ export function deriveExpectedStatus(
     return task.status;
   }
 
-  // No PR but branch pushed → Submitted
-  if (task.branch && !task.pr) {
-    return STATUS.SUBMITTED;
-  }
-
-  // PR exists but not merged → Review or Merge Ready
-  if (task.pr && !task.pr_merged) {
+  // No PR but branch pushed, or PR exists but not merged -> Review
+  // (implemented work awaiting review/integration; transport facts are metadata)
+  if ((task.branch && !task.pr) || (task.pr && !task.pr_merged)) {
     return STATUS.REVIEW;
   }
 
-  // PR merged but not verified → Verify
-  // (Already checked Done/terminal above, so status is an active state)
+  // PR merged but not verified -> Verify
   if (task.pr && task.pr_merged) {
     return STATUS.VERIFY;
   }

@@ -46,40 +46,16 @@ function makeTaskFile(
 }
 
 describe("cmdPromote", () => {
-  it("promotes In Progress → Implementation Complete by default", async () => {
+  it("promotes In Progress → Review by default", async () => {
     const fp = makeTaskFile("TASK-001");
-    await cmdPromote("TASK-001");
-
-    const content = fs.readFileSync(fp, "utf-8");
-    expect(content).toContain("status: Implementation Complete");
-  });
-
-  it("promotes Implementation Complete → Submitted", async () => {
-    const fp = makeTaskFile("TASK-001", { status: "Implementation Complete" });
-    await cmdPromote("TASK-001");
-
-    const content = fs.readFileSync(fp, "utf-8");
-    expect(content).toContain("status: Submitted");
-  });
-
-  it("promotes Submitted → Review", async () => {
-    const fp = makeTaskFile("TASK-001", { status: "Submitted" });
     await cmdPromote("TASK-001");
 
     const content = fs.readFileSync(fp, "utf-8");
     expect(content).toContain("status: Review");
   });
 
-  it("promotes Review → Merge Ready", async () => {
+  it("promotes Review → Verify", async () => {
     const fp = makeTaskFile("TASK-001", { status: "Review" });
-    await cmdPromote("TASK-001");
-
-    const content = fs.readFileSync(fp, "utf-8");
-    expect(content).toContain("status: Merge Ready");
-  });
-
-  it("promotes Merge Ready → Verify", async () => {
-    const fp = makeTaskFile("TASK-001", { status: "Merge Ready" });
     await cmdPromote("TASK-001");
 
     const content = fs.readFileSync(fp, "utf-8");
@@ -126,16 +102,16 @@ describe("cmdPromote", () => {
     expect(content).toContain("status: Ready");
   });
 
-  it("promotes to a specific target with --to (Implementation Complete → Review)", async () => {
-    const fp = makeTaskFile("TASK-001", { status: "Implementation Complete" });
-    await cmdPromote("TASK-001", { to: "Review" });
+  it("promotes to a specific target with --to (Review → In Progress rollback)", async () => {
+    const fp = makeTaskFile("TASK-001", { status: "Review" });
+    await cmdPromote("TASK-001", { to: "In Progress" });
 
     const content = fs.readFileSync(fp, "utf-8");
-    expect(content).toContain("status: Review");
+    expect(content).toContain("status: In Progress");
   });
 
-  it("promotes to Verify with --to from Merge Ready", async () => {
-    const fp = makeTaskFile("TASK-001", { status: "Merge Ready" });
+  it("promotes to Verify with --to from Review", async () => {
+    const fp = makeTaskFile("TASK-001", { status: "Review" });
     await cmdPromote("TASK-001", { to: "Verify" });
 
     const content = fs.readFileSync(fp, "utf-8");
@@ -193,7 +169,7 @@ describe("cmdPromote", () => {
     expect(parsed.context.taskId).toBe("TASK-001");
     expect(parsed.guidance).toContain("promoted");
     expect(parsed.guidance).toContain("In Progress");
-    expect(parsed.guidance).toContain("Implementation Complete");
+    expect(parsed.guidance).toContain("Review");
     logSpy.mockRestore();
   });
 

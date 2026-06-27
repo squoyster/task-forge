@@ -50,8 +50,8 @@ export function validateTaskState(tasks: ParsedTask[], context?: ParsedTask[]): 
       warnings.push({ severity: "warning", code: "TERMINAL_WITH_ASSIGNEE", taskId: t.id, message: `${t.status} but still has assignee`, suggestedFix: "Clear the claim fields" });
     }
 
-    // Active states should have assignee
-    const activeNeedsAssignee = [STATUS.IN_PROGRESS, STATUS.IMPLEMENTATION_COMPLETE, STATUS.SUBMITTED, STATUS.REVIEW, STATUS.MERGE_READY, STATUS.VERIFY];
+    // Active states should have assignee (canonical active set)
+    const activeNeedsAssignee = [STATUS.IN_PROGRESS, STATUS.REVIEW, STATUS.VERIFY];
     if (activeNeedsAssignee.includes(t.status as any) && !t.assignee) {
       warnings.push({ severity: "warning", code: "ACTIVE_NO_ASSIGNEE", taskId: t.id, message: `${t.status} but no assignee`, suggestedFix: "Claim the task or reset to Ready" });
     }

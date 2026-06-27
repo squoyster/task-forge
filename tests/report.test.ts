@@ -69,7 +69,7 @@ describe("cmdReport", () => {
     expect(content).toContain("status: In Progress");
   });
 
-  it("transitions to Implementation Complete with --complete", async () => {
+  it("transitions to Review with --complete", async () => {
     vi.mocked(execa).mockRejectedValue(new Error("no worktree"));
 
     const fp = makeTaskFile("TASK-001", { status: "In Progress" });
@@ -77,7 +77,7 @@ describe("cmdReport", () => {
     await cmdReport("TASK-001", { complete: true });
 
     const content = fs.readFileSync(fp, "utf-8");
-    expect(content).toContain("status: Implementation Complete");
+    expect(content).toContain("status: Review");
     expect(content).toContain("Report generated");
   });
 

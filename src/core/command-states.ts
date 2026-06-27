@@ -448,7 +448,7 @@ export const COMMAND_STATE_REGISTRY: Record<string, CommandStateRule> = {
     command: "report",
     requiresTask: true,
     nextActions: [
-      workAction("taskforge promote {taskId} --to Submitted", "Submit after implementation report is accepted.", true, { from: "Implementation Complete", to: "Submitted" }),
+      workAction("taskforge promote {taskId} --to Verify", "Advance to verification after implementation report is accepted.", true, { from: "Review", to: "Verify" }),
     ],
     errorActions: withCommonErrors(),
   }),

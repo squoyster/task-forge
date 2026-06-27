@@ -51,10 +51,10 @@ Only these transitions are allowed:
 | Inbox | Needs Spec, Rejected |
 | Needs Spec | Ready, Deferred |
 | Ready | In Progress, Blocked, Deferred |
-| In Progress | Review, Verify, Blocked, Deferred |
+| In Progress | Review, Blocked, Deferred |
 | Blocked | Ready, In Progress |
-| Review | In Progress, Verify, Done |
-| Verify | In Progress, Review, Done |
+| Review | Verify, In Progress, Blocked, Deferred |
+| Verify | Done, Review, Blocked, Deferred |
 | Done | In Progress (explicit reopen/recovery only) |
 | Rejected | none (terminal) |
 | Deferred | Ready |

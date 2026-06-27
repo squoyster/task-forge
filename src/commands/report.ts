@@ -42,13 +42,15 @@ export async function cmdReport(taskId: string, options?: ReportOptions): Promis
   }
 
   if (options?.complete) {
-    const transitionError = validateTransition(task.status, STATUS.IMPLEMENTATION_COMPLETE);
+    // report --complete enters Review (TF-SIMP-02): implementation is done and
+    // ready for review. Reviewers gate the path to Verify/Done.
+    const transitionError = validateTransition(task.status, STATUS.REVIEW);
     if (transitionError) {
       if (options?.json) {
         writeResult(failedResult({ command: "report", taskId, error: transitionError, code: "INVALID_TRANSITION" }), options.json);
         return;
       }
-      throw new InvalidStatusTransitionError(task.status, STATUS.IMPLEMENTATION_COMPLETE, [STATUS.IN_PROGRESS]);
+      throw new InvalidStatusTransitionError(task.status, STATUS.REVIEW, [STATUS.IN_PROGRESS]);
     }
 
     // Check AC state for reviewer awareness
@@ -56,11 +58,11 @@ export async function cmdReport(taskId: string, options?: ReportOptions): Promis
     const hasBlankAC = hasAC && hasBlankAcceptanceCriteria(task.body);
     const hasUncheckedAC = hasAC && hasUncheckedAcceptanceCriteria(task.body);
 
-    updateTaskStatus(task.filePath, STATUS.IMPLEMENTATION_COMPLETE);
+    updateTaskStatus(task.filePath, STATUS.REVIEW);
 
     const today = new Date().toISOString().split("T")[0];
     appendAgentNote(task.filePath, today, "System", [
-      `Report generated — task moved to Implementation Complete`,
+      `Report generated — task moved to Review`,
       `Changed files: ${changedFiles.length > 0 ? changedFiles.join(", ") : "none"}`,
       `Commits: ${commits.length > 0 ? commits.join(", ") : "none"}`,
       `AC section: ${hasAC ? "present" : "missing"}`,
@@ -68,16 +70,16 @@ export async function cmdReport(taskId: string, options?: ReportOptions): Promis
       hasUncheckedAC ? "AC has unchecked items" : "",
     ].filter(Boolean));
 
-    await commitAndPushTaskState(repoRoot, `chore: report ${taskId} → Implementation Complete`);
+    await commitAndPushTaskState(repoRoot, `chore: report ${taskId} → Review`);
 
     if (options?.json) {
       writeResult(successResult({
         command: "report",
         taskId,
-        guidance: `Task ${taskId} moved to Implementation Complete. Verify AC before submitting.`,
+        guidance: `Task ${taskId} moved to Review. Verify AC before advancing to Verify/Done.`,
         nextCommands: [
-          { command: `taskforge done ${taskId}`, purpose: "Mark task as Done after AC verification passes", when: "Mark task as Done after AC verification passes", allowedFor: "all", priority: 1 },
-          { command: `taskforge start ${taskId}`, purpose: "Return to In Progress if AC verification fails", when: "Return to In Progress if AC verification fails", allowedFor: "all", priority: 2 },
+          { command: `taskforge promote ${taskId} --to Verify`, purpose: "Advance to verification after review passes", when: "Advance to verification after review passes", allowedFor: "all", priority: 1 },
+          { command: `taskforge promote ${taskId} --to "In Progress"`, purpose: "Return to In Progress if AC verification fails", when: "Return to In Progress if AC verification fails", allowedFor: "all", priority: 2 },
           { command: `taskforge block ${taskId} "AC verification failed: <details>" --category ambiguous_spec --blocked-by reviewer`, purpose: "Block if AC are unclear or cannot be verified", when: "Block if AC are unclear or cannot be verified", allowedFor: "all", priority: 3 },
         ],
       }), options.json);
@@ -86,11 +88,11 @@ export async function cmdReport(taskId: string, options?: ReportOptions): Promis
 
     logHeader(`# Report: ${taskId}`);
     logDivider();
-    logSub(`Status: ${STATUS.IMPLEMENTATION_COMPLETE}`);
+    logSub(`Status: ${STATUS.REVIEW}`);
     logSub(`Changed files: ${changedFiles.length > 0 ? changedFiles.join(", ") : "none"}`);
     logSub(`Commits: ${commits.length > 0 ? commits.join(", ") : "none"}`);
     logDivider();
-    logSuccess(`Task ${taskId} moved to Implementation Complete.`);
+    logSuccess(`Task ${taskId} moved to Review.`);
     logDivider();
     logInfo("Reviewer Instructions:");
     logSub("1. Read the task file and extract every acceptance criterion.");
@@ -99,9 +101,9 @@ export async function cmdReport(taskId: string, options?: ReportOptions): Promis
     logSub("   - Identifier (function name, test name, or ~line number)");
     logSub("   - Rationale (one sentence on how the code satisfies the AC)");
     logSub("3. Run gates: npm run typecheck && npm run lint && npm run build && npm test -- --run");
-    logSub("4. If all AC pass → taskforge done TASK-ID");
-    logSub("5. If any AC fails → taskforge start TASK-ID (return to In Progress)");
-    logSub("6. If AC are unclear → taskforge block TASK-ID \"reason\" --category ambiguous_spec");
+    logSub(`4. If all AC pass → taskforge promote ${taskId} --to Verify`);
+    logSub(`5. If any AC fails → taskforge promote ${taskId} --to "In Progress"`);
+    logSub(`6. If AC are unclear → taskforge block ${taskId} "reason" --category ambiguous_spec`);
     logDivider();
     if (!hasAC) {
       logWarn("Warning: No Acceptance Criteria section found in task file.");
@@ -119,7 +121,7 @@ export async function cmdReport(taskId: string, options?: ReportOptions): Promis
       taskId,
       guidance: `Report generated for ${taskId}.`,
       nextCommands: [
-        { command: `taskforge report ${taskId} --complete`, purpose: "Generate completion report and move to Implementation Complete", when: "Generate completion report and move to Implementation Complete", allowedFor: "all", priority: 1 },
+        { command: `taskforge report ${taskId} --complete`, purpose: "Generate completion report and move to Review", when: "Generate completion report and move to Review", allowedFor: "all", priority: 1 },
         { command: "taskforge gates", purpose: "Run gates before generating report", when: "Run gates before generating report", allowedFor: "all", priority: 2 },
       ],
     }), options.json);
@@ -128,13 +130,13 @@ export async function cmdReport(taskId: string, options?: ReportOptions): Promis
 
   logHeader(`# Report: ${taskId}`);
   logDivider();
-  logSub(`Status: ${options?.complete ? STATUS.IMPLEMENTATION_COMPLETE : task.status}`);
+  logSub(`Status: ${options?.complete ? STATUS.REVIEW : task.status}`);
   logSub(`Changed files: ${changedFiles.length > 0 ? changedFiles.join(", ") : "none"}`);
   logSub(`Commits: ${commits.length > 0 ? commits.join(", ") : "none"}`);
   logDivider();
   if (!options?.complete) {
     logInfo("Next actions:");
-    logSub(`  taskforge report ${taskId} --complete  — Generate completion report and move to Implementation Complete`);
+    logSub(`  taskforge report ${taskId} --complete  — Generate completion report and move to Review`);
     logSub(`  taskforge gates                       — Run gates before generating report`);
   }
 }

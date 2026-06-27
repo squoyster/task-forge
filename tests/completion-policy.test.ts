@@ -274,20 +274,20 @@ describe("checkCompletionEligibility — code-bearing tasks", () => {
     expect(result.reasons).toHaveLength(0);
   });
 
-  it("suggests SUBMITTED when no PR is recorded", async () => {
+  it("suggests Review when no PR is recorded", async () => {
     const result = await checkCompletionEligibility(
       { ...defaultTask, pr: undefined },
       defaultConfig,
     );
-    expect(result.suggestedStatus).toBe(STATUS.SUBMITTED);
+    expect(result.suggestedStatus).toBe(STATUS.REVIEW);
   });
 
-  it("suggests MERGE_READY when PR is not merged", async () => {
+  it("suggests Review when PR is not merged", async () => {
     const result = await checkCompletionEligibility(
       { ...defaultTask, pr_merged: false },
       defaultConfig,
     );
-    expect(result.suggestedStatus).toBe(STATUS.MERGE_READY);
+    expect(result.suggestedStatus).toBe(STATUS.REVIEW);
   });
 
   it("returns machine-readable error codes in preconditions", async () => {
@@ -334,8 +334,8 @@ describe("deriveExpectedStatus", () => {
     expect(deriveExpectedStatus({ status: STATUS.DEFERRED })).toBe(STATUS.DEFERRED);
   });
 
-  it("returns SUBMITTED when branch exists but no PR", () => {
-    expect(deriveExpectedStatus({ status: STATUS.IN_PROGRESS, branch: "agent/foo" })).toBe(STATUS.SUBMITTED);
+  it("returns Review when branch exists but no PR", () => {
+    expect(deriveExpectedStatus({ status: STATUS.IN_PROGRESS, branch: "agent/foo" })).toBe(STATUS.REVIEW);
   });
 
   it("returns REVIEW when PR exists but not merged", () => {
@@ -368,7 +368,7 @@ describe("checkCompletionEligibility — integration scenarios", () => {
       { integrationBranch: "main" },
     );
     expect(result.eligible).toBe(false);
-    expect(result.suggestedStatus).toBe(STATUS.SUBMITTED);
+    expect(result.suggestedStatus).toBe(STATUS.REVIEW);
   });
 
   it("Scenario: open PR, mergeable, checks passing → not Done (not merged)", async () => {
@@ -391,7 +391,7 @@ describe("checkCompletionEligibility — integration scenarios", () => {
       verifier,
     );
     expect(result.eligible).toBe(false);
-    expect(result.suggestedStatus).toBe(STATUS.MERGE_READY);
+    expect(result.suggestedStatus).toBe(STATUS.REVIEW);
   });
 
   it("Scenario: open PR with conflicts → not Done", async () => {
