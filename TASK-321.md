@@ -1,11 +1,12 @@
 ---
 id: TASK-321
 type: Task
-status: Ready
+status: Done
 priority: P2
 agentRole: Implementer
 riskLevel: High
 humanInterventionRequired: false
+completed_at: 2026-06-27T22:02:33Z
 dependsOn:
   - TASK-320
 spec_hash: 2e9f4d825cb27a1d
@@ -46,12 +47,12 @@ Forbidden files/directories:
 - `src/core/config.ts`, `src/util/paths.ts`, `.taskforge/config.json`, `opencode.json`, `dist/**`
 
 ## Acceptance Criteria
-- [ ] Default `taskforge --help` fits the documented core taxonomy and omits hidden/optional commands.
-- [ ] Hidden recovery commands remain callable; no compatibility aliases are added.
-- [ ] `sync`, `deps`, and `mcp` require explicit opt-in and do not initialize by default.
-- [ ] `next --json` is sufficient to select, claim/resume ownership, create or enter the direct-git worktree, load the compact prompt, and recognize doctor/blocked states without broad docs.
-- [ ] Every returned next action passes the executable-command contract from TF-SIMP-01.
-- [ ] Help and representative `next --json` states have contract tests.
+- [x] Default `taskforge --help` fits the documented core taxonomy and omits hidden/optional commands.
+- [x] Hidden recovery commands remain callable; no compatibility aliases are added.
+- [x] `sync`, `deps`, and `mcp` require explicit opt-in and do not initialize by default.
+- [x] `next --json` is sufficient to select, claim/resume ownership, create or enter the direct-git worktree, load the compact prompt, and recognize doctor/blocked states without broad docs.
+- [x] Every returned next action passes the executable-command contract from TF-SIMP-01.
+- [x] Help and representative `next --json` states have contract tests.
 
 ## Test / Verification Command
 ```bash
@@ -84,13 +85,40 @@ Auto-continue unless gates fail. Stop if a hidden command loses its authority ch
 - dependsOn set to [TASK-320]
 
 ## Result
+Implemented. Default `--help` exposes only the 10 entry commands (init, next,
+prompt, inspect, list, new, update, gates, validate-state, doctor). 19
+contextual/recovery commands are registered with `{ hidden: true }` (callable,
+not advertised; discovered via `next --json`). `sync`/`deps` gate on
+`TASKFORGE_WITH_DEPS`; `mcp` now gates on `TASKFORGE_WITH_MCP` (was always-on).
+
+`next --json` enriched for self-sufficiency: added `owner` (assignee/null),
+`cwd` (worktree or repo root), `prompt` (`taskforge prompt <id>` reference),
+and always-present `workspace` (expected worktree path via getWorktreePath +
+branch + exists flag). The result already carried `nextActions` (ordered,
+executable, per-action safety), `prohibitedActions`, `guidance` (reason), and
+`task.statusLabel`.
+
+Reworded stale `STANDARD_PROHIBITED_ACTIONS` reasons: `git worktree add` / `git
+branch -D` previously referenced deleted `taskforge start` / `done
+--delete-branch` commands (TASK-320 residual); now "Forbidden in managed agent
+sessions" (consistent with commit/push). This cleans the command-result.ts
+Option-B residual from TASK-320.
+
+cli.ts exports `VISIBLE_COMMANDS`/`HIDDEN_COMMANDS` constants; `program.parse()`
+guarded behind isMainEntry check so the program is importable in tests. New
+contract test `tests/cli-help.test.ts` (5 tests) verifies: visible commands in
+--help, hidden commands omitted, opt-in commands absent, hidden commands
+callable, opt-in absent without env var.
+
+Gates: typecheck 0 errors, lint 0 errors (26 pre-existing no-explicit-any
+warnings), build success, 864 tests pass / 73 files.
 
 ## Links
 - Issue:
 - Project Item:
-- PR:
-- Branch:
-- Worktree:
+- PR: https://github.com/squoyster/task-forge/pull/new/agent/TASK-321-minimal-cli-complete-next-json
+- Branch: agent/TASK-321-minimal-cli-complete-next-json
+- Worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-321
 - CI:
 - Test Log:
 
