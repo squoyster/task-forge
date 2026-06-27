@@ -1,11 +1,12 @@
 ---
 id: TASK-319
 type: Task
-status: Ready
+status: Done
 priority: P2
 agentRole: Implementer
 riskLevel: High
 humanInterventionRequired: false
+completed_at: 2026-06-27T14:47:06Z
 dependsOn:
   - TASK-318
 spec_hash: 28f8a53437cd8e1b
@@ -41,12 +42,12 @@ Forbidden files/directories:
 - `src/cli.ts`, `opencode.json`, `dist/**`
 
 ## Acceptance Criteria
-- [ ] Fresh config has one documented task-state path and one unambiguous worktree-root path.
-- [ ] `getTaskStateDir` and `getWorktreesDir` honor non-default relative and absolute configurations.
-- [ ] Resolving from the main checkout and a linked worktree yields the same durable locations.
-- [ ] `init` no longer creates or advertises `main/tasks` as live state.
-- [ ] No retained config field is decorative; dead `config.yaml` behavior is removed or proven active in the task result.
-- [ ] Existing default installations retain the current sibling task-state and worktree layout.
+- [x] Fresh config has one documented task-state path and one unambiguous worktree-root path.
+- [x] `getTaskStateDir` and `getWorktreesDir` honor non-default relative and absolute configurations.
+- [x] Resolving from the main checkout and a linked worktree yields the same durable locations.
+- [x] `init` no longer creates or advertises `main/tasks` as live state.
+- [x] No retained config field is decorative; dead `config.yaml` behavior is removed or proven active in the task result.
+- [x] Existing default installations retain the current sibling task-state and worktree layout.
 
 ## Test / Verification Command
 ```bash
@@ -79,12 +80,30 @@ Auto-continue unless gates fail or a forbidden file must be touched. Stop if res
 
 ## Result
 
+Implemented config-authoritative storage paths. Removed every decorative path field; the two retained path fields are now runtime-honored:
+
+**Schema (`config.ts`):** dropped `tasks.directory`/`idPrefix`/`template` and `worktrees.branchPrefix` (none were ever read by runtime — verified zero production readers; `getNextId` hardcodes `TASK-`, `makeBranchName` hardcodes `agent/`). Replaced with `tasks.stateDir` (default `../task-state`, relative to MAIN repo root or absolute) and kept `worktrees.root` (default `../worktrees`, documented as the PARENT containing `<repoName>/<taskId>`).
+
+**Paths (`paths.ts`):** `getTaskStateDir`/`getWorktreesDir` now resolve against the MAIN repo root (via `getMainRepoRoot`) reading config (memoized per mainRoot, cache cleared on `setRepoRoot`). This makes resolution identical from the main checkout and any linked worktree (AC #3) — previously `getWorktreesDir` used the worktree's own path + name, a latent bug for worktree invocation. `getWorktreesDir` now uses the MAIN repo name. Removed dead `getTasksDir` (the `main/tasks` contract) and `getConfigPath` (the `.taskforge/config.yaml` accessor — config is JSON). Absolute `stateDir`/`root` honored via `path.resolve`.
+
+**Init (`init.ts`):** writes a truthful config (`tasks: { stateDir }`, `worktrees: { root }`) — no decorative keys. The `main/tasks → task-state` migration is retained (it migrates legacy, does not create active state).
+
+**`.taskforge/config.json`** (this repo): updated to the new shape.
+
+**Backward compatibility (AC #6):** existing installs with old config keys keep working — zod strips unknown keys (`directory`/`idPrefix`/`template`/`branchPrefix`), and absent `stateDir` defaults to `../task-state`, matching the prior hardcoded behavior. Added a test (`config.test.ts`) asserting decorative keys are stripped.
+
+**Tests:** `tests/paths.test.ts` — removed dead `getTasksDir`/`getConfigPath` tests; added 4 TF-SIMP-03 tests (non-default relative `stateDir`, absolute `stateDir`, non-default `worktrees.root`, main-vs-linked-worktree equivalence via a real linked git worktree). `tests/commands/next.test.ts` — config mock now returns path fields (direct consequence of paths becoming config-aware).
+
+**AC verification:** `rg 'getTasksDir|tasks/TEMPLATE\.md|tasks\.directory|config\.yaml' src .taskforge/config.json docs/workflow.md docs/agent-framework-integration.md` → clean (0 matches).
+
+Gates: typecheck 0 errors; lint 0 errors (26 pre-existing warnings); build success; **881 tests pass** (75 files).
+
 ## Links
 - Issue:
 - Project Item:
-- PR:
-- Branch:
-- Worktree:
+- PR: https://github.com/squoyster/task-forge/pull/new/agent/TASK-319-config-authoritative-storage
+- Branch: agent/TASK-319-config-authoritative-storage
+- Worktree: /Volumes/Transcend/devel/worktrees/task-forge/TASK-319
 - CI:
 - Test Log:
 
