@@ -1,7 +1,7 @@
 ---
 id: TASK-320
 type: Task
-status: Inbox
+status: Needs Spec
 priority: P2
 agentRole: Implementer
 riskLevel: High
