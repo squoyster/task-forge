@@ -4,11 +4,12 @@ type: Task
 status: Inbox
 priority: P2
 agentRole: Implementer
-riskLevel: Low
+riskLevel: High
 humanInterventionRequired: false
-spec_hash: b0957fcff167c838
+dependsOn:
+  - TASK-322
+spec_hash: 3b932788904dc787
 ---
-
 # TASK-324: TF-EMBED-02: Replace the MCP command mirror with a typed task/state contract
 ## Goal
 Provide an optional MCP server that exposes TaskForge's stable task/state kernel through structured tools and resources without exposing repository mutation. The current MCP captures CLI stdout and mirrors `status`, `start`, and `done`, including worktree cleanup. This is brittle, untyped at the result boundary, and tied to the old lifecycle. A small MCP contract materially improves interoperability for agents that support MCP.
@@ -76,6 +77,11 @@ Risk: High. A second mutation implementation would split invariants. MCP handler
 Stop if a second mutation implementation appears. Require mutating-tool invariant parity tests.
 
 ## Agent Notes
+
+### 2026-06-27T00:00:00Z System
+- Task updated via taskforge update
+- riskLevel set to "High"
+- dependsOn set to [TASK-322]
 
 ## Result
 
