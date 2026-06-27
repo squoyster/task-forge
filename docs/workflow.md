@@ -5,7 +5,7 @@ Operating contract for humans and agents. This file + the live CLI output win on
 ## Model
 
 - **Direct-git, permissive.** Agents use raw git for all routine work (commits, pushes, branches, worktrees, and task-state edits). The git facade was removed (TASK-312). `taskforge` CLI is optional except where noted.
-- Authoritative task state lives in `../task-state/` (the `task-state` worktree), not `tasks/` on `main`. Task-state commits/pushes use `TASKFORGE_INTERNAL=1` (hooks block otherwise).
+- Authoritative task state lives in `../task-state/` (the `task-state` worktree), not `tasks/` on `main`. The task-state and worktree paths are **config-authoritative** (`.taskforge/config.json`: `tasks.stateDir`, `worktrees.root`), resolved against the main repo root so they are identical from the main checkout or any linked worktree. Task-state commits/pushes use `TASKFORGE_INTERNAL=1` (hooks block otherwise).
 - `taskforge next|inspect|list|gates` are useful for reading state. `--json` output is authoritative.
 - **All changes to `main` via PR.** Work in a worktree per task; push the branch; a human merges the PR.
 - **Stop all work** if `.doctor-lock` exists.

@@ -21,9 +21,14 @@ vi.mock("../../src/core/git.js", () => ({
   checkUncommittedWorktrees: vi.fn().mockResolvedValue([]),
 }));
 
-// Mock config to return harmless defaults
+// Mock config to return harmless defaults (path fields included so config-aware
+// getTaskStateDir/getWorktreesDir resolve — TF-SIMP-03).
 vi.mock("../../src/core/config.js", () => ({
-  loadConfig: vi.fn().mockReturnValue({}),
+  loadConfig: vi.fn().mockReturnValue({
+    tasks: { stateDir: "../task-state" },
+    worktrees: { root: "../worktrees" },
+    github: { enabled: false },
+  }),
 }));
 
 // Mock GitHub service to avoid API calls in tests
@@ -192,6 +197,8 @@ describe("cmdNext", () => {
   it("warns about open agent PRs when GitHub is configured", async () => {
     makeTaskFile("TASK-001", { status: "Ready" });
     vi.mocked(loadConfig).mockReturnValue({
+      tasks: { stateDir: "../task-state" },
+      worktrees: { root: "../worktrees" },
       github: { enabled: true, owner: "test", repo: "test", token: "ghp_test" },
     } as any);
     vi.mocked(listPullRequests).mockResolvedValue([
@@ -207,7 +214,11 @@ describe("cmdNext", () => {
 
   it("does not warn about open PRs when GitHub is not configured", async () => {
     makeTaskFile("TASK-001", { status: "Ready" });
-    vi.mocked(loadConfig).mockReturnValue({});
+    vi.mocked(loadConfig).mockReturnValue({
+      tasks: { stateDir: "../task-state" },
+      worktrees: { root: "../worktrees" },
+      github: { enabled: false },
+    });
     vi.mocked(listPullRequests).mockResolvedValue([
       { number: 99, title: "Hidden PR", headRefName: "agent/TASK-200", body: "", draft: false, url: "" },
     ]);

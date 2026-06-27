@@ -167,8 +167,8 @@ export async function cmdInit(options: InitOptions = {}): Promise<void> {
     }
     const config = {
       project: { name: path.basename(repoRoot), defaultBranch },
-      tasks: { stateBranch: "task-state", stateDir: "../task-state", directory: "tasks", idPrefix: "TASK", template: "TEMPLATE.md" },
-      worktrees: { root: "../worktrees", branchPrefix: "agent" },
+      tasks: { stateDir: "../task-state" },
+      worktrees: { root: "../worktrees" },
       github: { enabled: false },
       opencode: { enabled: true, command: "opencode" },
       continuation: { autoContinue: true, maxTaskFixIterations: 3 },

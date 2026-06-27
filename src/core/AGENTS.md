@@ -46,6 +46,7 @@ The core engine implements the TaskForge state machine, task lifecycle, git oper
 - **Audit Trail** (`audit.ts`): Every state change, command, and lifecycle event is logged.
 - **Error Handling** (`errors.ts`): Use structured `TaskForgeError` subclasses. Never throw raw `Error`.
 - **Config** (`config.ts`): Configuration loaded from `.taskforge/config.json`.
+- **Storage Paths** (`paths.ts`, config-authoritative since TF-SIMP-03): `tasks.stateDir` (default `../task-state`) and `worktrees.root` (default `../worktrees`, parent of `<repoName>/<taskId>`) are runtime-honored. `getTaskStateDir`/`getWorktreesDir` resolve against the MAIN repo root, so identical from main checkout or linked worktree. No decorative path fields.
 - **Agent Registry** (`agent-registry.ts`): Agents must heartbeat to maintain lease. Stale agents are swept.
 
 ## Work Guidance

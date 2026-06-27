@@ -4,13 +4,10 @@
     "defaultBranch": "main"
   },
   "tasks": {
-    "directory": "tasks",
-    "idPrefix": "TASK",
-    "template": "tasks/TEMPLATE.md"
+    "stateDir": "../task-state"
   },
   "worktrees": {
-    "root": "../worktrees",
-    "branchPrefix": "agent"
+    "root": "../worktrees"
   },
   "github": {
     "enabled": true,

@@ -8,18 +8,19 @@ export const ConfigSchema = z.object({
     })
     .optional()
     .default({}),
+  // ponytail: TF-SIMP-03 made these runtime-authoritative (honored by getTaskStateDir/getWorktreesDir).
+  //   stateDir: relative to MAIN repo root (or absolute); resolves to the sibling task-state store.
+  //   root: PARENT dir; final worktree = <root>/<repoName>/<taskId>. Dropped decorative
+  //   directory/idPrefix/template/branchPrefix (never read by runtime).
   tasks: z
     .object({
-      directory: z.string().default("tasks"),
-      idPrefix: z.string().default("TASK"),
-      template: z.string().default("tasks/TEMPLATE.md"),
+      stateDir: z.string().default("../task-state"),
     })
     .optional()
     .default({}),
   worktrees: z
     .object({
       root: z.string().default("../worktrees"),
-      branchPrefix: z.string().default("agent"),
     })
     .optional()
     .default({}),

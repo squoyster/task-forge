@@ -10,7 +10,7 @@ describe("ConfigSchema", () => {
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.project.defaultBranch).toBe("main");
-      expect(result.data.tasks.directory).toBe("tasks");
+      expect(result.data.tasks.stateDir).toBe("../task-state");
       expect(result.data.worktrees.root).toBe("../worktrees");
       expect(result.data.github.enabled).toBe(false);
       expect(result.data.opencode.enabled).toBe(true);
@@ -42,8 +42,8 @@ describe("ConfigSchema", () => {
   it("parses a full custom config", () => {
     const config = {
       project: { name: "my-project", defaultBranch: "develop" },
-      tasks: { directory: "todos", idPrefix: "PROJ", template: "todos/template.md" },
-      worktrees: { root: "../wt", branchPrefix: "bot" },
+      tasks: { stateDir: "../custom-state" },
+      worktrees: { root: "../wt" },
       github: { enabled: true, owner: "myorg", repo: "myrepo", projectNumber: 1 },
       opencode: { enabled: false, command: "custom-cli" },
       continuation: { autoContinue: false, maxTaskFixIterations: 5, allowDraftPr: false, allowCommit: false, allowPush: true },
@@ -59,10 +59,27 @@ describe("ConfigSchema", () => {
     if (result.success) {
       expect(result.data.project.name).toBe("my-project");
       expect(result.data.project.defaultBranch).toBe("develop");
-      expect(result.data.tasks.directory).toBe("todos");
+      expect(result.data.tasks.stateDir).toBe("../custom-state");
+      expect(result.data.worktrees.root).toBe("../wt");
       expect(result.data.github.owner).toBe("myorg");
       expect(result.data.dependencies.scan.snyk).toBe(true);
       expect(result.data.dependencies.policy.maxLockfileChangedPackagesWithoutReview).toBe(50);
+    }
+  });
+
+  it("strips decorative legacy path keys (directory/idPrefix/template/branchPrefix) from TF-SIMP-03", () => {
+    const result = ConfigSchema.safeParse({
+      tasks: { directory: "tasks", idPrefix: "PROJ", template: "tasks/TEMPLATE.md", stateDir: "../task-state" },
+      worktrees: { root: "../worktrees", branchPrefix: "bot" },
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.tasks.stateDir).toBe("../task-state");
+      expect(result.data.tasks).not.toHaveProperty("directory");
+      expect(result.data.tasks).not.toHaveProperty("idPrefix");
+      expect(result.data.tasks).not.toHaveProperty("template");
+      expect(result.data.worktrees.root).toBe("../worktrees");
+      expect(result.data.worktrees).not.toHaveProperty("branchPrefix");
     }
   });
 
