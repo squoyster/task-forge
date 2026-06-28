@@ -1,43 +1,24 @@
-# Documentation — TaskForge
+# AGENTS.md - Docs Overlay
 
-## Purpose
+Purpose: documentation-specific rules for TaskForge. Workflow rules live in `docs/workflow.md`; this file only owns docs-layer deltas.
 
-Project documentation for TaskForge: architecture specs, workflow contracts, deployment guides, and design decisions. The canonical agent workflow contract is `docs/workflow.md`.
+## Docs Rules
 
-## Ownership
-
-| Document | Path | Purpose |
-|---|---|---|
-| Workflow Contract | `workflow.md` | Canonical agent/human workflow; overrides conflicting docs |
-| Architecture: State Machine | `architecture/command-state-machine-and-invariants.md` | Task lifecycle state machine and invariant rules |
-| Architecture: Return Contract | `architecture/command-return-contract.md` | CommandResult shape and serialization contract |
-| Agent Framework Integration | `agent-framework-integration.md` | How TaskForge integrates with agent frameworks |
-| Control Plane Hardening | `control-plane-hardening.md` | Error recovery and resilience design |
-| GitHub Task State Protection | `github-task-state-protection.md` | Branch protection rules for task state |
-| Next Action Semantics | `next-action-semantics.md` | Semantics of the `nextAction` field in CommandResult |
-| Deployment: Container | `deployment/container-runtime.md` | Container runtime configuration |
-| Decisions | `decisions/` | Design decision records (currently empty) |
-
-## Local Contracts
-
-- `workflow.md` is the canonical workflow contract. If another doc (including AGENTS.md) conflicts with `workflow.md`, `workflow.md` wins for workflow rules.
-- Architecture docs in `architecture/` define contracts that source code implements.
-- Do not store temporary or session-specific content in `docs/`.
-
-## Work Guidance
-
-- Update `docs/workflow.md` when agent workflow rules change.
-- Update `docs/architecture/` docs when state machine, return contract, or invariants change.
-- Add ADR-style records to `docs/decisions/` for significant design choices.
-- Do not create new docs unless necessary — prefer updating existing ones.
-- Keep documentation concise, current, and operational.
-
-## Verification
-
-N/A — docs are informational. Verify accuracy against source code when updating.
+```axl
+R000 docs | workflow_contract -> `docs/workflow.md` is canonical for agent/human workflow and overrides conflicting docs.
+R001 docs | ownership -> `agent-framework-integration.md`, `control-plane-hardening.md`, `github-task-state-protection.md`, `next-action-semantics.md`, `architecture/command-state-machine-and-invariants.md`, `architecture/command-return-contract.md`, and `deployment/container-runtime.md` belong here.
+R002 docs | temporary_content -> F store session-specific or transient material in `docs/`.
+R010 docs | update_workflow -> when workflow rules change, update `docs/workflow.md`.
+R011 docs | update_architecture -> when state machine, return contract, or invariant rules change, update the matching `docs/architecture/*.md` file.
+R012 docs | update_deployment -> when container/runtime behavior changes, update `docs/deployment/container-runtime.md`.
+R013 docs | prefer_existing -> M update existing docs over creating new ones unless a new doc is necessary.
+R014 docs | quality -> keep docs concise, current, and operational.
+R020 docs | verify_accuracy -> verify doc changes against source code or live contracts when relevant.
+```
 
 ## Child DOX Index
 
-- `architecture/` — State machine and return contract specs.
-- `deployment/` — Deployment and runtime configuration.
-- `decisions/` — Design decision records (empty).
+```axl
+R150 child(architecture/)=`command-state-machine-and-invariants.md`, `command-return-contract.md`.
+R151 child(deployment/)=`container-runtime.md`.
+```
