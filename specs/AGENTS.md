@@ -1,147 +1,21 @@
-# TaskForge Agent Compact Guide
+# AGENTS.md - Specs Overlay
 
-## Control Plane
+Purpose: specification, gap-analysis, task-pack, and roadmap rules for TaskForge. This folder holds design-time documents, not runtime policy.
 
-- Use TaskForge for workflow.
-- Do not invent steps.
-- After each TaskForge command, pick exactly one returned `validNextCommands`.
-- If no valid agent action exists: stop, follow recovery.
-- `docs/workflow.md` is the canonical workflow contract.
+## Specs Rules
 
-## Startup
-
-```bash
-taskforge doctor --json
-taskforge validate-state --json
-taskforge next --json
+```axl
+R000 specs | scope -> design specs, gap analyses, task packs, roadmap docs, and the compact guide belong here.
+R001 specs | source_of_truth -> specs are planning and design artifacts; runtime workflow still comes from `docs/workflow.md`.
+R002 specs | compact_guide -> the operational Agent Compact Guide (direct-git routine, AC discipline, gates, file discovery) is authoritative in `docs/workflow.md` and the root `AGENTS.md`; this file defers to them rather than re-hosting them.
+R010 specs | update_when -> update specs when durable design, architecture, or task-pack assumptions change.
+R011 specs | no_session_noise -> F store transient session artifacts in `specs/`.
+R012 specs | prefer_existing -> M revise existing specs over creating new ones unless a new spec is required.
+R020 specs | verify -> check spec changes against the implementation, task state, or linked docs when the change depends on them.
 ```
 
-If blocked:
-- doctor issue: `taskforge doctor --json`
-- state issue: `taskforge doctor` or create bug
-- outstanding task: finish/release current task
+## Child DOX Index
 
-## Hard Rules
-
-Never:
-- use `--force`
-- edit task-state files directly
-- use deprecated `main/tasks/` as truth
-- work on `main`
-- bypass TaskForge with workflow git
-- carry hidden context between tasks
-- skip ACs
-- mark Done without evidence
-
-## Workflow
-
-```bash
-taskforge start <TASK-ID>
-taskforge resume <TASK-ID>
-git diff
-taskforge gates
-git add -A && git commit -m "TASK-ID: ..."
-git push -u origin <branch>
-gh pr create
-taskforge report <TASK-ID> --complete
-taskforge done <TASK-ID>
+```axl
+R150 child(specs docs)=`README.md`, `CHANGELOG.md`, `TASKFORGE.md`, `control-plane-hardening.md`, `github-task-state-protection.md`, `taskforge-slimming-refactor.md`, `taskforge-agent-policy-tasks.md`, `taskforge-agent-definitions-gap-analysis-tasks.md`, `taskforge-container-deployment-gap-analysis-tasks.md`, `taskforge-command-return-template.md`, `taskforge-control-plane-closure-spec.md`, `task-forge-rationalization-roadmap.md`, `task-forge-prescriptive-command-output-task-pack.md`, `task-forge-ac-repair-task-pack.md`, `taskforge_architecture_gap_analysis.md`, `fix-claim-start-self-deadlock-agent-prompt.md`.
 ```
-
-If gates fail: fix, rerun gates, commit.
-
-Use `taskforge start` only for Ready tasks. For `In Progress`, `Review`, and `Verify`, use `taskforge resume`; `taskforge next --json` will return the correct command.
-
-## Direct-Git Routine
-
-Agents use direct git for routine work (the git facade was removed):
-
-| Operation | Command |
-|---|---|
-| Review changes | `git diff` |
-| Commit | `git add -A && git commit -m "TASK-ID: ..."` |
-| Push | `git push -u origin <branch>` |
-| Open PR | `gh pr create` (or a human opens it) |
-
-Worktree and branch lifecycle still flow through TaskForge (`taskforge start`, `taskforge done`). Read-only git is always fine. Do not mutate task-state with git.
-
-## Acceptance Criteria
-
-Before coding:
-- read task
-- extract every `- [ ]` AC
-- block if ACs missing/ambiguous
-- map ACs to files/modules
-
-Before Done:
-- every AC must be `[x]`
-- every AC needs evidence:
-
-```md
-- [x] AC text — `src/file.ts` `symbolName`: rationale
-```
-
-Gates prove no breakage. AC evidence proves completion.
-
-## Deliverables
-
-Update when applicable:
-- AC checklist with evidence
-- `CHANGELOG.md` under `## [Unreleased]`
-- task notes via TaskForge/task-store API
-- `README.md` for CLI changes
-
-## Unknown State
-
-If no valid next action or unclear state:
-
-```bash
-taskforge new "Handle unclosed TaskForge state: <summary>" --type Bug --priority P1 --status Ready --body "<details>"
-taskforge block <TASK-ID> "Unhandled state requires human triage: <details>" --category unsafe_operation --blocked-by human
-```
-
-Do not guess.
-
-## Code Rules
-
-- TypeScript strict
-- ESM `.js` relative imports
-- no `any`; use `unknown` + narrowing
-- no unused vars; prefix `_`
-- no unnecessary comments
-- no `console.log`; use logging utilities
-- Zod for runtime validation
-- tests in `tests/`
-- npm only
-
-## Verification
-
-```bash
-npm run typecheck
-npm run lint
-npm run build
-npm test -- --run
-```
-
-## File Discovery
-
-Use indexes before broad search:
-
-1. `.agent/tf.ctx`
-2. `.agent/file.idx`
-3. `.agent/symbol.idx`
-4. `.agent/spec.idx`
-5. `.agent/task.idx`
-
-Avoid by default:
-- `session-ses_*.md`
-- `specs/session-ses_*.md`
-- `docs/archive/`
-- `.opencode/node_modules/`
-- `node_modules/`
-- broad `Volumes/`
-
-## Task Source
-
-Authoritative task state is TaskForge task-state worktree, not deprecated `main/tasks/`.
-
-Do not manually edit task files. Use TaskForge commands or task-store APIs where explicitly required by implementation code.
