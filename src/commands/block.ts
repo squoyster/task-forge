@@ -6,7 +6,7 @@ import { logSuccess, logSub, logInfo, logDivider } from "../util/logging.js";
 import { TaskNotFoundError, InvalidStatusTransitionError } from "../core/errors.js";
 import { getRepoRoot } from "../util/paths.js";
 import { assertTaskOwnership } from "../core/session.js";
-import { writeResult } from "../util/write-command-result.js";
+import { emitResult } from "../core/command-result.js";
 import { successResult, failedResult } from "../core/result-builder.js";
 
 export interface BlockOptions {
@@ -25,7 +25,7 @@ export async function cmdBlock(
 
   if (!task) {
     if (options.json) {
-      writeResult(failedResult({ command: "block", taskId, error: `Task ${taskId} not found`, code: "TASK_NOT_FOUND" }), options.json);
+      emitResult(failedResult({ command: "block", taskId, error: `Task ${taskId} not found`, code: "TASK_NOT_FOUND" }), options.json);
       return;
     }
     throw new TaskNotFoundError(taskId);
@@ -42,7 +42,7 @@ export async function cmdBlock(
         allowedFor: "all" as const,
         priority: 1 as const,
       }));
-      writeResult(failedResult({
+      emitResult(failedResult({
         command: "block",
         taskId,
         error: `Cannot transition from "${task.status}" to "${STATUS.BLOCKED}". Allowed: ${allowed.join(", ")}`,
@@ -86,7 +86,7 @@ export async function cmdBlock(
   await commitAndPushTaskState(repoRoot, `chore: block ${taskId} — ${reason}`);
 
   if (options.json) {
-    writeResult(successResult({
+    emitResult(successResult({
       command: "block",
       taskId,
       guidance: `Task ${taskId} is now blocked. Run 'taskforge next' to find the next available task, or 'taskforge resume <taskId>' to continue working on another in-progress task.`,

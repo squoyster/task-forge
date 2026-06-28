@@ -2,7 +2,7 @@ import { execa } from "execa";
 import { loadConfig } from "../core/config.js";
 import { logHeader, logDivider, logError, logSuccess, logInfo } from "../util/logging.js";
 import { getRepoRoot } from "../util/paths.js";
-import { writeResult } from "../util/write-command-result.js";
+import { emitResult } from "../core/command-result.js";
 import { successResult, failedResult } from "../core/result-builder.js";
 import { gatesStateMachine } from "../core/command-states.js";
 import { getDefaultGuidanceAdapter } from "../core/guidance-adapter.js";
@@ -120,7 +120,7 @@ export async function cmdGates(options?: GatesOptions): Promise<boolean> {
   // Surface pre-gate aborts (dirty tree, unknown gate) without running anything.
   if (error) {
     if (options?.json) {
-      writeResult(
+      emitResult(
         failedResult({ command: "gates", error, code: "GATES_ABORTED" }),
         options.json,
       );
@@ -156,7 +156,7 @@ export async function cmdGates(options?: GatesOptions): Promise<boolean> {
     logDivider();
     logInfo(result.guidance);
   } else {
-    writeResult(successResult({
+    emitResult(successResult({
       command: "gates",
       guidance: result.guidance,
     }), options.json);

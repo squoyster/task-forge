@@ -22,6 +22,8 @@ The core engine implements the TaskForge state machine, task lifecycle, git oper
 | State Validation | `state-validator.ts` | Validate entire task state for consistency |
 | Session | `session.ts`, `session-state.ts` | Per-agent session tracking |
 | Result Builder/Renderer | `result-builder.ts`, `result-renderer.ts` | Build and format CommandResult for CLI output |
+| Command Result Schema + Sink | `command-result.ts` | `TaskForgeCommandResultSchema` + `emitResult`/`setResultSink` (in-process capture for the MCP bridge) |
+| MCP Typed Bridge | `mcp-contract.ts` | `runCommandForResult`, `McpCommandResultSchema` (passthrough), `buildGetTaskResult`, task-resource builder, taskId traversal guard |
 | Next Command Maps | `next-command-maps.ts` | Map current state to valid next commands |
 | Continuation | `continuation.ts`, `completion-policy.ts` | Auto-continuation policy enforcement |
 | Control Files | `control-files.ts` | Runtime control file management |
@@ -42,6 +44,8 @@ The core engine implements the TaskForge state machine, task lifecycle, git oper
 ## Local Contracts
 
 - **CommandResult** (`command-states.ts`): Every command returns `{ ok, state, nextAction, guidance, errorCode?, context? }`. The `nextAction` drives agent behavior.
+- **Result Sink** (`command-result.ts`, TF-EMBED-02): `emitResult(result, json)` is the drop-in for `writeResult` that also pushes the typed result into a module-level sink (`setResultSink`). The MCP bridge installs the sink to capture structured results in-process — never by parsing stdout. Commands should call `emitResult`, not raw `process.stdout.write(renderResult...)`.
+- **MCP Typed Bridge** (`mcp-contract.ts`): `runCommandForResult` silences stdout, runs a CLI command function (json mode), and returns its typed result via the sink; throws-without-emit synthesise `COMMAND_THREW`/`NO_RESULT_EMIT`. `taskId` is an opaque token guarded against path traversal; resources never expose out-of-root paths.
 - **Task Schema** (`task.ts`): All tasks validated with Zod. Status transitions follow the state machine in `command-states.ts`.
 - **Git Operations** (`git.ts`): All git mutations go through this module. No direct git commands outside this file.
 - **Audit Trail** (`audit.ts`): Every state change, command, and lifecycle event is logged.

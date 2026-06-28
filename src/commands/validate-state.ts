@@ -1,12 +1,15 @@
 import { loadAllTasks } from "../core/task-store.js";
 import { validateTaskState } from "../core/state-validator.js";
 import { logSuccess, logWarn, logInfo, logHeader, logDivider, logError, logSub } from "../util/logging.js";
-import { writeResult } from "../util/write-command-result.js";
+import { emitResult } from "../core/command-result.js";
 import { successResult, failedResult } from "../core/result-builder.js";
 
 export interface ValidateStateOptions {
   json?: boolean;
   strict?: boolean;
+  /** When true, never call process.exit (used by the MCP bridge, which runs
+   *  commands in-process and reads results from the result sink). */
+  emitOnly?: boolean;
 }
 
 export async function cmdValidateState(options?: ValidateStateOptions): Promise<void> {
@@ -17,7 +20,7 @@ export async function cmdValidateState(options?: ValidateStateOptions): Promise<
 
   if (options?.json) {
     if (hasIssues) {
-      writeResult(failedResult({
+      emitResult(failedResult({
         command: "validate-state",
         error: strict
           ? `${result.errors.length} error(s), ${result.warnings.length} warning(s) found (strict mode).`
@@ -43,7 +46,7 @@ export async function cmdValidateState(options?: ValidateStateOptions): Promise<
         ],
       }), options.json);
     } else {
-      writeResult(successResult({
+      emitResult(successResult({
         command: "validate-state",
         guidance: "State is valid — no issues found.",
         nextCommands: [
@@ -58,7 +61,7 @@ export async function cmdValidateState(options?: ValidateStateOptions): Promise<
       }), options.json);
     }
 
-    if (hasIssues) {
+    if (hasIssues && !options?.emitOnly) {
       process.exit(1);
     }
     return;
@@ -130,7 +133,7 @@ export async function cmdValidateState(options?: ValidateStateOptions): Promise<
     logSub("   Safety: safe");
   }
 
-  if (hasIssues) {
+  if (hasIssues && !options?.emitOnly) {
     process.exit(1);
   }
 }
