@@ -164,3 +164,75 @@ export function getSkillFilePlanEntries(
     };
   });
 }
+
+/**
+ * Drift diagnostic for a single managed skill. Structurally compatible with
+ * DoctorIssue/DoctorRepair so adapters can spread it without mapping.
+ */
+export interface SkillFileDiagnostic {
+  severity: "error" | "warn" | "info";
+  code: string;
+  message: string;
+  relativePath: string;
+}
+
+/**
+ * Detect drift of managed skill files (R-E03-002). A managed skill is healthy
+ * when present with byte-identical canonical content. Drift classes:
+ *  - SKILL_MISSING: file absent or unreadable.
+ *  - SKILL_STALE:   present but content differs from canonical source.
+ * Byte-equality implies valid frontmatter (canonical source is validated by
+ * skill-files.test.ts), so no separate malformed class is needed.
+ */
+export function doctorSkillFiles(projectRoot: string): SkillFileDiagnostic[] {
+  const diags: SkillFileDiagnostic[] = [];
+  for (const skill of TASKFORGE_SKILLS) {
+    const fullPath = path.join(projectRoot, skill.relativePath);
+    if (!fs.existsSync(fullPath)) {
+      diags.push({
+        severity: "error",
+        code: "SKILL_MISSING",
+        message: `Managed skill missing: ${skill.relativePath} — run 'taskforge doctor --fix' to reinstall`,
+        relativePath: skill.relativePath,
+      });
+      continue;
+    }
+    let content: string;
+    try {
+      content = fs.readFileSync(fullPath, "utf-8");
+    } catch {
+      diags.push({
+        severity: "error",
+        code: "SKILL_MISSING",
+        message: `Managed skill unreadable: ${skill.relativePath}`,
+        relativePath: skill.relativePath,
+      });
+      continue;
+    }
+    if (content !== skill.content) {
+      diags.push({
+        severity: "warn",
+        code: "SKILL_STALE",
+        message: `Managed skill drifted from canonical source: ${skill.relativePath}`,
+        relativePath: skill.relativePath,
+      });
+    }
+  }
+  return diags;
+}
+
+/**
+ * Idempotently repair managed skill drift (R-E03-002, R-E03-003). Reinstalls
+ * ONLY the canonical managed files via installSkillFiles; unmanaged neighbors
+ * are untouched. Returns one repair entry per detected drift; a no-drift call
+ * returns [] and writes nothing.
+ */
+export function fixSkillFiles(projectRoot: string): Array<{ code: string; message: string }> {
+  const diags = doctorSkillFiles(projectRoot);
+  if (diags.length === 0) return [];
+  installSkillFiles(projectRoot, false);
+  return diags.map((d) => ({
+    code: d.code,
+    message: `Reinstalled ${d.relativePath} from canonical source`,
+  }));
+}

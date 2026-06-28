@@ -5,6 +5,7 @@ import { installAgentsMd } from "./agents-md.js";
 import { RUNTIME_AUDIT_BASE } from "./audit.js";
 import { installOpenCodeConfig } from "./opencode-config.js";
 import { loadConfig } from "./config.js";
+import { doctorSkillFiles, fixSkillFiles } from "./skill-files.js";
 
 export interface DoctorIssue {
   severity: "error" | "warn" | "info";
@@ -61,6 +62,18 @@ export class OpenCodeAgentFrameworkAdapter implements AgentFrameworkAdapter {
         } else {
           issues.push({ severity: "warn", code: "OPENCODE_DOCTOR_AGENT", message: "opencode.json missing doctor agent" });
         }
+
+        // MCP taskforge block check (AC #3, R-E03-002): the managed block must
+        // exist; when enabled, it must be a valid local/stdio launcher.
+        const mcp = ocConfig?.mcp?.taskforge;
+        if (!mcp) {
+          issues.push({ severity: "warn", code: "OPENCODE_MCP_MISSING", message: "opencode.json missing mcp.taskforge block — run 'taskforge init --repair'" });
+        } else if (mcp.enabled === true) {
+          const validStdio = mcp.type === "local" && Array.isArray(mcp.command) && mcp.command.length > 0;
+          if (!validStdio) {
+            issues.push({ severity: "warn", code: "OPENCODE_MCP_INVALID_STDIO", message: "mcp.taskforge enabled but not a valid stdio launcher (need type:'local' + non-empty command[])" });
+          }
+        }
       } catch {
         issues.push({ severity: "warn", code: "OPENCODE_JSON", message: "opencode.json is not valid JSON" });
       }
@@ -73,6 +86,10 @@ export class OpenCodeAgentFrameworkAdapter implements AgentFrameworkAdapter {
     } else {
       issues.push({ severity: "info", code: "OPENCODE_AUDIT_DIR", message: "Audit directory not yet created (will be created on first event)" });
     }
+
+    // Managed skill drift (R-E03-002): shared across all skill-installing
+    // frameworks. opencode installs skills via its adapter.apply().
+    issues.push(...doctorSkillFiles(repoRoot));
 
     return issues;
   }
@@ -97,7 +114,7 @@ export class OpenCodeAgentFrameworkAdapter implements AgentFrameworkAdapter {
       }
     }
 
-    // Fix opencode.json
+    // Fix opencode.json (permissions + MCP block)
     const openCodeJsonPath = path.join(repoRoot, "opencode.json");
     if (!fs.existsSync(openCodeJsonPath)) {
       installOpenCodeConfig(repoRoot, policy, audit, guard, false);
@@ -107,10 +124,12 @@ export class OpenCodeAgentFrameworkAdapter implements AgentFrameworkAdapter {
         const ocConfig = JSON.parse(fs.readFileSync(openCodeJsonPath, "utf-8"));
         const bashPerms = ocConfig?.permission?.bash ?? {};
         const editPerms = ocConfig?.permission?.edit ?? {};
-        const needsFix = bashPerms["git *"] !== "deny" || editPerms["../task-state/**"] !== "deny" || !ocConfig?.agent?.doctor;
+        const mcp = ocConfig?.mcp?.taskforge;
+        const mcpDrift = !mcp || (mcp.enabled === true && !(mcp.type === "local" && Array.isArray(mcp.command) && mcp.command.length > 0));
+        const needsFix = bashPerms["git *"] !== "deny" || editPerms["../task-state/**"] !== "deny" || !ocConfig?.agent?.doctor || mcpDrift;
         if (needsFix) {
           installOpenCodeConfig(repoRoot, policy, audit, guard, false);
-          repairs.push({ code: "OPENCODE_PERMISSIONS", message: "Repaired opencode.json agent permissions and doctor agent config" });
+          repairs.push({ code: mcpDrift && bashPerms["git *"] === "deny" ? "OPENCODE_MCP" : "OPENCODE_PERMISSIONS", message: "Repaired opencode.json (permissions/MCP block/doctor agent)" });
         }
       } catch {
         installOpenCodeConfig(repoRoot, policy, audit, guard, false);
@@ -125,17 +144,30 @@ export class OpenCodeAgentFrameworkAdapter implements AgentFrameworkAdapter {
       repairs.push({ code: "OPENCODE_AUDIT_DIR", message: "Created audit directory" });
     }
 
+    // Repair managed skill drift (R-E03-002, R-E03-003): idempotent reinstall
+    // of canonical skill files only.
+    repairs.push(...fixSkillFiles(repoRoot));
+
     return repairs;
   }
 }
 
 export class GenericAgentFrameworkAdapter implements AgentFrameworkAdapter {
-  doctor(_repoRoot: string): DoctorIssue[] {
-    return [];
+  /**
+   * When checkSkills is true (framework installs skills: generic/auto), the
+   * adapter reports managed-skill drift. When false (framework 'none'), no
+   * managed skills are expected and the adapter is a no-op.
+   */
+  constructor(private readonly opts: { checkSkills?: boolean } = {}) {}
+
+  doctor(repoRoot: string): DoctorIssue[] {
+    if (!this.opts.checkSkills) return [];
+    return doctorSkillFiles(repoRoot);
   }
 
-  fix(_repoRoot: string): DoctorRepair[] {
-    return [];
+  fix(repoRoot: string): DoctorRepair[] {
+    if (!this.opts.checkSkills) return [];
+    return fixSkillFiles(repoRoot);
   }
 }
 
@@ -143,5 +175,8 @@ export function getAgentFrameworkAdapter(frameworkId?: string): AgentFrameworkAd
   if (frameworkId === "opencode") {
     return new OpenCodeAgentFrameworkAdapter();
   }
-  return new GenericAgentFrameworkAdapter();
+  // 'none' installs no managed skills; everything else (generic, auto,
+  // undefined) does.
+  const checkSkills = frameworkId !== "none";
+  return new GenericAgentFrameworkAdapter({ checkSkills });
 }

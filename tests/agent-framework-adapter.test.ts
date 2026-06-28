@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { OpenCodeAgentFrameworkAdapter, GenericAgentFrameworkAdapter, getAgentFrameworkAdapter } from "../src/core/agent-framework-adapter.js";
+import { installSkillFiles } from "../src/core/skill-files.js";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -165,8 +166,10 @@ describe("AgentFrameworkAdapter", () => {
         fs.writeFileSync(openCodeJsonPath, JSON.stringify({
           permission: { bash: { "git *": "deny" }, edit: { "../task-state/**": "deny" } },
           agent: { doctor: true },
+          mcp: { taskforge: { type: "local", command: ["taskforge", "mcp"], enabled: false } },
         }));
         fs.mkdirSync(auditDir, { recursive: true });
+        installSkillFiles(repoRoot, false);
         const repairs = adapter.fix(repoRoot);
         expect(repairs).toEqual([]);
       });
