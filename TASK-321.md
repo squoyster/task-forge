@@ -6,10 +6,9 @@ priority: P2
 agentRole: Implementer
 riskLevel: High
 humanInterventionRequired: false
-completed_at: 2026-06-27T22:02:33Z
 dependsOn:
   - TASK-320
-spec_hash: 2e9f4d825cb27a1d
+spec_hash: 211eb9da73daaa08
 ---
 # TASK-321: TF-SIMP-05: Publish a minimal default CLI and a complete `next --json` packet
 ## Goal

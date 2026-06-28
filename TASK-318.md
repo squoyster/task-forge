@@ -6,10 +6,9 @@ priority: P2
 agentRole: Implementer
 riskLevel: High
 humanInterventionRequired: false
-completed_at: 2026-06-27T14:03:13Z
 dependsOn:
   - TASK-317
-spec_hash: 7b2256d79f9b52d6
+spec_hash: 041cef5bc9a65646
 ---
 # TASK-318: TF-SIMP-02: Collapse to one task status graph
 ## Goal

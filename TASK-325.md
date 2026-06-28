@@ -1,7 +1,7 @@
 ---
 id: TASK-325
 type: Task
-status: Ready
+status: In Progress
 priority: P2
 agentRole: Implementer
 riskLevel: Medium
@@ -9,7 +9,11 @@ humanInterventionRequired: false
 dependsOn:
   - TASK-323
   - TASK-324
+assignee: e8edbcdbf9
+claimed_at: '2026-06-28 00:14:19'
+context_hash: 73657e52ea2540f4
 spec_hash: be194d8099d81fe9
+branch: agent/TASK-325-tf-embed-03-add-fresh-project-embedding--e8edbcdbf9
 ---
 # TASK-325: TF-EMBED-03: Add fresh-project embedding conformance and repair
 ## Goal
@@ -78,6 +82,11 @@ Risk: Medium. Framework-specific expectations can accidentally become the produc
 Stop if framework-specific expectations become the product contract. Require shared-contract separation.
 
 ## Agent Notes
+
+### 2026-06-28T00:00:00Z System
+- Task claimed via taskforge start TASK-325
+- Session: e8edbcdbf9
+- Branch: agent/TASK-325-tf-embed-03-add-fresh-project-embedding--e8edbcdbf9
 
 ### 2026-06-27T00:00:00Z System
 - Task updated via taskforge update

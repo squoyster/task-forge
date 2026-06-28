@@ -6,10 +6,9 @@ priority: P2
 agentRole: Implementer
 riskLevel: Medium
 humanInterventionRequired: false
-completed_at: 2026-06-27T23:25:22Z
 dependsOn:
   - TASK-322
-spec_hash: 1a6d2ff0ebe12dc5
+spec_hash: 323f38519af5adeb
 ---
 # TASK-323: TF-EMBED-01: Install portable TaskForge Agent Skills
 ## Goal

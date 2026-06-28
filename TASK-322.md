@@ -6,10 +6,9 @@ priority: P2
 agentRole: Implementer
 riskLevel: High
 humanInterventionRequired: false
-completed_at: 2026-06-27T22:47:04Z
 dependsOn:
   - TASK-321
-spec_hash: dc8395610827817b
+spec_hash: 586ddeedb96a8c92
 ---
 # TASK-322: TF-SIMP-06: Align OpenCode with least-privilege direct-git profiles
 ## Goal

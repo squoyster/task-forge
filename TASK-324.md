@@ -6,10 +6,9 @@ priority: P2
 agentRole: Implementer
 riskLevel: High
 humanInterventionRequired: false
-completed_at: 2026-06-27T23:57:03Z
 dependsOn:
   - TASK-322
-spec_hash: 3b932788904dc787
+spec_hash: e31aaa88fcfb51f9
 ---
 # TASK-324: TF-EMBED-02: Replace the MCP command mirror with a typed task/state contract
 ## Goal

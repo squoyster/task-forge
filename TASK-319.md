@@ -6,10 +6,9 @@ priority: P2
 agentRole: Implementer
 riskLevel: High
 humanInterventionRequired: false
-completed_at: 2026-06-27T14:47:06Z
 dependsOn:
   - TASK-318
-spec_hash: 28f8a53437cd8e1b
+spec_hash: e2cf39b5f1e1280c
 ---
 # TASK-319: TF-SIMP-03: Make storage paths truthful and config-authoritative
 ## Goal

@@ -6,8 +6,7 @@ priority: P2
 agentRole: Implementer
 riskLevel: High
 humanInterventionRequired: false
-completed_at: 2026-06-27T13:16:41Z
-spec_hash: 19c678fbfe63023c
+spec_hash: f5c1688dcf3aacb2
 ---
 # TASK-317: TF-SIMP-01: Remove stale facade guidance and dead facade artifacts
 ## Goal
